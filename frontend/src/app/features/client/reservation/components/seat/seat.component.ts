@@ -29,9 +29,7 @@ export class SeatComponent {
         this.storageService.getItem<ReservationRequest>('reservationState');
 
       if (currentShowtime) {
-        this.seatStore.loadSeats({ showtimeId: currentShowtime.id });
-
-        this.seatStore.connectSSE({
+        this.seatStore.initSeatMap({
           showtimeId: currentShowtime.id,
           userId: reservationState?.userId as number,
           reservationId: reservationState?.reservationId || null,

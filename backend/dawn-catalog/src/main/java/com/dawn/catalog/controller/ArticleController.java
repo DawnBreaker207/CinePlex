@@ -4,10 +4,10 @@ import com.dawn.catalog.dto.request.ArticleRequest;
 import com.dawn.catalog.dto.response.ArticleResponse;
 import com.dawn.catalog.service.ArticleService;
 import com.dawn.common.core.dto.response.ResponseObject;
+import com.dawn.common.core.dto.response.ResponsePage;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/article")
@@ -16,8 +16,8 @@ public class ArticleController {
     private final ArticleService articleService;
 
     @GetMapping("")
-    public ResponseObject<List<ArticleResponse>> getAll() {
-        return ResponseObject.success(articleService.getAll());
+    public ResponseObject<ResponsePage<ArticleResponse>> getAll(Pageable pageable) {
+        return ResponseObject.success(articleService.getAll(pageable));
     }
 
     @GetMapping("/{id}")

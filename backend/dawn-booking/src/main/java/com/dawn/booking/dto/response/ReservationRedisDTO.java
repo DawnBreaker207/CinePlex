@@ -8,6 +8,7 @@ import lombok.experimental.SuperBuilder;
 
 import java.util.ArrayList;
 import java.util.List;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -21,8 +22,7 @@ public class ReservationRedisDTO {
 
     private Long theaterId;
 
-    @Builder.Default
-    private List<String> seats = new ArrayList<>();
+    private String voucherCode;
 
     @Builder.Default
     private List<Long> seatsIds = new ArrayList<>();

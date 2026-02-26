@@ -1,5 +1,3 @@
 spring:
   application:
     name: dawn-cinema
-service:
-  url: http://localhost:8888/api/v1

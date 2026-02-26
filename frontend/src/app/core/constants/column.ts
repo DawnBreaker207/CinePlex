@@ -43,6 +43,15 @@ export const HEADER_COLUMNS = {
     marker('Ngày tạo'),
     marker('Hành động'),
   ],
+  VOUCHER: [
+    marker('Thông tin'),
+    marker('Thởi gian'),
+    marker('Mức giảm'),
+    marker('Tình trạng'),
+    marker('Phạm vi'),
+    marker('Trạng thái'),
+    marker('Hành động'),
+  ],
 };
 
 export const HEADERS = [

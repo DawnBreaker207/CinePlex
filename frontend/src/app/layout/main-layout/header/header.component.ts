@@ -8,10 +8,7 @@ import { NzIconModule } from 'ng-zorro-antd/icon';
 import { AuthService } from '@core/auth/auth.service';
 import { ProfileMenuComponent } from '@shared/components/profile-menu/profile-menu.component';
 import { SelectShowtimeComponent } from '@features/client/home/components/select/select.component';
-import {
-  TranslateModule,
-  TranslateService,
-} from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { HEADERS } from '@core/constants/column';
 
 @Component({

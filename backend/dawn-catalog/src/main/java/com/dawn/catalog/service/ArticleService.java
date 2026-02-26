@@ -2,11 +2,11 @@ package com.dawn.catalog.service;
 
 import com.dawn.catalog.dto.request.ArticleRequest;
 import com.dawn.catalog.dto.response.ArticleResponse;
-
-import java.util.List;
+import com.dawn.common.core.dto.response.ResponsePage;
+import org.springframework.data.domain.Pageable;
 
 public interface ArticleService {
-    List<ArticleResponse> getAll();
+    ResponsePage<ArticleResponse> getAll(Pageable pageable);
 
     ArticleResponse getById(Long id);
 
@@ -14,5 +14,5 @@ public interface ArticleService {
 
     ArticleResponse update(Long id, ArticleRequest req);
 
-    Void delete(Long id);
+    void delete(Long id);
 }

@@ -60,7 +60,11 @@
                   : 'bg-white text-gray-700 border border-gray-200 rounded-2xl rounded-tl-none'
               "
             >
-              {{ msg.content }}
+              @if (msg.sender === "user") {
+                {{ msg.content }}
+              } @else {
+                <markdown [data]="msg.content"></markdown>
+              }
 
               <span
                 class="block text-[10px] mt-1 opacity-70"
@@ -72,6 +76,30 @@
               >
                 {{ msg.time | date: "HH:mm" }}
               </span>
+            </div>
+          </div>
+        </div>
+      }
+      @if (isTyping()) {
+        <div class="flex w-full justify-start">
+          <div class="flex gap-2">
+            <nz-avatar
+              nzIcon="robot"
+              class="!bg-orange-500 mt-auto shrink-0 shadow-sm"
+              [nzSize]="28"
+            ></nz-avatar>
+            <div
+              class="bg-white border border-gray-200 rounded-2xl rounded-tl-none px-4 py-3 shadow-sm flex items-center gap-1 h-10"
+            >
+              <div
+                class="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce"
+              ></div>
+              <div
+                class="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.15s]"
+              ></div>
+              <div
+                class="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.3s]"
+              ></div>
             </div>
           </div>
         </div>

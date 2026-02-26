@@ -35,6 +35,15 @@ public class Reservation extends AbstractMappedEntity {
     @Column(name = "total_amount", nullable = false)
     private BigDecimal totalAmount;
 
+    @Column(name = "voucher_code", nullable = true)
+    private String voucherCode;
+
+    @Column(name = "original_amount")
+    private BigDecimal originalAmount;
+
+    @Column(name = "discount_amount")
+    private BigDecimal discountAmount;
+
     @Column(name = "is_paid")
     @Builder.Default
     private Boolean isPaid = false;

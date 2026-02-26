@@ -48,6 +48,7 @@ import { ShowtimeEffects } from '@domain/showtime/data-access/showtime.effects';
 import { provideTranslateHttpLoader } from '@ngx-translate/http-loader';
 import { provideTranslateService } from '@ngx-translate/core';
 import { provideAppSecurity } from '@core/config/app.security';
+import { provideMarkdown } from 'ngx-markdown';
 
 registerLocaleData(localVi);
 export const appConfig: ApplicationConfig = {
@@ -93,6 +94,7 @@ export const appConfig: ApplicationConfig = {
     ),
     { provide: LOCALE_ID, useValue: 'vi' },
     provideAppSecurity(),
+    provideMarkdown(),
     provideAnimationsAsync(),
     provideStoreDevtools({ maxAge: 25, logOnly: !isDevMode() }),
   ],

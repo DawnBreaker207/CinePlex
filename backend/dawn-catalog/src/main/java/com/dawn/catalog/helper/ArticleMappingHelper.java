@@ -10,9 +10,10 @@ public interface ArticleMappingHelper {
         return Article
                 .builder()
                 .title(req.getTitle())
-                .slug(req.getSlug())
+                .thumbnail(req.getThumbnail())
                 .summary(req.getSummary())
                 .content(req.getContent())
+                .type(req.getType())
                 .status(req.getStatus())
                 .build();
     }
@@ -24,10 +25,14 @@ public interface ArticleMappingHelper {
                 .title(req.getTitle())
                 .slug(req.getSlug())
                 .summary(req.getSummary())
+                .thumbnail(req.getThumbnail())
                 .content(req.getContent())
                 .status(req.getStatus())
+                .type(req.getType())
                 .views(req.getViews())
                 .isDeleted(req.getIsDeleted())
+                .createdAt(req.getCreatedAt())
+                .updatedAt(req.getUpdatedAt())
                 .build();
     }
 }

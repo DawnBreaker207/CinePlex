@@ -21,7 +21,7 @@ public class ApiExceptionHandler {
 
     @ExceptionHandler(ApiException.class)
     public ResponseEntity<ExceptionMessage> handleApiRequestException(ApiException e) {
-        log.info("**ApiExceptionHandler controller, handler API request*\n");
+        log.info("**ApiExceptionHandler controller, handler API request**");
         return buildResponse(e.getStatus(), e.getMessage());
     }
 

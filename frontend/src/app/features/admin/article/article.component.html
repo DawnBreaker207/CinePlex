@@ -20,124 +20,108 @@
       <nz-icon nzType="plus" nzTheme="outline" />
     </button>
   </div>
-  <div
-    class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 overflow-hidden"
-  >
-    <nz-table
-      #basicTable
-      [nzData]="articles()"
-      [nzPageSize]="10"
-      nzTableLayout="fixed"
+
+  <app-loading [isLoading]="articleStore.loading()">
+    <div
+      class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 overflow-hidden"
     >
-      <thead>
-        <tr>
-          @for (header of headerColumn; track header) {
-            <th>{{ header | translate }}</th>
-          }
-        </tr>
-      </thead>
-      <tbody>
-        @for (data of basicTable.data; track data.id) {
-          <tr
-            class="group hover:bg-gray-50 transition-colors border-b border-gray-100"
-          >
-            <td>
-              <img
-                [src]="data.thumbnail"
-                [alt]="data.title"
-                class="w-12 h-12 object-cover rounded shadow-sm border border-gray-600"
-              />
-            </td>
-            <td>
-              <div
-                class="font-semibold truncate max-w-xs"
-                nz-tooltip
-                [nzTooltipTitle]="data.title"
-              >
-                {{ data.title }}
-              </div>
-              <div class="text-xs truncate max-w-xs">
-                {{ data.summary }}
-              </div>
-            </td>
-            <td>
-              <nz-tag [nzColor]="'blue'">
-                {{ data.category }}
-              </nz-tag>
-            </td>
-            <td>
-              {{ data.author }}
-            </td>
-            <td>
-              @if (data.status === "PUBLISHED") {
-                <nz-tag [nzColor]="'success'" class="border-none">
-                  <span nz-icon nzType="check-circle"></span>
-                  {{ "Đã đăng" | translate }}
-                </nz-tag>
-              } @else {
-                <nz-tag [nzColor]="'default'" class="border-none">
-                  <span nz-icon nzType="edit"></span> {{ "Nháp" | translate }}
-                </nz-tag>
-              }
-            </td>
-            <td class="text-gray-600">
-              {{ data.createdAt | date: "dd/MM/yyyy" }}
-            </td>
-            <td nzRight>
-              <div class="flex gap-2">
-                <button
-                  nz-button
-                  nzType="default"
-                  nzShape="circle"
-                  (click)="openDrawer(data)"
-                  nz-tooltip
-                  [nzTooltipTitle]="'Chỉnh sửa' | translate"
-                >
-                  <span nz-icon nzType="edit" class="text-blue-400"> </span>
-                </button>
-                <button
-                  nz-button
-                  nzType="default"
-                  nzDanger
-                  nzShape="circle"
-                  nz-popconfirm
-                  [nzPopconfirmTitle]="
-                    'Bạn có chắc chắn muốn xóa bài này?' | translate
-                  "
-                  (nzOnConfirm)="deleteArticle(data.id)"
-                  nz-tooltip
-                  [nzTooltipTitle]="'Xóa' | translate"
-                >
-                  <span nz-icon nzType="delete"> </span>
-                </button>
-              </div>
-            </td>
-          </tr>
-        }
-      </tbody>
-    </nz-table>
-  </div>
-</div>
-<nz-drawer
-  [nzVisible]="drawerVisible"
-  [nzWidth]="800"
-  [nzBodyStyle]="{ padding: '0', background: '#f0f0f0', color: 'black' }"
-  [nzTitle]="
-    editingArticle
-      ? ('Chỉnh sửa bài viết' | translate)
-      : ('Viết bài mới' | translate)
-  "
-  [nzPlacement]="'left'"
-  (nzOnClose)="closeDrawer()"
->
-  <ng-container *nzDrawerContent>
-    <div class="p-6">
-      <app-form
-        [initialData]="editingArticle"
-        (saveArticle)="handleSave($event)"
-        (cancelArticle)="closeDrawer()"
+      <nz-table
+        [nzData]="articleStore.articles()"
+        [nzFrontPagination]="false"
+        [nzTotal]="articleStore.pagination()?.totalElements || 0"
+        [nzPageIndex]="pageIndex"
+        [nzPageSize]="pageSize"
+        nzShowPagination
+        [nzShowSizeChanger]="true"
+        (nzQueryParams)="onQueryParamsChange($event)"
       >
-      </app-form>
+        <thead>
+          <tr>
+            @for (header of headerColumn; track header) {
+              <th>{{ header | translate }}</th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of articleStore.articles(); track item.id) {
+            <tr
+              class="group hover:bg-gray-50 transition-colors border-b border-gray-100"
+            >
+              <td>
+                <img
+                  [src]="item.thumbnail"
+                  [alt]="item.title"
+                  class="w-12 h-12 object-cover rounded shadow-sm border border-gray-600"
+                />
+              </td>
+              <td>
+                <div
+                  class="font-semibold truncate max-w-xs"
+                  nz-tooltip
+                  [nzTooltipTitle]="item.title"
+                >
+                  {{ item.title }}
+                </div>
+                <div class="text-xs truncate max-w-xs">
+                  {{ item.summary }}
+                </div>
+              </td>
+              <td>
+                <nz-tag [nzColor]="'blue'">
+                  {{ item.type }}
+                </nz-tag>
+              </td>
+              <td>
+                {{ item.author }}
+              </td>
+              <td>
+                @if (item.status === "PUBLISHED") {
+                  <nz-tag [nzColor]="'success'" class="border-none">
+                    <span nz-icon nzType="check-circle"></span>
+                    {{ "Đã đăng" | translate }}
+                  </nz-tag>
+                } @else {
+                  <nz-tag [nzColor]="'default'" class="border-none">
+                    <span nz-icon nzType="edit"></span> {{ "Nháp" | translate }}
+                  </nz-tag>
+                }
+              </td>
+              <td class="text-gray-600">
+                {{ item.createdAt | date: "dd/MM/yyyy" }}
+              </td>
+              <td nzRight>
+                <div class="flex gap-2">
+                  <button
+                    nz-button
+                    nzType="default"
+                    nzShape="circle"
+                    (click)="openDrawer(item)"
+                    nz-tooltip
+                    [nzTooltipTitle]="'Chỉnh sửa' | translate"
+                  >
+                    <span nz-icon nzType="edit" class="text-blue-400"> </span>
+                  </button>
+                  <button
+                    nz-button
+                    nzType="default"
+                    nzDanger
+                    nzShape="circle"
+                    nz-popconfirm
+                    [nzPopconfirmTitle]="
+                      'Bạn có chắc chắn muốn xóa bài này?' | translate
+                    "
+                    (nzOnConfirm)="deleteArticle(item.id)"
+                    nz-tooltip
+                    [nzTooltipTitle]="'Xóa' | translate"
+                  >
+                    <span nz-icon nzType="delete"> </span>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </nz-table>
     </div>
-  </ng-container>
-</nz-drawer>
+  </app-loading>
+</div>

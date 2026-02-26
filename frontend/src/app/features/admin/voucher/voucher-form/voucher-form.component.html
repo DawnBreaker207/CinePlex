@@ -1,0 +1,203 @@
+<form nz-form [formGroup]="form" class="w-full h-full">
+  <nz-row [nzGutter]="24">
+    <nz-col [nzSpan]="12">
+      <h3 class="text-base font-semibold text-gray-700 mb-4 border-b pb-2">
+        {{ "Thông tin cơ bản" | translate }}
+      </h3>
+
+      <nz-form-item>
+        <nz-form-label nzRequired>{{
+          "Tên chương trình" | translate
+        }}</nz-form-label>
+        <nz-form-control [nzErrorTip]="'Vui lòng nhập tên'">
+          <input
+            nz-input
+            formControlName="name"
+            [placeholder]="'Ví dụ: khuyến mại Tết'"
+          />
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label nzRequired>{{
+          "Mã Voucher (Code)" | translate
+        }}</nz-form-label>
+        <nz-form-control [nzErrorTip]="'Mã bắt buộc (Ký tự in hoa, số)'">
+          <input
+            nz-input
+            formControlName="code"
+            class="uppercase"
+            [placeholder]="'VD: SALE50'"
+          />
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label nzRequired>{{
+          "Thời gian áp dụng" | translate
+        }}</nz-form-label>
+        <nz-form-control [nzErrorTip]="'Vui lòng chọn thời gian'">
+          <nz-range-picker
+            formControlName="rangeDate"
+            class="w-full"
+          ></nz-range-picker>
+        </nz-form-control>
+      </nz-form-item>
+
+      <div class="flex gap-4">
+        <nz-form-item class="flex-1">
+          <nz-form-label nzRequired>{{ "Phạm vi" | translate }}</nz-form-label>
+          <nz-form-control>
+            <nz-select formControlName="category">
+              <nz-option
+                [nzValue]="VoucherCategory.CAMPAIGN"
+                nzLabel="Chiến dịch"
+              ></nz-option>
+              <nz-option
+                [nzValue]="VoucherCategory.SYSTEM"
+                nzLabel="Hệ thống"
+              ></nz-option>
+            </nz-select>
+          </nz-form-control>
+        </nz-form-item>
+
+        <nz-form-item class="flex-1">
+          <nz-form-label>{{ "Nhóm tham chiếu" | translate }}</nz-form-label>
+          <nz-form-control>
+            <input
+              nz-input
+              formControlName="groupRef"
+              placeholder="Group Ref"
+            />
+          </nz-form-control>
+        </nz-form-item>
+      </div>
+    </nz-col>
+
+    <nz-col [nzSpan]="12">
+      <h3 class="text-base font-semibold text-gray-700 mb-4 border-b pb-2">
+        {{ "Thiết lập giảm giá" | translate }}
+      </h3>
+      <div class="flex gap-4">
+        <nz-form-item>
+          <nz-form-label nzRequired>{{
+            "Số lượng phát hành" | translate
+          }}</nz-form-label>
+          <nz-form-control [nzErrorTip]="'Số lượng phải lớn hơn 0'">
+            <nz-input-number
+              formControlName="quantityTotal"
+              [nzMin]="1"
+              class="w-full"
+              [nzStep]="10"
+            >
+            </nz-input-number>
+          </nz-form-control>
+        </nz-form-item>
+
+        <nz-form-item class="flex-1">
+          <nz-form-label nzRequired>{{
+            "Loại giảm giá" | translate
+          }}</nz-form-label>
+          <nz-form-control>
+            <nz-select formControlName="discountType">
+              <nz-option
+                [nzValue]="DiscountType.FIXED"
+                nzLabel="Số tiền (VNĐ)"
+              ></nz-option>
+              <nz-option
+                [nzValue]="DiscountType.PERCENT"
+                nzLabel="Phần trăm (%)"
+              ></nz-option>
+            </nz-select>
+          </nz-form-control>
+        </nz-form-item>
+      </div>
+
+      <div class="flex gap-4">
+        <nz-form-item class="flex-1">
+          <nz-form-label nzRequired>{{
+            "Giá trị giảm" | translate
+          }}</nz-form-label>
+          <nz-form-control>
+            <nz-input-number
+              formControlName="discountValue"
+              [nzMin]="0"
+              [nzStep]="1000"
+              class="w-full"
+              [nzFormatter]="
+                form.get('discountType')?.value === 'PERCENT'
+                  ? parserPercent
+                  : parserMoney
+              "
+              [nzParser]="parserNumber"
+            >
+            </nz-input-number>
+          </nz-form-control>
+        </nz-form-item>
+
+        <nz-form-item>
+          <nz-form-label nzRequired>{{
+            "Giá tri tối thiểu" | translate
+          }}</nz-form-label>
+          <nz-form-control [nzExtra]="'Số lượng phải lớn hơn 0'">
+            <nz-input-number
+              formControlName="minOrderValue"
+              [nzMin]="0"
+              [nzStep]="1000"
+              class="w-full"
+              [nzFormatter]="parserMoney"
+              [nzParser]="parserNumber"
+              [nzPlaceHolder]="'Ví dụ: 100.000đ'"
+            >
+            </nz-input-number>
+          </nz-form-control>
+        </nz-form-item>
+      </div>
+
+      @if (form.get("discountType")?.value === "PERCENT") {
+        <nz-form-item>
+          <nz-form-label>{{ "Giảm tối đa (VNĐ)" | translate }}</nz-form-label>
+          <nz-form-control>
+            <nz-input-number
+              formControlName="maxDiscountAmount"
+              [nzMin]="0"
+              [nzStep]="1000"
+              class="w-full"
+              [nzFormatter]="parserMoney"
+              [nzParser]="parserNumber"
+            >
+            </nz-input-number>
+          </nz-form-control>
+        </nz-form-item>
+      }
+
+      <nz-form-item>
+        <nz-form-label>{{ "Điều kiện áp dụng" | translate }}</nz-form-label>
+        <nz-form-control>
+          <textarea
+            nz-input
+            formControlName="conditions"
+            rows="3"
+            placeholder="Mô tả điều kiện...."
+          ></textarea>
+        </nz-form-control>
+      </nz-form-item>
+    </nz-col>
+  </nz-row>
+
+  @if (mode !== "view") {
+    <div *nzModalFooter>
+      <button nz-button nzType="default" (close)="close()">
+        {{ "Hủy bỏ" | translate }}
+      </button>
+      <button
+        nz-button
+        nzType="primary"
+        (click)="submit()"
+        [nzLoading]="voucherStore.loading()"
+      >
+        {{ "Lưu thay đổi" | translate }}
+      </button>
+    </div>
+  }
+</form>

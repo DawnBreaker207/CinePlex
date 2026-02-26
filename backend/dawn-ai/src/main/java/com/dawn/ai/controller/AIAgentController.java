@@ -1,7 +1,8 @@
 package com.dawn.ai.controller;
 
-import com.dawn.ai.service.AiAgentProvider;
+import com.dawn.ai.service.AiAgentService;
 import com.dawn.common.core.dto.response.ResponseObject;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -10,11 +11,11 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class AIAgentController {
 
-    private final AiAgentProvider aiAgentProvider;
+    private final AiAgentService agent;
 
     @PostMapping("/chat")
-    public ResponseObject<String> chat(@RequestBody ChatRequest question) {
-        String answer = aiAgentProvider.ask(question.getMessage());
+    public ResponseObject<String> chat(@RequestBody ChatRequest question, HttpSession session) {
+        String answer = agent.chat(session.getId(), question.getMessage());
         return ResponseObject.success(answer);
     }
 }

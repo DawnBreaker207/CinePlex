@@ -2,6 +2,7 @@ import {
   Component,
   effect,
   ElementRef,
+  inject,
   signal,
   viewChild,
 } from '@angular/core';
@@ -12,6 +13,8 @@ import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzAvatarModule } from 'ng-zorro-antd/avatar';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzFloatButtonModule } from 'ng-zorro-antd/float-button';
+import { ChatboxService } from '@core/services/report/chatbox.service';
+import { MarkdownComponent } from 'ngx-markdown';
 
 interface Message {
   content: string;
@@ -29,18 +32,21 @@ interface Message {
     NzAvatarModule,
     NzIconModule,
     NzFloatButtonModule,
+    MarkdownComponent,
   ],
   templateUrl: './chat.component.html',
   styleUrl: './chat.component.css',
 })
 export class ChatComponent {
+  private chatboxService = inject(ChatboxService);
   scrollBottom = viewChild<ElementRef>('scrollBottom');
 
   isOpen = signal<boolean>(false);
+  isTyping = signal<boolean>(false);
   inputValue = signal<string>('');
   messages = signal<Message[]>([
     {
-      content: 'Chào bạn! Đây là chat box',
+      content: 'Chào Admin! Tôi có thể giúp gì về số liệu CinePlex hôm nay?',
       sender: 'bot',
       time: new Date(),
     },
@@ -50,7 +56,8 @@ export class ChatComponent {
     effect(() => {
       const msgs = this.messages();
       const open = this.isOpen();
-      if (open && msgs.length > 0) {
+      const typing = this.isTyping();
+      if (open && (msgs.length > 0 || typing)) {
         setTimeout(() => this.scrollBottom(), 50);
       }
     });
@@ -62,24 +69,36 @@ export class ChatComponent {
 
   sendMessage() {
     const text = this.inputValue().trim();
-    if (!text) return;
+    if (!text || this.isTyping()) return;
 
     this.messages.update((prev) => [
       ...prev,
       { content: text, sender: 'user', time: new Date() },
     ]);
     this.inputValue.set('');
+    this.isTyping.set(true);
 
-    setTimeout(() => {
-      this.messages.update((prev) => [
-        ...prev,
-        {
-          content: `Bot nhận được: "${text}"`,
-          sender: 'bot',
-          time: new Date(),
-        },
-      ]);
-    }, 800);
+    this.chatboxService.sendMessage(text).subscribe({
+      next: (res) => {
+        this.messages.update((prev) => [
+          ...prev,
+          { content: res, sender: 'bot', time: new Date() },
+        ]);
+        this.isTyping.set(false);
+      },
+      error: (err) => {
+        console.error(err);
+        this.messages.update((prev) => [
+          ...prev,
+          {
+            content: 'Xin lỗi, hệ thống đang bận. Vui lòng thử lại sau.',
+            sender: 'bot',
+            time: new Date(),
+          },
+        ]);
+        this.isTyping.set(false);
+      },
+    });
   }
 
   scrollToBottom() {

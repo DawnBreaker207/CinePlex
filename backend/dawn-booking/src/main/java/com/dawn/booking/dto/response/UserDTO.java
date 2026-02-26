@@ -10,7 +10,7 @@ import lombok.experimental.SuperBuilder;
 @AllArgsConstructor
 @SuperBuilder
 public class UserDTO {
-    private Long id;
+    private Long userId;
 
     private String username;
 

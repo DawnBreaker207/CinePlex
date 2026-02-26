@@ -4,6 +4,7 @@ import com.dawn.booking.dto.request.*;
 import com.dawn.booking.dto.response.ReservationInitResponse;
 import com.dawn.booking.dto.response.ReservationResponse;
 import com.dawn.booking.dto.response.UserReservationResponse;
+import com.dawn.booking.dto.response.VoucherDiscountDTO;
 import com.dawn.common.core.dto.response.ResponsePage;
 import org.springframework.data.domain.Pageable;
 
@@ -20,8 +21,10 @@ public interface ReservationService {
 
     void holdReservationSeats(ReservationHoldSeatRequest reservation);
 
-    ReservationResponse confirmReservation(ReservationRequest reservation);
+    ReservationResponse confirmReservation(String reservationId);
 
-    void cancelReservation(String reservationId, Long userId);
+    VoucherDiscountDTO applyVoucher(String reservationId, String code);
+
+    void cancelReservation(String reservationId);
 
 }

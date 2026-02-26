@@ -1,4 +1,4 @@
-package com.dawn.booking.dto.request;
+package com.dawn.payment.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -9,11 +9,8 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder
-public class ReservationRequest {
-
-    private String reservationId;
-
-    private Long showtimeId;
-
-    private Long userId;
+public class PaymentHandlerResponse {
+    String reservationId;
+    boolean success;
+    String message;
 }

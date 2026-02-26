@@ -1,6 +1,7 @@
 package com.dawn.common.infra.redis.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -11,6 +12,7 @@ import java.util.concurrent.TimeUnit;
 @Service
 @RequiredArgsConstructor
 public class RedisService {
+
     private final RedisTemplate<String, Object> redisTemplate;
 
     public Map<Object, Object> getHash(String key) {
@@ -48,5 +50,17 @@ public class RedisService {
 
     public Boolean expire(String key, Duration ttl) {
         return redisTemplate.expire(key, ttl);
+    }
+
+    public Long decrement(String key, Long delta) {
+        return redisTemplate.opsForValue().decrement(key, delta);
+    }
+
+    public Long increment(String key, Long delta) {
+        return redisTemplate.opsForValue().increment(key, delta);
+    }
+
+    public <T> T execute(RedisCallback<T> action) {
+        return redisTemplate.execute(action);
     }
 }

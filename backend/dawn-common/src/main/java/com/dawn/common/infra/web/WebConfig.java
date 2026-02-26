@@ -3,7 +3,8 @@ package com.dawn.common.infra.web;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.client.SimpleClientHttpRequestFactory;
+import org.springframework.context.annotation.Scope;
+import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.method.HandlerTypePredicate;
@@ -21,15 +22,13 @@ public class WebConfig implements WebMvcConfigurer {
     }
 
     @Bean("baseRestClient")
-    public RestClient.Builder restClient() {
-        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
-        factory.setConnectTimeout(10_000);
-        factory.setReadTimeout(10_000);
-
+    @Scope("prototype")
+    public RestClient restClient() {
         return RestClient
                 .builder()
-                .requestFactory(factory)
-                .defaultHeader("Content-Type", "application/json");
+                .requestFactory(new JdkClientHttpRequestFactory())
+                .defaultHeader("Content-Type", "application/json")
+                .build();
     }
 
     @Override
