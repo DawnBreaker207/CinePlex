@@ -14,14 +14,12 @@ export class SecurityService {
       const isCmdOrCtrl = e.ctrlKey || e.metaKey;
       const key = e.key.toLowerCase();
 
-      const forbiddenKeys = ['f12', 'u', 's'];
-      const forbiddenInspectKeys = ['i', 'j', 'c'];
       if (
-        forbiddenKeys.includes(key) ||
-        (isCmdOrCtrl && e.shiftKey && forbiddenInspectKeys.includes(key)) ||
-        (isCmdOrCtrl && key === 'u')
+        key === 'f12' ||
+        (isCmdOrCtrl &&
+          (['u', 's'].includes(key) ||
+            (e.shiftKey && ['i', 'j', 'c'].includes(key))))
       ) {
-        console.log('Hello world');
         e.preventDefault();
         e.stopPropagation();
       }

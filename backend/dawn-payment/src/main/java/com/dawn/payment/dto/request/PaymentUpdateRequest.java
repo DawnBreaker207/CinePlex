@@ -1,5 +1,6 @@
 package com.dawn.payment.dto.request;
 
+import com.dawn.common.core.constant.PaymentMethod;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -16,6 +17,8 @@ public class PaymentUpdateRequest {
     private String reservationId;
 
     private BigDecimal totalAmount;
+
+    private PaymentMethod method;
 
     private Boolean isSuccess;
 }

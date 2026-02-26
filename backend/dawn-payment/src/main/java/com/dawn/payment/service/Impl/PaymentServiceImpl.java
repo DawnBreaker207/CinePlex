@@ -3,67 +3,105 @@ package com.dawn.payment.service.Impl;
 import com.dawn.common.core.constant.Message;
 import com.dawn.common.core.constant.PaymentMethod;
 import com.dawn.common.core.constant.PaymentStatus;
-import com.dawn.payment.config.payment.MomoConfig;
-import com.dawn.payment.config.payment.VNPayConfig;
+import com.dawn.common.core.exception.wrapper.ResourceNotFoundException;
 import com.dawn.payment.dto.request.PaymentRequest;
 import com.dawn.payment.dto.request.PaymentUpdateRequest;
+import com.dawn.payment.dto.response.PaymentHandlerResponse;
 import com.dawn.payment.dto.response.PaymentResponse;
+import com.dawn.payment.dto.response.ReservationDTO;
+import com.dawn.payment.handler.PaymentHandler;
 import com.dawn.payment.model.Payment;
 import com.dawn.payment.repository.PaymentRepository;
 import com.dawn.payment.service.PaymentService;
-import com.dawn.payment.utils.MomoUtils;
-import com.dawn.payment.utils.VNPayUtils;
-import jakarta.servlet.http.HttpServletRequest;
+import com.dawn.payment.service.ReservationClientService;
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestClient;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class PaymentServiceImpl implements PaymentService {
 
-    private final VNPayConfig VNPayConfig;
-
-    private final MomoConfig momoConfig;
-
-    private final RestClient restClient;
+    private final List<PaymentHandler> handlers;
 
     private final PaymentRepository paymentRepository;
 
-    public PaymentServiceImpl(
-            VNPayConfig VNPayConfig,
-            MomoConfig momoConfig,
-            PaymentRepository paymentRepository,
-            @Qualifier("baseRestClient") RestClient.Builder builder) {
-        this.VNPayConfig = VNPayConfig;
-        this.momoConfig = momoConfig;
-        this.paymentRepository = paymentRepository;
-        this.restClient = builder.build();
+    private final ReservationClientService reservationClientService;
+
+    public PaymentResponse createPayment(PaymentRequest req, String ip) {
+        PaymentHandler handler = findHandler(req.getPaymentType());
+        String url = handler.createPaymentUrl(req.getReservationId(), req.getAmount(), ip);
+
+        return PaymentResponse
+                .builder()
+                .code("ok")
+                .message("success")
+                .paymentUrl(url)
+                .build();
     }
 
-    public PaymentResponse createPayment(PaymentRequest req, HttpServletRequest request) {
-        log.info("Payment request received: {}", req);
-        PaymentResponse response;
-        switch (req.getPaymentType().trim().toLowerCase()) {
-            case "vnpay" -> response = createVNPayPayment(req.getReservationId(), req.getAmount(), request);
-            case "momo" -> response = createMomoPayment(req.getReservationId(), req.getAmount());
-            default -> throw new IllegalArgumentException("Unsupported payment provider " + req.getPaymentType());
-        }
+    @Override
+    @Transactional
+    public PaymentHandlerResponse processCallback(String provider, Map<String, String> params) {
+        PaymentHandler handler = findHandler(provider);
+        String id = handler.getId(params);
 
-        return response;
+        log.info("Handler payment: {}", handler);
+        if (!handler.verifySignature(params)) {
+            log.error("Error: wrong signature from {}", provider);
+            reservationClientService.cancel(id);
+            return PaymentHandlerResponse.builder()
+                    .success(false)
+                    .message("Invalid signature")
+                    .build();
+        }
+        try {
+            log.info("Process callback received {}", provider);
+            ReservationDTO reservation = reservationClientService.confirm(id);
+            log.info("Get reservation from payment {}", reservation);
+            updatePayment(PaymentUpdateRequest
+                    .builder()
+                    .totalAmount(reservation.getTotalAmount())
+                    .reservationId(id)
+                    .method(checkPaymentMethod(provider))
+                    .isSuccess(Boolean.TRUE)
+                    .build());
+
+            return PaymentHandlerResponse
+                    .builder()
+                    .reservationId(id)
+                    .success(true)
+                    .build();
+        } catch (Exception ex) {
+            log.info("Failed with id {}", id);
+            return PaymentHandlerResponse
+                    .builder()
+                    .reservationId(id)
+                    .success(false)
+                    .message("Internal Error")
+                    .build();
+        }
+    }
+
+    @Override
+    public Boolean manualCheck(String provider, String id) {
+
+        PaymentHandler handler = findHandler(provider);
+        if (handler.queryTransactions(id)) {
+            log.info("Retry handler");
+            return true;
+        }
+        return false;
     }
 
     @Transactional
-    public Payment updatePayment(PaymentUpdateRequest request) {
+    public void updatePayment(PaymentUpdateRequest request) {
         PaymentStatus status = request.getIsSuccess() ? PaymentStatus.PAID : PaymentStatus.CANCELED;
         paymentRepository.findByReservationId(request.getReservationId())
                 .filter(p -> p.getStatus() == PaymentStatus.PAID)
@@ -75,67 +113,32 @@ public class PaymentServiceImpl implements PaymentService {
                 .builder()
                 .reservationId(request.getReservationId())
                 .paymentIntentId(request.getReservationId())
-                .method(PaymentMethod.VNPAY)
+                .method(request.getMethod())
                 .amount(request.getTotalAmount())
                 .status(status)
                 .createdAt(Instant.now())
                 .build();
-        return paymentRepository.saveAndFlush(payment);
+        paymentRepository.saveAndFlush(payment);
     }
 
-    private PaymentResponse createVNPayPayment(String reservationId, Integer totalPrice, HttpServletRequest clientIp) {
-        Map<String, String> vnpParamsMap = VNPayConfig.getVNPayConfig();
-        long amount = totalPrice * 100L;
-
-        //  Config default bankCode
-        //  This bank code is fixed, you can change it
-        vnpParamsMap.put("vnp_BankCode", "NCB");
-        vnpParamsMap.put("vnp_TxnRef", reservationId);
-        vnpParamsMap.put("vnp_Amount", String.valueOf(amount));
-        //  Update Ip Address
-        // You can set default IP to "127.0.0.1" or "0.0.0.0" without get IP utils
-        vnpParamsMap.put("vnp_IpAddr", VNPayUtils.getIpAddress(clientIp));
-        //	Build Query URL
-        String queryUrl = VNPayUtils.getPaymentURL(vnpParamsMap, true);
-        String hashData = VNPayUtils.getPaymentURL(vnpParamsMap, false);
-        String vnpSecureHash = VNPayUtils.hmacSHA512(VNPayConfig.getVnp_SecretKey(), hashData);
-        queryUrl += "&vnp_SecureHash=" + vnpSecureHash;
-        String paymentUrl = VNPayConfig.getVnp_PayUrl() + "?" + queryUrl;
-        return PaymentResponse
-                .builder()
-                .code("ok")
-                .message("success")
-                .paymentUrl(paymentUrl)
-                .build();
+    private PaymentHandler findHandler(String provider) {
+        return handlers
+                .stream()
+                .filter(h -> h.supports(provider))
+                .findFirst()
+                .orElseThrow(() -> new ResourceNotFoundException("Provider not supported"));
     }
 
-    private PaymentResponse createMomoPayment(String reservationId, Integer total) {
-        Map<String, String> momoParamsMap = momoConfig.getMomoConfig();
+    private PaymentMethod checkPaymentMethod(String provider) {
+        if (provider == null) return PaymentMethod.UNKNOWN;
 
-        momoParamsMap.put("orderId", reservationId);
-        momoParamsMap.put("orderInfo", "Thanh toan don hang: " + reservationId);
-        momoParamsMap.put("requestId", UUID.randomUUID().toString());
-        momoParamsMap.put("amount", String.valueOf(total));
-        momoParamsMap.put("extraData", "Khong co khuyen mai");
-        momoParamsMap.put("signature", MomoUtils.sign(momoParamsMap, momoConfig));
+        String paymentMethod = provider.trim().toUpperCase();
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        String momoApiUrl = momoConfig.getMomo_PayUrl() + "/create";
-        Map<String, Object> response = restClient.post()
-                .uri(momoApiUrl)
-                .body(momoParamsMap)
-                .retrieve()
-                .body(new ParameterizedTypeReference<>() {
-                });
-        if (response == null || response.get("payUrl") == null) {
-            throw new RuntimeException("MoMo payment failed or payUrl is null");
+        try {
+            return PaymentMethod.valueOf(paymentMethod);
+        } catch (IllegalArgumentException e) {
+            log.warn("Unknown provider: {}. Default to UNKNOWN", paymentMethod);
+            return PaymentMethod.UNKNOWN;
         }
-
-        return PaymentResponse.builder()
-                .code("ok")
-                .message("success")
-                .paymentUrl((String) response.get("payUrl"))
-                .build();
     }
 }

@@ -1,4 +1,4 @@
-#version: '4'
+version: '4'
 include:
   - path: docker-compose.monitor.yml
 
@@ -126,9 +126,10 @@ services:
       CLOUDINARY_CLOUD_NAME: ${CLOUD_NAME}
       CLOUDINARY_API_KEY: ${API_KEY}
       CLOUDINARY_API_SECRET: ${API_SECRET}
-      ###  Gemini API Config
-      GEMINI_API_KEY: ${GEMINI_API_KEY}
-      GEMINI_API_MODEL: ${GEMINI_API_MODEL}
+      ###  Open Router Config
+      OPEN_ROUTER_URL: ${OPEN_ROUTER_URL}
+      OPEN_ROUTER_API_KEY: ${OPEN_ROUTER_API_KEY}
+      OPEN_ROUTER_API_MODEL: ${OPEN_ROUTER_API_MODEL}
     build:
       context: ../backend
       dockerfile: Dockerfile

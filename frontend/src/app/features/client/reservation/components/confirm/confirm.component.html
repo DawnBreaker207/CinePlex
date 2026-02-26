@@ -9,7 +9,7 @@
       <span
         class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-primary"
       >
-        <nz-icon nzType="user" nzTheme="outline"/>
+        <nz-icon nzType="user" nzTheme="outline" />
       </span>
       <h3 class="text-lg font-bold text-gray-800 m-0">
         {{ "Thông tin nhận vé" | translate }}
@@ -23,7 +23,7 @@
           <div class="space-y-1">
             <span
               class="text-xs font-semibold text-gray-500 uppercase tracking-wide"
-            >Họ và tên</span
+              >Họ và tên</span
             >
             <div
               class="font-medium text-gray-900 text-base border-b border-gray-100 pb-2"
@@ -36,7 +36,7 @@
           <div class="space-y-1">
             <span
               class="text-xs font-semibold text-gray-500 uppercase tracking-wide"
-            >{{ "Số điện thoại" | translate }}</span
+              >{{ "Số điện thoại" | translate }}</span
             >
             <div
               class="font-medium text-gray-900 text-base border-b border-gray-100 pb-2"
@@ -49,7 +49,7 @@
           <div class="space-y-1 md:col-span-2">
             <span
               class="text-xs font-semibold text-gray-500 uppercase tracking-wide"
-            >Email</span
+              >Email</span
             >
             <div
               class="font-medium text-gray-900 text-base border-b border-gray-100 pb-2"
@@ -57,7 +57,7 @@
               {{ user.email }}
             </div>
             <p class="text-xs text-orange-500 mt-1 flex items-center gap-1">
-              <nz-icon nzType="info-circle"/>
+              <nz-icon nzType="info-circle" />
               {{
                 "Vé sẽ được gửi qua email này, vui lòng kiểm tra kỹ."
                   | translate
@@ -79,7 +79,7 @@
       <span
         class="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-orange-600"
       >
-        <nz-icon nzType="gift" nzTheme="outline"/>
+        <nz-icon nzType="gift" nzTheme="outline" />
       </span>
       <h3 class="text-lg font-bold text-gray-800 mb-0">
         {{ "Mã giảm giá/ Voucher" | translate }}
@@ -91,7 +91,7 @@
         <!-- Input -->
         <div class="flex-1 relative">
           <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-            <nz-icon nzType="tags"/>
+            <nz-icon nzType="tags" />
           </span>
           <input
             nz-input
@@ -122,7 +122,7 @@
             <span
               class="bg-white p-1.5 rounded-md border border-green-100 text-green-600"
             >
-              <nz-icon nzType="check-circle" nzTheme="fill"/>
+              <nz-icon nzType="check-circle" nzTheme="fill" />
             </span>
             <div>
               <p class="text-sm font-bold text-green-700 m-0">
@@ -138,7 +138,7 @@
             class="text-gray-400 hover:text-red-500 transition-colors"
             (click)="removeVoucher()"
           >
-            <nz-icon nzType="close"/>
+            <nz-icon nzType="close" />
           </button>
         </div>
       }
@@ -146,8 +146,8 @@
       <!-- MY VOUCHER -->
       <div class="mt-4 flex flex-wrap gap-2">
         <span class="text-xs text-gray-500 py-1">{{
-            "Voucher của bạn:" | translate
-          }}</span>
+          "Voucher của bạn:" | translate
+        }}</span>
         <div
           class="cursor-pointer border border-dashed border-primary text-primary bg-blue-50/50 px-2 py-1 rounded text-xs hover:bg-blue-50 transition-colors"
           (click)="voucherCode = 'WELCOME10'"
@@ -181,15 +181,15 @@
         <span
           class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-green-600"
         >
-          <nz-icon nzType="credit-card" nzTheme="outline"/>
+          <nz-icon nzType="credit-card" nzTheme="outline" />
         </span>
         <h3 class="text-lg font-bold text-gray-800 m-0">
           {{ "Phương thức thanh toán" | translate }}
         </h3>
       </div>
       <a href="#" class="text-sm text-primary hover:underline font-medium">{{
-          "Hướng dẫn" | translate
-        }}</a>
+        "Hướng dẫn" | translate
+      }}</a>
     </div>
 
     <div class="p-6">

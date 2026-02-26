@@ -1,4 +1,4 @@
-package com.dawn.booking.service;
+package com.dawn.common.infra.redis.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

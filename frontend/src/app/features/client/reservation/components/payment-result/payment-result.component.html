@@ -8,9 +8,9 @@
     "
     [nzSubTitle]="
       status() === 'success'
-        ? ('Mã đơn' | translate) +
-          vnpTxnRef() +
-          ('đã được thanh toán thành công' | translate)
+        ? ('Mã đơn ' | translate) +
+          reservationCode() +
+          (' đã được thanh toán thành công' | translate)
         : errorMessage()
     "
   >

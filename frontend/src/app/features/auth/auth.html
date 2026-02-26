@@ -17,9 +17,9 @@
           routerLink="/"
           class="flex items-center gap-2 text-decoration-none w-fit"
         >
-          <nz-icon nzType="shop" nzTheme="fill" class="text-4xl text-primary"/>
+          <nz-icon nzType="shop" nzTheme="fill" class="text-4xl text-primary" />
           <span class="text-3xl font-bold tracking-tighter"
-          >CINE<span class="text-primary">PLEX</span></span
+            >CINE<span class="text-primary">PLEX</span></span
           >
         </a>
       </div>
@@ -29,7 +29,7 @@
           class="text-5xl text-gray-300! fond-bold mb-4 leading-tight"
           translate
         >
-          {{ "Phép màu Điện ảnh" | translate }}<br/>
+          {{ "Phép màu Điện ảnh" | translate }}<br />
           {{ "ngay trong tầm tay." | translate }}
         </h1>
         <p class="text-lg text-gray-300 max-w-md">
@@ -50,9 +50,9 @@
       <!--  LOGO ON MOBILE ONLY  -->
       <div class="lg:hidden text-center mb-8">
         <a routerLink="/" class="inline-flex items-center gap-2">
-          <nz-icon nzType="shop" nzTheme="fill" class="text-3xl text-primary"/>
+          <nz-icon nzType="shop" nzTheme="fill" class="text-3xl text-primary" />
           <span class="text-2xl font-bold text-gray-900"
-          >CINE <span class="text-primary">PLEX</span></span
+            >CINE <span class="text-primary">PLEX</span></span
           >
         </a>
       </div>
@@ -85,9 +85,8 @@
           nzLayout="vertical"
         >
           <nz-form-item class="mb-5">
-            <nz-form-label nzRequired>{{
-                "Họ và tên" | translate
-              }}
+            <nz-form-label nzRequired
+              >{{ "Họ và tên" | translate }}
             </nz-form-label>
             <nz-form-control
               [nzErrorTip]="'Chúng tôi nên gọi bạn là gì?' | translate"
@@ -108,9 +107,8 @@
           </nz-form-item>
 
           <nz-form-item class="mb-5">
-            <nz-form-label nzRequired>{{
-                "Địa chỉ Email" | translate
-              }}
+            <nz-form-label nzRequired
+              >{{ "Địa chỉ Email" | translate }}
             </nz-form-label>
             <nz-form-control
               [nzErrorTip]="'Vui lòng nhập đúng định dạng email' | translate"
@@ -132,9 +130,8 @@
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <nz-form-item class="mb-5">
-              <nz-form-label nzRequired>{{
-                  "Mật khẩu" | translate
-                }}
+              <nz-form-label nzRequired
+                >{{ "Mật khẩu" | translate }}
               </nz-form-label>
               <nz-form-control [nzErrorTip]="'Yêu cầu mật khẩu!' | translate">
                 <nz-input-group
@@ -153,9 +150,8 @@
             </nz-form-item>
 
             <nz-form-item class="mb-5">
-              <nz-form-label nzRequired>{{
-                  "Xác nhận" | translate
-                }}
+              <nz-form-label nzRequired
+                >{{ "Xác nhận" | translate }}
               </nz-form-label>
               <nz-form-control [nzErrorTip]="confirmErrorTpl">
                 <nz-input-group
@@ -202,7 +198,7 @@
             tabindex="0"
             role="button"
             class="font-bold text-primary hover:underline cursor-pointer ml-1"
-          >{{ "Đăng nhập tại đây" | translate }}</a
+            >{{ "Đăng nhập tại đây" | translate }}</a
           >
         </div>
       </ng-template>
@@ -227,9 +223,8 @@
           nzLayout="vertical"
         >
           <nz-form-item class="mb-5">
-            <nz-form-label nzRequired>{{
-                "Email hoặc Tên đăng nhập" | translate
-              }}
+            <nz-form-label nzRequired
+              >{{ "Email hoặc Tên đăng nhập" | translate }}
             </nz-form-label>
             <nz-form-control
               [nzErrorTip]="'Vui lòng nhập đúng tên đăng nhập!' | translate"
@@ -250,9 +245,8 @@
           </nz-form-item>
 
           <nz-form-item class="mb-2">
-            <nz-form-label nzRequired>{{
-                "Mật khẩu" | translate
-              }}
+            <nz-form-label nzRequired
+              >{{ "Mật khẩu" | translate }}
             </nz-form-label>
             <nz-form-control
               [nzErrorTip]="'Vui lòng nhập mật khẩu!' | translate"
@@ -282,11 +276,11 @@
 
           <div class="flex items-center justify-between mb-6">
             <span nz-checkbox formControlName="remember">{{
-                "Ghi nhớ đăng nhập" | translate
-              }}</span>
+              "Ghi nhớ đăng nhập" | translate
+            }}</span>
             <a
               class="text-sm font-semibold text-primary hover:text-blue-700 hober:underline cursor-pointer"
-            >{{ "Quên mật khẩu?" | translate }}</a
+              >{{ "Quên mật khẩu?" | translate }}</a
             >
           </div>
 
@@ -310,7 +304,7 @@
             tabindex="0"
             role="button"
             class="font-bold text-primary hover:underline cursor-pointer ml-1"
-          >{{ "Tạo tài khoản mới" | translate }}</a
+            >{{ "Tạo tài khoản mới" | translate }}</a
           >
         </div>
       </ng-template>
@@ -323,8 +317,8 @@
           </div>
           <div class="relative flex justify-center text-sm">
             <span class="px-4 bg-white text-gray-500 font-medium">{{
-                "Hoặc tiếp tục với" | translate
-              }}</span>
+              "Hoặc tiếp tục với" | translate
+            }}</span>
           </div>
         </div>
 
@@ -333,7 +327,7 @@
             type="button"
             class="flex items-center justify-center w-full px-4 py-3 border border-gray-200 rounded-xl shadow-sm bg-white text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all"
           >
-            <nz-icon nzType="google" class="mr-2 text-xl text-red-500"/>
+            <nz-icon nzType="google" class="mr-2 text-xl text-red-500" />
             Google
           </button>
 

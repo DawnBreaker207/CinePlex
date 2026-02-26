@@ -33,7 +33,7 @@
             <div
               class="w-full h-full flex items-center justify-center text-gray-300 bg-gray-50"
             >
-              <nz-icon nzType="user" class="text-5xl"/>
+              <nz-icon nzType="user" class="text-5xl" />
             </div>
           }
 
@@ -41,7 +41,7 @@
           <div
             class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center"
           >
-            <nz-icon nzType="camera" class="text-white! text-2xl mb-1"/>
+            <nz-icon nzType="camera" class="text-white! text-2xl mb-1" />
             <span
               class="text-white text-[10px] font-bold uppercase tracking-wider"
             >
@@ -56,7 +56,7 @@
             [nzColor]="'geekblue'"
             class="m-0 rounded-full px-3 py-1 font-bold text-xs border-2 border-white shadow-md"
           >
-            <nz-icon nzType="star" nzTheme="fill" class="mr-1"/>
+            <nz-icon nzType="star" nzTheme="fill" class="mr-1" />
             {{ user().role }}
           </nz-tag>
         </div>
@@ -74,7 +74,7 @@
               (click)="resetAvatar(fileInput)"
               class="h-10 rounded-lg font-medium flex items-center gap-2"
             >
-              <nz-icon nzType="undo"/>
+              <nz-icon nzType="undo" />
               {{ "Hủy" | translate }}
             </button>
           }
@@ -86,7 +86,7 @@
             <p
               class="text-sm text-blue-600 font-semibold animate-pulse flex items-center justify-center sm:justify-start gap-2 bg-blue-50 py-1 px-3 rounded-lg w-fit"
             >
-              <nz-icon nzType="info-circle" nzTheme="fill"/>
+              <nz-icon nzType="info-circle" nzTheme="fill" />
               {{ 'Ảnh chưa lưu.Bấm "Lưu thay đổi" bên dưới.' | translate }}
             </p>
           } @else {
@@ -115,7 +115,7 @@
       <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
         <nz-form-item>
           <nz-form-label nzRequired class="font-semibold text-gray-700"
-          >{{ "Họ và tên" | translate }}
+            >{{ "Họ và tên" | translate }}
           </nz-form-label>
           <nz-form-control [nzErrorTip]="'Vui lòng nhập họ tên' | translate">
             <input
@@ -129,7 +129,7 @@
 
         <nz-form-item>
           <nz-form-label nzRequired class="font-semibold text-gray-700"
-          >{{ "Số điện thoại" | translate }}
+            >{{ "Số điện thoại" | translate }}
           </nz-form-label>
           <nz-form-control
             [nzErrorTip]="'Vui lòng nhập số điện thoại' | translate"
@@ -145,7 +145,7 @@
 
         <nz-form-item class="md:col-span-2">
           <nz-form-label class="font-semibold text-gray-700"
-          >{{ "Email" | translate }}
+            >{{ "Email" | translate }}
           </nz-form-label>
           <nz-form-control>
             <div class="relative group">
@@ -168,7 +168,7 @@
 
         <nz-form-item class="md:col-span-2">
           <nz-form-label class="font-semibold text-gray-700"
-          >{{ "Địa chỉ" | translate }}
+            >{{ "Địa chỉ" | translate }}
           </nz-form-label>
           <nz-form-control>
             <textarea

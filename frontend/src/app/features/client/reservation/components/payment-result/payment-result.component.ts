@@ -29,7 +29,7 @@ export class PaymentResultComponent implements OnInit, OnDestroy {
   status = signal<'success' | 'error' | 'info'>('info');
   errorMessage = signal<string>('');
   countdown = signal(10);
-  vnpTxnRef = signal<string>('');
+  reservationCode = signal<string>('');
 
   private intervalId: any;
 
@@ -46,27 +46,17 @@ export class PaymentResultComponent implements OnInit, OnDestroy {
     }
     this.store.dispatch(ShowtimeActions.loadShowtime({ id: state.showtimeId }));
 
-    const txnRef = query['vnp_TxnRef'];
-    const vnpResponseCode = query['vnp_ResponseCode'];
-    this.vnpTxnRef.set(txnRef || '');
+    const status = query['status'];
+    const reservationCode = query['reservationId'];
+    this.reservationCode.set(reservationCode || '');
 
-    if (txnRef && vnpResponseCode === '00') {
+    if (reservationCode && status === 'success') {
       this.status.set('success');
-      this.reservationStore.confirm({
-        reservation: {
-          reservationId: txnRef,
-          userId: state.userId,
-          showtimeId: state.showtimeId,
-          seatIds: state.seatIds,
-        },
-      });
+      this.reservationStore.confirm(reservationCode);
     } else {
       this.status.set('error');
-      this.errorMessage.set(`Thanh toán thất bại. Mã lỗi: ${vnpResponseCode}`);
-      this.reservationStore.cancel({
-        reservationId: state.reservationId,
-        userId: state.userId,
-      });
+      this.errorMessage.set(`Thanh toán thất bại`);
+      this.reservationStore.cancel();
     }
     this.storageService.removeItem('reservationState');
     this.startCountDown();

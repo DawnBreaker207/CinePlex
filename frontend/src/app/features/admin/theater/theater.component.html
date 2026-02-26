@@ -52,10 +52,8 @@
       >
         <thead>
           <tr>
-            @for (item of headerColumn; track item) {
-              <th>
-                {{ item | translate }}
-              </th>
+            @for (header of headerColumn; track header) {
+              <th>{{ header | translate }}</th>
             }
           </tr>
         </thead>
@@ -105,12 +103,6 @@
                         nzTwotoneColor="#e7000b"
                       />
                     </button>
-                    <!--              <button nz-button nzType="text" nzShape="circle">-->
-                    <!--                <i nz-icon nzType="redo" class="!text-orange-600" nzTheme="outline"></i>-->
-                    <!--              </button>-->
-                    <!--              <button nz-button nzType="text">-->
-                    <!--                <i nz-icon nzType="eye-invisible" nzTheme="twotone" nzTwotoneColor="#e7000b"></i>-->
-                    <!--              </button>-->
                   </nz-space>
                 </div>
               </td>

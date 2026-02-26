@@ -11,25 +11,25 @@
         tabindex="0"
         role="button"
       >
-        <nz-icon [nzType]="isCollapsed() ? 'menu-unfold' : 'menu-fold'"/>
+        <nz-icon [nzType]="isCollapsed() ? 'menu-unfold' : 'menu-fold'" />
       </div>
       <div class="hidden md:block">
         <nz-breadcrumb [nzSeparator]="iconTemplate">
           <ng-template #iconTemplate>
-            <nz-icon nzType="right" class="text-xs text-gray-400"/>
+            <nz-icon nzType="right" class="text-xs text-gray-400" />
           </ng-template>
           <nz-breadcrumb-item>Admin</nz-breadcrumb-item>
           @for (crum of breadcrumbs(); track crum.url; let last = $last) {
             <nz-breadcrumb-item>
               @if (last) {
                 <span class="font-semibold text-gray-800">{{
-                    crum.label
-                  }}</span>
+                  crum.label
+                }}</span>
               } @else {
                 <a
                   [routerLink]="crum.url"
                   class="text-gray-500 hover:text-primary transition-colors"
-                >{{ crum.label }}</a
+                  >{{ crum.label }}</a
                 >
               }
             </nz-breadcrumb-item>
@@ -69,7 +69,7 @@
           [nzStyle]="{ backgroundColor: '#3b82f6' }"
           nzSize="small"
         >
-          <nz-icon nzType="bell" class="text-xl"/>
+          <nz-icon nzType="bell" class="text-xl" />
         </nz-badge>
       </div>
 
@@ -82,8 +82,8 @@
           >
             <span>{{ "Thông báo" | translate }}</span>
             <span class="text-xs text-primary cursor-pointer">{{
-                "Đánh dấu đã đọc" | translate
-              }}</span>
+              "Đánh dấu đã đọc" | translate
+            }}</span>
           </div>
           <ul class="max-h-64 overflow-y-auto">
             <li
@@ -92,7 +92,7 @@
               <div
                 class="w-8 h-8 rounded-full bg-green-100 text-green-600 flex items-center justify-center shrink-0"
               >
-                <nz-icon nzType="pay-circle"/>
+                <nz-icon nzType="pay-circle" />
               </div>
               <div>
                 <p class="text-sm text-gray-800 font-medium">
@@ -110,7 +110,7 @@
       <!-- Divider -->
       <div class="h-8 w-px bg-gray-200 hidden sm:block"></div>
 
-      <app-profile-menu/>
+      <app-profile-menu />
     </div>
   </div>
 </nz-header>

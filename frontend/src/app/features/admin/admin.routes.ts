@@ -7,6 +7,7 @@ import { ReservationComponent } from '@features/admin/reservation/reservation.co
 import { UserComponent } from '@features/admin/user/user.component';
 import { ArticleComponent } from '@features/admin/article/article.component';
 import { AdminLayoutComponent } from '../../layout/admin-layout/admin-layout.component';
+import { VoucherComponent } from '@features/admin/voucher/voucher.component';
 
 export const ADMIN_ROUTES: Routes = [
   {
@@ -52,6 +53,11 @@ export const ADMIN_ROUTES: Routes = [
         path: 'article',
         component: ArticleComponent,
         data: { breadcrumb: 'Article Manager' },
+      },
+      {
+        path: 'voucher',
+        component: VoucherComponent,
+        data: { breadcrumb: 'Voucher Manager' },
       },
     ],
   },

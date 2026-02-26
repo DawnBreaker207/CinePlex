@@ -1,61 +1,65 @@
-import { Injectable, signal } from '@angular/core';
-import { Article } from '@domain/article/models/article.model';
+import { inject, Injectable } from '@angular/core';
+import { Article, ArticleRequest } from '@domain/article/models/article.model';
+import { environment } from '@env/environment';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { catchError, map, Observable, throwError } from 'rxjs';
+import { ApiRes, ResponsePage } from '@core/models/common.model';
 
 @Injectable({
   providedIn: 'root',
 })
 export class ArticleService {
-  //  Mock Data
-  private mockArticles: Article[] = [
-    {
-      id: '1',
-      title: 'Review: Dune 2 - Kiệt tác điện ảnh thập kỷ',
-      summary:
-        'Phần 2 của Dune không chỉ thỏa mãn thị giác mà còn mở rộng sâu sắc thế giới chính trị...',
-      thumbnail:
-        'https://image.tmdb.org/t/p/w500/1pdfLvkbY9ohJlCjQH2CZjjYVvJ.jpg',
-      content: '<p>Nội dung chi tiết bài viết ở đây...</p>',
-      author: 'Admin',
-      status: 'PUBLISHED',
-      category: 'Review Phim',
-      views: 12500,
-      createdAt: new Date().toISOString(),
-    },
-    {
-      id: '2',
-      title: 'Top 5 phim bom tấn ra mắt tháng 4',
-      summary:
-        'Điểm danh những cái tên không thể bỏ lỡ tại rạp chiếu tháng tới.',
-      thumbnail:
-        'https://image.tmdb.org/t/p/w500/xOMo8BRK7PfcJv9JCnx7s5hj0PX.jpg',
-      content: '<p>Danh sách phim...</p>',
-      author: 'Editor',
-      status: 'DRAFT',
-      category: 'Tin tức',
-      views: 0,
-      createdAt: new Date().toISOString(),
-    },
-  ];
+  URL = `${environment.apiUrl}/article`;
+  private http = inject(HttpClient);
 
-  articles = signal<Article[]>(this.mockArticles);
-
-  add(article: Omit<Article, 'id' | 'views' | 'createdAt'>) {
-    const newArticle: Article = {
-      ...article,
-      id: Math.random().toString(36).substr(2, 9),
-      views: 0,
-      createdAt: new Date().toISOString(),
-    };
-    this.articles.update((list) => [newArticle, ...list]);
+  getAll(query?: any) {
+    let params = new HttpParams();
+    if (query) {
+      Object.entries(query).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          params = params.set(key, value.toString());
+        }
+      });
+    }
+    return this.http
+      .get<ApiRes<ResponsePage<Article[]>>>(`${this.URL}`, { params })
+      .pipe(
+        map((res) => res.data),
+        catchError(this.handleError<ResponsePage<Article[]>>('article')),
+      );
   }
 
-  update(id: string, updateData: Partial<Article>) {
-    this.articles.update((list) =>
-      list.map((item) => (item.id === id ? { ...item, ...updateData } : item)),
+  getOne(id: number) {
+    return this.http.get<ApiRes<Article>>(`${this.URL}/${id}`).pipe(
+      map((res) => res.data),
+      catchError(this.handleError<Article>('article')),
     );
   }
 
-  delete(id: string) {
-    this.articles.update((list) => list.filter((item) => item.id !== id));
+  add(article: ArticleRequest) {
+    return this.http.post<ApiRes<Article>>(`${this.URL}`, article).pipe(
+      map((res) => res.data),
+      catchError(this.handleError<Article>('article')),
+    );
+  }
+
+  update(id: number, article: ArticleRequest) {
+    return this.http.put<ApiRes<Article>>(`${this.URL}/${id}`, article).pipe(
+      map((res) => res.data),
+      catchError(this.handleError<Article>('article')),
+    );
+  }
+
+  delete(id: number) {
+    return this.http.delete<void>(`${this.URL}/${id}`).pipe(
+      map((res) => console.log(res)),
+      catchError(this.handleError<void>('article')),
+    );
+  }
+  private handleError<T>(operation = 'operation') {
+    return (error: any): Observable<T> => {
+      console.log(`${operation} failed: ${error}`);
+      return throwError(() => error);
+    };
   }
 }

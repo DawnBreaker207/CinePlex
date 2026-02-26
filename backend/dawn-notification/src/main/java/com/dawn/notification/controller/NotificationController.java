@@ -2,7 +2,8 @@ package com.dawn.notification.controller;
 
 import com.dawn.common.core.dto.request.BookingNotificationEvent;
 import com.dawn.common.core.helper.RedisKeyHelper;
-import com.dawn.notification.service.NotificationService;
+import com.dawn.notification.service.EmailService;
+import com.dawn.notification.service.SseService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -15,11 +16,13 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 @RequiredArgsConstructor
 public class NotificationController {
 
-    private final NotificationService notificationService;
+    private final SseService sseService;
+
+    private final EmailService emailService;
 
     @GetMapping("/mail/test")
     public void sendEmail() {
-        notificationService.sendReservationEmail(BookingNotificationEvent
+        emailService.sendReservationEmail(BookingNotificationEvent
                 .builder()
                 .to("demo@gmail.com")
                 .name("Dawnbreaker")
@@ -39,7 +42,7 @@ public class NotificationController {
         HttpHeaders headers = new HttpHeaders();
         headers.add(HttpHeaders.CACHE_CONTROL, "no-store");
         headers.add(HttpHeaders.CONNECTION, "keep-alive");
-        SseEmitter emitter = notificationService.subscribe(RedisKeyHelper
+        SseEmitter emitter = sseService.subscribe(RedisKeyHelper
                 .showtimeChannel(showtimeId), clientId);
         return ResponseEntity
                 .ok()

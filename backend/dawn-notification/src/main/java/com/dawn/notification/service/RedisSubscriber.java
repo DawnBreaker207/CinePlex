@@ -13,7 +13,7 @@ import java.nio.charset.StandardCharsets;
 @RequiredArgsConstructor
 public class RedisSubscriber implements MessageListener {
 
-    private final NotificationService notificationService;
+    private final SseService sseService;
 
     @Override
     public void onMessage(Message message, byte[] pattern) {
@@ -21,7 +21,7 @@ public class RedisSubscriber implements MessageListener {
         String body = new String(message.getBody(), StandardCharsets.UTF_8);
         log.info("Receive message from channel:{}, body:{}", channel, body);
         try {
-            notificationService.broadcastToChannel(channel, body);
+            sseService.broadcastToChannel(channel, body);
         } catch (Exception e) {
             log.error("Failed to broadcast message to channel {}: {}", channel, e.getMessage());
         }

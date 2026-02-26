@@ -14,7 +14,7 @@ import {
 import { computed, inject } from '@angular/core';
 import { ReservationService } from '@domain/reservation/data-access/reservation.service';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { concatMap, pipe, switchMap, tap } from 'rxjs';
+import { pipe, switchMap, tap } from 'rxjs';
 import { tapResponse } from '@ngrx/operators';
 import { StorageService } from '@core/services/storage/storage.service';
 import { Router } from '@angular/router';
@@ -172,51 +172,21 @@ export const ReservationStore = signalStore(
           ),
         ),
         //
-        confirm: rxMethod<{ reservation: ReservationRequest }>(
-          pipe(
-            tap(() =>
-              patchState(store, { loading: true, saving: true, error: null }),
-            ),
-            concatMap(({ reservation }) => {
-              return reservationService.confirmReservation(reservation).pipe(
-                tapResponse({
-                  next: (reservation) => {
-                    stopCountdown();
-                    patchState(store, {
-                      reservation: reservation,
-                      loading: false,
-                      saving: false,
-                    });
-                  },
-                  error: (err: any) =>
-                    patchState(store, {
-                      error: err.message,
-                      loading: false,
-                      saving: false,
-                    }),
-                }),
-              );
-            }),
-          ),
-        ),
+        confirm: (reservationId: string) => {
+          stopCountdown();
+          patchState(store, {
+            reservationId: reservationId,
+            currentTTL: null,
+            loading: false,
+            saving: false,
+            error: null,
+          });
+        },
         //
-        cancel: rxMethod<{ reservationId: string; userId: number }>(
-          pipe(
-            tap(() => patchState(store, { loading: true, saving: true })),
-            switchMap(({ reservationId, userId }) =>
-              reservationService.cancelReservation(reservationId, userId).pipe(
-                tapResponse({
-                  next: () => {
-                    stopCountdown();
-                    patchState(store, initialState);
-                  },
-                  error: (err: any) =>
-                    patchState(store, { error: err.message, saving: false }),
-                }),
-              ),
-            ),
-          ),
-        ),
+        cancel: () => {
+          stopCountdown();
+          patchState(store, initialState);
+        },
         //
         restore: rxMethod<{ reservationId: string }>(
           pipe(

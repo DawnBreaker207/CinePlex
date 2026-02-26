@@ -121,48 +121,75 @@ export const SeatStore = signalStore(
           error: null,
         })),
       // Connected SSE
-      connectSSE: rxMethod<{
+      initSeatMap: rxMethod<{
         showtimeId: number;
         userId: number;
         reservationId: string | null;
       }>(
         pipe(
+          tap(() =>
+            patchState(store, { loading: true, error: null, seats: [] }),
+          ),
           switchMap(({ showtimeId, userId, reservationId }) =>
-            sseService.connect(showtimeId, userId).pipe(
-              tap((res: any) => {
-                if (
-                  res.event === 'SEAT_STATE_INIT' ||
-                  res.event === 'SEAT_HOLD'
-                ) {
-                  const holdData = res.data.seatIds;
-                  patchState(store, (state) => ({
-                    seats: state.seats.map((s) => {
-                      const match = holdData.find(
-                        (h: any) => Number(h.seatId) === s.id,
-                      );
-                      if (match) {
-                        return {
-                          ...s,
-                          status: (match.reservationId === reservationId
-                            ? 'SELECTED'
-                            : 'HOLD') as SeatStatus,
-                        };
+            seatService.getSeatByShowtime(showtimeId).pipe(
+              tapResponse({
+                next: (seats) => {
+                  patchState(store, { seats, loading: false });
+
+                  sseService.connect(showtimeId, userId).subscribe({
+                    next: (res: any) => {
+                      if (
+                        res.event === 'SEAT_STATE_INIT' ||
+                        res.event === 'SEAT_HOLD'
+                      ) {
+                        const holdData = res.data.seatIds || [];
+
+                        const isMyUpdate =
+                          holdData.length > 0 &&
+                          holdData[0].reservationId === reservationId;
+                        patchState(store, (state) => ({
+                          seats: state.seats.map((s) => {
+                            const match = holdData.find(
+                              (h: any) => Number(h.seatId) === s.id,
+                            );
+                            if (match) {
+                              return {
+                                ...s,
+                                status: (match.reservationId === reservationId
+                                  ? 'SELECTED'
+                                  : 'HOLD') as SeatStatus,
+                              };
+                            }
+                            if (isMyUpdate && s.status === 'SELECTED') {
+                              return {
+                                ...s,
+                                status: 'AVAILABLE' as SeatStatus,
+                              };
+                            }
+                            if (res.event === 'SEAT_STATE_INIT') {
+                              return s.status === 'BOOKED'
+                                ? s
+                                : { ...s, status: 'AVAILABLE' as SeatStatus };
+                            }
+                            return s;
+                          }),
+                        }));
+                      } else if (res.event === 'SEAT_RELEASE') {
+                        const releaseIds = res.data.seatIds;
+                        patchState(store, (state) => ({
+                          seats: state.seats.map((s) =>
+                            releaseIds.includes(s.id) && s.status !== 'BOOKED'
+                              ? { ...s, status: 'AVAILABLE' as SeatStatus }
+                              : s,
+                          ),
+                        }));
                       }
-                      return s.status === 'HOLD' || s.status === 'SELECTED'
-                        ? { ...s, status: 'AVAILABLE' as SeatStatus }
-                        : s;
-                    }),
-                  }));
-                } else if (res.event === 'SEAT_RELEASE') {
-                  const releaseIds = res.data.seatIds;
-                  patchState(store, (state) => ({
-                    seats: state.seats.map((s) =>
-                      releaseIds.includes(s.id)
-                        ? { ...s, status: 'AVAILABLE' as SeatStatus }
-                        : s,
-                    ),
-                  }));
-                }
+                    },
+                    error: (err) => console.error('SSE Error:', err),
+                  });
+                },
+                error: (error: any) =>
+                  patchState(store, { error, loading: false }),
               }),
             ),
           ),

@@ -116,15 +116,19 @@ CREATE TABLE IF NOT EXISTS showtime
 
 CREATE TABLE IF NOT EXISTS reservation
 (
-    id           VARCHAR(50)    NOT NULL PRIMARY KEY,
-    user_id      BIGINT         NOT NULL,
-    showtime_id  BIGINT         NOT NULL,
-    status       ENUM ('CONFIRMED','CANCELED'),
-    total_amount DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
-    is_paid      BOOLEAN                 DEFAULT FALSE,
-    is_deleted   BOOLEAN                 DEFAULT FALSE,
-    created_at   DATETIME       NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at   DATETIME       NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    id              VARCHAR(50)    NOT NULL PRIMARY KEY,
+    user_id         BIGINT         NOT NULL,
+    showtime_id     BIGINT         NOT NULL,
+    status          ENUM ('CONFIRMED','CANCELED'),
+    total_amount    DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+    # Voucher
+    voucher_code    VARCHAR(50)    NULL COMMENT 'Voucher Used',
+    original_amount DECIMAL(10, 2)          DEFAULT 0 COMMENT 'Total Original',
+    discount_amount DECIMAL(10, 2)          DEFAULT 0 COMMENT 'Total Discount',
+    is_paid         BOOLEAN                 DEFAULT FALSE,
+    is_deleted      BOOLEAN                 DEFAULT FALSE,
+    created_at      DATETIME       NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at      DATETIME       NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_reservation_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
     CONSTRAINT fk_reservation_showtime FOREIGN KEY (showtime_id) REFERENCES showtime (id) ON DELETE CASCADE,
     INDEX idx_user_id (user_id),
@@ -196,6 +200,7 @@ CREATE TABLE IF NOT EXISTS article
     content    LONGTEXT,
     author_id  BIGINT,
     status     ENUM ('DRAFT', 'PUBLISHED','ARCHIVED') DEFAULT 'DRAFT',
+    type       ENUM ('NEWS', 'PROMOTION','UNKNOWN')   DEFAULT 'UNKNOWN',
     views      BIGINT                                 DEFAULT 0,
     is_deleted BOOLEAN                                DEFAULT FALSE,
     created_at DATETIME     NOT NULL                  DEFAULT CURRENT_TIMESTAMP,
@@ -208,30 +213,24 @@ CREATE TABLE IF NOT EXISTS article
 CREATE TABLE IF NOT EXISTS vouchers
 (
     id                  BIGINT PRIMARY KEY AUTO_INCREMENT,
-
-    code                VARCHAR(50)              NOT NULL UNIQUE COMMENT 'Code voucher: MAGIAMGIA',
     name                VARCHAR(255)             NOT NULL COMMENT 'Name voucher: MA GIAM GIA',
-
-    category            ENUM ('CAMPAIGN','SYSTEM') DEFAULT 'CAMPAIGN' COMMENT 'voucher type',
-    group_ref           VARCHAR(50)              NULL COMMENT 'Voucher group',
-
-    discount_type       ENUM ('FIXED','PERCENT') NOT NULL COMMENT 'Discount type',
-
-    discount_value      BIGINT                   NOT NULL COMMENT 'Discount value',
-    max_discount_amount BIGINT                     DEFAULT NULL COMMENT 'Max discount',
-    min_order_value     BIGINT                     DEFAULT 0 COMMENT 'Minimum booking can be used',
-
-    quantity_total      INT                        DEFAULT 0 COMMENT 'Total discount can be use',
-    quantity_used       INT                        DEFAULT 0 COMMENT 'Total discount was used',
-
+    code                VARCHAR(50)              NOT NULL UNIQUE COMMENT 'Code voucher: MAGIAMGIA',
     start_at            DATETIME                 NOT NULL COMMENT 'Campaign start',
     end_at              DATETIME                 NOT NULL COMMENT 'Campaign end',
-    is_active           BOOLEAN                    DEFAULT TRUE COMMENT 'Active voucher',
-
-    created_at          TIMESTAMP                  DEFAULT CURRENT_TIMESTAMP,
-
-    INDEX idx_code (code),
-    INDEX idx_category_time (category, start_at, end_at)
+    quantity_total      BIGINT                   NOT NULL DEFAULT 0 COMMENT 'Total discount can be use',
+    quantity_used       BIGINT                   NOT NULL DEFAULT 0 COMMENT 'Total discount was used',
+    min_order_value     BIGINT                   NOT NULL DEFAULT 0 COMMENT 'Minimum booking can be used',
+    discount_type       ENUM ('FIXED','PERCENT') NOT NULL COMMENT 'Discount type',
+    discount_value      BIGINT                   NOT NULL COMMENT 'Discount value',
+    max_discount_amount BIGINT                            DEFAULT NULL COMMENT 'Max discount',
+    conditions          JSON                     NULL,
+    category            ENUM ('CAMPAIGN','SYSTEM')        DEFAULT 'CAMPAIGN' COMMENT 'voucher type',
+    group_ref           VARCHAR(50)              NULL COMMENT 'Voucher group',
+    is_active           BOOLEAN                           DEFAULT TRUE COMMENT 'Active voucher',
+    version             BIGINT                   NOT NULL DEFAULT 0,
+    created_at          DATETIME                 NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at          DATETIME                 NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_voucher_validity (code, is_active, start_at, end_at)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci;

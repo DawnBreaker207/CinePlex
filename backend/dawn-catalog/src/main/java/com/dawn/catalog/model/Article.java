@@ -1,6 +1,7 @@
 package com.dawn.catalog.model;
 
-import com.dawn.common.core.constant.ArticleStatus;
+import com.dawn.catalog.config.ArticleStatus;
+import com.dawn.catalog.config.ArticleType;
 import com.dawn.common.core.model.AbstractMappedEntity;
 import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.persistence.*;
@@ -30,6 +31,9 @@ public class Article extends AbstractMappedEntity {
     @Column(name = "summary")
     private String summary;
 
+    @Column(name = "thumbnail")
+    private String thumbnail;
+
     @Column(name = "content")
     private String content;
 
@@ -37,7 +41,12 @@ public class Article extends AbstractMappedEntity {
     private Long authorId;
 
     @Column(name = "status")
+    @Enumerated(EnumType.STRING)
     private ArticleStatus status;
+
+    @Column(name = "type")
+    @Enumerated(EnumType.STRING)
+    private ArticleType type;
 
     @Column(name = "is_deleted", nullable = false)
     @Builder.Default

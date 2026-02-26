@@ -126,7 +126,9 @@ resilience4j:
         limit-refresh-period: 1m
         timeout-duration: 0s
 service:
-  url: http://localhost:8888/api/v1
+  url:
+    base: http://localhost:8888/api/v1
+    frontend: http://localhost:4200
 management:
   endpoints:
     web:
@@ -146,3 +148,14 @@ management:
       endpoint: http://tempo:9411/api/v2/spans
 loki:
   url: http://loki:3100/loki/api/v1/push
+langchain4j:
+  open-ai:
+    chat-model:
+      base-url: ${OPEN_ROUTER_URL}
+      api-key: ${OPEN_ROUTER_API_KEY}
+      model-name: ${OPEN_ROUTER_API_MODEL}
+      log-requests: true
+      log-responses: true
+      timeout: 60s
+      max-retries: 0
+      temperature: 0.0

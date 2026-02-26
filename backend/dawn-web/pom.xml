@@ -51,6 +51,10 @@
             <groupId>com.dawn.backend</groupId>
             <artifactId>dawn-payment</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.dawn.backend</groupId>
+            <artifactId>dawn-ai</artifactId>
+        </dependency>
     </dependencies>
 
     <build>

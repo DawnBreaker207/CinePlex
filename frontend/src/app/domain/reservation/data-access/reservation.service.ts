@@ -98,24 +98,6 @@ export class ReservationService {
       );
   }
 
-  confirmReservation(reservation: ReservationRequest) {
-    return this.http
-      .post<ApiRes<Reservation>>(`${this.URL}/confirm`, reservation)
-      .pipe(
-        map((res) => res.data),
-        catchError(this.handleError<Reservation>('Confirm reservation')),
-      );
-  }
-
-  cancelReservation(reservationId: string, userId: number) {
-    return this.http
-      .post<ApiRes<void>>(`${this.URL}/${reservationId}/cancel`, userId)
-      .pipe(
-        map((res) => res.data),
-        catchError(this.handleError<void>('Cancel reservation')),
-      );
-  }
-
   restoreReservation(reservationId: string) {
     return this.http
       .get<

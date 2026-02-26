@@ -1,20 +1,20 @@
 import { Component, inject } from '@angular/core';
-import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzIconModule } from 'ng-zorro-antd/icon';
-import { NzTableModule } from 'ng-zorro-antd/table';
+import { NzTableModule, NzTableQueryParams } from 'ng-zorro-antd/table';
 
 import { NzTooltipModule } from 'ng-zorro-antd/tooltip';
 import { NzTagModule } from 'ng-zorro-antd/tag';
 import { DatePipe } from '@angular/common';
-import { NzDrawerModule } from 'ng-zorro-antd/drawer';
+import { NzDrawerModule, NzDrawerService } from 'ng-zorro-antd/drawer';
 import { NzPopconfirmModule } from 'ng-zorro-antd/popconfirm';
 import { FormsModule } from '@angular/forms';
-import { ArticleService } from '@domain/article/data-access/article.service';
 import { Article } from '@domain/article/models/article.model';
 import { ArticleFormComponent } from '@features/admin/article/form/article-form.component';
 import { TranslateModule } from '@ngx-translate/core';
 import { HEADER_COLUMNS } from '@core/constants/column';
+import { ArticleStore } from '@domain/article/data-access/article.store';
+import { LoadingComponent } from '@shared/components/loading/loading.component';
 
 @Component({
   selector: 'app-article',
@@ -28,44 +28,49 @@ import { HEADER_COLUMNS } from '@core/constants/column';
     NzDrawerModule,
     FormsModule,
     NzPopconfirmModule,
-    ArticleFormComponent,
     TranslateModule,
+    LoadingComponent,
   ],
   templateUrl: './article.component.html',
   styleUrl: './article.component.css',
 })
 export class ArticleComponent {
-  private articleService = inject(ArticleService);
-  private msg = inject(NzMessageService);
+  readonly articleStore = inject(ArticleStore);
+  private drawerService = inject(NzDrawerService);
 
-  articles = this.articleService.articles;
   headerColumn = HEADER_COLUMNS.ARTICLE;
-  drawerVisible = false;
-  editingArticle: Article | null = null;
+  pageIndex = 1;
+  pageSize = 10;
 
   openDrawer(article?: Article) {
-    this.drawerVisible = true;
-    this.editingArticle = article || null;
+    const isEditMode = !!article;
+    this.drawerService.create<
+      ArticleFormComponent,
+      { article: Article | null; isEditMode: boolean }
+    >({
+      nzTitle: isEditMode ? 'Chỉnh sửa bài viét' : 'Viết bài mới',
+      nzContent: ArticleFormComponent,
+      nzWidth: 800,
+      nzData: {
+        article: article || null,
+        isEditMode: isEditMode,
+      },
+    });
   }
 
-  closeDrawer() {
-    this.drawerVisible = false;
-    this.editingArticle = null;
+  deleteArticle(id: number) {
+    this.articleStore.deleteArticle(id);
   }
-
-  handleSave(formData: any) {
-    if (this.editingArticle) {
-      this.articleService.update(this.editingArticle.id, formData);
-      this.msg.success('Cập nhật bài viết thành công ');
-    } else {
-      this.articleService.add({ ...formData, author: 'Admin' });
-      this.msg.success('Đăng bài viết mới thành công');
-    }
-    this.closeDrawer();
+  loadArticles() {
+    this.articleStore.loadArticles({
+      page: this.pageIndex - 1,
+      size: this.pageSize,
+    });
   }
-
-  deleteArticle(id: string) {
-    this.articleService.delete(id);
-    this.msg.info('Đã xóa bài viết');
+  onQueryParamsChange(params: NzTableQueryParams) {
+    const { pageIndex, pageSize } = params;
+    this.pageIndex = pageIndex;
+    this.pageSize = pageSize;
+    this.loadArticles();
   }
 }

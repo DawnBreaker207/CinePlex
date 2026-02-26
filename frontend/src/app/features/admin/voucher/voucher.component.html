@@ -1,0 +1,224 @@
+<div class="min-h-screen bg-slate-50 py-10 px-4 sm:px-6 lg:px-8">
+  <div
+    class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8"
+  >
+    <div>
+      <h1 class="text-3xl font-bold text-gray-900">
+        {{ "Quản Lý Voucher" | translate }}
+      </h1>
+    </div>
+    <button
+      nz-button
+      nzType="primary"
+      nzShape="circle"
+      (click)="openModal('add')"
+    >
+      <nz-icon nzType="plus" nzTheme="outline" />
+    </button>
+  </div>
+  <div
+    class="mb-5 flex flex-col md:flex-row items-center justify-between gap-4"
+  >
+    <!--   Search result list-->
+    <div class="w-full md:w-auto flex-1 max-w-lg">
+      <nz-input-group nzPrefixIcon="search" class="w-full">
+        <input
+          nz-input
+          [placeholder]="'Tìm kiếm' | translate"
+          class="w-full"
+          type="text"
+        />
+      </nz-input-group>
+    </div>
+
+    <div class="flex gap-2 w-full md:w-auto">
+      <!---->
+      <nz-select
+        class="w-full md:w-[180px]"
+        [nzPlaceHolder]="'Trạng thái' | translate"
+      >
+        <nz-option
+          [nzLabel]="'Tất cả' | translate"
+          [nzValue]="null"
+        ></nz-option>
+        <nz-option
+          [nzLabel]="'Đang hoạt động' | translate"
+          [nzValue]="true"
+        ></nz-option>
+        <nz-option
+          [nzLabel]="'Tạm ngưng' | translate"
+          [nzValue]="false"
+        ></nz-option>
+      </nz-select>
+      <!-- -->
+      <nz-select class="w-[150px]" [nzPlaceHolder]="'Sắp xếp' | translate">
+        <nz-option
+          [nzLabel]="'Mới nhất' | translate"
+          nzValue="newest"
+        ></nz-option>
+        <nz-option
+          [nzLabel]="'Cũ nhất' | translate"
+          nzValue="oldest"
+        ></nz-option>
+      </nz-select>
+    </div>
+  </div>
+  <app-loading [isLoading]="voucherStore.loading()">
+    <div
+      class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 overflow-hidden"
+    >
+      <nz-table
+        [nzData]="voucherStore.vouchers()"
+        [nzFrontPagination]="false"
+        [nzTotal]="voucherStore.pagination()?.totalElements || 0"
+        [nzPageIndex]="(voucherStore.pagination()?.pageNumber ?? 0) + 1"
+        [nzPageSize]="voucherStore.pagination()?.pageSize ?? 10"
+        nzShowPagination
+        [nzShowSizeChanger]="true"
+        (nzQueryParams)="onQueryParamsChange($event)"
+      >
+        <thead>
+          <tr>
+            @for (header of headerColumn; track header) {
+              <th [nzAlign]="'center'">{{ header | translate }}</th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of voucherStore.vouchers(); track item.id) {
+            <tr
+              class="group hover:bg-gray-50 transition-colors border-b border-gray-100"
+            >
+              <!--  Information  -->
+              <td class="text-center">
+                <div class="flex flex-col">
+                  <span class="font-medium text-gray-900">{{ item.name }}</span>
+                  <div class="flex justify-center items-center gap-1 mt-1">
+                    <span
+                      class="bg-blue-50 text-blue-700 text-xs px-2 py-0.5 rounded border border-blue-200 font-mono"
+                    >
+                      {{ item.code }}
+                    </span>
+                  </div>
+                </div>
+              </td>
+              <!--   Times  -->
+              <td class="text-center">
+                <div class="flex flex-col text-xs text-gray-600">
+                  <span>
+                    {{ item.startAt | date: "dd/MM/yyyy" }}
+                  </span>
+                  <span class="text-gray-400 mx-1">↓</span>
+                  <span>
+                    {{ item.endAt | date: "dd/MM/yyyy" }}
+                  </span>
+                </div>
+              </td>
+              <!--   Discount -->
+              <td class="text-center">
+                <div class="font-semibold text-orange-600">
+                  @if (item.discountType === "PERCENT") {
+                    {{ item.discountValue }}%
+                    <div class="text-[10px] text-gray-400 font-normal">
+                      ( Tối đa :{{ item.maxDiscountAmount | currencyFormat }})
+                    </div>
+                  } @else {
+                    {{ item.discountValue | currencyFormat }}
+                  }
+                </div>
+              </td>
+              <!--   Usage   -->
+              <td class="text-center">
+                <div class="w-full px-2">
+                  <div class="flex justify-between text-xs mb-1">
+                    <span class="text-gray-500">Đã dùng</span>
+                    <span class="font-medium text-gray-700"
+                      >{{ item.quantityUsed }}/{{ item.quantityTotal }}</span
+                    >
+                  </div>
+                  <nz-progress
+                    [nzPercent]="(item.quantityUsed / item.quantityTotal) * 100"
+                    [nzShowInfo]="false"
+                    nzSize="small"
+                    [nzStrokeColor]="
+                      item.quantityUsed / item.quantityTotal >= 1
+                        ? '#ff4d4f'
+                        : '#1890ff'
+                    "
+                  >
+                  </nz-progress>
+                </div>
+              </td>
+              <!--     Scope  -->
+              <td class="text-center">
+                <nz-tag
+                  [nzColor]="item.category === 'SYSTEM' ? 'purple' : 'cyan'"
+                >
+                  {{ item.category === "SYSTEM" ? "Hệ thống" : "Chiến dịch" }}
+                </nz-tag>
+              </td>
+              <!--     Status  -->
+              <td class="text-center">
+                @if (!item.isActive) {
+                  <nz-tag nzColor="default">Tạm khóa</nz-tag>
+                } @else if (isExpired(item.endAt)) {
+                  <nz-tag nzColor="error">Hết hạn</nz-tag>
+                } @else {
+                  <nz-tag nzColor="success">Hoạt động</nz-tag>
+                }
+              </td>
+              <!--     Action  -->
+              <td class="text-center">
+                <div>
+                  <nz-space>
+                    <button
+                      nz-button
+                      nzType="text"
+                      nzShape="circle"
+                      (click)="openModal('view', item.id)"
+                    >
+                      <nz-icon nzType="eye" nzTheme="twotone" />
+                    </button>
+                    <button
+                      nz-button
+                      nzType="text"
+                      nzShape="circle"
+                      (click)="openModal('edit', item.id)"
+                    >
+                      <nz-icon
+                        nzType="edit"
+                        nzTheme="twotone"
+                        nzTwotoneColor="#52c41a"
+                      />
+                    </button>
+                    <button
+                      nz-button
+                      nzType="text"
+                      nzShape="circle"
+                      (click)="onDelete(item.id)"
+                    >
+                      <nz-icon
+                        nzType="delete"
+                        nzTheme="twotone"
+                        nzTwotoneColor="#e7000b"
+                      />
+                    </button>
+                  </nz-space>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </nz-table>
+    </div>
+  </app-loading>
+  @if (voucherStore.error()) {
+    <nz-alert
+      nzType="error"
+      [nzMessage]="voucherStore.error()"
+      nzShowIcon
+      nzCloseable
+    >
+    </nz-alert>
+  }
+</div>
