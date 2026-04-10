@@ -84,6 +84,26 @@ public class SeatClientServiceImpl implements SeatClientService {
         return Collections.emptyList();
     }
 
+
+    @Override
+    public List<SeatDTO> findAllByShowtimeId(Long showtimeId) {
+        ResponseObject<List<SeatDTO>> response = restClient
+                .get()
+                .uri(url + "/seats/reservation/showtime/{showtimeId}", showtimeId)
+                .retrieve()
+                .onStatus(HttpStatusCode::is4xxClientError, (req, res) -> {
+                    throw new ResourceNotFoundException(Message.Exception.SEAT_NOT_FOUND);
+                })
+                .body(new ParameterizedTypeReference<>() {
+                });
+
+        if (response != null && response.getData() != null) {
+            return response.getData();
+        }
+        return Collections.emptyList();
+    }
+
+
     @Override
     public void saveAllSeat(List<SeatDTO> seats) {
         restClient

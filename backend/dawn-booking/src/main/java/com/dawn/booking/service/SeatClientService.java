@@ -12,5 +12,7 @@ public interface SeatClientService {
 
     List<SeatDTO> findAllByReservationId(String reservationId);
 
+    List<SeatDTO> findAllByShowtimeId(Long showtimeId);
+
     void saveAllSeat(List<SeatDTO> seats);
 }

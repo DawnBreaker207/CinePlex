@@ -109,6 +109,15 @@ public class SeatServiceImpl implements SeatService {
     }
 
     @Override
+    public List<SeatResponse> findAllByShowtimeId(Long showtimeId) {
+        return seatRepository
+                .findAllByShowtimeId(showtimeId)
+                .stream()
+                .map(SeatMappingHelper::map)
+                .toList();
+    }
+
+    @Override
     public List<SeatResponse> findAllByReservationId(String reservationId) {
         return seatRepository
                 .findAllByReservationId(reservationId)

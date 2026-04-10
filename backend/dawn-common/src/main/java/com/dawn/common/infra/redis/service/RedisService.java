@@ -1,19 +1,42 @@
 package com.dawn.common.infra.redis.service;
 
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
+import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class RedisService {
 
     private final RedisTemplate<String, Object> redisTemplate;
+    private final StringRedisTemplate stringRedisTemplate;
+    private DefaultRedisScript<List> scriptLockMulti;
+
+    private DefaultRedisScript<Long> scriptDeleteIfEquals;
+
+    @PostConstruct
+    public void initScript() {
+        this.scriptLockMulti = new DefaultRedisScript<>();
+        this.scriptLockMulti.setLocation(new ClassPathResource("script/lock_seat.lua"));
+        this.scriptLockMulti.setResultType(List.class);
+
+        this.scriptDeleteIfEquals = new DefaultRedisScript<>();
+        this.scriptDeleteIfEquals.setLocation(new ClassPathResource("script/unlock_seat.lua"));
+        this.scriptDeleteIfEquals.setResultType(Long.class);
+    }
+
 
     public Map<Object, Object> getHash(String key) {
         return redisTemplate.opsForHash().entries(key);
@@ -62,5 +85,50 @@ public class RedisService {
 
     public <T> T execute(RedisCallback<T> action) {
         return redisTemplate.execute(action);
+    }
+
+    public <T> T executeScript(RedisScript<T> script, List<String> keys, Object... args) {
+        return redisTemplate.execute(script, keys, args);
+    }
+
+    public List lockMulti(List<String> keys, String owner, Duration ttl) {
+        if (keys == null || keys.isEmpty()) return Collections.singletonList(1L);
+        try {
+            return stringRedisTemplate.execute(
+                    scriptLockMulti,
+                    keys,
+                    owner,
+                    String.valueOf(ttl.getSeconds()));
+
+        } catch (Exception e) {
+            log.error("Redis error: {}", e.getMessage());
+            return Arrays.asList(0L, keys.get(0), "System_error");
+        }
+    }
+
+    public boolean releaseLock(String key, String expectedOwner) {
+        if (key == null || expectedOwner == null) return false;
+
+        try {
+            Long result = stringRedisTemplate.execute(
+                    scriptDeleteIfEquals,
+                    Collections.singletonList(key),
+                    expectedOwner);
+            return result == 1L;
+
+        } catch (Exception e) {
+            log.error("Redis error: {}", e.getMessage());
+            return false;
+        }
+    }
+
+    public List<Object> multiGet(List<String> keys) {
+        if (keys == null || keys.isEmpty()) return Collections.emptyList();
+        try {
+            return Collections.singletonList(stringRedisTemplate.opsForValue().multiGet(keys));
+        } catch (Exception e) {
+            log.error("Redis multiGet error for key {}: {}", keys, e.getMessage());
+            return Collections.nCopies(keys.size(), null);
+        }
     }
 }

@@ -1,5 +1,6 @@
 package com.dawn.cinema.repository;
 
+import com.dawn.cinema.dto.response.SeatResponse;
 import com.dawn.cinema.model.Seat;
 import com.dawn.cinema.model.Showtime;
 import com.dawn.common.core.constant.SeatStatus;
@@ -18,6 +19,9 @@ public interface SeatRepository extends JpaRepository<Seat, Long> {
     List<Seat> findByIdWithLock(List<Long> seatIds);
 
     List<Seat> findByShowtime(Showtime showtime);
+
+
+    List<Seat> findAllByShowtimeId(Long showtimeId);
 
     List<Seat> findByShowtimeAndStatus(Showtime showtime, SeatStatus seatStatus);
 

@@ -7,6 +7,7 @@ import com.dawn.booking.dto.request.ReservationUserRequest;
 import com.dawn.booking.dto.response.*;
 import com.dawn.booking.service.ReservationRedisService;
 import com.dawn.booking.service.ReservationService;
+import com.dawn.booking.service.SeatClientService;
 import com.dawn.common.core.dto.response.ResponseObject;
 import com.dawn.common.core.dto.response.ResponsePage;
 import io.swagger.v3.oas.annotations.Operation;
@@ -30,6 +31,8 @@ public class ReservationController {
 
     ReservationRedisService redisService;
 
+
+    SeatClientService seatClientService;
     @GetMapping("")
 //    @PreAuthorize("hasRole('ADMIN') or hasRole('MODERATOR')")
     @Operation(summary = "Get all reservation with conditions", description = "Returns reservation with condition filters (Admin Only)")
@@ -95,6 +98,12 @@ public class ReservationController {
 
     @GetMapping("/showtimes/{showtimeId}/locked-seats")
     public List<SseDTO> getLockedSeats(@PathVariable Long showtimeId) {
-        return redisService.getLockedSeatsByShowtime(showtimeId);
+
+        List<Long> allShowtimeSeatIds =  seatClientService
+                .findAllByShowtimeId(showtimeId)
+                .stream()
+                .map(SeatDTO::getId)
+                .toList();
+        return redisService.getLockedSeatsByShowtime(showtimeId, allShowtimeSeatIds);
     }
 }

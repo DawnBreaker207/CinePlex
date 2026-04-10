@@ -82,8 +82,8 @@ public class ReservationNotificationHelper {
         }
     }
 
-    public void sendSeatHold(Long showtimeId, Long userId) {
-        List<SseDTO> seatInfo = reservationRedisService.getLockedSeatsByShowtime(showtimeId);
+    public void sendSeatHold(Long showtimeId, Long userId, List<Long> allShowtimeSeatIds) {
+        List<SseDTO> seatInfo = reservationRedisService.getLockedSeatsByShowtime(showtimeId, allShowtimeSeatIds);
         Map<String, Object> event = Map.of(
                 "event", "SEAT_HOLD",
                 "showtimeId", showtimeId,
@@ -94,8 +94,8 @@ public class ReservationNotificationHelper {
         reservationRedisService.publishSeatEvent(showtimeId, event);
     }
 
-    public void getSeatRelease(Long showtimeId, Long userId) {
-        List<SseDTO> seatInfo = reservationRedisService.getLockedSeatsByShowtime(showtimeId);
+    public void getSeatRelease(Long showtimeId, Long userId, List<Long> allShowtimeSeatIds) {
+        List<SseDTO> seatInfo = reservationRedisService.getLockedSeatsByShowtime(showtimeId, allShowtimeSeatIds);
         Map<String, Object> event = Map.of(
                 "event", "SEAT_RELEASE",
                 "showtimeId", showtimeId,
@@ -106,11 +106,12 @@ public class ReservationNotificationHelper {
         reservationRedisService.publishSeatEvent(showtimeId, event);
     }
 
-    public void sendSeatRelease(Long showtimeId, List<Long> seatIds) {
+    public void sendSeatRelease(Long showtimeId, List<Long> seatIds, List<Long> allShowtimeSeatIds) {
+        List<SseDTO> seatInfo = reservationRedisService.getLockedSeatsByShowtime(showtimeId, allShowtimeSeatIds);
         Map<String, Object> event = Map.of(
                 "event", "SEAT_RELEASE",
                 "showtimeId", showtimeId,
-                "seatIds", seatIds
+                "seatIds", seatInfo
         );
         log.info("Publishing SEAT_RELEASE event: {}", event);
         reservationRedisService.publishSeatEvent(showtimeId, event);

@@ -26,7 +26,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -174,53 +173,57 @@ public class ReservationServiceImpl implements ReservationService {
         String reservationId = reservation.getReservationId();
         Long showtimeId = reservation.getShowtimeId();
         List<Long> seatIds = reservation.getSeatIds();
-        boolean success = false;
         log.info("Holding {} seats for reservation {} (user:{}, showtime: {})", seatIds.size(), reservationId, userId, showtimeId);
 
         //        Take reservationId and userId on redis
         String redisKey = RedisKeyHelper.reservationHoldKey(reservationId);
-        //        Define locks to update seat
-        List<Long> successfulLockedSeatIds = new ArrayList<>();
+
+        Map<Object, Object> reservationData = reservationRedisService.getReservationData(reservationId);
+        log.info("Get reservation redis from hold seat {}", reservationData);
+        validateReservationOwnership(reservationData, reservationId, userId);
+        validateShowtimeAndAvailability(showtimeId, seatIds.size());
+
+
+        List<Long> allShowtimeSeatIds = seatService.findAllByShowtimeId(showtimeId)
+                .stream()
+                .map(SeatDTO::getId)
+                .toList();
+        // Delete old seats in Redis
+        List<Long> oldSeatIds = reservationRedisService.parseSeatIdsFromReservationData(reservationData);
+        List<Long> seatRelease = oldSeatIds
+                .stream()
+                .filter(id -> !seatIds.contains(id))
+                .toList();
+        if (!seatRelease.isEmpty()) {
+            reservationRedisService.deleteSeatLocks(seatRelease, reservationId);
+            reservationNotificationHelper.sendSeatRelease(showtimeId, seatRelease, allShowtimeSeatIds);
+            log.info("Released seats {} for reservation {}", seatRelease, reservationId);
+        }
+
+        //        Load seats from DB and validate
+        List<SeatDTO> seats = seatService.findAllById(seatIds);
+        log.info("Get seat from DB: {}", seats.size());
+        validateSeatsForReservation(seats, showtimeId, seatIds);
+
+        //        Lock seats from Redis
+        reservationRedisService.acquireSeatLock(seatIds, seats, redisKey);
+
         try {
-            Map<Object, Object> reservationData = reservationRedisService.getReservationData(reservationId);
-            log.info("Get reservation redis from hold seat {}", reservationData);
-            validateReservationOwnership(reservationData, reservationId, userId);
-            validateShowtimeAndAvailability(showtimeId, seatIds.size());
-
-            // Delete old seats in Redis
-            List<Long> oldSeatIds = reservationRedisService.parseSeatIdsFromReservationData(reservationData);
-            List<Long> seatRelease = oldSeatIds
-                    .stream()
-                    .filter(id -> !seatIds.contains(id))
-                    .toList();
-            if (!seatRelease.isEmpty()) {
-                reservationRedisService.deleteSeatLocks(seatRelease, reservationId);
-                reservationNotificationHelper.sendSeatRelease(showtimeId, seatRelease);
-                log.info("Released seats {} for reservation {}", seatRelease, reservationId);
-            }
-
-            //        Load seats from DB and validate
-            List<SeatDTO> seats = seatService.findAllById(seatIds);
-            log.info("Get seat from DB: {}", seats.size());
-            validateSeatsForReservation(seats, showtimeId, seatIds);
-
-            successfulLockedSeatIds = reservationRedisService.acquireSeatLock(seatIds, seats, redisKey);
             //        Update seat in redis
             reservationRedisService.updateReservationSeats(reservationId, seatIds);
 
-            reservationNotificationHelper.sendSeatHold(showtimeId, userId);
-            success = true;
+            reservationNotificationHelper.sendSeatHold(showtimeId, userId,allShowtimeSeatIds);
             log.info("Successfully hold {} seats with user id {} for reservation {}: {} ", seatIds.size(), userId, reservationId, seatIds);
-        } finally {
-            if (!success && !successfulLockedSeatIds.isEmpty()) {
-                log.warn("Rolling back locks for reservation {}", reservationId);
-                reservationRedisService.rollbackLocks(successfulLockedSeatIds, redisKey);
-            }
+
+        } catch (Exception e) {
+            log.error("Error after locking seats, processing unlocking for reservation: {}", reservationId);
+            reservationRedisService.deleteSeatLocks(seatIds,reservationId);
+            throw e;
         }
     }
 
     @Override
-    @Transactional(propagation = Propagation.NOT_SUPPORTED, rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
     public ReservationResponse confirmReservation(String reservationId) {
         log.info("Confirming reservation: {}", reservationId);
         //        Get reservation from redis
@@ -343,12 +346,16 @@ public class ReservationServiceImpl implements ReservationService {
 
         reservationRepository.save(reservation);
         log.info("Saved PAYMENT_FAILED log to DB for tracking: {}", reservationId);
-
+        List<Long> allShowtimeSeatIds = seatService
+                .findAllByShowtimeId(showtime.getId())
+                .stream()
+                .map(SeatDTO::getId)
+                .toList();
 
         reservationRedisService.deleteReservation(reservationId);
         log.info("Cancelled reservation hold {} successfully", reservationId);
 
-        reservationNotificationHelper.getSeatRelease(showtime.getId(), cachedData.getUserId());
+        reservationNotificationHelper.getSeatRelease(showtime.getId(), cachedData.getUserId(), allShowtimeSeatIds);
         log.info("Published seat release event for showtime {}: {}", showtime.getId(), seatIds);
     }
 

@@ -57,6 +57,12 @@ public class SeatController {
         return ResponseObject.success(seatService.findAllByReservationId(reservationId));
     }
 
+    @GetMapping("/reservation/showtime/{showtimeId}")
+    public ResponseObject<List<SeatResponse>> findAllSeatByShowtimeId(@PathVariable Long showtimeId) {
+        return ResponseObject.success(seatService.findAllByShowtimeId(showtimeId));
+    }
+
+
     @PostMapping("/saveAll")
     public ResponseObject<Void> saveAllSeat(@RequestBody List<SeatRequest> seats) {
         seatService.saveAllSeat(seats);
