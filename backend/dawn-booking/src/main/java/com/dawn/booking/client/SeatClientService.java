@@ -1,4 +1,4 @@
-package com.dawn.booking.service;
+package com.dawn.booking.client;
 
 import com.dawn.booking.dto.response.SeatDTO;
 

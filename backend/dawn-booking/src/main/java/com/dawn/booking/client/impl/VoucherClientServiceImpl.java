@@ -1,6 +1,6 @@
-package com.dawn.booking.service;
+package com.dawn.booking.client.impl;
 
-import com.dawn.booking.dto.response.MovieDTO;
+import com.dawn.booking.client.VoucherClientService;
 import com.dawn.booking.dto.response.VoucherDiscountDTO;
 import com.dawn.common.core.constant.Message;
 import com.dawn.common.core.dto.response.ResponseObject;
@@ -22,7 +22,7 @@ import java.math.BigDecimal;
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
-public class VoucherClientService {
+public class VoucherClientServiceImpl implements VoucherClientService {
 
     RestClient restClient;
 

@@ -5,7 +5,7 @@ import com.dawn.identity.dto.request.UserRequest;
 import com.dawn.identity.dto.response.UserResponse;
 import com.dawn.identity.model.User;
 import com.dawn.identity.repository.UserRepository;
-import com.dawn.identity.service.Impl.UserServiceImpl;
+import com.dawn.identity.service.impl.UserServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

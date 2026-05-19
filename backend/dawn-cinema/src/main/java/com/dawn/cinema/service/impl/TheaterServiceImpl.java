@@ -1,4 +1,4 @@
-package com.dawn.cinema.service.Impl;
+package com.dawn.cinema.service.impl;
 
 import com.dawn.cinema.dto.request.TheaterRequest;
 import com.dawn.cinema.dto.response.TheaterResponse;

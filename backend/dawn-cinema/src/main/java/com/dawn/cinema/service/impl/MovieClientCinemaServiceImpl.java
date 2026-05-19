@@ -1,14 +1,11 @@
-package com.dawn.booking.service.Impl;
+package com.dawn.cinema.service.impl;
 
-import com.dawn.booking.dto.response.MovieDTO;
-import com.dawn.booking.service.MovieClientBookingService;
+import com.dawn.cinema.dto.response.MovieDTO;
+import com.dawn.cinema.service.MovieClientCinemaService;
 import com.dawn.common.core.constant.Message;
 import com.dawn.common.core.dto.response.ResponseObject;
 import com.dawn.common.core.exception.wrapper.ResourceNotFoundException;
-import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
-import lombok.experimental.FieldDefaults;
-import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
@@ -19,14 +16,12 @@ import org.springframework.web.client.RestClient;
 @Component
 @Slf4j
 @RequiredArgsConstructor
-@FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
-public class MovieClientBookingServiceImpl implements MovieClientBookingService {
+public class MovieClientCinemaServiceImpl implements MovieClientCinemaService {
 
-    RestClient restClient;
+    private final RestClient restClient;
 
     @Value("${service.url.base}")
-    @NonFinal
-    String url;
+    private String url;
 
     @Override
     public MovieDTO findOne(Long id) {

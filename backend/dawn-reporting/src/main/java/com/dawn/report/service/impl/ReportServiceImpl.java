@@ -1,4 +1,4 @@
-package com.dawn.report.service.Impl;
+package com.dawn.report.service.impl;
 
 import com.dawn.report.dto.response.PaymentDistribution;
 import com.dawn.report.dto.response.ReportResponse;

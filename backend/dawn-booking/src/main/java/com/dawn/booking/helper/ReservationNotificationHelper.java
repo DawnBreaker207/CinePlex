@@ -2,12 +2,11 @@ package com.dawn.booking.helper;
 
 import com.dawn.booking.dto.response.*;
 import com.dawn.booking.model.Reservation;
-import com.dawn.booking.service.MovieClientBookingService;
+import com.dawn.booking.client.MovieClientBookingService;
 import com.dawn.booking.service.ReservationRedisService;
-import com.dawn.booking.service.UserClientService;
+import com.dawn.booking.client.UserClientService;
 import com.dawn.common.core.constant.RabbitMQConstants;
 import com.dawn.common.core.dto.request.BookingNotificationEvent;
-import com.dawn.notification.service.SseService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;

@@ -7,7 +7,7 @@ import com.dawn.booking.dto.request.ReservationUserRequest;
 import com.dawn.booking.dto.response.*;
 import com.dawn.booking.service.ReservationRedisService;
 import com.dawn.booking.service.ReservationService;
-import com.dawn.booking.service.SeatClientService;
+import com.dawn.booking.client.SeatClientService;
 import com.dawn.common.core.dto.response.ResponseObject;
 import com.dawn.common.core.dto.response.ResponsePage;
 import io.swagger.v3.oas.annotations.Operation;

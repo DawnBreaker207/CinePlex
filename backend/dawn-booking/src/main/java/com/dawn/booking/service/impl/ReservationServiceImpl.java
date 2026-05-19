@@ -1,5 +1,7 @@
-package com.dawn.booking.service.Impl;
+package com.dawn.booking.service.impl;
 
+import com.dawn.booking.client.*;
+import com.dawn.booking.client.impl.VoucherClientServiceImpl;
 import com.dawn.booking.dto.request.ReservationFilterRequest;
 import com.dawn.booking.dto.request.ReservationHoldSeatRequest;
 import com.dawn.booking.dto.request.ReservationInitRequest;
@@ -56,7 +58,7 @@ public class ReservationServiceImpl implements ReservationService {
 
     ReservationRedisService reservationRedisService;
 
-    VoucherClientService voucherClientService;
+    VoucherClientServiceImpl voucherClientService;
 
     @Override
     public ResponsePage<UserReservationResponse> findByUser(ReservationUserRequest request, Pageable pageable) {

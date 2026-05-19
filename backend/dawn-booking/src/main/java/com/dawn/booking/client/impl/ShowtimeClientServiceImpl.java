@@ -1,7 +1,7 @@
-package com.dawn.booking.service.Impl;
+package com.dawn.booking.client.impl;
 
+import com.dawn.booking.client.ShowtimeClientService;
 import com.dawn.booking.dto.response.ShowtimeDTO;
-import com.dawn.booking.service.ShowtimeClientService;
 import com.dawn.common.core.constant.Message;
 import com.dawn.common.core.dto.response.ResponseObject;
 import com.dawn.common.core.exception.wrapper.ResourceNotFoundException;

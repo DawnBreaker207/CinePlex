@@ -1,4 +1,4 @@
-package com.dawn.identity.service.Impl;
+package com.dawn.identity.service.impl;
 
 import com.dawn.common.core.constant.Message;
 import com.dawn.common.core.exception.wrapper.RefreshTokenExpiredException;
