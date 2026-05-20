@@ -1,21 +1,13 @@
 services:
-  loki:
-    container_name: loki
-    image: grafana/loki:latest
-    command: ['-config.file=/etc/loki/local-config.yaml']
-    ports:
-      - '3100:3100'
-    networks:
-      - booking-net
-
   prometheus:
     container_name: prometheus
     image: prom/prometheus:v2.46.0
     command:
       - --enable-feature=exemplar-storage
       - --config.file=/etc/prometheus/prometheus.yml
-    volumes:
-      - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    configs:
+      - source: prometheus_config
+        target: /etc/prometheus/prometheus.yml
     ports:
       - '9090:9090'
     networks:
@@ -25,26 +17,50 @@ services:
     container_name: tempo
     image: grafana/tempo:2.2.2
     command: ['-config.file=/etc/tempo.yaml']
+    configs:
+      - source: tempo_config
+        target: /etc/tempo.yaml
     volumes:
-      - ./docker/tempo/tempo.yml:/etc/tempo.yaml:ro
-      - ./docker/tempo/tempo-data:/tmp/tempo
+      - tempo-data:/tmp/tempo
     ports:
-      - '3200:3200' # Tempo
-      - '9411:9411' # Zipkin
+      - '3200:3200'
+      - '9411:9411'
     networks:
       - booking-net
 
   grafana:
     container_name: grafana
     image: grafana/grafana:10.1.0
-    volumes:
-      - ./docker/grafana:/etc/grafana/provisioning/datasources:ro
+    configs:
+      - source: grafana_datasources
+        target: /etc/grafana/provisioning/datasources/datasources.yml
     environment:
       - GF_AUTH_ANONYMOUS_ENABLED=true
       - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
       - GF_AUTH_DISABLE_LOGIN_FORM=true
     ports:
       - '3000:3000'
+    networks:
+      - booking-net
+
+  loki:
+    container_name: loki
+    image: grafana/loki:latest
+    command: ['-config.file=/etc/loki/local-config.yaml']
+    ports:
+      - '3100:3100'
+    networks:
+      - booking-net
+
+  promtail:
+    container_name: promtail
+    image: grafana/promtail:latest
+    configs:
+      - source: promtail_config
+        target: /etc/promtail/config.yml
+    command: ['-config.file=/etc/promtail/config.yml']
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
       - booking-net
 
@@ -76,3 +92,99 @@ services:
       - REDIS_ADDR=redis:6379
     networks:
       - booking-net
+
+configs:
+  prometheus_config:
+    content: |
+      global:
+        scrape_interval: 2s
+        evaluation_interval: 2s
+      scrape_configs:
+        - job_name: 'monitoring'
+          static_configs:
+            - targets: ['node-exporter:9100', 'cadvisor:8080', 'redis-exporter:9121']
+        - job_name: 'backend'
+          metrics_path: '/actuator/prometheus'
+          static_configs:
+            - targets: ['server:8888']
+
+  tempo_config:
+    content: |
+      server:
+        http_listen_port: 3200
+      distributor:
+        receivers:
+          zipkin:
+      storage:
+        trace:
+          backend: local
+          local:
+            path: /tmp/tempo/blocks
+
+  grafana_datasources:
+    content: |
+      apiVersion: 1
+      datasources:
+        - name: Prometheus
+          type: prometheus
+          access: proxy
+          uid: prometheus
+          url: http://prometheus:9090
+          editable: false
+          jsonData:
+            httpMethod: POST
+            exemplarTraceIdDestinations:
+              - name: trace_id
+                datasourceUid: tempo
+        - name: Tempo
+          type: tempo
+          uid: tempo
+          access: proxy
+          orgId: 1
+          url: http://tempo:3200
+          basicAuth: false
+          isDefault: true
+          version: 1
+          editable: false
+          apiVersion: 1
+          jsonData:
+            httpMethod: GET
+            tracesToLogs:
+              datasourceUid: 'loki'
+            nodeGraph:
+              enabled: true
+        - name: Loki
+          type: loki
+          uid: loki
+          access: proxy
+          orgId: 1
+          url: http://loki:3100
+          basicAuth: false
+          isDefault: false
+          version: 1
+          editable: false
+          apiVersion: 1
+          jsonData:
+            derivedFields:
+              - datasourceUid: tempo
+                matcherRegex: \[.+,(.+?),
+                name: TraceID
+                url: $${__value.raw}
+
+  promtail_config:
+    content: |
+      server:
+        http_listen_port: 9080
+        grpc_listen_port: 0
+      clients:
+        - url: http://loki:3100/loki/api/v1/push
+      scrape_configs:
+        - job_name: docker
+          docker_sd_configs:
+            - host: unix:///var/run/docker.sock
+          relabel_configs:
+            - source_labels: [__meta_docker_container_name]
+              target_label: 'container'
+
+volumes:
+  tempo-data:
