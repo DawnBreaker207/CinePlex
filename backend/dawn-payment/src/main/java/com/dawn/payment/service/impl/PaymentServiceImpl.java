@@ -53,6 +53,17 @@ public class PaymentServiceImpl implements PaymentService {
         String id = handler.getId(params);
 
         log.info("Handler payment: {}", handler);
+        Payment existingPayment = paymentRepository
+                .findByReservationId(id)
+                .orElseThrow(() -> new ResourceNotFoundException(Message.Exception.RESERVATION_NOT_FOUND));
+
+        if (existingPayment != null && PaymentStatus.PAID.equals(existingPayment.getStatus())) {
+            return PaymentHandlerResponse
+                    .builder()
+                    .reservationId(id)
+                    .success(true)
+                    .build();
+        }
         if (!handler.verifySignature(params)) {
             log.error("Error: wrong signature from {}", provider);
             reservationClientService.cancel(id);
@@ -73,6 +84,7 @@ public class PaymentServiceImpl implements PaymentService {
                     .isSuccess(Boolean.TRUE)
                     .build());
 
+
             return PaymentHandlerResponse
                     .builder()
                     .reservationId(id)
@@ -80,6 +92,7 @@ public class PaymentServiceImpl implements PaymentService {
                     .build();
         } catch (Exception ex) {
             log.info("Failed with id {}", id);
+            reservationClientService.cancel(id);
             return PaymentHandlerResponse
                     .builder()
                     .reservationId(id)

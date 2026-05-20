@@ -1,6 +1,9 @@
 package com.dawn.booking.service.impl;
 
-import com.dawn.booking.client.*;
+import com.dawn.booking.client.MovieClientBookingService;
+import com.dawn.booking.client.SeatClientService;
+import com.dawn.booking.client.ShowtimeClientService;
+import com.dawn.booking.client.UserClientService;
 import com.dawn.booking.client.impl.VoucherClientServiceImpl;
 import com.dawn.booking.dto.request.ReservationFilterRequest;
 import com.dawn.booking.dto.request.ReservationHoldSeatRequest;
@@ -11,12 +14,14 @@ import com.dawn.booking.helper.ReservationMappingHelper;
 import com.dawn.booking.helper.ReservationNotificationHelper;
 import com.dawn.booking.model.Reservation;
 import com.dawn.booking.repository.ReservationRepository;
-import com.dawn.booking.service.*;
+import com.dawn.booking.service.ReservationRedisService;
+import com.dawn.booking.service.ReservationService;
 import com.dawn.booking.utils.ReservationUtils;
 import com.dawn.common.core.constant.Message;
 import com.dawn.common.core.constant.ReservationStatus;
 import com.dawn.common.core.constant.SeatStatus;
 import com.dawn.common.core.dto.response.ResponsePage;
+import com.dawn.common.core.exception.ApiException;
 import com.dawn.common.core.exception.wrapper.PermissionDeniedException;
 import com.dawn.common.core.exception.wrapper.ResourceNotFoundException;
 import com.dawn.common.core.exception.wrapper.SeatUnavailableException;
@@ -27,7 +32,9 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -35,6 +42,7 @@ import java.time.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -214,12 +222,12 @@ public class ReservationServiceImpl implements ReservationService {
             //        Update seat in redis
             reservationRedisService.updateReservationSeats(reservationId, seatIds);
 
-            reservationNotificationHelper.sendSeatHold(showtimeId, userId,allShowtimeSeatIds);
+            reservationNotificationHelper.sendSeatHold(showtimeId, userId, allShowtimeSeatIds);
             log.info("Successfully hold {} seats with user id {} for reservation {}: {} ", seatIds.size(), userId, reservationId, seatIds);
 
         } catch (Exception e) {
             log.error("Error after locking seats, processing unlocking for reservation: {}", reservationId);
-            reservationRedisService.deleteSeatLocks(seatIds,reservationId);
+            reservationRedisService.deleteSeatLocks(seatIds, reservationId);
             throw e;
         }
     }
@@ -227,66 +235,82 @@ public class ReservationServiceImpl implements ReservationService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public ReservationResponse confirmReservation(String reservationId) {
-        log.info("Confirming reservation: {}", reservationId);
-        //        Get reservation from redis
-        ReservationRedisDTO cachedData = reservationRedisService.getFromRedis(reservationId);
-        String voucherCode = cachedData.getVoucherCode();
+        try {
 
-        log.info("Get reservation from redis: {}", cachedData);
-        UserDTO user = userService.findById(cachedData.getUserId());
-        log.info("Get user from reservation {}", user);
+            log.info("Confirming reservation: {}", reservationId);
+            //        Get reservation from redis
+            ReservationRedisDTO cachedData = reservationRedisService.getFromRedis(reservationId);
 
-        List<Long> seatIds = cachedData.getSeatsIds();
-        if (seatIds == null || seatIds.isEmpty()) {
-            throw new IllegalStateException(Message.Exception.NO_SEAT_SELECTED);
+            if (cachedData == null) {
+                Optional<Reservation> existing = reservationRepository.findById(reservationId);
+                if (existing.isPresent() && existing.get().getIsPaid()) {
+                    return null;
+                }
+                throw new ApiException(HttpStatus.NOT_FOUND, Message.Exception.RESERVATION_NOT_FOUND);
+            }
+
+            String voucherCode = cachedData.getVoucherCode();
+
+            log.info("Get reservation from redis: {}", cachedData);
+            UserDTO user = userService.findById(cachedData.getUserId());
+            log.info("Get user from reservation {}", user);
+
+            List<Long> seatIds = cachedData.getSeatsIds();
+            if (seatIds == null || seatIds.isEmpty()) {
+                throw new IllegalStateException(Message.Exception.NO_SEAT_SELECTED);
+            }
+
+            reservationRedisService.validateSeatLocks(reservationId, seatIds);
+            //        Create reservation to save
+            List<SeatDTO> seatEntities = loadSeatFromDatabase(seatIds, reservationId);
+            validateSeatsStillAvailable(seatEntities);
+
+            log.info("All {} seats verified as available in DB for reservation {}", seatEntities.size(), reservationId);
+            ShowtimeDTO showtime = showtimeService.findById(cachedData.getShowtimeId());
+            BigDecimal originalAmount = showtime.getPrice().multiply(BigDecimal.valueOf(seatEntities.size()));
+            BigDecimal discountAmount = BigDecimal.ZERO;
+            BigDecimal total = originalAmount;
+
+            if (voucherCode != null && !voucherCode.isBlank()) {
+                voucherClientService.useVoucher(voucherCode);
+
+                VoucherDiscountDTO finalCalc = voucherClientService.calculateVoucher(voucherCode, originalAmount);
+
+                discountAmount = finalCalc.getDiscountAmount();
+                total = finalCalc.getFinalAmount();
+            }
+
+            log.info("Calculated total amount: {} for {} seats", total, seatEntities.size());
+
+            Reservation reservation = Reservation
+                    .builder()
+                    .id(reservationId)
+                    .userId(user.getUserId())
+                    .showtimeId(showtime.getId())
+                    .reservationStatus(ReservationStatus.CONFIRMED)
+                    .originalAmount(originalAmount)
+                    .discountAmount(discountAmount)
+                    .totalAmount(total)
+                    .voucherCode(voucherCode)
+                    .isPaid(true)
+                    .isDeleted(false)
+                    .build();
+
+            Reservation savedReservation = reservationRepository.saveAndFlush(reservation);
+
+            updateSeatsAndShowtime(seatEntities, savedReservation);
+
+            reservationNotificationHelper.handleNotification(savedReservation, showtime, seatEntities);
+
+            reservationRedisService.cleanupRedisLocks(reservationId, seatEntities);
+
+
+            log.info("Successfully confirmed reservation: {} with {} seats", reservation.getId(), seatEntities.size());
+            return ReservationMappingHelper.map(savedReservation, user, showtime, seatEntities);
+        } catch (Exception e) {
+            cancelReservation(reservationId);
+            throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, Message.Exception.RESERVATION_EXPIRED);
         }
-
-        reservationRedisService.validateSeatLocks(reservationId, seatIds);
-        //        Create reservation to save
-        List<SeatDTO> seatEntities = loadSeatFromDatabase(seatIds, reservationId);
-        validateSeatsStillAvailable(seatEntities);
-
-        log.info("All {} seats verified as available in DB for reservation {}", seatEntities.size(), reservationId);
-        ShowtimeDTO showtime = showtimeService.findById(cachedData.getShowtimeId());
-        BigDecimal originalAmount = showtime.getPrice().multiply(BigDecimal.valueOf(seatEntities.size()));
-        BigDecimal discountAmount = BigDecimal.ZERO;
-        BigDecimal total = originalAmount;
-
-        if (voucherCode != null && !voucherCode.isBlank()) {
-            voucherClientService.useVoucher(voucherCode);
-
-            VoucherDiscountDTO finalCalc = voucherClientService.calculateVoucher(voucherCode, originalAmount);
-
-            discountAmount = finalCalc.getDiscountAmount();
-            total = finalCalc.getFinalAmount();
-        }
-
-        log.info("Calculated total amount: {} for {} seats", total, seatEntities.size());
-
-        Reservation reservation = Reservation
-                .builder()
-                .id(reservationId)
-                .userId(user.getUserId())
-                .showtimeId(showtime.getId())
-                .reservationStatus(ReservationStatus.CONFIRMED)
-                .originalAmount(originalAmount)
-                .discountAmount(discountAmount)
-                .totalAmount(total)
-                .voucherCode(voucherCode)
-                .isPaid(true)
-                .isDeleted(false)
-                .build();
-
-        Reservation savedReservation = reservationRepository.saveAndFlush(reservation);
-
-        updateSeatsAndShowtime(seatEntities, savedReservation);
-
-        reservationNotificationHelper.handleNotification(savedReservation, showtime, seatEntities);
-
-        reservationRedisService.cleanupRedisLocks(reservationId, seatEntities);
-
-        log.info("Successfully confirmed reservation: {} with {} seats", reservation.getId(), seatEntities.size());
-        return ReservationMappingHelper.map(savedReservation, user, showtime, seatEntities);
     }
 
     @Override
@@ -305,7 +329,7 @@ public class ReservationServiceImpl implements ReservationService {
     }
 
     @Override
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void cancelReservation(String reservationId) {
         log.info("Processing cancellation tracking for: {}", reservationId);
 

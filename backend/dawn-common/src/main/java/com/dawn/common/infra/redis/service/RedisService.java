@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -125,7 +126,12 @@ public class RedisService {
     public List<Object> multiGet(List<String> keys) {
         if (keys == null || keys.isEmpty()) return Collections.emptyList();
         try {
-            return Collections.singletonList(stringRedisTemplate.opsForValue().multiGet(keys));
+            List<String> values = stringRedisTemplate.opsForValue().multiGet(keys);
+            if (values == null) return List.of();
+            return values
+                    .stream()
+                    .map(v -> (Object) v)
+                    .collect(Collectors.toList());
         } catch (Exception e) {
             log.error("Redis multiGet error for key {}: {}", keys, e.getMessage());
             return Collections.nCopies(keys.size(), null);

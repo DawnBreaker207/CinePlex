@@ -7,12 +7,14 @@ springdoc:
   api-docs:
     path: /api-docs
 spring:
+  config:
+    import: "optional:file:.env[.properties]"
   application:
     name: ticket-booking
   # RabbitMQ config
   rabbitmq:
-    host: rabbitmq
-    port: 5672
+    host: ${RABBITMQ_HOST}
+    port: ${RABBITMQ_PORT}
   # Database config
   datasource:
     url: ${SPRING_DATASOURCE_URL}
@@ -38,8 +40,8 @@ spring:
   # Config Redis
   data:
     redis:
-      host: redis
-      port: 6379
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
       timeout: 60000
       repositories:
         enabled: true
@@ -145,9 +147,9 @@ management:
       probability: 1.0
   zipkin:
     tracing:
-      endpoint: http://tempo:9411/api/v2/spans
+      endpoint: ${ZIPKIN_URL}
 loki:
-  url: http://loki:3100/loki/api/v1/push
+  url: ${LOKI_URL}
 langchain4j:
   open-ai:
     chat-model:
