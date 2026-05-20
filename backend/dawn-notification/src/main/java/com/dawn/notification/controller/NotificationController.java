@@ -38,10 +38,12 @@ public class NotificationController {
     }
 
     @GetMapping(value = "/subscribe/showtime/{showtimeId}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public ResponseEntity<SseEmitter> subscribe(@PathVariable Long showtimeId, @RequestParam(defaultValue = "anonymous") String clientId) {
+    public ResponseEntity<SseEmitter> subscribe(@PathVariable Long showtimeId, @RequestParam String clientId) {
         HttpHeaders headers = new HttpHeaders();
-        headers.add(HttpHeaders.CACHE_CONTROL, "no-store");
+        headers.add(HttpHeaders.CACHE_CONTROL, "no-cache");
         headers.add(HttpHeaders.CONNECTION, "keep-alive");
+        headers.add("X-Accel-Buffering", "no");
+
         SseEmitter emitter = sseService.subscribe(RedisKeyHelper
                 .showtimeChannel(showtimeId), clientId);
         return ResponseEntity

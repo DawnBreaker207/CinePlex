@@ -29,7 +29,7 @@ public class SseService {
     private final ExecutorService executor = Executors.newCachedThreadPool();
 
     public SseEmitter subscribe(String channel, String clientId) {
-        SseEmitter emitter = new SseEmitter(Long.MAX_VALUE);
+        SseEmitter emitter = new SseEmitter(300_000L);
 
         emitter.onCompletion(() -> removeEmitter(channel, clientId));
         emitter.onTimeout(() -> removeEmitter(channel, clientId));
@@ -38,17 +38,19 @@ public class SseService {
             emitters.computeIfAbsent(channel, c -> new ConcurrentHashMap<>()).put(clientId, emitter);
             log.info("Client [{}] subscribed to [{}]", clientId, channel);
 
+            emitter.send(SseEmitter.event().name("CONNECTED").data("connected"));
+
             if (channel.startsWith("channel:showtime:")) {
-                executor.execute(() -> sendCurrentSeatState(emitter, channel));
+                executor.execute(() -> sendCurrentSeatState(emitter, channel, clientId));
             }
             log.info("Subscribe to channel {}", emitter);
             return emitter;
 
-        } catch (Exception e) {
+        } catch (IOException e) {
             log.error("Failed to subscribe client [{}] to [{}]", clientId, channel, e);
             removeEmitter(channel, clientId);
             emitter.completeWithError(e);
-            throw e;
+            return emitter;
         }
     }
 
@@ -66,7 +68,7 @@ public class SseService {
     }
 
 
-    private void sendCurrentSeatState(SseEmitter emitter, String channel) {
+    private void sendCurrentSeatState(SseEmitter emitter, String channel, String clientId) {
         try {
             String[] parts = channel.split(":");
             Long showtimeId = Long.valueOf(parts[2]);
@@ -86,7 +88,8 @@ public class SseService {
         } catch (Exception e) {
             log.debug("Emitter disconnected before receiving initial state.");
             log.error("Failed to fetch/send initial seat state for channel {}", channel, e);
-            removeEmitter(channel, "anonymous");
+            removeEmitter(channel, clientId);
+            emitter.completeWithError(e);
         }
     }
 

@@ -12,26 +12,36 @@ export class SseService {
   connect(id: string | number, userId: number) {
     return new Observable((observer) => {
       // Seat channel
+      const clientId = `${userId}_${Math.random().toString(36).substring(3, 9)}`;
 
-      const source = new EventSource(`${this.URL}/${id}?clientId=${userId}`);
-      source.addEventListener('SEAT_STATE_INIT', (event: MessageEvent) => {
+      const url = `${this.URL}/${id}?clientId=${clientId}`;
+
+      const source = new EventSource(url);
+
+      const handleEvent = (eventName: string, data: string) => {
         this.zone.run(() => {
-          const data = JSON.parse(event.data);
-          observer.next({ event: 'SEAT_STATE_INIT', data });
+          try {
+            const parsedData = JSON.parse(data);
+            observer.next({ event: eventName, data: parsedData });
+          } catch (e) {
+            observer.next({ event: eventName, data });
+          }
         });
-      });
-      source.addEventListener('SEAT_HOLD', (event: MessageEvent) => {
-        this.zone.run(() => {
-          const data = JSON.parse(event.data);
-          observer.next({ event: 'SEAT_HOLD', data });
-        });
-      });
-      source.addEventListener('SEAT_RELEASE', (event: MessageEvent) => {
-        this.zone.run(() => {
-          const data = JSON.parse(event.data);
-          observer.next({ event: 'SEAT_RELEASE', data });
-        });
-      });
+      };
+
+      source.addEventListener('SEAT_STATE_INIT', (e: MessageEvent) =>
+        handleEvent('SEAT_STATE_INIT', e.data),
+      );
+      source.addEventListener('SEAT_HOLD', (e: MessageEvent) =>
+        handleEvent('SEAT_HOLD', e.data),
+      );
+      source.addEventListener('SEAT_RELEASE', (e: MessageEvent) =>
+        handleEvent('SEAT_RELEASE', e.data),
+      );
+
+      source.addEventListener('CONNECTED', (e: MessageEvent) =>
+        console.log('SSE Handshake: connected'),
+      );
 
       // ✅ Optional: thêm handler fallback cho các event khác
       source.onmessage = (event) => {
@@ -44,14 +54,18 @@ export class SseService {
       };
 
       source.onerror = (error) => {
-        console.error('Seat SSE error', error);
-        observer.error(error);
-        source?.close();
-        setTimeout(() => this.connect(id, userId), 1000);
+        if (source.readyState === EventSource.CLOSED) {
+          console.error(
+            'SSE Connection was closed. Browser will attempt to reconnect...',
+          );
+        } else if (source.readyState === EventSource.CONNECTING) {
+          console.warn('SSE Connection lost. Reconnecting...');
+        }
       };
 
       // Clean up
       return () => {
+        console.log('Closing SSE connection for client: ', clientId);
         source?.close();
       };
     });
