@@ -1,22 +1,28 @@
-<nz-layout class="h-screen w-full overflow-hidden ant-layout-has-sider">
+<nz-layout
+  class="ant-layout-has-sider h-screen w-full overflow-hidden font-sans text-slate-800"
+>
   <!-- SIDER -->
   <app-sidebar [isCollapsed]="isCollapsed" />
-  <!--LAYOUT RIGHT-->
-  <nz-layout class="h-full flex flex-col">
-    <!--  HEADER  -->
-    <app-navbar
-      [breadcrumbs]="breadcrumbs"
-      [isCollapsed]="isCollapsed"
-      (toggleCollapsed)="toggleCollapse($event)"
-    />
 
-    <nz-content class="flex-1 overflow-y-auto bg-slate-50">
-      <div class="min-h-full">
-        <router-outlet />
-        <app-chat />
-      </div>
-      <nz-footer class="text-center text-gray-400 bg-transparent mt-8">
-        {{ "Hệ thống đặt vé CinePlex" | translate }} {{ date.getFullYear() }}
+  <!-- LAYOUT RIGHT -->
+  <nz-layout class="flex flex-col overflow-hidden">
+    <!-- NAVBAR -->
+    <nz-header class="shrink-0 z-40">
+      <app-navbar
+        [breadcrumbs]="breadcrumbs"
+        [isCollapsed]="isCollapsed"
+        (toggleCollapsed)="toggleCollapse($event)"
+      />
+    </nz-header>
+
+    <!-- CONTENT AREA -->
+    <nz-content class="flex-1 overflow-y-auto overflow-x-hidden bg-slate-50">
+      <router-outlet />
+      <app-chat />
+
+      <nz-footer class="text-center text-slate-400 bg-transparent py-6">
+        {{ "Hệ thống đặt vé CinePlex" | translate }} &copy;
+        {{ date.getFullYear() }}
       </nz-footer>
     </nz-content>
   </nz-layout>
