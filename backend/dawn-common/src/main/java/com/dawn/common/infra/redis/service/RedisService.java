@@ -100,7 +100,6 @@ public class RedisService {
                     keys,
                     owner,
                     String.valueOf(ttl.getSeconds()));
-
         } catch (Exception e) {
             log.error("Redis error: {}", e.getMessage());
             return Arrays.asList(0L, keys.get(0), "System_error");
@@ -115,8 +114,7 @@ public class RedisService {
                     scriptDeleteIfEquals,
                     Collections.singletonList(key),
                     expectedOwner);
-            return result == 1L;
-
+            return Long.valueOf(1L).equals(result);
         } catch (Exception e) {
             log.error("Redis error: {}", e.getMessage());
             return false;

@@ -116,27 +116,37 @@ public class ReservationRedisService {
 
         List result = redisService.lockMulti(keys, redisKey, HOLD_TIMEOUT);
 
+        if (result == null || result.isEmpty() || result.get(0) == null) {
+            log.error("Lua script returned null or empty result for reservation {}", redisKey);
+            throw new SeatUnavailableException("Failed to acquire seat lock, please try again");
+        }
+
         Long status = Long.parseLong(result.get(0).toString());
 
         if (status == 1) {
             log.info("Successfully locked {} seats for reservation {}", seatIds.size(), redisKey);
             return seatIds;
         } else {
-            String failedKey = result.get(1).toString();
-            String currentOwner = result.get(2).toString();
+            String failedKey = result.size() > 1 & result.get(1) != null ? result.get(1).toString() : "unknown";
+            String currentOwner = result.size() > 2 & result.get(2) != null ? result.get(2).toString() : "unknown";
 
-            String failedSeatIdStr = failedKey.substring(failedKey.lastIndexOf(":") + 1);
-            Long failedSeatId = Long.parseLong(failedSeatIdStr);
+            String failedSeatIdStr = failedKey.contains(":") ? failedKey.substring(failedKey.lastIndexOf(":") + 1) : failedKey;
+            Long parsedSeatId = null;
+            try {
 
-            SeatDTO seat = seats
-                    .stream()
-                    .filter(s -> s
-                            .getId()
-                            .equals(failedSeatId))
+                parsedSeatId = Long.parseLong(failedSeatIdStr);
+            } catch (NumberFormatException e) {
+                log.warn("Could not parse failedSeatId from key: {}", failedKey);
+
+            }
+            final Long failedSeatId = parsedSeatId;
+            String seatNumber = failedSeatId != null
+                    ? seats.stream()
+                    .filter(s -> s.getId().equals(failedSeatId))
                     .findFirst()
-                    .orElse(null);
-
-            String seatNumber = seat != null ? seat.getSeatNumber() : failedSeatIdStr;
+                    .map(SeatDTO::getSeatNumber)
+                    .orElse(failedSeatIdStr)
+                    : failedSeatIdStr;
 
             log.warn("Bulk lock failed! Seat {} ({}) is held by {}", failedSeatId, seatNumber, currentOwner);
             throw new SeatUnavailableException("Seat " + seatNumber + " was held by another");
