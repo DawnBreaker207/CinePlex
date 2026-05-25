@@ -1,7 +1,7 @@
 package com.dawn.catalog.dto.response;
 
-import com.dawn.catalog.config.ArticleStatus;
-import com.dawn.catalog.config.ArticleType;
+import com.dawn.catalog.constant.ArticleStatus;
+import com.dawn.catalog.constant.ArticleType;
 import com.dawn.common.core.dto.response.BaseResponse;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
