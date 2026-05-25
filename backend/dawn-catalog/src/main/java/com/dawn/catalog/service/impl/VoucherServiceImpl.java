@@ -1,6 +1,6 @@
 package com.dawn.catalog.service.impl;
 
-import com.dawn.catalog.config.DiscountType;
+import com.dawn.catalog.constant.DiscountType;
 import com.dawn.catalog.dto.request.VoucherRequest;
 import com.dawn.catalog.dto.response.VoucherCalculation;
 import com.dawn.catalog.dto.response.VoucherResponse;
