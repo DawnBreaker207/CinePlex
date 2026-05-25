@@ -35,6 +35,8 @@ public class Message {
         //    Payment
         public static final String PAYMENT_COMPLETE = "Payment already for this reservation";
         public static final String PAYMENT_NOT_FOUND = "Payment not found";
+        // Service
+        public static final String INTERNAL_SERVICE_ERROR = "Internal Service Error";
     }
 
 

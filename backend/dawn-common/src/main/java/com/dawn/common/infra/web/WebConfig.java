@@ -3,7 +3,6 @@ package com.dawn.common.infra.web;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Scope;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestClient;
@@ -11,6 +10,9 @@ import org.springframework.web.method.HandlerTypePredicate;
 import org.springframework.web.servlet.config.annotation.PathMatchConfigurer;
 import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+import java.net.http.HttpClient;
+import java.time.Duration;
 
 @Configuration
 @RequiredArgsConstructor
@@ -21,14 +23,35 @@ public class WebConfig implements WebMvcConfigurer {
         configurer.addPathPrefix("/api/v1", HandlerTypePredicate.forAnnotation(RestController.class));
     }
 
-    @Bean("baseRestClient")
-    @Scope("prototype")
-    public RestClient restClient() {
+    @Bean("internalRestClient")
+    public RestClient internalRestClient() {
+        HttpClient httpClient = HttpClient
+                .newBuilder()
+                .connectTimeout(Duration.ofSeconds(3))
+                .build();
+
+        JdkClientHttpRequestFactory factory = new JdkClientHttpRequestFactory(httpClient);
+        factory.setReadTimeout(Duration.ofSeconds(5));
         return RestClient
                 .builder()
-                .requestFactory(new JdkClientHttpRequestFactory())
+                .requestFactory(factory)
                 .defaultHeader("Content-Type", "application/json")
                 .build();
+    }
+
+    @Bean("externalRestClientBuilder")
+    public RestClient.Builder externalRestClientBuilder() {
+        HttpClient httpClient = HttpClient
+                .newBuilder()
+                .connectTimeout(Duration.ofSeconds(5))
+                .build();
+
+        JdkClientHttpRequestFactory factory = new JdkClientHttpRequestFactory(httpClient);
+        factory.setReadTimeout(Duration.ofSeconds(10));
+        return RestClient
+                .builder()
+                .requestFactory(factory)
+                .defaultHeader("Content-Type", "application/json");
     }
 
     @Override

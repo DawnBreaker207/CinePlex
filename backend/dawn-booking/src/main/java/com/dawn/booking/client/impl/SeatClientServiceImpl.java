@@ -4,7 +4,9 @@ import com.dawn.booking.client.SeatClientService;
 import com.dawn.booking.dto.response.SeatDTO;
 import com.dawn.common.core.constant.Message;
 import com.dawn.common.core.dto.response.ResponseObject;
+import com.dawn.common.core.exception.wrapper.InternalServiceException;
 import com.dawn.common.core.exception.wrapper.ResourceNotFoundException;
+import io.github.resilience4j.retry.annotation.Retry;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -23,15 +25,16 @@ import java.util.List;
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 public class SeatClientServiceImpl implements SeatClientService {
 
-    RestClient restClient;
+    private final RestClient internalRestClient;
 
     @Value("${service.url.base}")
     @NonFinal
     String url;
 
     @Override
+    @Retry(name = "internal")
     public List<SeatDTO> findByIdWithLock(List<Long> seatIds) {
-        ResponseObject<List<SeatDTO>> response = restClient
+        ResponseObject<List<SeatDTO>> response = internalRestClient
                 .post()
                 .uri(url + "/seats/locks")
                 .body(seatIds)
@@ -39,6 +42,9 @@ public class SeatClientServiceImpl implements SeatClientService {
                 .onStatus(HttpStatusCode::is4xxClientError, (req, res) -> {
                     throw new ResourceNotFoundException(Message.Exception.SEAT_NOT_FOUND);
                 })
+                .onStatus(HttpStatusCode::is5xxServerError, (req, res) -> {
+                    throw new InternalServiceException(Message.Exception.INTERNAL_SERVICE_ERROR);
+                })
                 .body(new ParameterizedTypeReference<>() {
                 });
         if (response != null && response.getData() != null) {
@@ -48,8 +54,9 @@ public class SeatClientServiceImpl implements SeatClientService {
     }
 
     @Override
+    @Retry(name = "internal")
     public List<SeatDTO> findAllById(List<Long> seatIds) {
-        ResponseObject<List<SeatDTO>> response = restClient
+        ResponseObject<List<SeatDTO>> response = internalRestClient
                 .post()
                 .uri(url + "/seats/all/id")
                 .body(seatIds)
@@ -57,6 +64,9 @@ public class SeatClientServiceImpl implements SeatClientService {
                 .onStatus(HttpStatusCode::is4xxClientError, (req, res) -> {
                     throw new ResourceNotFoundException(Message.Exception.SEAT_NOT_FOUND);
                 })
+                .onStatus(HttpStatusCode::is5xxServerError, (req, res) -> {
+                    throw new InternalServiceException(Message.Exception.INTERNAL_SERVICE_ERROR);
+                })
                 .body(new ParameterizedTypeReference<>() {
                 });
 
@@ -67,32 +77,17 @@ public class SeatClientServiceImpl implements SeatClientService {
     }
 
     @Override
+    @Retry(name = "internal")
     public List<SeatDTO> findAllByReservationId(String reservationId) {
-        ResponseObject<List<SeatDTO>> response = restClient
+        ResponseObject<List<SeatDTO>> response = internalRestClient
                 .get()
                 .uri(url + "/seats/reservation/{reservationId}", reservationId)
                 .retrieve()
                 .onStatus(HttpStatusCode::is4xxClientError, (req, res) -> {
                     throw new ResourceNotFoundException(Message.Exception.SEAT_NOT_FOUND);
                 })
-                .body(new ParameterizedTypeReference<>() {
-                });
-
-        if (response != null && response.getData() != null) {
-            return response.getData();
-        }
-        return Collections.emptyList();
-    }
-
-
-    @Override
-    public List<SeatDTO> findAllByShowtimeId(Long showtimeId) {
-        ResponseObject<List<SeatDTO>> response = restClient
-                .get()
-                .uri(url + "/seats/reservation/showtime/{showtimeId}", showtimeId)
-                .retrieve()
-                .onStatus(HttpStatusCode::is4xxClientError, (req, res) -> {
-                    throw new ResourceNotFoundException(Message.Exception.SEAT_NOT_FOUND);
+                .onStatus(HttpStatusCode::is5xxServerError, (req, res) -> {
+                    throw new InternalServiceException(Message.Exception.INTERNAL_SERVICE_ERROR);
                 })
                 .body(new ParameterizedTypeReference<>() {
                 });
@@ -105,14 +100,41 @@ public class SeatClientServiceImpl implements SeatClientService {
 
 
     @Override
+    @Retry(name = "internal")
+    public List<SeatDTO> findAllByShowtimeId(Long showtimeId) {
+        ResponseObject<List<SeatDTO>> response = internalRestClient
+                .get()
+                .uri(url + "/seats/reservation/showtime/{showtimeId}", showtimeId)
+                .retrieve()
+                .onStatus(HttpStatusCode::is4xxClientError, (req, res) -> {
+                    throw new ResourceNotFoundException(Message.Exception.SEAT_NOT_FOUND);
+                })
+                .onStatus(HttpStatusCode::is5xxServerError, (req, res) -> {
+                    throw new InternalServiceException(Message.Exception.INTERNAL_SERVICE_ERROR);
+                })
+                .body(new ParameterizedTypeReference<>() {
+                });
+
+        if (response != null && response.getData() != null) {
+            return response.getData();
+        }
+        return Collections.emptyList();
+    }
+
+
+    @Override
+    @Retry(name = "internal")
     public void saveAllSeat(List<SeatDTO> seats) {
-        restClient
+        internalRestClient
                 .post()
                 .uri(url + "/seats/saveAll")
                 .body(seats)
                 .retrieve()
                 .onStatus(HttpStatusCode::is4xxClientError, (req, res) -> {
                     throw new ResourceNotFoundException(Message.Exception.SEAT_NOT_FOUND);
+                })
+                .onStatus(HttpStatusCode::is5xxServerError, (req, res) -> {
+                    throw new InternalServiceException(Message.Exception.INTERNAL_SERVICE_ERROR);
                 })
                 .toBodilessEntity();
     }
