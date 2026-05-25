@@ -1,4 +1,4 @@
-package com.dawn.common.infra.websocket;
+package com.dawn.notification.config;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
