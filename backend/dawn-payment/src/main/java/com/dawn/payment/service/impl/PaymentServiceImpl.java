@@ -3,6 +3,7 @@ package com.dawn.payment.service.impl;
 import com.dawn.common.core.constant.Message;
 import com.dawn.common.core.constant.PaymentMethod;
 import com.dawn.common.core.constant.PaymentStatus;
+import com.dawn.common.core.exception.wrapper.ResourceAlreadyExistedException;
 import com.dawn.common.core.exception.wrapper.ResourceNotFoundException;
 import com.dawn.payment.dto.request.PaymentRequest;
 import com.dawn.payment.dto.request.PaymentUpdateRequest;
@@ -19,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -37,7 +39,19 @@ public class PaymentServiceImpl implements PaymentService {
     public PaymentResponse createPayment(PaymentRequest req, String ip) {
         PaymentHandler handler = findHandler(req.getPaymentType());
         String url = handler.createPaymentUrl(req.getReservationId(), req.getAmount(), ip);
-
+        log.info("Creating payment with status: {}, method: {}",
+                PaymentStatus.PENDING,
+                checkPaymentMethod(req.getPaymentType()));
+        Payment payment = Payment.builder()
+                .reservationId(req.getReservationId())
+                .amount(BigDecimal.valueOf(req.getAmount()))
+                .method(checkPaymentMethod(req.getPaymentType()))
+                .status(PaymentStatus.PENDING)
+                .method(checkPaymentMethod(req.getPaymentType()))
+                .paymentIntentId(req.getReservationId())
+                .createdAt(Instant.now())
+                .build();
+        paymentRepository.save(payment);
         return PaymentResponse
                 .builder()
                 .code("ok")
@@ -47,46 +61,41 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
-    @Transactional
     public PaymentHandlerResponse processCallback(String provider, Map<String, String> params) {
         PaymentHandler handler = findHandler(provider);
         String id = handler.getId(params);
 
         log.info("Handler payment: {}", handler);
-        Payment existingPayment = paymentRepository
+        Payment existing = paymentRepository
                 .findByReservationId(id)
-                .orElseThrow(() -> new ResourceNotFoundException(Message.Exception.RESERVATION_NOT_FOUND));
+                .orElseThrow(() -> new ResourceNotFoundException(Message.Exception.PAYMENT_NOT_FOUND));
 
-        if (existingPayment != null && PaymentStatus.PAID.equals(existingPayment.getStatus())) {
-            return PaymentHandlerResponse
-                    .builder()
+        if (PaymentStatus.PAID.equals(existing.getStatus())) {
+            return PaymentHandlerResponse.builder()
                     .reservationId(id)
                     .success(true)
                     .build();
         }
-        if (!handler.verifySignature(params)) {
-            log.error("Error: wrong signature from {}", provider);
-            reservationClientService.cancel(id);
-            return PaymentHandlerResponse.builder()
-                    .success(false)
-                    .message("Invalid signature")
-                    .build();
-        }
         try {
             log.info("Process callback received {}", provider);
-            ReservationDTO reservation = reservationClientService.confirm(id);
-            log.info("Get reservation from payment {}", reservation);
+            // Save payment first
             updatePayment(PaymentUpdateRequest
                     .builder()
-                    .totalAmount(reservation.getTotalAmount())
                     .reservationId(id)
                     .method(checkPaymentMethod(provider))
-                    .isSuccess(Boolean.TRUE)
+                    .isSuccess(true)
                     .build());
 
+            // Save confirm reservation
+            ReservationDTO reservation = reservationClientService.confirm(id);
+            log.info("Get reservation from payment {}", reservation);
 
-            return PaymentHandlerResponse
-                    .builder()
+            // Update amount from reservation
+            Payment payment = paymentRepository.findByReservationId(id).get();
+            payment.setAmount(reservation.getTotalAmount());
+            paymentRepository.save(payment);
+
+            return PaymentHandlerResponse.builder()
                     .reservationId(id)
                     .success(true)
                     .build();
@@ -115,23 +124,17 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Transactional
     public void updatePayment(PaymentUpdateRequest request) {
-        PaymentStatus status = request.getIsSuccess() ? PaymentStatus.PAID : PaymentStatus.CANCELED;
-        paymentRepository.findByReservationId(request.getReservationId())
-                .filter(p -> p.getStatus() == PaymentStatus.PAID)
-                .ifPresent((payment) -> {
-                    throw new IllegalStateException(Message.Exception.PAYMENT_COMPLETE);
-                });
 
-        Payment payment = Payment
-                .builder()
-                .reservationId(request.getReservationId())
-                .paymentIntentId(request.getReservationId())
-                .method(request.getMethod())
-                .amount(request.getTotalAmount())
-                .status(status)
-                .createdAt(Instant.now())
-                .build();
-        paymentRepository.saveAndFlush(payment);
+        Payment existing = paymentRepository
+                .findByReservationId(request.getReservationId())
+                .orElseThrow(() -> new ResourceNotFoundException(Message.Exception.PAYMENT_NOT_FOUND));
+        if (PaymentStatus.PAID.equals(existing.getStatus())) {
+            throw new IllegalStateException(Message.Exception.PAYMENT_COMPLETE);
+        }
+
+        existing.setStatus(PaymentStatus.PAID);
+        existing.setMethod(request.getMethod());
+        paymentRepository.saveAndFlush(existing);
     }
 
     private PaymentHandler findHandler(String provider) {
