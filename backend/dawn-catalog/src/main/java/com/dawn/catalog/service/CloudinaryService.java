@@ -1,4 +1,4 @@
-package com.dawn.common.infra.cloudinary.service;
+package com.dawn.catalog.service;
 
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
