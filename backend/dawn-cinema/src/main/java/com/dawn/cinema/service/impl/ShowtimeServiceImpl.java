@@ -20,6 +20,7 @@ import com.dawn.common.core.exception.wrapper.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -164,7 +165,7 @@ public class ShowtimeServiceImpl implements ShowtimeService {
 
     @Override
     @Transactional
-    @Cacheable(value = SHOWTIME_CACHE, key = "'id:' + #id")
+    @CachePut(value = SHOWTIME_CACHE, key = "'id:' + #id")
     public ShowtimeResponse update(Long id, ShowtimeRequest showtimeDetails) {
         log.info("Updating showtime with id: {}", id);
         Showtime showtime = showtimeRepository

@@ -137,8 +137,8 @@ public class SeatServiceImpl implements SeatService {
 
         for (Seat seat : existingSeats) {
             SeatRequest request = requestMap.get(seat.getId());
-                seat.setStatus(request.getStatus());
-                seat.setReservationId(request.getReservationId());
+            seat.setStatus(request.getStatus());
+            seat.setReservationId(request.getReservationId());
         }
 
         seatRepository.saveAll(existingSeats);
@@ -163,7 +163,7 @@ public class SeatServiceImpl implements SeatService {
 
         if (theaterId == 1) {
             log.info("Creating seats for theater layout (15 rows x 20 seats)");
-            for (char row = 'A'; row <= '0'; row++) {
+            for (char row = 'A'; row <= 'O'; row++) {
                 for (int seatNum = 1; seatNum <= 10; seatNum++) {
                     Seat seat = new Seat();
                     seat.setShowtime(showtime);

@@ -9,6 +9,7 @@ import com.dawn.catalog.model.Voucher;
 import com.dawn.catalog.repository.VoucherRepository;
 import com.dawn.catalog.service.VoucherService;
 import com.dawn.common.core.dto.response.ResponsePage;
+import com.dawn.common.core.exception.wrapper.InvalidRequestException;
 import com.dawn.common.core.exception.wrapper.ResourceAlreadyExistedException;
 import com.dawn.common.core.exception.wrapper.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -132,17 +133,17 @@ public class VoucherServiceImpl implements VoucherService {
 
     private void validateVoucher(Voucher voucher, BigDecimal value) {
         Instant now = Instant.now();
-        if (!Boolean.TRUE.equals(voucher.getIsActive())) throw new ResourceNotFoundException("Voucher inactive");
+        if (!Boolean.TRUE.equals(voucher.getIsActive())) throw new InvalidRequestException("Voucher inactive");
 
-        if (now.isBefore(voucher.getStartAt())) throw new ResourceNotFoundException("Not started yet");
+        if (now.isBefore(voucher.getStartAt())) throw new InvalidRequestException("Not started yet");
 
-        if (now.isAfter(voucher.getEndAt())) throw new ResourceNotFoundException("Expired");
+        if (now.isAfter(voucher.getEndAt())) throw new InvalidRequestException("Expired");
 
         if (voucher.getQuantityUsed() >= voucher.getQuantityTotal())
-            throw new ResourceNotFoundException("Out of stock");
+            throw new InvalidRequestException("Out of stock");
 
         if (value.compareTo(BigDecimal.valueOf(voucher.getMinOrderValue())) < 0) {
-            throw new ResourceNotFoundException("Order total is less than minimum requirement");
+            throw new InvalidRequestException("Order total is less than minimum requirement");
         }
     }
 
@@ -157,8 +158,7 @@ public class VoucherServiceImpl implements VoucherService {
                     .multiply(BigDecimal.valueOf(voucher.getDiscountValue()))
                     .divide(BigDecimal.valueOf(100), 0, RoundingMode.HALF_UP);
             if (voucher.getMaxDiscountAmount() != null) {
-                BigDecimal maxDiscount = discount.min(BigDecimal.valueOf(voucher.getMaxDiscountAmount()));
-                discount = discount.min(maxDiscount);
+                discount = discount.min(BigDecimal.valueOf(voucher.getMaxDiscountAmount()));
             }
         }
 

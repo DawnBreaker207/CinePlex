@@ -74,8 +74,7 @@ public class TheaterServiceImpl implements TheaterService {
     @CachePut(value = THEATER_CACHE, key = "'id:' + #result.id")
     public TheaterResponse create(TheaterRequest request) {
         log.info("Add new theater: {}", request);
-        Theater theater = theaterRepository.save(TheaterMappingHelper.map(request));
-
+        Theater theater = TheaterMappingHelper.map(request);
         return TheaterMappingHelper.map(theaterRepository.save(theater));
     }
 
