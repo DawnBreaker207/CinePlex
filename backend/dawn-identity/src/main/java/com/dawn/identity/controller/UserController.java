@@ -13,6 +13,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/user")
 @Tag(name = "User", description = "Operations related to user")
@@ -36,6 +38,11 @@ public class UserController {
     @GetMapping("/email/{email}")
     public ResponseObject<UserResponse> getEmail(@PathVariable String email) {
         return ResponseObject.success(userService.findByEmail(email));
+    }
+
+    @PostMapping("/batch")
+    public ResponseObject<List<UserResponse>> findAllByIds(@RequestBody List<Long> ids) {
+        return ResponseObject.success(userService.findAllByIds(ids));
     }
 
     @PutMapping("/update/{id}/status")

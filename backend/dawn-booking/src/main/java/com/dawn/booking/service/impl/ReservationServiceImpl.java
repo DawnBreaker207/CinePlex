@@ -41,6 +41,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -70,17 +71,47 @@ public class ReservationServiceImpl implements ReservationService {
     public ResponsePage<UserReservationResponse> findByUser(ReservationUserRequest request, Pageable pageable) {
         log.debug("Finding reservation for user {}, status={}", request.getUserId(), request.getStatus());
 
-        Page<Reservation> reservations = reservationRepository.findAllByUserIdAndReservationStatusOrderByCreatedAtDesc(request.getUserId(), ReservationStatus.CONFIRMED, pageable);
-
+        Page<Reservation> reservations = reservationRepository
+                .findAllByUserIdAndReservationStatusOrderByCreatedAtDesc(
+                        request.getUserId(),
+                        ReservationStatus.CONFIRMED,
+                        pageable);
+        if (reservations.isEmpty()) {
+            return ResponsePage.of(reservations.map(r -> null));
+        }
         log.info("Found {} reservations for user {}", reservations.getSize(), request.getUserId());
+
+        List<Long> showtimeIds = reservations.stream()
+                .map(Reservation::getShowtimeId)
+                .distinct()
+                .toList();
+
+        Map<Long, ShowtimeDTO> showtimeMap = showtimeService.findAllByIds(showtimeIds)
+                .stream()
+                .collect(Collectors.toMap(ShowtimeDTO::getId, s -> s));
+
+        List<Long> movieIds = showtimeMap.values().stream()
+                .map(ShowtimeDTO::getMovieId)
+                .distinct()
+                .toList();
+
+        Map<Long, MovieDTO> movieMap = movieService.findAllByIds(movieIds)
+                .stream()
+                .collect(Collectors.toMap(MovieDTO::getId, s -> s));
+
+        List<String> reservationIds = reservations.stream()
+                .map(Reservation::getId)
+                .toList();
+
+        Map<String, List<SeatDTO>> seatMap = seatService.findAllByReservationIds(reservationIds)
+                .stream()
+                .collect(Collectors.groupingBy(SeatDTO::getReservationId));
 
         return ResponsePage.of(reservations
                 .map(reservation -> {
-                    ShowtimeDTO showtime = showtimeService.findById(reservation.getShowtimeId());
-
-                    MovieDTO movie = movieService.findOne(showtime.getMovieId());
-
-                    List<SeatDTO> seats = seatService.findAllByReservationId(reservation.getId());
+                    ShowtimeDTO showtime = showtimeMap.get(reservation.getShowtimeId());
+                    MovieDTO movie = movieMap.get(showtime.getMovieId());
+                    List<SeatDTO> seats = seatMap.getOrDefault(reservation.getId(), List.of());
                     return ReservationMappingHelper.toUserResponse(reservation, movie, showtime, seats);
                 }));
     }
@@ -94,14 +125,45 @@ public class ReservationServiceImpl implements ReservationService {
         Instant startDate = start.atStartOfDay(ZoneId.systemDefault()).toInstant();
         Instant endDate = end.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant();
 
-        return ResponsePage.of(reservationRepository
-                .findAllWithFilter(req, startDate, endDate, pageable)
-                .map(reservation -> {
-                    List<SeatDTO> seats = seatService.findAllByReservationId(reservation.getId());
-                    ShowtimeDTO showtime = showtimeService.findById(reservation.getShowtimeId());
-                    UserDTO user = userService.findById(reservation.getUserId());
-                    return ReservationMappingHelper.map(reservation, user, showtime, seats);
-                }));
+        Page<Reservation> reservations = reservationRepository
+                .findAllWithFilter(req, startDate, endDate, pageable);
+        if (reservations.isEmpty()) {
+            return ResponsePage.of(reservations.map(r -> null));
+        }
+
+        List<Long> showtimeIds = reservations.stream()
+                .map(Reservation::getShowtimeId)
+                .distinct()
+                .toList();
+
+        Map<Long, ShowtimeDTO> showtimeMap = showtimeService.findAllByIds(showtimeIds)
+                .stream()
+                .collect(Collectors.toMap(ShowtimeDTO::getId, s -> s));
+
+        List<Long> userIds = reservations.stream()
+                .map(Reservation::getUserId)
+                .distinct()
+                .toList();
+
+        Map<Long, UserDTO> userMap = userService.findAllByIds(userIds)
+                .stream()
+                .collect(Collectors.toMap(UserDTO::getUserId, s -> s));
+
+        List<String> reservationIds = reservations.stream()
+                .map(Reservation::getId)
+                .toList();
+
+        Map<String, List<SeatDTO>> seatMap = seatService.findAllByReservationIds(reservationIds)
+                .stream()
+                .filter(s -> s.getReservationId() != null)
+                .collect(Collectors.groupingBy(SeatDTO::getReservationId));
+
+        return ResponsePage.of(reservations.map(reservation -> {
+            ShowtimeDTO showtime = showtimeMap.get(reservation.getShowtimeId());
+            UserDTO user = userMap.get(reservation.getUserId());
+            List<SeatDTO> seats = seatMap.getOrDefault(reservation.getId(), List.of());
+            return ReservationMappingHelper.map(reservation, user, showtime, seats);
+        }));
     }
 
     @Override
@@ -149,13 +211,14 @@ public class ReservationServiceImpl implements ReservationService {
         log.info("Initializing reservation for user {} at showtime {}", o.getUserId(), o.getShowtimeId());
 
         String reservationId = ReservationUtils.generateReservationIds();
-
+        ShowtimeDTO showtime = showtimeService.findById(o.getShowtimeId());
         //        Create essential value to save on redis
         Map<String, String> initialData = Map.of(
                 "reservationId", reservationId,
                 "userId", o.getUserId().toString(),
                 "showtimeId", o.getShowtimeId().toString(),
                 "theaterId", o.getTheaterId().toString(),
+                "price", showtime.getPrice().toPlainString(),
                 "seatIds", "[]");
 
         //        Create expired time on redis key
@@ -236,7 +299,12 @@ public class ReservationServiceImpl implements ReservationService {
         // Idempotency check
         Optional<Reservation> existing = reservationRepository.findById(reservationId);
         if (existing.isPresent() && existing.get().getIsPaid()) {
-            return null;
+            log.info("Reservation {} already confirmed, returning existing", reservationId);
+            Reservation r = existing.get();
+            List<SeatDTO> seats = seatService.findAllByReservationId(reservationId);
+            ShowtimeDTO showtime = showtimeService.findById(r.getShowtimeId());
+            UserDTO user = userService.findById(r.getUserId());
+            return ReservationMappingHelper.map(r, user, showtime, seats);
         }
 
         //  Collect data from redis
@@ -363,16 +431,16 @@ public class ReservationServiceImpl implements ReservationService {
         reservationRedisService.deleteReservation(reservationId);
 
         //   Save record CANCELLED
-        ShowtimeDTO showtime = showtimeService.findById(cachedData.getShowtimeId());
         if (existing.isEmpty()) {
             int seatCount = (seatIds != null) ? seatIds.size() : 0;
-            BigDecimal total = showtime.getPrice().multiply(BigDecimal.valueOf(seatCount));
+            BigDecimal price = new BigDecimal(cachedData.getPrice());
+            BigDecimal total = price.multiply(BigDecimal.valueOf(seatCount));
             log.info("Calculated total amount: {} for {} seats", total, seatCount);
             Reservation reservation = Reservation
                     .builder()
                     .id(reservationId)
                     .userId(cachedData.getUserId())
-                    .showtimeId(showtime.getId())
+                    .showtimeId(cachedData.getShowtimeId())
                     .reservationStatus(ReservationStatus.CANCELED)
                     .originalAmount(total)
                     .totalAmount(total)
@@ -387,12 +455,12 @@ public class ReservationServiceImpl implements ReservationService {
 
         try {
             List<Long> allShowtimeSeatIds = seatService
-                    .findAllByShowtimeId(showtime.getId())
+                    .findAllByShowtimeId(cachedData.getShowtimeId())
                     .stream()
                     .map(SeatDTO::getId)
                     .toList();
-            reservationNotificationHelper.getSeatRelease(showtime.getId(), cachedData.getUserId(), allShowtimeSeatIds);
-            log.info("Published seat release event for showtime {}: {}", showtime.getId(), seatIds);
+            reservationNotificationHelper.getSeatRelease(cachedData.getShowtimeId(), cachedData.getUserId(), allShowtimeSeatIds);
+            log.info("Published seat release event for showtime {}: {}", cachedData.getShowtimeId(), seatIds);
         } catch (Exception e) {
             log.warn("Failed to broadcast seat release for reservation {}", reservationId);
 
@@ -506,7 +574,7 @@ public class ReservationServiceImpl implements ReservationService {
         int newAvailable = showtime.getAvailableSeats() - seats.size();
         if (newAvailable < 0) {
             log.error("Showtime {} available seats would become negative: {}, Current: {}", showtime.getId(), newAvailable, showtime.getAvailableSeats());
-            throw new IllegalStateException("Showtime available seats calculation error");
+            return;
         }
 
         seats.forEach(seat -> {

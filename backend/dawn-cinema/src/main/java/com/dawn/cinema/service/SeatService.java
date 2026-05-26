@@ -2,6 +2,7 @@ package com.dawn.cinema.service;
 
 import com.dawn.cinema.dto.request.SeatRequest;
 import com.dawn.cinema.dto.response.SeatResponse;
+import com.dawn.cinema.dto.response.ShowtimeResponse;
 import com.dawn.cinema.model.Seat;
 import com.dawn.cinema.model.Showtime;
 
@@ -20,6 +21,8 @@ public interface SeatService {
     List<SeatResponse> findAllById(List<Long> seatIds);
 
     List<SeatResponse> findAllByShowtimeId(Long showtimeId);
+
+    List<SeatResponse> findAllByReservationIds(List<String> ids);
 
     List<SeatResponse> findAllByReservationId(String reservationId);
 

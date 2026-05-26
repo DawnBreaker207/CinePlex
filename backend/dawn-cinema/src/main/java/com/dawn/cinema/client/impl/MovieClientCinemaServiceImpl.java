@@ -1,7 +1,7 @@
-package com.dawn.cinema.service.impl;
+package com.dawn.cinema.client.impl;
 
+import com.dawn.cinema.client.MovieClientCinemaService;
 import com.dawn.cinema.dto.response.MovieDTO;
-import com.dawn.cinema.service.MovieClientCinemaService;
 import com.dawn.common.core.constant.Message;
 import com.dawn.common.core.dto.response.ResponseObject;
 import com.dawn.common.core.exception.wrapper.InternalServiceException;
@@ -15,6 +15,8 @@ import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
+import java.util.List;
+
 @Component
 @Slf4j
 @RequiredArgsConstructor
@@ -24,6 +26,30 @@ public class MovieClientCinemaServiceImpl implements MovieClientCinemaService {
 
     @Value("${service.url.base}")
     private String url;
+
+    @Override
+    @Retry(name = "internal")
+    public List<MovieDTO> findAllByIds(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) return List.of();
+        ResponseObject<List<MovieDTO>> response = internalRestClient
+                .post()
+                .uri(url + "/movie/batch")
+                .body(ids)
+                .retrieve()
+                .onStatus(HttpStatusCode::is4xxClientError, (req, res) -> {
+                    throw new ResourceNotFoundException(Message.Exception.MOVIE_NOT_FOUND);
+                })
+                .onStatus(HttpStatusCode::is5xxServerError, (req, res) -> {
+                    throw new InternalServiceException(Message.Exception.INTERNAL_SERVICE_ERROR);
+                })
+                .body(new ParameterizedTypeReference<>() {
+                });
+
+        if (response != null && response.getData() != null) {
+            return response.getData();
+        }
+        return List.of();
+    }
 
     @Override
     @Retry(name = "internal")

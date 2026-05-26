@@ -11,7 +11,7 @@ import com.dawn.cinema.model.Theater;
 import com.dawn.cinema.repository.SeatRepository;
 import com.dawn.cinema.repository.ShowtimeRepository;
 import com.dawn.cinema.repository.TheaterRepository;
-import com.dawn.cinema.service.MovieClientCinemaService;
+import com.dawn.cinema.client.MovieClientCinemaService;
 import com.dawn.cinema.service.ShowtimeService;
 import com.dawn.common.core.constant.Message;
 import com.dawn.common.core.constant.SeatStatus;
@@ -21,7 +21,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,6 +28,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -94,6 +96,29 @@ public class ShowtimeServiceImpl implements ShowtimeService {
                     MovieDTO movie = movieService.findOne(showtime.getMovieId());
                     return ShowtimeMappingHelper.map(showtime, movie);
                 })
+                .toList();
+    }
+
+    @Override
+    public List<ShowtimeResponse> findAllByIds(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) return List.of();
+
+        log.info("Batch fetching {} showtimes", ids.size());
+
+        List<Showtime> showtimes = showtimeRepository.findByIdIn(ids);
+
+        List<Long> movieIds = showtimes.stream()
+                .map(Showtime::getMovieId)
+                .distinct()
+                .toList();
+
+        Map<Long, MovieDTO> movieMap = movieService.findAllByIds(movieIds)
+                .stream()
+                .collect(Collectors.toMap(MovieDTO::getId, m -> m));
+        return showtimes.stream()
+                .map(showtime -> ShowtimeMappingHelper.map(
+                        showtime,
+                        movieMap.get(showtime.getMovieId())))
                 .toList();
     }
 

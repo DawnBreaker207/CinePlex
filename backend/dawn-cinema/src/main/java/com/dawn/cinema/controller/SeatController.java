@@ -35,6 +35,11 @@ public class SeatController {
         return ResponseObject.success(seatService.getAvailableSeatByShowtime(showtimeId));
     }
 
+    @PostMapping("/reservation/batch-by-reservations")
+    public ResponseObject<List<SeatResponse>> findAllByReservationIds(@RequestBody List<String> ids) {
+        return ResponseObject.success(seatService.findAllByReservationIds(ids));
+    }
+
     @PostMapping("/showtime/{showtimeId}/create")
     @Operation(summary = "Create seat for a showtime", description = "Manually create seats for a specific showtime (Admin only)")
     public ResponseObject<List<SeatResponse>> createSeatsForShowtime(@PathVariable Long showtimeId) {

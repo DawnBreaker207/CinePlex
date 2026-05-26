@@ -18,6 +18,8 @@ import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
+import java.util.List;
+
 @Component
 @Slf4j
 @RequiredArgsConstructor
@@ -36,6 +38,28 @@ public class ShowtimeClientServiceImpl implements ShowtimeClientService {
         ResponseObject<ShowtimeDTO> response = internalRestClient
                 .get()
                 .uri(url + "/showtime/{id}", id)
+                .retrieve()
+                .onStatus(HttpStatusCode::is4xxClientError, (req, res) -> {
+                    throw new ResourceNotFoundException(Message.Exception.SHOWTIME_NOT_FOUND);
+                })
+                .onStatus(HttpStatusCode::is5xxServerError, (req, res) -> {
+                    throw new InternalServiceException(Message.Exception.INTERNAL_SERVICE_ERROR);
+                })
+                .body(new ParameterizedTypeReference<>() {
+                });
+        if (response != null && response.getData() != null) {
+            return response.getData();
+        }
+        throw new ResourceNotFoundException(Message.Exception.SHOWTIME_NOT_FOUND);
+    }
+
+    @Override
+    @Retry(name = "internal")
+    public List<ShowtimeDTO> findAllByIds(List<Long> ids) {
+        ResponseObject<List<ShowtimeDTO>> response = internalRestClient
+                .post()
+                .uri(url + "/showtime/batch")
+                .body(ids)
                 .retrieve()
                 .onStatus(HttpStatusCode::is4xxClientError, (req, res) -> {
                     throw new ResourceNotFoundException(Message.Exception.SHOWTIME_NOT_FOUND);

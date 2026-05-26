@@ -88,6 +88,15 @@ public class SeatServiceImpl implements SeatService {
                 .toList();
     }
 
+    @Override
+    public List<SeatResponse> findAllByReservationIds(List<String> ids) {
+        if (ids == null || ids.isEmpty()) return List.of();
+        log.info("Batch fetching {} seats", ids.size());
+        return seatRepository.findAllByReservationIdIn(ids)
+                .stream()
+                .map(SeatMappingHelper::map)
+                .toList();
+    }
 
     @Override
     @Transactional

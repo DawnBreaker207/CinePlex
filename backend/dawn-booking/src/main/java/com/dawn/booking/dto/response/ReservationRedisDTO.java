@@ -24,6 +24,8 @@ public class ReservationRedisDTO {
 
     private String voucherCode;
 
+    private String price;
+
     @Builder.Default
     private List<Long> seatsIds = new ArrayList<>();
 }

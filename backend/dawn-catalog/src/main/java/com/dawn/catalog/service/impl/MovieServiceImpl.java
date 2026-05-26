@@ -13,6 +13,7 @@ import com.dawn.common.core.dto.response.ResponsePage;
 import com.dawn.common.core.exception.wrapper.ResourceAlreadyExistedException;
 import com.dawn.common.core.exception.wrapper.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
@@ -29,6 +30,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class MovieServiceImpl implements MovieService {
     public static final String CACHE_INFO = "movie_info";
     public static final String CACHE_LIST = "movie_list";
@@ -42,6 +44,17 @@ public class MovieServiceImpl implements MovieService {
         return ResponsePage.of(movieRepository
                 .findAllWithFilter(m, pageable)
                 .map(MovieMappingHelper::map));
+    }
+
+    @Override
+//    @Cacheable(value = CACHE_INFO, key = "'batch' + #ids.hashCode()")
+    public List<MovieResponse> findAllByIds(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) return List.of();
+        log.info("Batch fetching {} movies", ids.size());
+        return movieRepository.findByIdIn(ids)
+                .stream()
+                .map(MovieMappingHelper::map)
+                .toList();
     }
 
     @Override

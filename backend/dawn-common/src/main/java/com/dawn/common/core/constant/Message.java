@@ -37,6 +37,12 @@ public class Message {
         public static final String PAYMENT_NOT_FOUND = "Payment not found";
         // Service
         public static final String INTERNAL_SERVICE_ERROR = "Internal Service Error";
+        // Voucher
+        public static final String VOUCHER_NOT_FOUND = "Voucher not found";
+        public static final String VOUCHER_EXPIRED = "Voucher has expired";
+        public static final String VOUCHER_OUT_OF_STOCK = "Voucher already taken, please try again";
+        public static final String VOUCHER_CONFLICT = "Voucher conflict";
+        public static final String VOUCHER_INACTIVE = "Voucher is inactive";
     }
 
 

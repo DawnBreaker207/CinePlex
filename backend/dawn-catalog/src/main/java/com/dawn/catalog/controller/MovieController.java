@@ -12,6 +12,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/movie")
 @Tag(name = "Movie", description = "Operations related to movie")
@@ -33,6 +35,11 @@ public class MovieController {
     @GetMapping("/filmId/{id}")
     public ResponseObject<MovieResponse> findByMovieId(@PathVariable String id) {
         return ResponseObject.success(movieService.findByMovieId(id));
+    }
+
+    @PostMapping("/batch")
+    public ResponseObject<List<MovieResponse>> findAllByIds(@RequestBody List<Long> ids) {
+        return ResponseObject.success(movieService.findAllByIds(ids));
     }
 
     @PostMapping("")

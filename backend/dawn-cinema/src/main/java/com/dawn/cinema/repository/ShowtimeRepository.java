@@ -3,6 +3,7 @@ package com.dawn.cinema.repository;
 import com.dawn.cinema.model.Showtime;
 import com.dawn.cinema.model.Theater;
 import io.lettuce.core.dynamic.annotation.Param;
+import org.springframework.boot.actuate.endpoint.Show;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -14,6 +15,9 @@ import java.util.List;
 public interface ShowtimeRepository extends JpaRepository<Showtime, Long> {
     //    Find showtime by date
     List<Showtime> findByShowDate(LocalDate date);
+
+    // Get batch showtime
+    List<Showtime> findByIdIn(List<Long> ids);
 
     //    Get all showtime for a movie
     Page<Showtime> findByMovieId(Long movieId, Pageable pageable);

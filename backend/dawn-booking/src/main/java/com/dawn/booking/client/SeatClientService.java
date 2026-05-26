@@ -10,6 +10,8 @@ public interface SeatClientService {
 
     List<SeatDTO> findAllById(List<Long> seatIds);
 
+    List<SeatDTO> findAllByReservationIds(List<String> reservationIds);
+
     List<SeatDTO> findAllByReservationId(String reservationId);
 
     List<SeatDTO> findAllByShowtimeId(Long showtimeId);

@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 
@@ -27,4 +28,6 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
     Page<Movie> findAllWithFilter(@Param("movie") MovieRequest movie, Pageable pageable);
 
     Optional<Movie> findByFilmId(String filmId);
+
+    List<Movie> findByIdIn(List<Long> ids);
 }

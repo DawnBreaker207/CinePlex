@@ -6,6 +6,8 @@ import com.dawn.identity.dto.response.UserResponse;
 import com.dawn.identity.model.Role;
 import org.springframework.data.domain.Pageable;
 
+import java.util.List;
+
 public interface UserService {
     ResponsePage<UserResponse> findAll(Pageable pageable);
 
@@ -16,6 +18,8 @@ public interface UserService {
     UserResponse updateStatus(Long id, Boolean status);
 
     UserResponse findByEmail(String email);
+
+    List<UserResponse> findAllByIds(List<Long> ids);
 
     boolean existsByRolesName(String roleName);
 

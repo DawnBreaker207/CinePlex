@@ -1,6 +1,7 @@
 package com.dawn.common.infra.web;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
@@ -16,6 +17,7 @@ import java.time.Duration;
 
 @Configuration
 @RequiredArgsConstructor
+@Slf4j
 public class WebConfig implements WebMvcConfigurer {
 
     @Override
@@ -36,6 +38,10 @@ public class WebConfig implements WebMvcConfigurer {
                 .builder()
                 .requestFactory(factory)
                 .defaultHeader("Content-Type", "application/json")
+                .requestInterceptor((request, body, execution) -> {
+                    log.info("[RestClient] {} {}", request.getMethod(), request.getURI());
+                    return execution.execute(request, body);
+                })
                 .build();
     }
 

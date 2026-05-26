@@ -12,6 +12,7 @@ import com.dawn.identity.repository.RoleRepository;
 import com.dawn.identity.repository.UserRepository;
 import com.dawn.identity.service.UserService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
@@ -19,8 +20,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class UserServiceImpl implements UserService {
     public static final String USER_CACHE = "user";
     private final UserRepository userRepository;
@@ -33,6 +37,17 @@ public class UserServiceImpl implements UserService {
                 userRepository
                         .findAll(pageable)
                         .map(UserMappingHelper::map));
+    }
+
+    @Override
+//    @Cacheable(value = USER_CACHE, key = "'batch' + #ids.hashCode()")
+    public List<UserResponse> findAllByIds(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) return List.of();
+        log.info("Batch fetching {} users", ids.size());
+        return userRepository.findByIdIn(ids)
+                .stream()
+                .map(UserMappingHelper::map)
+                .toList();
     }
 
     @Override

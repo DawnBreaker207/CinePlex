@@ -8,6 +8,7 @@ import com.dawn.catalog.helper.VoucherMappingHelper;
 import com.dawn.catalog.model.Voucher;
 import com.dawn.catalog.repository.VoucherRepository;
 import com.dawn.catalog.service.VoucherService;
+import com.dawn.common.core.constant.Message;
 import com.dawn.common.core.dto.response.ResponsePage;
 import com.dawn.common.core.exception.wrapper.InvalidRequestException;
 import com.dawn.common.core.exception.wrapper.ResourceAlreadyExistedException;
@@ -96,10 +97,22 @@ public class VoucherServiceImpl implements VoucherService {
     @Override
     @Transactional
     public void useVoucher(String code) {
-        log.info("User voucher: {}", code);
+        log.info("Using voucher: {}", code);
+
+        Voucher voucher = voucherRepository.findByCode(code)
+                .orElseThrow(() -> new ResourceNotFoundException(Message.Exception.VOUCHER_NOT_FOUND));
+
+        Instant now = Instant.now();
+        if (now.isAfter(voucher.getEndAt())) {
+            throw new InvalidRequestException(Message.Exception.VOUCHER_EXPIRED);
+        }
+        if (voucher.getQuantityUsed() >= voucher.getQuantityTotal()) {
+            throw new InvalidRequestException(Message.Exception.VOUCHER_OUT_OF_STOCK);
+        }
+
         int updated = voucherRepository.useVoucher(code, Instant.now());
         if (updated == 0) {
-            throw new ResourceNotFoundException("Voucher usage failed (Expired/No Stock)");
+            throw new ResourceNotFoundException(Message.Exception.VOUCHER_CONFLICT);
         }
     }
 

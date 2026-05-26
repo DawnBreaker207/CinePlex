@@ -20,6 +20,7 @@ public interface SeatRepository extends JpaRepository<Seat, Long> {
 
     List<Seat> findByShowtime(Showtime showtime);
 
+    List<Seat> findAllByReservationIdIn(List<String> ids);
 
     List<Seat> findAllByShowtimeId(Long showtimeId);
 

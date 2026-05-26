@@ -78,6 +78,30 @@ public class SeatClientServiceImpl implements SeatClientService {
 
     @Override
     @Retry(name = "internal")
+    public List<SeatDTO> findAllByReservationIds(List<String> reservationIds) {
+        ResponseObject<List<SeatDTO>> response = internalRestClient
+                .post()
+                .uri(url + "/seats/reservation/batch-by-reservations")
+                .body(reservationIds)
+                .retrieve()
+                .onStatus(HttpStatusCode::is4xxClientError, (req, res) -> {
+                    throw new ResourceNotFoundException(Message.Exception.SEAT_NOT_FOUND);
+                })
+                .onStatus(HttpStatusCode::is5xxServerError, (req, res) -> {
+                    throw new InternalServiceException(Message.Exception.INTERNAL_SERVICE_ERROR);
+                })
+                .body(new ParameterizedTypeReference<>() {
+                });
+
+        if (response != null && response.getData() != null) {
+            return response.getData();
+        }
+        return Collections.emptyList();
+    }
+
+
+    @Override
+    @Retry(name = "internal")
     public List<SeatDTO> findAllByReservationId(String reservationId) {
         ResponseObject<List<SeatDTO>> response = internalRestClient
                 .get()
