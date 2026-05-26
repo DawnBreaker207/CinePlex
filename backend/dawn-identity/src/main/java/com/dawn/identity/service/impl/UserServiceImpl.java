@@ -31,7 +31,7 @@ public class UserServiceImpl implements UserService {
     private final RoleRepository roleRepository;
 
     @Override
-//    @Cacheable(value = USER_CACHE)
+    @Cacheable(value = USER_CACHE)
     public ResponsePage<UserResponse> findAll(Pageable pageable) {
         return ResponsePage.of(
                 userRepository
@@ -40,7 +40,6 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-//    @Cacheable(value = USER_CACHE, key = "'batch' + #ids.hashCode()")
     public List<UserResponse> findAllByIds(List<Long> ids) {
         if (ids == null || ids.isEmpty()) return List.of();
         log.info("Batch fetching {} users", ids.size());

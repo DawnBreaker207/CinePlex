@@ -6,6 +6,7 @@ import com.dawn.report.repository.DashboardRepository;
 import com.dawn.report.service.DashboardService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -45,7 +46,7 @@ public class DashboardServiceImpl implements DashboardService {
     }
 
     @Override
-//    @Cacheable(value = "dashboard:metrics", key = "#req.movieId + ':' + #req.theaterId")
+    @Cacheable(value = "dashboard:metrics", key = "#req.movieId + ':' + #req.theaterId")
     public MetricsResponse getMetrics(DashboardFilterRequest req) {
         LocalDate end = req.getEndDate() != null ? req.getEndDate() : LocalDate.now();
         LocalDate start = req.getStartDate() != null ? req.getStartDate() : end.minusDays(30);
@@ -65,7 +66,7 @@ public class DashboardServiceImpl implements DashboardService {
     }
 
     @Override
-//    @Cacheable(value = "dashboard:revenue", key = "#req.movieId + ':' + #req.theaterId")
+    @Cacheable(value = "dashboard:revenue", key = "#req.movieId + ':' + #req.theaterId")
     public List<RevenuePointResponse> getRevenueOverTime(DashboardFilterRequest req) {
         LocalDate end = req.getEndDate() != null ? req.getEndDate() : LocalDate.now();
         LocalDate start = req.getStartDate() != null ? req.getStartDate() : end.minusDays(30);
@@ -74,7 +75,7 @@ public class DashboardServiceImpl implements DashboardService {
     }
 
     @Override
-//    @Cacheable(value = "dashboard:topMovies", key = "#req.movieId + ':' + #req.theaterId")
+    @Cacheable(value = "dashboard:topMovies", key = "#req.movieId + ':' + #req.theaterId")
     public List<TopMovieResponse> getTopMovies(DashboardFilterRequest req) {
         LocalDate end = req.getEndDate() != null ? req.getEndDate() : LocalDate.now();
         LocalDate start = req.getStartDate() != null ? req.getStartDate() : end.minusDays(30);
@@ -84,7 +85,7 @@ public class DashboardServiceImpl implements DashboardService {
     }
 
     @Override
-//    @Cacheable(value = "dashboard:topTheaters", key = "#req.movieId + ':' + #req.theaterId")
+    @Cacheable(value = "dashboard:topTheaters", key = "#req.movieId + ':' + #req.theaterId")
     public List<TopTheaterResponse> getTopTheaters(DashboardFilterRequest req) {
         LocalDate end = req.getEndDate() != null ? req.getEndDate() : LocalDate.now();
         LocalDate start = req.getStartDate() != null ? req.getStartDate() : end.minusDays(30);
@@ -94,7 +95,7 @@ public class DashboardServiceImpl implements DashboardService {
     }
 
     @Override
-//    @Cacheable(value = "dashboard:paymentDistribution", key = "#req.movieId + ':' + #req.theaterId")
+    @Cacheable(value = "dashboard:paymentDistribution", key = "#req.movieId + ':' + #req.theaterId")
     public List<PaymentDistribution> getPaymentDistribution(DashboardFilterRequest req) {
         LocalDate end = req.getEndDate() != null ? req.getEndDate() : LocalDate.now();
         LocalDate start = req.getStartDate() != null ? req.getStartDate() : end.minusDays(30);

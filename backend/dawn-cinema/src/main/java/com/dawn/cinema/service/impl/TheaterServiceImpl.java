@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,7 +31,7 @@ public class TheaterServiceImpl implements TheaterService {
     private final ShowtimeRepository showtimeRepository;
 
     @Override
-//    @Cacheable(value = THEATER_CACHE)
+    @Cacheable(value = THEATER_CACHE)
     public ResponsePage<TheaterResponse> findAll(Pageable pageable) {
 
         return ResponsePage.of(
@@ -44,7 +45,7 @@ public class TheaterServiceImpl implements TheaterService {
     }
 
     @Override
-//    @Cacheable(value = THEATER_CACHE, key = "'location:' + #location")
+    @Cacheable(value = THEATER_CACHE, key = "'location:' + #location")
     public ResponsePage<TheaterResponse> findByLocation(String location, Pageable pageable) {
         log.info("Search theater by location {}", location);
         return ResponsePage.of(theaterRepository
@@ -57,7 +58,7 @@ public class TheaterServiceImpl implements TheaterService {
     }
 
     @Override
-//    @Cacheable(value = THEATER_CACHE, key = "'id:' + #id")
+    @Cacheable(value = THEATER_CACHE, key = "'id:' + #id")
     public TheaterResponse findOne(Long id) {
 
         return theaterRepository

@@ -38,10 +38,10 @@ public class WebConfig implements WebMvcConfigurer {
                 .builder()
                 .requestFactory(factory)
                 .defaultHeader("Content-Type", "application/json")
-                .requestInterceptor((request, body, execution) -> {
-                    log.info("[RestClient] {} {}", request.getMethod(), request.getURI());
-                    return execution.execute(request, body);
-                })
+//                .requestInterceptor((request, body, execution) -> {
+//                    log.info("[RestClient] {} {}", request.getMethod(), request.getURI());
+//                    return execution.execute(request, body);
+//                })
                 .build();
     }
 

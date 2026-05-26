@@ -47,7 +47,6 @@ public class MovieServiceImpl implements MovieService {
     }
 
     @Override
-//    @Cacheable(value = CACHE_INFO, key = "'batch' + #ids.hashCode()")
     public List<MovieResponse> findAllByIds(List<Long> ids) {
         if (ids == null || ids.isEmpty()) return List.of();
         log.info("Batch fetching {} movies", ids.size());
