@@ -1,6 +1,5 @@
 package com.dawn.cinema.repository;
 
-import com.dawn.cinema.dto.response.SeatResponse;
 import com.dawn.cinema.model.Seat;
 import com.dawn.cinema.model.Showtime;
 import com.dawn.common.core.constant.SeatStatus;

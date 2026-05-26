@@ -2,7 +2,6 @@ package com.dawn.cinema.service;
 
 import com.dawn.cinema.dto.request.SeatRequest;
 import com.dawn.cinema.dto.response.SeatResponse;
-import com.dawn.cinema.dto.response.ShowtimeResponse;
 import com.dawn.cinema.model.Seat;
 import com.dawn.cinema.model.Showtime;
 

@@ -1,7 +1,6 @@
 package com.dawn.booking.client.impl;
 
 import com.dawn.booking.client.UserClientService;
-import com.dawn.booking.dto.response.MovieDTO;
 import com.dawn.booking.dto.response.RoleDTO;
 import com.dawn.booking.dto.response.UserDTO;
 import com.dawn.common.core.constant.Message;

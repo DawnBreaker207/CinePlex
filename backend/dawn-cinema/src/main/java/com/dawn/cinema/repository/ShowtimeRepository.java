@@ -3,7 +3,6 @@ package com.dawn.cinema.repository;
 import com.dawn.cinema.model.Showtime;
 import com.dawn.cinema.model.Theater;
 import io.lettuce.core.dynamic.annotation.Param;
-import org.springframework.boot.actuate.endpoint.Show;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

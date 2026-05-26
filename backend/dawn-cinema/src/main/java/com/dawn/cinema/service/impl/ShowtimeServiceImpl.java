@@ -1,5 +1,6 @@
 package com.dawn.cinema.service.impl;
 
+import com.dawn.cinema.client.MovieClientCinemaService;
 import com.dawn.cinema.dto.request.ShowtimeFilterRequest;
 import com.dawn.cinema.dto.request.ShowtimeRequest;
 import com.dawn.cinema.dto.response.MovieDTO;
@@ -11,7 +12,6 @@ import com.dawn.cinema.model.Theater;
 import com.dawn.cinema.repository.SeatRepository;
 import com.dawn.cinema.repository.ShowtimeRepository;
 import com.dawn.cinema.repository.TheaterRepository;
-import com.dawn.cinema.client.MovieClientCinemaService;
 import com.dawn.cinema.service.ShowtimeService;
 import com.dawn.common.core.constant.Message;
 import com.dawn.common.core.constant.SeatStatus;
@@ -29,7 +29,6 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 @Service
