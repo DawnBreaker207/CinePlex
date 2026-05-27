@@ -155,8 +155,8 @@ resilience4j:
 
 service:
   url:
-    base: http://localhost:8888/api/v1
-    frontend: http://localhost:4200
+    base: ${BACKEND_BASE_URL}
+    frontend: ${FRONTEND_BASE_URL}
 management:
   endpoints:
     web:

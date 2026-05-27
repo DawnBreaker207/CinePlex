@@ -2,6 +2,41 @@
 @import "tailwindcss";
 @import "quill/dist/quill.snow.css";
 
+.ant-layout,
+.ant-layout-content,
+.ant-layout-sider,
+.ant-layout-header {
+  background: transparent !important;
+  height: auto !important;
+  line-height: inherit !important;
+  padding: 0 !important;
+}
+
+.ant-layout-footer {
+  background: transparent !important;
+  padding: 0 !important;
+}
+
+.ant-input,
+.ant-input-affix-wrapper,
+.ant-select-selector,
+.ant-picker {
+  background-color: #ffffff !important;
+  color: #1e293b !important;
+  border-color: #e2e8f0 !important;
+}
+
+.ant-input::placeholder {
+  color: #94a3b8 !important;
+}
+.ant-input:focus,
+.ant-input-focused,
+.ant-select-focused .ant-select-selector,
+.ant-picker-focused {
+  border-color: #6366f1 !important;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1) !important;
+}
+
 body {
   font-family:
     -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
