@@ -4,10 +4,8 @@ import com.dawn.common.core.constant.PaymentMethod;
 import com.dawn.common.core.constant.PaymentStatus;
 import com.dawn.common.core.exception.wrapper.ResourceNotFoundException;
 import com.dawn.payment.dto.request.PaymentRequest;
-import com.dawn.payment.dto.request.PaymentUpdateRequest;
 import com.dawn.payment.dto.response.PaymentHandlerResponse;
 import com.dawn.payment.dto.response.PaymentResponse;
-import com.dawn.payment.dto.response.ReservationDTO;
 import com.dawn.payment.handler.PaymentHandler;
 import com.dawn.payment.model.Payment;
 import com.dawn.payment.repository.PaymentRepository;
@@ -20,6 +18,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -44,6 +43,8 @@ class PaymentServiceImplTest {
     PaymentHandler vnpayHandler;
     @Mock
     PaymentHandler momoHandler;
+    @Mock
+    RabbitTemplate rabbitTemplate;
 
     PaymentServiceImpl service;
 
@@ -53,7 +54,6 @@ class PaymentServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        // VNPAY handler supports "VNPAY", Momo supports "MOMO"
         when(vnpayHandler.supports(VNPAY)).thenReturn(true);
         when(vnpayHandler.supports(MOMO)).thenReturn(false);
         when(momoHandler.supports(MOMO)).thenReturn(true);
@@ -62,7 +62,8 @@ class PaymentServiceImplTest {
         service = new PaymentServiceImpl(
                 List.of(vnpayHandler, momoHandler),
                 paymentRepository,
-                reservationClientService);
+                reservationClientService,
+                rabbitTemplate);
     }
 
     // ----------------------------------------------------------------
@@ -82,11 +83,9 @@ class PaymentServiceImplTest {
             PaymentRequest req = buildRequest(VNPAY, 100_000);
             PaymentResponse response = service.createPayment(req, "127.0.0.1");
 
-            // Verify URL trả về đúng
             assertThat(response.getCode()).isEqualTo("ok");
             assertThat(response.getPaymentUrl()).isEqualTo("https://vnpay.test/pay?token=abc");
 
-            // Verify Payment được lưu đúng trạng thái
             ArgumentCaptor<Payment> captor = ArgumentCaptor.forClass(Payment.class);
             verify(paymentRepository).save(captor.capture());
             Payment saved = captor.getValue();
@@ -121,7 +120,7 @@ class PaymentServiceImplTest {
         }
 
         @Test
-        @DisplayName("provider null → method = UNKNOWN, vẫn throw vì không có handler")
+        @DisplayName("provider null → throw vì không có handler")
         void createPayment_nullProvider_shouldThrow() {
             PaymentRequest req = buildRequest(null, 100_000);
 
@@ -139,7 +138,7 @@ class PaymentServiceImplTest {
     class ProcessCallbackIdempotency {
 
         @Test
-        @DisplayName("callback lần 2 với payment đã PAID → trả về success=true, KHÔNG gọi confirm lại")
+        @DisplayName("callback lần 2 với payment đã PAID → trả về success=true, KHÔNG lưu lại")
         void processCallback_alreadyPaid_shouldReturnSuccessWithoutConfirm() {
             Map<String, String> params = Map.of("vnp_TxnRef", RES_ID);
             when(vnpayHandler.getId(params)).thenReturn(RES_ID);
@@ -152,27 +151,22 @@ class PaymentServiceImplTest {
             assertThat(response.isSuccess()).isTrue();
             assertThat(response.getReservationId()).isEqualTo(RES_ID);
 
-            // Idempotency: confirm KHÔNG được gọi lần 2
-            verify(reservationClientService, never()).confirm(any());
             verify(paymentRepository, never()).saveAndFlush(any());
         }
 
         @Test
-        @DisplayName("duplicate callback đồng thời — payment đã PAID → không double-confirm")
-        void processCallback_duplicateCallback_shouldNotDoubleConfirm() {
+        @DisplayName("duplicate callback — payment đã PAID → không double-process")
+        void processCallback_duplicateCallback_shouldNotDoubleProcess() {
             Map<String, String> params = Map.of("vnp_TxnRef", RES_ID);
             when(vnpayHandler.getId(params)).thenReturn(RES_ID);
 
-            // Lần đầu PENDING, sau khi check idempotency thì gọi tiếp
-            // Giả lập: lần gọi thứ nhất thấy PAID (đã được xử lý bởi thread khác)
             Payment paid = buildPayment(RES_ID, PaymentStatus.PAID, PaymentMethod.VNPAY);
             when(paymentRepository.findByReservationId(RES_ID)).thenReturn(Optional.of(paid));
 
             service.processCallback(VNPAY, params);
-            service.processCallback(VNPAY, params); // gọi lần 2
+            service.processCallback(VNPAY, params);
 
-            // confirm chỉ 0 lần (cả 2 lần đều thấy PAID)
-            verify(reservationClientService, never()).confirm(any());
+            verify(paymentRepository, never()).saveAndFlush(any());
         }
     }
 
@@ -185,36 +179,27 @@ class PaymentServiceImplTest {
     class ProcessCallbackHappyPath {
 
         @Test
-        @DisplayName("VNPAY callback hợp lệ → updatePayment PAID, confirm reservation, update amount")
-        void processCallback_vnpay_success_shouldUpdateAndConfirm() {
+        @DisplayName("VNPAY callback hợp lệ → update PAID, publish event")
+        void processCallback_vnpay_success_shouldUpdateAndPublish() {
             Map<String, String> params = Map.of("vnp_TxnRef", RES_ID);
             when(vnpayHandler.getId(params)).thenReturn(RES_ID);
 
             Payment pending = buildPayment(RES_ID, PaymentStatus.PENDING, PaymentMethod.VNPAY);
-            // findByReservationId được gọi 2 lần: lần 1 check idempotency, lần 2 update amount
-            when(paymentRepository.findByReservationId(RES_ID))
-                    .thenReturn(Optional.of(pending))  // lần 1: idempotency check → PENDING
-                    .thenReturn(Optional.of(pending)); // lần 2: sau updatePayment
-
-            ReservationDTO reservation = buildReservationDTO(RES_ID, new BigDecimal("95000"));
-            when(reservationClientService.confirm(RES_ID)).thenReturn(reservation);
-
-            // updatePayment gọi findByReservationId nội bộ
-            Payment updatingPayment = buildPayment(RES_ID, PaymentStatus.PENDING, PaymentMethod.VNPAY);
-            // saveAndFlush trong updatePayment
-            when(paymentRepository.saveAndFlush(any())).thenReturn(updatingPayment);
+            when(paymentRepository.findByReservationId(RES_ID)).thenReturn(Optional.of(pending));
+            when(paymentRepository.saveAndFlush(any())).thenReturn(pending);
 
             PaymentHandlerResponse response = service.processCallback(VNPAY, params);
 
             assertThat(response.isSuccess()).isTrue();
             assertThat(response.getReservationId()).isEqualTo(RES_ID);
 
-            // Verify confirm được gọi
-            verify(reservationClientService).confirm(RES_ID);
+            // Verify payment được lưu với trạng thái PAID
+            ArgumentCaptor<Payment> captor = ArgumentCaptor.forClass(Payment.class);
+            verify(paymentRepository).saveAndFlush(captor.capture());
+            assertThat(captor.getValue().getStatus()).isEqualTo(PaymentStatus.PAID);
 
-            // Verify payment amount được update từ reservation
-            verify(paymentRepository).save(argThat(p ->
-                    p.getAmount().compareTo(new BigDecimal("95000")) == 0));
+            // Verify event được publish
+            verify(rabbitTemplate).convertAndSend(anyString(), anyString(), any(Object.class));
         }
 
         @Test
@@ -224,12 +209,7 @@ class PaymentServiceImplTest {
             when(momoHandler.getId(params)).thenReturn(RES_ID);
 
             Payment pending = buildPayment(RES_ID, PaymentStatus.PENDING, PaymentMethod.MOMO);
-            when(paymentRepository.findByReservationId(RES_ID))
-                    .thenReturn(Optional.of(pending))
-                    .thenReturn(Optional.of(pending));
-
-            ReservationDTO reservation = buildReservationDTO(RES_ID, new BigDecimal("100000"));
-            when(reservationClientService.confirm(RES_ID)).thenReturn(reservation);
+            when(paymentRepository.findByReservationId(RES_ID)).thenReturn(Optional.of(pending));
             when(paymentRepository.saveAndFlush(any())).thenReturn(pending);
 
             PaymentHandlerResponse response = service.processCallback(MOMO, params);
@@ -240,7 +220,7 @@ class PaymentServiceImplTest {
     }
 
     // ----------------------------------------------------------------
-    // processCallback — failure / exception path
+    // processCallback — failure path
     // ----------------------------------------------------------------
 
     @Nested
@@ -259,114 +239,25 @@ class PaymentServiceImplTest {
         }
 
         @Test
-        @DisplayName("confirm reservation throw → cancel được gọi, trả về success=false")
-        void processCallback_confirmThrows_shouldCancelAndReturnFail() {
+        @DisplayName("saveAndFlush throw → publish PaymentFailedEvent, trả về success=false")
+        void processCallback_saveThrows_shouldPublishFailedEvent() {
             Map<String, String> params = Map.of("vnp_TxnRef", RES_ID);
             when(vnpayHandler.getId(params)).thenReturn(RES_ID);
 
             Payment pending = buildPayment(RES_ID, PaymentStatus.PENDING, PaymentMethod.VNPAY);
-            when(paymentRepository.findByReservationId(RES_ID))
-                    .thenReturn(Optional.of(pending))
-                    .thenReturn(Optional.of(pending));
-            when(paymentRepository.saveAndFlush(any())).thenReturn(pending);
-
-            // confirm throw
-            when(reservationClientService.confirm(RES_ID))
-                    .thenThrow(new RuntimeException("Booking service down"));
+            when(paymentRepository.findByReservationId(RES_ID)).thenReturn(Optional.of(pending));
+            when(paymentRepository.saveAndFlush(any()))
+                    .thenThrow(new RuntimeException("DB error"));
 
             PaymentHandlerResponse response = service.processCallback(VNPAY, params);
 
             assertThat(response.isSuccess()).isFalse();
             assertThat(response.getMessage()).isEqualTo("Internal Error");
-            // cancel phải được gọi khi confirm fail
-            verify(reservationClientService).cancel(RES_ID);
-        }
 
-        @Test
-        @DisplayName("updatePayment throw IllegalStateException (PAID race) → cancel được gọi")
-        void processCallback_updatePaymentRace_shouldCancelAndReturnFail() {
-            Map<String, String> params = Map.of("vnp_TxnRef", RES_ID);
-            when(vnpayHandler.getId(params)).thenReturn(RES_ID);
-
-            Payment pending = buildPayment(RES_ID, PaymentStatus.PENDING, PaymentMethod.VNPAY);
-            // Lần 1: idempotency check thấy PENDING
-            // Lần 2 (trong updatePayment): thấy PAID → throw IllegalStateException
-            Payment paid = buildPayment(RES_ID, PaymentStatus.PAID, PaymentMethod.VNPAY);
-            when(paymentRepository.findByReservationId(RES_ID))
-                    .thenReturn(Optional.of(pending))  // idempotency check
-                    .thenReturn(Optional.of(paid));    // updatePayment thấy đã PAID
-
-            PaymentHandlerResponse response = service.processCallback(VNPAY, params);
-
-            assertThat(response.isSuccess()).isFalse();
-            verify(reservationClientService).cancel(RES_ID);
-            verify(reservationClientService, never()).confirm(any());
+            // Verify PaymentFailedEvent được publish
+            verify(rabbitTemplate).convertAndSend(anyString(), anyString(), any(Object.class));
         }
     }
-
-    // ----------------------------------------------------------------
-    // updatePayment
-    // ----------------------------------------------------------------
-
-    @Nested
-    @DisplayName("updatePayment")
-    class UpdatePayment {
-
-        @Test
-        @DisplayName("PENDING → PAID: status và method được update, saveAndFlush được gọi")
-        void updatePayment_pendingToPaid_shouldUpdate() {
-            Payment pending = buildPayment(RES_ID, PaymentStatus.PENDING, PaymentMethod.VNPAY);
-            when(paymentRepository.findByReservationId(RES_ID)).thenReturn(Optional.of(pending));
-            when(paymentRepository.saveAndFlush(any())).thenReturn(pending);
-
-            PaymentUpdateRequest req = PaymentUpdateRequest.builder()
-                    .reservationId(RES_ID)
-                    .method(PaymentMethod.VNPAY)
-                    .isSuccess(true)
-                    .build();
-
-            service.updatePayment(req);
-
-            ArgumentCaptor<Payment> captor = ArgumentCaptor.forClass(Payment.class);
-            verify(paymentRepository).saveAndFlush(captor.capture());
-            assertThat(captor.getValue().getStatus()).isEqualTo(PaymentStatus.PAID);
-            assertThat(captor.getValue().getMethod()).isEqualTo(PaymentMethod.VNPAY);
-        }
-
-        @Test
-        @DisplayName("đã PAID → throw IllegalStateException (guard double-update)")
-        void updatePayment_alreadyPaid_shouldThrow() {
-            Payment paid = buildPayment(RES_ID, PaymentStatus.PAID, PaymentMethod.VNPAY);
-            when(paymentRepository.findByReservationId(RES_ID)).thenReturn(Optional.of(paid));
-
-            PaymentUpdateRequest req = PaymentUpdateRequest.builder()
-                    .reservationId(RES_ID)
-                    .method(PaymentMethod.VNPAY)
-                    .isSuccess(true)
-                    .build();
-
-            assertThatThrownBy(() -> service.updatePayment(req))
-                    .isInstanceOf(IllegalStateException.class);
-
-            verify(paymentRepository, never()).saveAndFlush(any());
-        }
-
-        @Test
-        @DisplayName("reservationId không tồn tại → throw ResourceNotFoundException")
-        void updatePayment_notFound_shouldThrow() {
-            when(paymentRepository.findByReservationId(RES_ID)).thenReturn(Optional.empty());
-
-            PaymentUpdateRequest req = PaymentUpdateRequest.builder()
-                    .reservationId(RES_ID)
-                    .method(PaymentMethod.VNPAY)
-                    .isSuccess(true)
-                    .build();
-
-            assertThatThrownBy(() -> service.updatePayment(req))
-                    .isInstanceOf(ResourceNotFoundException.class);
-        }
-    }
-
 
     // ----------------------------------------------------------------
     // manualCheck
@@ -415,7 +306,6 @@ class PaymentServiceImplTest {
         @Test
         @DisplayName("provider lowercase → vẫn map đúng PaymentMethod")
         void checkPaymentMethod_lowercaseProvider_shouldMap() {
-            // supports() mock phải trả true cho lowercase
             when(vnpayHandler.supports("vnpay")).thenReturn(true);
             when(vnpayHandler.createPaymentUrl(any(), anyInt(), any()))
                     .thenReturn("https://vnpay.test");
@@ -431,7 +321,6 @@ class PaymentServiceImplTest {
         @Test
         @DisplayName("provider không map được → method = UNKNOWN")
         void checkPaymentMethod_unknownProvider_shouldReturnUnknown() {
-            // Tạo handler giả hỗ trợ "WEIRD"
             PaymentHandler weirdHandler = mock(PaymentHandler.class);
             when(weirdHandler.supports("WEIRD")).thenReturn(true);
             when(weirdHandler.supports(VNPAY)).thenReturn(false);
@@ -439,10 +328,12 @@ class PaymentServiceImplTest {
             when(weirdHandler.createPaymentUrl(any(), anyInt(), any()))
                     .thenReturn("https://weird.test");
 
+            // FIX: truyền đủ 4 tham số
             PaymentServiceImpl svcWithWeird = new PaymentServiceImpl(
                     List.of(vnpayHandler, momoHandler, weirdHandler),
                     paymentRepository,
-                    reservationClientService);
+                    reservationClientService,
+                    rabbitTemplate);
 
             PaymentRequest req = buildRequest("WEIRD", 100_000);
             svcWithWeird.createPayment(req, "127.0.0.1");
@@ -474,13 +365,6 @@ class PaymentServiceImplTest {
                 .method(method)
                 .status(status)
                 .createdAt(Instant.now())
-                .build();
-    }
-
-    private ReservationDTO buildReservationDTO(String id, BigDecimal total) {
-        return ReservationDTO.builder()
-                .id(id)
-                .totalAmount(total)
                 .build();
     }
 }

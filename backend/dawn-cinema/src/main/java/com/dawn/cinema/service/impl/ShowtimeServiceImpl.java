@@ -21,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,6 +30,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -77,12 +79,22 @@ public class ShowtimeServiceImpl implements ShowtimeService {
         Theater theater = theaterRepository
                 .findById(req.getTheaterId())
                 .orElseThrow(() -> new ResourceNotFoundException(Message.Exception.THEATER_NOT_FOUND));
-        return ResponsePage.of(showtimeRepository
-                .findByTheater(theater, start, end, pageable)
-                .map((showtime) -> {
-                    MovieDTO movie = movieService.findOne(showtime.getMovieId());
-                    return ShowtimeMappingHelper.map(showtime, movie);
-                }));
+        Page<Showtime> showtimePage = showtimeRepository
+                .findByTheater(theater, start, end, pageable);
+        List<Long> movieIds = showtimePage.getContent()
+                .stream()
+                .map(Showtime::getMovieId)
+                .distinct()
+                .toList();
+        Map<Long, MovieDTO> movieCache = movieService
+                .findAllByIds(movieIds)
+                .stream()
+                .collect(Collectors.toMap(MovieDTO::getId, Function.identity()));
+        return ResponsePage.of(
+                showtimePage.map(
+                        showtime -> ShowtimeMappingHelper.map(
+                                showtime,
+                                movieCache.get(showtime.getMovieId()))));
     }
 
     @Override

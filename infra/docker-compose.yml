@@ -37,7 +37,7 @@ services:
         ]
       interval: 10s
       timeout: 5s
-      retries: 10 
+      retries: 10
     networks:
       - booking-net
   redis:
@@ -56,7 +56,7 @@ services:
       - '15672:15672'
     networks:
       - booking-net
-  server:
+  backend:
     container_name: backend
     image: backend:latest
     environment:
@@ -113,6 +113,12 @@ services:
       OPEN_ROUTER_URL: ${OPEN_ROUTER_URL}
       OPEN_ROUTER_API_KEY: ${OPEN_ROUTER_API_KEY}
       OPEN_ROUTER_API_MODEL: ${OPEN_ROUTER_API_MODEL}
+      LOKI_URL: ${LOKI_URL}
+      ZIPKIN_URL: ${ZIPKIN_URL}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+      RABBITMQ_HOST: ${RABBITMQ_HOST}
+      RABBITMQ_PORT: ${RABBITMQ_PORT}
     build:
       context: ../backend
       dockerfile: Dockerfile
@@ -140,7 +146,7 @@ services:
       context: .
       dockerfile: Dockerfile.nginx
     depends_on:
-      - server
+      - backend
       - client
     networks:
       - booking-net

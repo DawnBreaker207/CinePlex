@@ -106,7 +106,7 @@ configs:
         - job_name: 'backend'
           metrics_path: '/actuator/prometheus'
           static_configs:
-            - targets: ['server:8888']
+            - targets: ['backend:8888']
 
   tempo_config:
     content: |
