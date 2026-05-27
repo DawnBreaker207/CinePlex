@@ -1,7 +1,6 @@
 package com.dawn.notification.service;
 
 import com.dawn.common.core.constant.RabbitMQConstants;
-import com.dawn.common.core.dto.request.BookingNotificationEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -17,14 +16,6 @@ import java.util.Map;
 public class RabbitListenerNotify {
 
     private final SimpMessagingTemplate messagingTemplate;
-
-    private final EmailService emailService;
-
-    @RabbitListener(queues = RabbitMQConstants.QUEUE_NOTIFY)
-    public void handleBookingEvent(BookingNotificationEvent event) {
-        log.info("Received booking event for: {}", event.getReservationId());
-        emailService.sendReservationEmail(event);
-    }
 
     @RabbitListener(queues = RabbitMQConstants.QUEUE_DASHBOARD)
     public void handleUpdateDashboard() {

@@ -3,27 +3,28 @@ package com.dawn.payment.service.impl;
 import com.dawn.common.core.constant.Message;
 import com.dawn.common.core.constant.PaymentMethod;
 import com.dawn.common.core.constant.PaymentStatus;
-import com.dawn.common.core.exception.wrapper.ResourceAlreadyExistedException;
+import com.dawn.common.core.constant.RabbitMQConstants;
+import com.dawn.common.core.dto.event.PaymentCompletedEvent;
+import com.dawn.common.core.dto.event.PaymentFailedEvent;
 import com.dawn.common.core.exception.wrapper.ResourceNotFoundException;
 import com.dawn.payment.dto.request.PaymentRequest;
-import com.dawn.payment.dto.request.PaymentUpdateRequest;
 import com.dawn.payment.dto.response.PaymentHandlerResponse;
 import com.dawn.payment.dto.response.PaymentResponse;
-import com.dawn.payment.dto.response.ReservationDTO;
 import com.dawn.payment.handler.PaymentHandler;
 import com.dawn.payment.model.Payment;
 import com.dawn.payment.repository.PaymentRepository;
 import com.dawn.payment.service.PaymentService;
 import com.dawn.payment.service.ReservationClientService;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @Service
 @Slf4j
@@ -35,6 +36,8 @@ public class PaymentServiceImpl implements PaymentService {
     private final PaymentRepository paymentRepository;
 
     private final ReservationClientService reservationClientService;
+
+    private final RabbitTemplate rabbitTemplate;
 
     public PaymentResponse createPayment(PaymentRequest req, String ip) {
         PaymentHandler handler = findHandler(req.getPaymentType());
@@ -63,48 +66,59 @@ public class PaymentServiceImpl implements PaymentService {
     @Override
     public PaymentHandlerResponse processCallback(String provider, Map<String, String> params) {
         PaymentHandler handler = findHandler(provider);
-        String id = handler.getId(params);
+        String reservationId = handler.getId(params);
 
         log.info("Handler payment: {}", handler);
         Payment existing = paymentRepository
-                .findByReservationId(id)
+                .findByReservationId(reservationId)
                 .orElseThrow(() -> new ResourceNotFoundException(Message.Exception.PAYMENT_NOT_FOUND));
 
         if (PaymentStatus.PAID.equals(existing.getStatus())) {
             return PaymentHandlerResponse.builder()
-                    .reservationId(id)
+                    .reservationId(reservationId)
                     .success(true)
                     .build();
         }
         try {
             log.info("Process callback received {}", provider);
             // Save payment first
-            updatePayment(PaymentUpdateRequest
-                    .builder()
-                    .reservationId(id)
-                    .method(checkPaymentMethod(provider))
-                    .isSuccess(true)
-                    .build());
+            existing.setStatus(PaymentStatus.PAID);
+            existing.setMethod(checkPaymentMethod(provider));
+            existing.setCreatedAt(Instant.now());
+            paymentRepository.saveAndFlush(existing);
 
-            // Save confirm reservation
-            ReservationDTO reservation = reservationClientService.confirm(id);
-            log.info("Get reservation from payment {}", reservation);
-
-            // Update amount from reservation
-            Payment payment = paymentRepository.findByReservationId(id).get();
-            payment.setAmount(reservation.getTotalAmount());
-            paymentRepository.save(payment);
+            // Publish event
+            PaymentCompletedEvent event = buildCompleteEvent(existing, provider);
+            rabbitTemplate.convertAndSend(
+                    RabbitMQConstants.EXCHANGE_PAYMENT,
+                    RabbitMQConstants.RK_PAYMENT_COMPLETED,
+                    event);
+            log.info("Published PaymentCompletedEvent for reservation: {}, eventId: {}",
+                    reservationId, event.eventId());
 
             return PaymentHandlerResponse.builder()
-                    .reservationId(id)
+                    .reservationId(reservationId)
                     .success(true)
                     .build();
         } catch (Exception ex) {
-            log.info("Failed with id {}", id);
-            reservationClientService.cancel(id);
+            log.error("Failed to process callback for reservation: {}", reservationId, ex);
+            PaymentFailedEvent failedEvent = PaymentFailedEvent
+                    .builder()
+                    .eventId(UUID.randomUUID().toString())
+                    .reservationId(reservationId)
+                    .reason(ex.getMessage())
+                    .failedAt(Instant.now())
+                    .build();
+
+            rabbitTemplate.convertAndSend(
+                    RabbitMQConstants.EXCHANGE_PAYMENT,
+                    RabbitMQConstants.RK_PAYMENT_FAILED,
+                    failedEvent);
+            log.info("Published PaymentFailedEvent for reservation: {}", reservationId);
+
             return PaymentHandlerResponse
                     .builder()
-                    .reservationId(id)
+                    .reservationId(reservationId)
                     .success(false)
                     .message("Internal Error")
                     .build();
@@ -120,21 +134,6 @@ public class PaymentServiceImpl implements PaymentService {
             return true;
         }
         return false;
-    }
-
-    @Transactional
-    public void updatePayment(PaymentUpdateRequest request) {
-
-        Payment existing = paymentRepository
-                .findByReservationId(request.getReservationId())
-                .orElseThrow(() -> new ResourceNotFoundException(Message.Exception.PAYMENT_NOT_FOUND));
-        if (PaymentStatus.PAID.equals(existing.getStatus())) {
-            throw new IllegalStateException(Message.Exception.PAYMENT_COMPLETE);
-        }
-
-        existing.setStatus(PaymentStatus.PAID);
-        existing.setMethod(request.getMethod());
-        paymentRepository.saveAndFlush(existing);
     }
 
     private PaymentHandler findHandler(String provider) {
@@ -156,5 +155,15 @@ public class PaymentServiceImpl implements PaymentService {
             log.warn("Unknown provider: {}. Default to UNKNOWN", paymentMethod);
             return PaymentMethod.UNKNOWN;
         }
+    }
+
+    private PaymentCompletedEvent buildCompleteEvent(Payment payment, String provider) {
+        return PaymentCompletedEvent.builder()
+                .eventId(UUID.randomUUID().toString())
+                .reservationId(payment.getReservationId())
+                .amount(payment.getAmount())
+                .method(checkPaymentMethod(provider))
+                .paidAt(Instant.now())
+                .build();
     }
 }

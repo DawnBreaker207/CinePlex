@@ -6,7 +6,7 @@ import com.dawn.booking.client.MovieClientBookingService;
 import com.dawn.booking.service.ReservationRedisService;
 import com.dawn.booking.client.UserClientService;
 import com.dawn.common.core.constant.RabbitMQConstants;
-import com.dawn.common.core.dto.request.BookingNotificationEvent;
+import com.dawn.common.core.dto.event.BookingCompleteEvent;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -54,7 +54,7 @@ public class ReservationNotificationHelper {
                     .of(showtime.getShowDate(), showtime.getShowTime())
                     .format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"));
 
-            BookingNotificationEvent event = BookingNotificationEvent
+            BookingCompleteEvent event = BookingCompleteEvent
                     .builder()
                     .to(user.getEmail())
                     .name(user.getUsername())
@@ -68,13 +68,13 @@ public class ReservationNotificationHelper {
                     .build();
 
             rabbitTemplate.convertAndSend(
-                    RabbitMQConstants.EXCHANGE_NOTIFY,
-                    RabbitMQConstants.ROUTING_KEY_NOTIFY,
+                    RabbitMQConstants.EXCHANGE_NOTIFICATION,
+                    RabbitMQConstants.RK_NOTIFICATION_RESERVATION_COMPLETED,
                     event);
 
             rabbitTemplate.convertAndSend(
-                    RabbitMQConstants.EXCHANGE_NOTIFY,
-                    RabbitMQConstants.ROUTING_KEY_DASHBOARD,
+                    RabbitMQConstants.EXCHANGE_NOTIFICATION,
+                    RabbitMQConstants.RK_DASHBOARD_REFRESH,
                     Collections.singletonMap("action", "REFRESH"));
         } catch (Exception e) {
             log.error("Failed to send notification for reservation {} ", reservation.getId(), e);

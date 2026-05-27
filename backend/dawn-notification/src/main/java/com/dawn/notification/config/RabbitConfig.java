@@ -1,10 +1,7 @@
 package com.dawn.notification.config;
 
 import com.dawn.common.core.constant.RabbitMQConstants;
-import org.springframework.amqp.core.Binding;
-import org.springframework.amqp.core.BindingBuilder;
-import org.springframework.amqp.core.Queue;
-import org.springframework.amqp.core.TopicExchange;
+import org.springframework.amqp.core.*;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -12,26 +9,29 @@ import org.springframework.context.annotation.Configuration;
 public class RabbitConfig {
 
     @Bean
-    public Queue queueNotify() {
-        return new Queue(RabbitMQConstants.QUEUE_NOTIFY);
-    }
-
-    @Bean
-    public Queue queueDashboard(){
-        return new Queue(RabbitMQConstants.QUEUE_DASHBOARD);
-    }
-
-    @Bean
     public TopicExchange exchange() {
-        return new TopicExchange(RabbitMQConstants.EXCHANGE_NOTIFY);
+        return new TopicExchange(RabbitMQConstants.EXCHANGE_NOTIFICATION);
     }
 
+    @Bean
+    public Queue queueNotify() {
+        return new Queue(RabbitMQConstants.QUEUE_NOTIFICATION_RESERVATION_COMPLETED);
+    }
+
+    //
     @Bean
     public Binding bindingNotify(Queue queueNotify, TopicExchange exchange) {
         return BindingBuilder
                 .bind(queueNotify)
                 .to(exchange)
-                .with(RabbitMQConstants.ROUTING_KEY_NOTIFY);
+                .with(RabbitMQConstants.RK_NOTIFICATION_RESERVATION_COMPLETED);
+    }
+
+    //
+
+    @Bean
+    public Queue queueDashboard() {
+        return new Queue(RabbitMQConstants.QUEUE_DASHBOARD);
     }
 
     @Bean
@@ -39,7 +39,6 @@ public class RabbitConfig {
         return BindingBuilder
                 .bind(queueDashboard)
                 .to(exchange)
-                .with(RabbitMQConstants.ROUTING_KEY_DASHBOARD);
+                .with(RabbitMQConstants.RK_DASHBOARD_REFRESH);
     }
-
 }
