@@ -1,63 +1,60 @@
-<div class="w-full bg-[url('/assets/bg-slider.png')] bg-repeat-x h-full">
+<div class="mt-6 w-full bg-[url('/assets/bg-slider.png')] bg-repeat-x">
   <div
-    class="max-w-5xl mx-auto mt-6 overflow-hidden shadow-2xl bg-black border-2 border-gray-300"
+    class="mx-auto max-w-5xl overflow-hidden rounded-xl border border-slate-700 bg-black shadow-2xl"
   >
     <nz-carousel
       nzAutoPlay
       nzEffect="fade"
       [nzAutoPlaySpeed]="5000"
       [nzEnableSwipe]="true"
-      class="w-full"
+      class="block w-full"
     >
-      @for (banner of banners; track banner.title) {
-        <div nz-carousel-content class="relative h-[500px] md:h[600px] w-full">
-          <!-- Background Image -->
-          <div
-            class="absolute inset-0 bg-cover bg-center pointer-events-none"
-            [style.backgroundImage]="'url(' + banner.image + ')'"
-          ></div>
+      @for (banner of banners; track banner.id) {
+        <div nz-carousel-content>
+          <div class="relative h-[420px] w-full md:h-[500px]">
+            <div
+              class="absolute inset-0 bg-cover bg-center pointer-events-none"
+              [style.backgroundImage]="'url(' + banner.image + ')'"
+            ></div>
 
-          <!-- Overlay Gradient -->
-          <div
-            class="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent opacity-90 pointer-events-none"
-          ></div>
+            <div
+              class="pointer-events-none absolute inset-0 bg-gradient-to-t from-black via-black/75 to-black/15 opacity-100"
+            ></div>
 
-          <!-- Content -->
-          <div
-            class="absolute inset-0 flex flex-col justify-end p-8 md:p-12 lg:p-16"
-          >
-            <div class="max-w-3xl">
-              <h1
-                class="text-gray-200! text-4xl md:text-6xl font-extrabold mb-4 drop-shadow-lg leading-tight"
-              >
-                {{ banner.title }}
-              </h1>
-
-              <p
-                class="text-gray-200 text-base md:text-xl max-w-2xl line-clamp-2 mb-8 drop-shadow-md"
-              >
-                {{ banner.desc }}
-              </p>
-
-              <div class="flex items-center gap-4">
-                <button
-                  nz-button
-                  nzType="primary"
-                  nzSize="large"
-                  class="h-12 px-8 rounded-full font-bold text-base flex items-center gap-2 border-none bg-primary hover:bg-blue-600"
+            <div
+              class="absolute inset-0 flex flex-col justify-end p-6 md:p-10 lg:p-14"
+            >
+              <div class="max-w-3xl">
+                <h1
+                  class="mb-3 font-['Bricolage_Grotesque'] text-3xl font-extrabold leading-tight text-white md:text-5xl"
                 >
-                  <nz-icon nzType="barcode" />
-                  Book Ticket
-                </button>
-                <button
-                  nz-button
-                  nzType="default"
-                  nzSize="large"
-                  class="h-12 px-8 rounded-full font-bold text-base flex items-center gap-2 border-2 border-white text-white hover:text-primary hover:border-primary"
+                  {{ banner.title }}
+                </h1>
+
+                <p
+                  class="mb-6 max-w-2xl line-clamp-2 text-sm text-white/95 md:text-base"
                 >
-                  <nz-icon nzType="play-circle" />
-                  Watch Trailer
-                </button>
+                  {{ banner.desc }}
+                </p>
+
+                <div class="flex flex-wrap items-center gap-3">
+                  <button
+                    nz-button
+                    nzType="primary"
+                    class="flex h-10 items-center gap-2 rounded-lg border-none bg-[#E53E3E] px-5 text-sm font-semibold text-white hover:bg-[#C53030]"
+                  >
+                    <nz-icon nzType="barcode"/>
+                    {{ 'Đặt vé ngay' | translate }}
+                  </button>
+                  <button
+                    nz-button
+                    nzType="default"
+                    class="flex h-10 items-center gap-2 rounded-lg border border-slate-200/70 bg-transparent px-5 text-sm font-semibold text-white hover:border-[#E53E3E] hover:text-[#E53E3E]"
+                  >
+                    <nz-icon nzType="play-circle"/>
+                    {{ 'Xem trailer' | translate }}
+                  </button>
+                </div>
               </div>
             </div>
           </div>

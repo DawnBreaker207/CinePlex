@@ -1,62 +1,42 @@
-<div
-  class="group relative bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 overflow-hidden flex flex-col h-full"
+<article
+  class="h-full overflow-hidden rounded-xl border border-slate-200 bg-white"
 >
-  <!-- Poster -->
-  <div class="relative aspect-[2/3] overflow-hidden bg-gray-200">
+  <a
+    [routerLink]="['/movie/detail', movie().id]"
+    class="block h-40 bg-slate-100"
+  >
     <img
-      [src]="movie().poster"
+      [src]="
+          movie().backdrop ||
+          movie().poster ||
+          'https://placehold.co/300x400/DBEAFE/1F2937?text=Soon'
+        "
       [alt]="movie().title"
-      class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+      class="h-full w-full object-cover"
     />
-
-    <!-- Overlay Buttons -->
-    <div
-      class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-4 z-20"
-    >
-      <!-- Detail -->
-      <button
-        [routerLink]="['/movie/detail', movie().id]"
-        class="bg-white text-gray-900 w-12 h-12 rounded-full flex items-center justify-center hover:scale-110 transition-transform shadow-lg border-none cursor-pointer"
-        [title]="'Xem chi tiết' | translate"
-      >
-        <nz-icon nzType="info-circle" class="text-xl" />
-      </button>
-    </div>
-  </div>
-
-  <!-- Info -->
-  <div class="p-4 flex-1 flex flex-col">
-    <h3
+  </a>
+  <div class="space-y-2 p-3">
+    <a
       [routerLink]="['/movie/detail', movie().id]"
-      class="font-bold text-gray-800 text-lg line-clamp-1 mb-1 group-hover:text-primary transition-colors cursor-pointer"
+      class="block truncate font-['Bricolage_Grotesque'] text-[13px] font-semibold text-slate-900 hover:text-[#E53E3E]"
       [title]="movie().title"
     >
       {{ movie().title }}
-    </h3>
-
-    <!-- Metadata -->
-    <div class="flex items-center justify-between text-xs text-gray-500 mb-4">
-      <!-- Genres -->
-      <span class="truncate max-w-[60%]" [title]="movie().genres.join(', ')">
-        {{ movie().genres.join(", ") }}
-      </span>
-
-      <!-- Durations -->
-      <span class="flex items-center gap-1 shrink-0">
-        <nz-icon nzType="clock-circle" />
-        {{ movie().duration }} {{ "phút" | translate }}
-      </span>
-    </div>
-
-    <!-- Buy button -->
+    </a>
+    <p
+      class="truncate text-[11px] text-slate-500"
+      [title]="movie().genres.join(', ')"
+    >
+      {{ movie().genres.join(", ") || "Đang cập nhật thể loại" }}
+    </p>
     <button
       nz-button
       nzBlock
-      nzType="default"
+      nzType="primary"
+      class="rounded-lg border-none bg-[#E53E3E] text-white hover:bg-[#C53030]"
       (click)="onSelectMovie(movie().id)"
-      class="mt-auto border-primary text-primary hover:bg-primary hover:text-white font-semibold rounded-lg transition-colors h-10"
     >
-      {{ "Mua Vé" | translate }}
+      {{ 'Đặt vé' | translate }}
     </button>
   </div>
-</div>
+</article>
