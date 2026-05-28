@@ -105,6 +105,7 @@ public class ReservationServiceImpl implements ReservationService {
 
         Map<String, List<SeatDTO>> seatMap = seatService.findAllByReservationIds(reservationIds)
                 .stream()
+                .filter(item -> item.getReservationId() != null)
                 .collect(Collectors.groupingBy(SeatDTO::getReservationId));
 
         return ResponsePage.of(reservations
