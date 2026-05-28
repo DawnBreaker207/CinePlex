@@ -10,10 +10,17 @@ import { ShowtimeActions } from '@domain/showtime/data-access/showtime.actions';
 import { TranslatePipe } from '@ngx-translate/core';
 import { ReservationStore } from '@features/client/reservation/reservation.store';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { BarcodeComponent } from '@shared/components/barcode/barcode.component';
 
 @Component({
   selector: 'app-payment-result',
-  imports: [NzResultModule, NzButtonModule, NzSpinModule, TranslatePipe],
+  imports: [
+    NzResultModule,
+    NzButtonModule,
+    NzSpinModule,
+    TranslatePipe,
+    BarcodeComponent,
+  ],
   templateUrl: './payment-result.component.html',
   styleUrl: './payment-result.component.css',
 })
