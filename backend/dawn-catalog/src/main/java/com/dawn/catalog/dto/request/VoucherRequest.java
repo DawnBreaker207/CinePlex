@@ -1,17 +1,15 @@
 package com.dawn.catalog.dto.request;
 
-import com.dawn.catalog.config.DiscountType;
-import com.dawn.catalog.config.VoucherType;
+import com.dawn.catalog.constant.DiscountType;
+import com.dawn.catalog.constant.VoucherType;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 import java.time.Instant;
-import java.time.LocalDate;
 
 @Data
 @NoArgsConstructor

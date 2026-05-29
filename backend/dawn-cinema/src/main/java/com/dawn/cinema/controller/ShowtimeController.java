@@ -34,6 +34,10 @@ public class ShowtimeController {
         return ResponseObject.success(showtimeService.getByDate(date));
     }
 
+    @PostMapping("/batch")
+    public ResponseObject<List<ShowtimeResponse>> findAllByIds(@RequestBody List<Long> ids) {
+        return ResponseObject.success(showtimeService.findAllByIds(ids));
+    }
 
     @GetMapping("/movies/{movieId}")
     @Operation(summary = "Get showtime by movie", description = "Returns showtime for a specific movie")

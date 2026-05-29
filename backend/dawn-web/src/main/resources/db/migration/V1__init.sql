@@ -164,10 +164,9 @@ CREATE TABLE IF NOT EXISTS payment
     payment_intent_id VARCHAR(255)   NOT NULL UNIQUE,
     amount            DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
     method            ENUM ('MOMO', 'VNPAY'),
-    status            ENUM ('PAID', 'CANCELED'),
+    status            ENUM ('PENDING','PAID', 'CANCELED'),
     created_at        DATETIME       NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at        DATETIME       NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT fk_payment FOREIGN KEY (reservation_id) REFERENCES reservation (id) ON DELETE SET NULL,
     INDEX idx_reservation_id (reservation_id),
     INDEX idx_status (status),
     INDEX idx_payment_intent (payment_intent_id)

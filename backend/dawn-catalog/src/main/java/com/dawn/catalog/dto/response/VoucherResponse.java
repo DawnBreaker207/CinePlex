@@ -1,16 +1,14 @@
 package com.dawn.catalog.dto.response;
 
-import com.dawn.catalog.config.DiscountType;
-import com.dawn.catalog.config.VoucherType;
+import com.dawn.catalog.constant.DiscountType;
+import com.dawn.catalog.constant.VoucherType;
 import com.dawn.common.core.dto.response.BaseResponse;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.Version;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import java.time.Instant;
-import java.time.LocalDate;
 
 
 @Data

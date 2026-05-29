@@ -1,6 +1,6 @@
 package com.dawn.notification.controller;
 
-import com.dawn.common.core.dto.request.BookingNotificationEvent;
+import com.dawn.common.core.dto.event.BookingCompleteEvent;
 import com.dawn.common.core.helper.RedisKeyHelper;
 import com.dawn.notification.service.EmailService;
 import com.dawn.notification.service.SseService;
@@ -22,7 +22,7 @@ public class NotificationController {
 
     @GetMapping("/mail/test")
     public void sendEmail() {
-        emailService.sendReservationEmail(BookingNotificationEvent
+        emailService.sendReservationEmail(BookingCompleteEvent
                 .builder()
                 .to("demo@gmail.com")
                 .name("Dawnbreaker")

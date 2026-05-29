@@ -1,28 +1,53 @@
-<div class="flex h-screen w-screen justify-center items-center">
-  <nz-result
-    [nzStatus]="status()"
-    [nzTitle]="
-      status() === 'success'
-        ? ('Đơn đã thanh toán thành công' | translate)
-        : ('Thanh toán thất bại' | translate)
-    "
-    [nzSubTitle]="
-      status() === 'success'
-        ? ('Mã đơn ' | translate) +
-          reservationCode() +
-          (' đã được thanh toán thành công' | translate)
-        : errorMessage()
-    "
-  >
-    <div nz-result-extra>
-      <button nz-button nzType="primary" (click)="goHome()">
-        {{ "Về trang chủ" | translate }}
-      </button>
-      <div class="mt-4 flex justify-center items-center gap-2">
-        <p>
-          {{ "Tự động về trang chủ trong" | translate }} {{ countdown() }}...
-        </p>
+<div class="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6">
+  <div class="mb-6 text-center">
+    @if (status() === 'success') {
+      <div
+        class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-3xl text-green-500"
+      >
+        ✓
       </div>
+      <h2 class="mb-1 text-xl font-semibold text-gray-800">{{ 'Đặt vé thành công!' | translate }}</h2>
+      <p class="text-sm text-gray-500">
+        {{ 'Mã đơn' | translate }} {{ reservationCode() }} {{ 'đã được xác nhận' | translate }}
+      </p>
+    } @else {
+      <div
+        class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-100 text-3xl text-primary"
+      >
+        ✕
+      </div>
+      <h2 class="mb-1 text-xl font-semibold text-gray-800">Thanh toán thất bại</h2>
+      <p class="text-sm text-gray-500">{{ errorMessage() }}</p>
+    }
+  </div>
+
+  @if (status() === 'success') {
+    <div class="mb-6 w-full max-w-md rounded-2xl border border-gray-200 bg-white p-6">
+      <div class="mb-3 flex justify-between text-sm">
+        <span class="text-gray-500">Mã đặt vé</span>
+        <span class="font-mono font-semibold text-gray-800">{{ reservationCode() }}</span>
+      </div>
+      <div class="my-3 border-t border-dashed border-gray-200"></div>
+        <app-barcode [value]="reservationCode()"/>
+      <p class="text-center text-xs text-gray-400">Xuất trình mã này khi vào rạp</p>
     </div>
-  </nz-result>
+  }
+
+  <div class="flex w-full max-w-md flex-col gap-3">
+    @if (status() !== 'success') {
+      <button
+        nz-button
+        nzType="primary"
+        class="h-11 w-full rounded-xl border-primary bg-primary font-semibold"
+      >
+        {{ 'Thử lại' | translate }}
+      </button>
+    }
+    <button nz-button class="h-11 w-full rounded-xl" (click)="goHome()">
+      Về trang chủ
+    </button>
+    <p class="text-center text-xs text-gray-400">
+      {{ 'Tự động về trang chủ trong' | translate }} {{ countdown() }}s
+    </p>
+  </div>
 </div>

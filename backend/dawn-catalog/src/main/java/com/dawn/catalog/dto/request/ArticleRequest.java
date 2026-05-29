@@ -1,8 +1,8 @@
 package com.dawn.catalog.dto.request;
 
 
-import com.dawn.catalog.config.ArticleStatus;
-import com.dawn.catalog.config.ArticleType;
+import com.dawn.catalog.constant.ArticleStatus;
+import com.dawn.catalog.constant.ArticleType;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

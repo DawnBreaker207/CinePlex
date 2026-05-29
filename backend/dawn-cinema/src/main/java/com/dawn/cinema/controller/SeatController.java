@@ -35,6 +35,11 @@ public class SeatController {
         return ResponseObject.success(seatService.getAvailableSeatByShowtime(showtimeId));
     }
 
+    @PostMapping("/reservation/batch-by-reservations")
+    public ResponseObject<List<SeatResponse>> findAllByReservationIds(@RequestBody List<String> ids) {
+        return ResponseObject.success(seatService.findAllByReservationIds(ids));
+    }
+
     @PostMapping("/showtime/{showtimeId}/create")
     @Operation(summary = "Create seat for a showtime", description = "Manually create seats for a specific showtime (Admin only)")
     public ResponseObject<List<SeatResponse>> createSeatsForShowtime(@PathVariable Long showtimeId) {
@@ -56,6 +61,12 @@ public class SeatController {
     public ResponseObject<List<SeatResponse>> findAllSeatByReservationId(@PathVariable String reservationId) {
         return ResponseObject.success(seatService.findAllByReservationId(reservationId));
     }
+
+    @GetMapping("/reservation/showtime/{showtimeId}")
+    public ResponseObject<List<SeatResponse>> findAllSeatByShowtimeId(@PathVariable Long showtimeId) {
+        return ResponseObject.success(seatService.findAllByShowtimeId(showtimeId));
+    }
+
 
     @PostMapping("/saveAll")
     public ResponseObject<Void> saveAllSeat(@RequestBody List<SeatRequest> seats) {

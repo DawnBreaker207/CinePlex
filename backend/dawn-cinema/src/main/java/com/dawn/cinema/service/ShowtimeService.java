@@ -14,6 +14,8 @@ public interface ShowtimeService {
 
     List<ShowtimeResponse> getByDate(LocalDate date);
 
+    List<ShowtimeResponse> findAllByIds(List<Long> ids);
+
     ResponsePage<ShowtimeResponse> getByMovie(Long movieId, Pageable pageable);
 
     ResponsePage<ShowtimeResponse> getByTheater(ShowtimeFilterRequest req, Pageable pageable);

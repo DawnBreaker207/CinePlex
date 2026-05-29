@@ -7,7 +7,7 @@ import com.dawn.catalog.model.Genre;
 import com.dawn.catalog.model.Movie;
 import com.dawn.catalog.repository.GenreRepository;
 import com.dawn.catalog.repository.MovieRepository;
-import com.dawn.catalog.service.Impl.MovieServiceImpl;
+import com.dawn.catalog.service.impl.MovieServiceImpl;
 import com.dawn.common.core.exception.wrapper.ResourceAlreadyExistedException;
 import com.dawn.common.core.exception.wrapper.ResourceNotFoundException;
 import org.junit.jupiter.api.AfterEach;

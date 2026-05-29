@@ -1,7 +1,7 @@
 package com.dawn.catalog.model;
 
-import com.dawn.catalog.config.DiscountType;
-import com.dawn.catalog.config.VoucherType;
+import com.dawn.catalog.constant.DiscountType;
+import com.dawn.catalog.constant.VoucherType;
 import com.dawn.common.core.model.AbstractMappedEntity;
 import jakarta.persistence.*;
 import lombok.*;

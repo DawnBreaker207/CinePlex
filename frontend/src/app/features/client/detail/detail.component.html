@@ -1,72 +1,68 @@
 @if (movie(); as movie) {
-  <div class="min-h-screen bg-[#0f172a] text-white font-sans pb-20">
-    <!-- HERO SECTION -->
-    <div class="relative w-full h-[600px] overflow-hidden group">
-      <!-- Backdrop Image -->
+  <div class="min-h-screen bg-slate-50 pb-16 text-slate-900">
+    <div class="relative h-[520px] w-full overflow-hidden">
       <div
-        class="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
-        [style.backgroundImage]="'url(' + movie.backdrop + ')'"
+        class="absolute inset-0 bg-cover bg-center"
+        [style.backgroundImage]="
+          'url(' +
+          (movie.backdrop ||
+            'https://placehold.co/1400x700/1A202C/F8FAFC?text=Dawn+Cinema') +
+          ')'
+        "
       ></div>
       <div
-        class="absolute inset-0 bg-gradient-to-t from-[#0f172a] via-[#0f172a]/80 to-transparent"
+        class="absolute inset-0 bg-gradient-to-t from-[#111827] via-[#111827]/80 to-black/20"
+      ></div>
+      <div
+        class="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-slate-50 to-transparent"
       ></div>
 
-      <!--  Content  -->
       <div
-        class="relative container mx-auto px-4 h-full flex items-end pb-12 gap-8"
+        class="relative mx-auto flex h-full max-w-5xl items-end gap-8 px-4 pb-10 md:px-6"
       >
-        <!--  Poster  -->
         <div
-          class="hidden md:block w-64 rounded-xl overflow-hidden shadow-2xl border-2 border-white/10 shrink-0 transform translate-y-16"
+          class="hidden w-56 shrink-0 translate-y-14 overflow-hidden rounded-xl border border-white/15 shadow-2xl md:block"
         >
           <img
-            [src]="movie.poster"
+            [src]="movie.poster || movie.backdrop"
             [alt]="movie.title"
-            class="w-full h-full object-cover"
+            class="h-full w-full object-cover"
           />
         </div>
 
-        <!--   Info  -->
-        <div class="flex-1 mb-4">
-          <div class="flex items-center gap-3 mb-2">
-            <span class="text-gray-300 text-sm">{{
-              movie.releaseDate | date: "dd/MM/yyy"
-            }}</span>
-            <span class="text-gray-300 text-sm"
-              >• {{ movie.duration }} phút</span
-            >
+        <div class="mb-2 flex-1">
+          <div
+            class="mb-2 flex flex-wrap items-center gap-3 text-sm text-slate-200"
+          >
+            <span>{{ movie.releaseDate | date: "dd/MM/yyy" }}</span>
+            <span>• {{ movie.duration }} phút</span>
           </div>
 
           <h1
-            class="text-4xl md:text-6xl font-extrabold text-white! mb-2 leading-tight"
+            class="mb-2 font-['Bricolage_Grotesque'] text-4xl font-extrabold leading-tight text-white md:text-5xl"
           >
             {{ movie.title }}
           </h1>
-          <p class="text-xl text-gray-400 italic md-4">
+          <p class="mb-4 text-lg italic text-slate-200/90 md:text-xl">
             {{ movie.originalTitle }}
           </p>
 
-          <!--    Genres  -->
-          <div class="flex items-center gap-6 mb-6">
-            <div class="flex gap-2">
-              @for (genre of movie.genres; track genre) {
-                <nz-tag
-                  [nzColor]="'transparent'"
-                  class="border border-gray-500 text-gray-300 rounded-full px-3"
-                >
-                  {{ genre }}
-                </nz-tag>
-              }
-            </div>
+          <div class="mb-6 flex flex-wrap items-center gap-2">
+            @for (genre of movie.genres; track genre) {
+              <nz-tag
+                [nzColor]="'transparent'"
+                class="rounded-full border border-white/30 px-3 text-xs text-white/95"
+              >
+                {{ genre }}
+              </nz-tag>
+            }
           </div>
 
-          <!--  Action Buttons    -->
-          <div class="flex gap-4">
+          <div class="flex flex-wrap gap-3">
             <button
               nz-button
               nzType="primary"
-              nzSize="large"
-              class="bg-red-600 border-none hover:bg-red-700 font-bold! px-8 rounded-full shadow-lg shadow-red-600/30"
+              class="rounded-lg border-none bg-[#E53E3E] px-6 font-semibold text-white hover:bg-[#C53030]"
             >
               {{ "Đặt vé ngay" | translate }}
             </button>
@@ -74,10 +70,9 @@
             <button
               nz-button
               nzType="default"
-              nzSize="large"
-              class="bg-white/10 border-white/20 text-white hover:bg-white/20 backdrop-blur-md rounded-full px-6"
+              class="rounded-lg border border-white/50 bg-white/10 px-6 text-white hover:border-white hover:bg-white/20"
             >
-              <nz-icon nzType="play-circle" nzTheme="fill" class="mr-2" />
+              <nz-icon nzType="play-circle" nzTheme="fill" class="mr-2"/>
               {{ "Xem Trailer" | translate }}
             </button>
           </div>
@@ -85,62 +80,59 @@
       </div>
     </div>
 
-    <!-- MAIN CONTENT & SIDEBAR -->
-    <div class="container mx-auto px-4 mt-20 flex flex-col lg:flex-row gap-10">
-      <!-- LEFT COLUMN -->
-      <div class="w-full lg:w-full space-y-8">
-        <!--  Showtime Section  -->
-        <div
-          class="bg-[#1e293b] rounded-2xl p-6 shadow-xl border border-white/5"
-        >
+    <div class="mx-auto mt-10 flex max-w-5xl flex-col gap-8 px-4 md:px-6">
+      <div class="w-full space-y-8">
+        <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <h2
-            class="text-2xl font-bold mb-6 border-l-4 border-red-500 pl-3 text-white!"
+            class="mb-6 border-l-4 border-[#E53E3E] pl-3 font-['Bricolage_Grotesque'] text-2xl font-bold text-slate-900"
           >
             {{ "Lịch Chiếu" | translate }}
           </h2>
 
-          <!-- Date Selector -->
-          <div class="flex gap-3 overflow-x-auto pb-4 mb-6 scrollbar-hide">
+          <div class="mb-6 flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
             @for (date of dates(); track date) {
               <div
                 (click)="selectDate(date)"
                 (keyup)="selectDate(date)"
                 tabindex="0"
                 role="button"
-                class="cursor-pointer min-w-[80px] flex flex-col items-center justify-center p-3 rounded-xl border transition-all duration-300"
+                class="min-w-[84px] cursor-pointer rounded-xl border p-3 text-center transition-all duration-200"
                 [ngClass]="
                   (selectedDate() | date: 'ddMMyy') === (date | date: 'ddMMyy')
-                    ? 'bg-red-600 border-red-600 text-white shadow-lg scale-105'
-                    : 'bg-[#0f172a] border-gray-700 text-gray-400 hover:border-gray-500'
+                    ? 'border-[#E53E3E] bg-[#E53E3E] text-white'
+                    : 'border-slate-200 bg-slate-50 text-slate-500 hover:border-slate-300'
                 "
               >
-                <span class="text-sm">{{ date | date: "EEE" }}</span>
                 <span class="text-2xl font-bold">{{ date | date: "dd" }}</span>
+                /<span class="text-sm">{{ date | date: "MM" }}</span>
               </div>
             }
           </div>
 
-          <!-- Cinema List & Times -->
           <div class="space-y-4">
             @for (cinema of showtimes(); track cinema.id) {
               <div
-                class="bg-[#0f172a]/50 p-4 rounded-xl border border-white/5 hover:border-white/10 transition"
+                class="rounded-xl border border-slate-200 bg-slate-50 p-4 transition hover:border-slate-300"
               >
+                <p class="mb-3 text-sm font-semibold text-slate-800">
+                  {{ cinema.name }}
+                </p>
                 <div class="flex flex-wrap gap-3">
                   @for (show of cinema.showtimes; track show.time) {
                     <div
-                      class="group cursor-pointer relative bg-[#1e293b] border border-gray-600 hover:border-red-500 rounded-lg p-3 w-[110px] text-center transition-all overflow-hidden"
+                      class="group relative w-[112px] cursor-pointer overflow-hidden rounded-lg border border-slate-300 bg-white p-3 text-center transition-all hover:border-[#E53E3E]"
                     >
                       <div
-                        class="text-lg font-bold text-white group-hover:text-red-400"
+                        class="text-lg font-bold text-slate-900 group-hover:text-[#E53E3E]"
                       >
                         {{ show.time }}
                       </div>
-                      <!-- Seat Available -->
                       <div class="flex items-center gap-1.5 mt-1">
-                        <div class="w-1.5 h-1.5 rounded-full"></div>
+                        <div
+                          class="h-1.5 w-1.5 rounded-full bg-emerald-500"
+                        ></div>
                         <span
-                          class="text-[10px] font-medium group-hover:text-red-400"
+                          class="text-[10px] font-medium text-slate-500 group-hover:text-[#E53E3E]"
                         >
                           {{
                             show.availableSeats > 0
@@ -155,13 +147,13 @@
               </div>
             } @empty {
               <div
-                class="flex flex-col items-center justify-center py-20 bg-[#1e293b]/20 rounded-3xl border-2 border-dashed border-white/5"
+                class="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 py-16"
               >
                 <nz-icon
                   nzType="calendar"
-                  class="text-5xl text-gray-600 mb-4"
+                  class="mb-4 text-5xl text-slate-400"
                 ></nz-icon>
-                <p class="text-gray-500 text-lg">
+                <p class="text-lg text-slate-500">
                   {{
                     "Hôm nay không có suất chiếu nào cho phim này" | translate
                   }}
@@ -170,7 +162,7 @@
                   nz-button
                   nzType="link"
                   (click)="selectDate(dates()[0])"
-                  class="text-red-500"
+                  class="text-[#E53E3E]"
                 >
                   {{ "Xem lịch ngày khác" | translate }}
                 </button>
@@ -178,45 +170,43 @@
             }
           </div>
         </div>
-        <!--  Detail Info  -->
-        <div
-          class="bg-[#1e293b] rounded-2xl p-6 shadow-xl border border-white/5"
-        >
-          <nz-tabset [nzTabBarGutter]="20" nzType="card" class="custom-tabs">
-            <!--  Content -->
+
+        <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <nz-tabs [nzTabBarGutter]="20" nzType="line" class="custom-tabs">
             <nz-tab nzTitle="Nội dung phim">
-              <p class="text-gray-300 leading-relaxed text-lg">
+              <p class="text-base leading-relaxed text-slate-600 md:text-lg">
                 {{ movie.overview }}
               </p>
-              <div class="mt-6 grid grid-cols-2 gap-4 text-sm text-gray-400">
+              <div
+                class="mt-6 grid grid-cols-1 gap-4 text-sm text-slate-500 md:grid-cols-2"
+              >
                 <div>
                   <strong>{{ "Khởi chiếu:" | translate }}</strong>
-                  <span class="text-white ml-2">
+                  <span class="ml-2 text-slate-900">
                     {{ movie.releaseDate | date: "dd/MM/yyyy" }}
                   </span>
                 </div>
                 <div>
                   <strong>{{ "Quốc gia:" | translate }}</strong>
-                  <span class="text-white ml-2">
+                  <span class="ml-2 text-slate-900">
                     {{ movie.country }}
                   </span>
                 </div>
                 <div>
                   <strong>{{ "Ngôn ngữ" | translate }}</strong>
-                  <span class="text-white ml-2">
+                  <span class="ml-2 text-slate-900">
                     {{ movie.language }}
                   </span>
                 </div>
               </div>
             </nz-tab>
-            <!--  Review  -->
             <nz-tab
               [nzTitle]="('Đánh giá' | translate) + ' (' + reviews.length + ')'"
             >
               <div class="space-y-6">
                 @for (review of reviews; track review.user) {
                   <div
-                    class="flex gap-4 border-b border-gray-700 pb-4 last:border-0"
+                    class="flex gap-4 border-b border-slate-100 pb-4 last:border-0"
                   >
                     <nz-avatar
                       [nzSrc]="review.avatar"
@@ -224,19 +214,19 @@
                     ></nz-avatar>
                     <div>
                       <div class="flex items-center gap-2 mb-1">
-                        <span class="font-bold text-white">{{
-                          review.user
-                        }}</span>
+                        <span class="font-bold text-slate-900">{{
+                            review.user
+                          }}</span>
                         <nz-rate
                           [ngModel]="review.rating"
                           nzDisabled
                           class="text-xs"
                         ></nz-rate>
                       </div>
-                      <p class="text-gray-300 text-sm">{{ review.comment }}</p>
-                      <span class="text-xs text-gray-500 mt-1 block">{{
-                        review.date
-                      }}</span>
+                      <p class="text-sm text-slate-600">{{ review.comment }}</p>
+                      <span class="mt-1 block text-xs text-slate-400">{{
+                          review.date
+                        }}</span>
                     </div>
                   </div>
                 }
@@ -244,20 +234,17 @@
                   nz-button
                   nzBlock
                   nzType="dashed"
-                  class="text-gray-400 hover:text-white border-gray-600"
+                  class="border-slate-300 text-slate-500 hover:border-[#E53E3E] hover:text-[#E53E3E]"
                 >
                   {{ "Viết đánh giá của bạn" | translate }}
                 </button>
               </div>
             </nz-tab>
-          </nz-tabset>
+          </nz-tabs>
         </div>
       </div>
-
-      <!-- RIGHT COLUMN -->
-      <!--      <div class="w-full lg:w-[30%] space-y-8"></div>-->
     </div>
   </div>
 } @else {
-  <app-loading />
+  <app-loading/>
 }

@@ -1,7 +1,7 @@
 package com.dawn.catalog.model;
 
-import com.dawn.catalog.config.ArticleStatus;
-import com.dawn.catalog.config.ArticleType;
+import com.dawn.catalog.constant.ArticleStatus;
+import com.dawn.catalog.constant.ArticleType;
 import com.dawn.common.core.model.AbstractMappedEntity;
 import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.persistence.*;

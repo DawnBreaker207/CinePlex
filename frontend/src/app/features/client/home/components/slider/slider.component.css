@@ -7,10 +7,5 @@
 ::ng-deep .ant-carousel .slick-dots li.slick-active button {
   opacity: 1;
   width: 24px;
-  background: #1890ff;
-}
-
-[nz-carousel-content] {
-  height: 28rem;
-  overflow: hidden;
+  background: #e53e3e;
 }

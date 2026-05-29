@@ -2,8 +2,10 @@ package com.dawn.payment.service;
 
 import com.dawn.common.core.constant.Message;
 import com.dawn.common.core.dto.response.ResponseObject;
+import com.dawn.common.core.exception.wrapper.InternalServiceException;
 import com.dawn.common.core.exception.wrapper.ResourceNotFoundException;
 import com.dawn.payment.dto.response.ReservationDTO;
+import io.github.resilience4j.retry.annotation.Retry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,19 +18,22 @@ import org.springframework.web.client.RestClient;
 @Slf4j
 @RequiredArgsConstructor
 public class ReservationClientService {
-    private final RestClient restClient;
+    private final RestClient internalRestClient;
 
     @Value("${service.url.base}")
     private String url;
 
-
+    @Retry(name = "internal")
     public ReservationDTO confirm(String reservationId) {
-        ResponseObject<ReservationDTO> response = restClient
+        ResponseObject<ReservationDTO> response = internalRestClient
                 .post()
                 .uri(url + "/reservation/confirm/{reservationId}", reservationId)
                 .retrieve()
                 .onStatus(HttpStatusCode::is4xxClientError, (req, res) -> {
                     throw new ResourceNotFoundException(Message.Exception.RESERVATION_NOT_FOUND);
+                })
+                .onStatus(HttpStatusCode::is5xxServerError, (req, res) -> {
+                    throw new InternalServiceException(Message.Exception.INTERNAL_SERVICE_ERROR);
                 })
                 .body(new ParameterizedTypeReference<>() {
                 });
@@ -39,8 +44,9 @@ public class ReservationClientService {
         throw new ResourceNotFoundException(Message.Exception.RESERVATION_NOT_FOUND);
     }
 
+    @Retry(name = "internal")
     public void cancel(String reservationId) {
-        ResponseObject<Void> response = restClient
+        ResponseObject<Void> response = internalRestClient
                 .post()
                 .uri(url + "/reservation/{reservationId}/cancel", reservationId)
                 .retrieve()
@@ -48,8 +54,7 @@ public class ReservationClientService {
                     throw new ResourceNotFoundException(Message.Exception.RESERVATION_NOT_FOUND);
                 })
                 .onStatus(HttpStatusCode::is5xxServerError, (req, res) -> {
-                    log.error("Cancel failed due to server error: {}", res.getStatusCode());
-                    throw new RuntimeException("Remote Server Error");
+                    throw new InternalServiceException(Message.Exception.INTERNAL_SERVICE_ERROR);
                 })
                 .body(new ParameterizedTypeReference<>() {
                 });

@@ -15,6 +15,9 @@ public interface ShowtimeRepository extends JpaRepository<Showtime, Long> {
     //    Find showtime by date
     List<Showtime> findByShowDate(LocalDate date);
 
+    // Get batch showtime
+    List<Showtime> findByIdIn(List<Long> ids);
+
     //    Get all showtime for a movie
     Page<Showtime> findByMovieId(Long movieId, Pageable pageable);
 

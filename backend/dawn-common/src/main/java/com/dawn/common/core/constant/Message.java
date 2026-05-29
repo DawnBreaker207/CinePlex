@@ -8,6 +8,7 @@ public class Message {
         public static final String MOVIE_EXISTED = "Movie was existed";
         //    Reservation
         public static final String RESERVATION_NOT_FOUND = "Reservation not found";
+        public static final String RESERVATION_EXISTED = "Reservation existed";
         public static final String RESERVATION_EXPIRED = "Reservation expired or not existed";
         //    Showtime
         public static final String SHOWTIME_NOT_FOUND = "Showtime not found";
@@ -33,6 +34,15 @@ public class Message {
         public static final String PERMISSION_FORBIDDEN = "You don't have permission";
         //    Payment
         public static final String PAYMENT_COMPLETE = "Payment already for this reservation";
+        public static final String PAYMENT_NOT_FOUND = "Payment not found";
+        // Service
+        public static final String INTERNAL_SERVICE_ERROR = "Internal Service Error";
+        // Voucher
+        public static final String VOUCHER_NOT_FOUND = "Voucher not found";
+        public static final String VOUCHER_EXPIRED = "Voucher has expired";
+        public static final String VOUCHER_OUT_OF_STOCK = "Voucher already taken, please try again";
+        public static final String VOUCHER_CONFLICT = "Voucher conflict";
+        public static final String VOUCHER_INACTIVE = "Voucher is inactive";
     }
 
 

@@ -19,6 +19,10 @@ public interface SeatService {
 
     List<SeatResponse> findAllById(List<Long> seatIds);
 
+    List<SeatResponse> findAllByShowtimeId(Long showtimeId);
+
+    List<SeatResponse> findAllByReservationIds(List<String> ids);
+
     List<SeatResponse> findAllByReservationId(String reservationId);
 
     void saveAllSeat(List<SeatRequest> seatRequests);
