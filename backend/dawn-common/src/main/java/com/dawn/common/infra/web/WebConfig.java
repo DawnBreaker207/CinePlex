@@ -1,5 +1,6 @@
 package com.dawn.common.infra.web;
 
+import com.dawn.common.core.constant.Constants;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
@@ -29,11 +30,11 @@ public class WebConfig implements WebMvcConfigurer {
     public RestClient internalRestClient() {
         HttpClient httpClient = HttpClient
                 .newBuilder()
-                .connectTimeout(Duration.ofSeconds(3))
+                .connectTimeout(Duration.ofSeconds(Constants.INTERNAL_CONNECT_TIMEOUT_SECONDS))
                 .build();
 
         JdkClientHttpRequestFactory factory = new JdkClientHttpRequestFactory(httpClient);
-        factory.setReadTimeout(Duration.ofSeconds(5));
+        factory.setReadTimeout(Duration.ofSeconds(Constants.INTERNAL_READ_TIMEOUT_SECONDS));
         return RestClient
                 .builder()
                 .requestFactory(factory)
@@ -49,11 +50,11 @@ public class WebConfig implements WebMvcConfigurer {
     public RestClient.Builder externalRestClientBuilder() {
         HttpClient httpClient = HttpClient
                 .newBuilder()
-                .connectTimeout(Duration.ofSeconds(5))
+                .connectTimeout(Duration.ofSeconds(Constants.EXTERNAL_CONNECT_TIMEOUT_SECONDS))
                 .build();
 
         JdkClientHttpRequestFactory factory = new JdkClientHttpRequestFactory(httpClient);
-        factory.setReadTimeout(Duration.ofSeconds(10));
+        factory.setReadTimeout(Duration.ofSeconds(Constants.EXTERNAL_READ_TIMEOUT_SECONDS));
         return RestClient
                 .builder()
                 .requestFactory(factory)

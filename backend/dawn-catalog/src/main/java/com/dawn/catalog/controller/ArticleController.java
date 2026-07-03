@@ -5,6 +5,7 @@ import com.dawn.catalog.dto.response.ArticleResponse;
 import com.dawn.catalog.service.ArticleService;
 import com.dawn.common.core.dto.response.ResponseObject;
 import com.dawn.common.core.dto.response.ResponsePage;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
@@ -26,12 +27,12 @@ public class ArticleController {
     }
 
     @PostMapping("")
-    public ResponseObject<ArticleResponse> create(@RequestBody ArticleRequest req) {
+    public ResponseObject<ArticleResponse> create(@Valid @RequestBody ArticleRequest req) {
         return ResponseObject.created(articleService.create(req));
     }
 
     @PutMapping("/{id}")
-    public ResponseObject<ArticleResponse> update(@PathVariable Long id, @RequestBody ArticleRequest req) {
+    public ResponseObject<ArticleResponse> update(@PathVariable Long id, @Valid @RequestBody ArticleRequest req) {
         return ResponseObject.success(articleService.update(id, req));
     }
 

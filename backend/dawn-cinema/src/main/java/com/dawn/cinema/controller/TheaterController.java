@@ -7,6 +7,7 @@ import com.dawn.common.core.dto.response.ResponseObject;
 import com.dawn.common.core.dto.response.ResponsePage;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
@@ -42,13 +43,13 @@ public class TheaterController {
 
     @PostMapping("")
     @Operation(summary = "Add a new theater", description = "Create a new theater (Admin only)")
-    public ResponseObject<TheaterResponse> create(@RequestBody TheaterRequest theater) {
+    public ResponseObject<TheaterResponse> create(@Valid @RequestBody TheaterRequest theater) {
         return ResponseObject.created(theaterService.create(theater));
     }
 
     @PutMapping("/{id}")
     @Operation(summary = "Update a theater", description = "Updates an existing theater (Admin only)")
-    public ResponseObject<TheaterResponse> update(@PathVariable Long id, @RequestBody TheaterRequest theater) {
+    public ResponseObject<TheaterResponse> update(@PathVariable Long id, @Valid @RequestBody TheaterRequest theater) {
         return ResponseObject.success(theaterService.update(id, theater));
     }
 

@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import lombok.experimental.FieldDefaults;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
@@ -34,7 +35,7 @@ public class ReservationController {
 
     SeatClientService seatClientService;
     @GetMapping("")
-//    @PreAuthorize("hasRole('ADMIN') or hasRole('MODERATOR')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MODERATOR')")
     @Operation(summary = "Get all reservation with conditions", description = "Returns reservation with condition filters (Admin Only)")
     public ResponseObject<ResponsePage<ReservationResponse>> getAll(@ModelAttribute ReservationFilterRequest o, Pageable pageable) {
         return ResponseObject.success(reservationService.findAll(o, pageable));
@@ -47,7 +48,7 @@ public class ReservationController {
     }
 
     @GetMapping("/me")
-//    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasRole('USER')")
     @Operation(summary = "Get reservation by user id", description = "Returns reservation by they own Id (User Only)")
     public ResponseObject<ResponsePage<UserReservationResponse>> getAllByUser(@ModelAttribute ReservationUserRequest request, Pageable pageable) {
         return ResponseObject.success(reservationService.findByUser(request, pageable));
@@ -67,14 +68,14 @@ public class ReservationController {
     }
 
     @PostMapping("/init")
-//    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasRole('USER')")
     @Operation(summary = "Init a reservation", description = "Create a reservation and return Id")
     public ResponseObject<ReservationInitResponse> reservationInit(@RequestBody ReservationInitRequest reservation) {
         return ResponseObject.success(reservationService.initReservation(reservation));
     }
 
     @PostMapping("/seatHold")
-//    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasRole('USER')")
     @Operation(summary = "Choose and booking seat", description = "Selected seat place and booking it")
     public ResponseObject<Void> reservationHoldSeat(@RequestBody ReservationHoldSeatRequest o) {
         reservationService.holdReservationSeats(o);
@@ -82,14 +83,14 @@ public class ReservationController {
     }
 
     @PostMapping("/confirm/{reservationId}")
-//    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasRole('USER')")
     @Operation(summary = "Save reservation after payment ", description = "Returns reservation after booking seats and payment success")
     public ResponseObject<ReservationResponse> reservationConfirm(@PathVariable String reservationId) {
         return ResponseObject.created(reservationService.confirmReservation(reservationId));
     }
 
     @PostMapping("/{reservationId}/cancel")
-//    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasRole('USER')")
     @Operation(summary = "Cancel reservation after payment ", description = "Cancel reservation after booking seats and payment failed")
     public ResponseObject<Void> reservationCancel(@PathVariable String reservationId) {
         reservationService.cancelReservation(reservationId);

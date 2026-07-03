@@ -120,7 +120,7 @@ public class PaymentServiceImpl implements PaymentService {
                     .builder()
                     .reservationId(reservationId)
                     .success(false)
-                    .message("Internal Error")
+                    .message(Message.Exception.PAYMENT_INTERNAL_ERROR)
                     .build();
         }
     }
@@ -141,7 +141,7 @@ public class PaymentServiceImpl implements PaymentService {
                 .stream()
                 .filter(h -> h.supports(provider))
                 .findFirst()
-                .orElseThrow(() -> new ResourceNotFoundException("Provider not supported"));
+                .orElseThrow(() -> new ResourceNotFoundException(Message.Exception.PROVIDER_NOT_SUPPORTED));
     }
 
     private PaymentMethod checkPaymentMethod(String provider) {

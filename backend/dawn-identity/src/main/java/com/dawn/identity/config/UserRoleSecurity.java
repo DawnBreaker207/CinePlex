@@ -1,5 +1,6 @@
 package com.dawn.identity.config;
 
+import com.dawn.common.core.constant.Message;
 import com.dawn.common.core.exception.wrapper.PermissionDeniedException;
 import com.dawn.common.core.exception.wrapper.ResourceNotFoundException;
 import com.dawn.identity.model.Role;
@@ -21,13 +22,13 @@ public class UserRoleSecurity {
         String currentUsername = auth.getName();
         User currentUser = userRepository
                 .findByUsername(currentUsername)
-                .orElseThrow(() -> new ResourceNotFoundException("Can not find this user"));
+                .orElseThrow(() -> new ResourceNotFoundException(Message.Exception.CAN_NOT_FIND_USER_BY_USERNAME));
 
         if (currentUser == null) return false;
 
         // Can not update yourself
         if (currentUser.getId().equals(userId)) {
-            throw new PermissionDeniedException("You can't update yourself");
+            throw new PermissionDeniedException(Message.Exception.USER_CANNOT_UPDATE_SELF);
         }
 
         User targetUser = userRepository.findById(userId).orElse(null);
@@ -38,7 +39,7 @@ public class UserRoleSecurity {
         int targetUserRole = getMaxRole(targetUser.getRoles());
 
         if (currentUserRole <= targetUserRole) {
-            throw new PermissionDeniedException("You permission not enough (Must higher than this person)");
+            throw new PermissionDeniedException(Message.Exception.PERMISSION_NOT_ENOUGH);
         }
         ;
         return true;

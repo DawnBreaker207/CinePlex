@@ -2,6 +2,7 @@ package com.dawn.common.infra.redis;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.dawn.common.core.constant.Constants;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.jsontype.impl.LaissezFaireSubTypeValidator;
@@ -91,7 +92,7 @@ public class RedisConfig {
 
         RedisCacheConfiguration redisCacheConfiguration = RedisCacheConfiguration
                 .defaultCacheConfig()
-                .entryTtl(Duration.ofMinutes(10))
+                .entryTtl(Duration.ofMinutes(Constants.DEFAULT_CACHE_TTL_MINUTES))
                 .disableCachingNullValues()
                 .serializeValuesWith(RedisSerializationContext
                         .SerializationPair

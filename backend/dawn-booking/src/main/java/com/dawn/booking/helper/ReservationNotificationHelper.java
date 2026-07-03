@@ -3,6 +3,7 @@ package com.dawn.booking.helper;
 import com.dawn.booking.dto.response.*;
 import com.dawn.booking.model.Reservation;
 import com.dawn.booking.client.MovieClientBookingService;
+import com.dawn.common.core.constant.Constants;
 import com.dawn.booking.service.ReservationRedisService;
 import com.dawn.booking.client.UserClientService;
 import com.dawn.common.core.constant.RabbitMQConstants;
@@ -75,7 +76,7 @@ public class ReservationNotificationHelper {
             rabbitTemplate.convertAndSend(
                     RabbitMQConstants.EXCHANGE_NOTIFICATION,
                     RabbitMQConstants.RK_DASHBOARD_REFRESH,
-                    Collections.singletonMap("action", "REFRESH"));
+                    Collections.singletonMap(Constants.SSE_FIELD_ACTION, "REFRESH"));
         } catch (Exception e) {
             log.error("Failed to send notification for reservation {} ", reservation.getId(), e);
         }
@@ -84,10 +85,10 @@ public class ReservationNotificationHelper {
     public void sendSeatHold(Long showtimeId, Long userId, List<Long> allShowtimeSeatIds) {
         List<SseDTO> seatInfo = reservationRedisService.getLockedSeatsByShowtime(showtimeId, allShowtimeSeatIds);
         Map<String, Object> event = Map.of(
-                "event", "SEAT_HOLD",
-                "showtimeId", showtimeId,
-                "userId", userId,
-                "seatIds", seatInfo
+                Constants.SSE_FIELD_EVENT, Constants.SSE_SEAT_HOLD,
+                Constants.SSE_FIELD_SHOWTIME_ID, showtimeId,
+                Constants.SSE_FIELD_USER_ID, userId,
+                Constants.SSE_FIELD_SEAT_IDS, seatInfo
         );
         log.info("Get seat hold: {}", event);
         reservationRedisService.publishSeatEvent(showtimeId, event);
@@ -96,10 +97,10 @@ public class ReservationNotificationHelper {
     public void getSeatRelease(Long showtimeId, Long userId, List<Long> allShowtimeSeatIds) {
         List<SseDTO> seatInfo = reservationRedisService.getLockedSeatsByShowtime(showtimeId, allShowtimeSeatIds);
         Map<String, Object> event = Map.of(
-                "event", "SEAT_RELEASE",
-                "showtimeId", showtimeId,
-                "userId", userId,
-                "seatIds", seatInfo
+                Constants.SSE_FIELD_EVENT, Constants.SSE_SEAT_RELEASE,
+                Constants.SSE_FIELD_SHOWTIME_ID, showtimeId,
+                Constants.SSE_FIELD_USER_ID, userId,
+                Constants.SSE_FIELD_SEAT_IDS, seatInfo
         );
         log.info("Get seat release: {}", event);
         reservationRedisService.publishSeatEvent(showtimeId, event);
@@ -108,9 +109,9 @@ public class ReservationNotificationHelper {
     public void sendSeatRelease(Long showtimeId, List<Long> seatIds, List<Long> allShowtimeSeatIds) {
         List<SseDTO> seatInfo = reservationRedisService.getLockedSeatsByShowtime(showtimeId, allShowtimeSeatIds);
         Map<String, Object> event = Map.of(
-                "event", "SEAT_RELEASE",
-                "showtimeId", showtimeId,
-                "seatIds", seatInfo
+                Constants.SSE_FIELD_EVENT, Constants.SSE_SEAT_RELEASE,
+                Constants.SSE_FIELD_SHOWTIME_ID, showtimeId,
+                Constants.SSE_FIELD_SEAT_IDS, seatInfo
         );
         log.info("Publishing SEAT_RELEASE event: {}", event);
         reservationRedisService.publishSeatEvent(showtimeId, event);

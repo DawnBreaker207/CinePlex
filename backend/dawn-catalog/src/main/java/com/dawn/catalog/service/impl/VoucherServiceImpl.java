@@ -58,7 +58,7 @@ public class VoucherServiceImpl implements VoucherService {
     @Transactional
     public VoucherResponse create(VoucherRequest req) {
         if (voucherRepository.findByCode(req.getCode()).isPresent()) {
-            throw new ResourceAlreadyExistedException("This voucher already existed");
+            throw new ResourceAlreadyExistedException(Message.Exception.VOUCHER_ALREADY_EXISTED);
         }
         Voucher voucher = VoucherMappingHelper.map(req);
         return VoucherMappingHelper.map(voucherRepository.save(voucher));
@@ -73,7 +73,7 @@ public class VoucherServiceImpl implements VoucherService {
 
         if (!existedVoucher.getCode().equals(req.getCode())
                 && voucherRepository.findByCode(req.getCode()).isPresent()) {
-            throw new ResourceAlreadyExistedException("This voucher already existed");
+            throw new ResourceAlreadyExistedException(Message.Exception.VOUCHER_ALREADY_EXISTED);
         }
 
         existedVoucher.setName(req.getName());
@@ -238,7 +238,7 @@ public class VoucherServiceImpl implements VoucherService {
             throw new InvalidRequestException(Message.Exception.VOUCHER_OUT_OF_STOCK);
         }
         if (value.compareTo(voucher.getMinOrderValue()) < 0) {
-            throw new InvalidRequestException("Order total is less than minimum requirement");
+            throw new InvalidRequestException(Message.Exception.MIN_ORDER_NOT_MET);
         }
     }
 

@@ -3,6 +3,7 @@ package com.dawn.booking.service;
 import com.dawn.booking.dto.response.ReservationRedisDTO;
 import com.dawn.booking.dto.response.SeatDTO;
 import com.dawn.booking.dto.response.SseDTO;
+import com.dawn.common.core.constant.Constants;
 import com.dawn.common.core.constant.Message;
 import com.dawn.common.core.exception.wrapper.RedisStorageException;
 import com.dawn.common.core.exception.wrapper.ReservationExpiredException;
@@ -30,7 +31,7 @@ import java.util.*;
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 public class ReservationRedisService {
 
-    static Duration HOLD_TIMEOUT = Duration.ofMinutes(15);
+    static Duration HOLD_TIMEOUT = Duration.ofMinutes(Constants.RESERVATION_HOLD_MINUTES);
 
     RedisService redisService;
 
@@ -58,9 +59,9 @@ public class ReservationRedisService {
             Map<Object, Object> existing = redisService.getHash(key);
             Map<String, String> updates = new HashMap<>();
 
-            updates.put("seatIds", mapper.writeValueAsString(seats));
-            if (existing != null && existing.get("voucherCode") != null) {
-                updates.put("voucherCode", (String) existing.get("voucherCode"));
+            updates.put(Constants.REDIS_SEAT_IDS, mapper.writeValueAsString(seats));
+            if (existing != null && existing.get(Constants.REDIS_VOUCHER_CODE) != null) {
+                updates.put(Constants.REDIS_VOUCHER_CODE, (String) existing.get(Constants.REDIS_VOUCHER_CODE));
             }
 
             redisService.putHash(key, updates, HOLD_TIMEOUT);
@@ -244,20 +245,20 @@ public class ReservationRedisService {
         }
 
 
-        Long userId = safeParseLong((String) data.get("userId"), "userId");
-        Long showtimeId = safeParseLong((String) data.get("showtimeId"), "showtimeId");
-        Long theaterId = safeParseLong((String) data.get("theaterId"), "theaterId");
+        Long userId = safeParseLong((String) data.get(Constants.REDIS_USER_ID), Constants.REDIS_USER_ID);
+        Long showtimeId = safeParseLong((String) data.get(Constants.REDIS_SHOWTIME_ID), Constants.REDIS_SHOWTIME_ID);
+        Long theaterId = safeParseLong((String) data.get(Constants.REDIS_THEATER_ID), Constants.REDIS_THEATER_ID);
 
-        String voucherCode = (String) data.get("voucherCode");
+        String voucherCode = (String) data.get(Constants.REDIS_VOUCHER_CODE);
         BigDecimal tempFinal = null;
-        String tempFinalStr = (String) data.get("tempFinalAmount");
+        String tempFinalStr = (String) data.get(Constants.REDIS_TEMP_FINAL_AMOUNT);
         if (tempFinalStr != null) {
             tempFinal = new BigDecimal(tempFinalStr);
         }
 
         List<Long> seatIds = Collections.emptyList();
         try {
-            String seatJson = (String) data.get("seatIds");
+            String seatJson = (String) data.get(Constants.REDIS_SEAT_IDS);
             if (seatJson != null) {
                 seatIds = mapper.readValue(seatJson, new TypeReference<>() {
                 });
@@ -279,7 +280,7 @@ public class ReservationRedisService {
 
     public List<Long> parseSeatIdsFromReservationData(Map<Object, Object> reservationData) {
         try {
-            String currentSeatsJson = (String) reservationData.get("seatIds");
+            String currentSeatsJson = (String) reservationData.get(Constants.REDIS_SEAT_IDS);
             log.info("Get current seat json: {}", currentSeatsJson);
             if (currentSeatsJson == null || currentSeatsJson.isEmpty()) {
                 return Collections.emptyList();
@@ -298,11 +299,11 @@ public class ReservationRedisService {
         Map<String, String> updates = new HashMap<>();
 
         if (data.getVoucherCode() != null) {
-            updates.put("voucherCode", data.getVoucherCode());
+            updates.put(Constants.REDIS_VOUCHER_CODE, data.getVoucherCode());
         }
 
         try {
-            updates.put("seatIds", mapper.writeValueAsString(data.getSeatsIds()));
+            updates.put(Constants.REDIS_SEAT_IDS, mapper.writeValueAsString(data.getSeatsIds()));
         } catch (JsonProcessingException e) {
             log.error("Serialize seat ids failed", e);
         }

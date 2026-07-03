@@ -7,6 +7,7 @@ import com.dawn.common.core.dto.response.ResponseObject;
 import com.dawn.common.core.dto.response.ResponsePage;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -45,13 +46,13 @@ public class MovieController {
     @PostMapping("")
     @RateLimiter(name = "limit")
     @PreAuthorize("hasRole('ADMIN') or hasRole('MODERATOR')")
-    public ResponseObject<MovieResponse> create(@RequestBody MovieRequest m) {
+    public ResponseObject<MovieResponse> create(@Valid @RequestBody MovieRequest m) {
         return ResponseObject.created(movieService.create(m));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN') or hasRole('MODERATOR')")
-    public ResponseObject<MovieResponse> update(@PathVariable Long id, @RequestBody MovieRequest m) {
+    public ResponseObject<MovieResponse> update(@PathVariable Long id, @Valid @RequestBody MovieRequest m) {
         return ResponseObject.success(movieService.update(id, m));
     }
 

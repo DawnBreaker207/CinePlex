@@ -1,8 +1,6 @@
 package com.dawn.notification.controller;
 
-import com.dawn.common.core.dto.event.BookingCompleteEvent;
 import com.dawn.common.core.helper.RedisKeyHelper;
-import com.dawn.notification.service.EmailService;
 import com.dawn.notification.service.SseService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -17,25 +15,6 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 public class NotificationController {
 
     private final SseService sseService;
-
-    private final EmailService emailService;
-
-    @GetMapping("/mail/test")
-    public void sendEmail() {
-        emailService.sendReservationEmail(BookingCompleteEvent
-                .builder()
-                .to("demo@gmail.com")
-                .name("Dawnbreaker")
-                .reservationId("ORD-D4DAAD940C10")
-                .movieName("Overlord")
-                .theaterName("Thanh Xuan")
-                .showtimeSession("11/10/2025 12:00:00")
-                .seats("A2,A3")
-                .paymentTime("11/10/2025 12:00:00")
-                .total("100000")
-                .build()
-        );
-    }
 
     @GetMapping(value = "/subscribe/showtime/{showtimeId}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public ResponseEntity<SseEmitter> subscribe(@PathVariable Long showtimeId, @RequestParam String clientId) {
