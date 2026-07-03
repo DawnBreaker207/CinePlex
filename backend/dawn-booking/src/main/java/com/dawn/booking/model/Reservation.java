@@ -8,6 +8,7 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 
 @Hidden
 @Entity
@@ -35,7 +36,7 @@ public class Reservation extends AbstractMappedEntity {
     @Column(name = "total_amount", nullable = false)
     private BigDecimal totalAmount;
 
-    @Column(name = "voucher_code", nullable = true)
+    @Column(name = "voucher_code")
     private String voucherCode;
 
     @Column(name = "original_amount")
@@ -44,9 +45,8 @@ public class Reservation extends AbstractMappedEntity {
     @Column(name = "discount_amount")
     private BigDecimal discountAmount;
 
-    @Column(name = "is_paid")
-    @Builder.Default
-    private Boolean isPaid = false;
+    @Column(name = "expired_at")
+    private Instant expiredAt;
 
     @Column(name = "is_deleted", nullable = false)
     @Builder.Default

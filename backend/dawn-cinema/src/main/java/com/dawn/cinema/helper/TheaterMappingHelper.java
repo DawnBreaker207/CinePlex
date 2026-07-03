@@ -13,7 +13,6 @@ public interface TheaterMappingHelper {
                 .builder()
                 .name(theater.getName())
                 .location(theater.getLocation())
-                .capacity(theater.getCapacity())
                 .build();
     }
 
@@ -23,7 +22,6 @@ public interface TheaterMappingHelper {
                 .id(theater.getId())
                 .name(theater.getName())
                 .location(theater.getLocation())
-                .capacity(theater.getCapacity())
                 .showtime(showtimeId)
                 .isDeleted(theater.getIsDeleted())
                 .createdAt(theater.getCreatedAt())

@@ -88,7 +88,6 @@ public class TheaterServiceImpl implements TheaterService {
                 .orElseThrow(() -> new ResourceNotFoundException(Message.Exception.THEATER_NOT_FOUND));
         theater.setName(theaterDetails.getName());
         theater.setLocation(theaterDetails.getLocation());
-        theater.setCapacity(theaterDetails.getCapacity());
         return TheaterMappingHelper.map(theaterRepository.save(theater));
     }
 

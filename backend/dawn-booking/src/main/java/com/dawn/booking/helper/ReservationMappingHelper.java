@@ -2,6 +2,7 @@ package com.dawn.booking.helper;
 
 import com.dawn.booking.dto.response.*;
 import com.dawn.booking.model.Reservation;
+import com.dawn.common.core.constant.ReservationStatus;
 
 import java.util.List;
 
@@ -21,7 +22,7 @@ public interface ReservationMappingHelper {
                                 .map(SeatDTO::getSeatNumber)
                                 .toList())
                         .isDeleted(reservation.getIsDeleted())
-                        .isPaid(reservation.getIsPaid())
+                        .isPaid(ReservationStatus.CONFIRMED.equals(reservation.getReservationStatus()) || ReservationStatus.REFUNDED.equals(reservation.getReservationStatus()))
                         .createdAt(reservation.getCreatedAt())
                         .updatedAt(reservation.getUpdatedAt())
                         .build();

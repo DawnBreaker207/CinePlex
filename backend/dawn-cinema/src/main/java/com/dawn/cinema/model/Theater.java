@@ -6,9 +6,6 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @Hidden
 @Entity
 @Table(name = "theater")
@@ -29,14 +26,7 @@ public class Theater extends AbstractMappedEntity {
     @Column(name = "location", nullable = false)
     private String location;
 
-    @Column(name = "capacity", nullable = false)
-    private Integer capacity;
-
     @Column(name = "is_deleted", nullable = false)
     @Builder.Default
     private Boolean isDeleted = false;
-
-    @OneToMany(mappedBy = "theater", cascade = CascadeType.ALL)
-    @Builder.Default
-    private List<Showtime> showtime = new ArrayList<>();
 }

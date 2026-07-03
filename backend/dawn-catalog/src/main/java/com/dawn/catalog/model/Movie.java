@@ -1,6 +1,5 @@
 package com.dawn.catalog.model;
 
-
 import com.dawn.common.core.model.AbstractMappedEntity;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -70,6 +69,12 @@ public class Movie extends AbstractMappedEntity {
 
     @Column(name = "film_id")
     private String filmId;
+
+    @Column(name = "trailer_url")
+    private String trailerUrl;
+
+    @Column(name = "age_rating")
+    private String ageRating;
 
     @Column(name = "is_deleted", nullable = false)
     @Builder.Default

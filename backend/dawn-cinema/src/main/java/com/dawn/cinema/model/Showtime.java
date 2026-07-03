@@ -30,9 +30,8 @@ public class Showtime extends AbstractMappedEntity {
     @Column(name = "movie_id", nullable = false)
     private Long movieId;
 
-    @ManyToOne
-    @JoinColumn(name = "theater_id", nullable = false)
-    private Theater theater;
+    @Column(name = "room_id", nullable = false)
+    private Long roomId;
 
     @Column(name = "show_date", nullable = false)
     private LocalDate showDate;
@@ -43,9 +42,6 @@ public class Showtime extends AbstractMappedEntity {
     @Column(name = "price", nullable = false)
     private BigDecimal price;
 
-    @Column(name = "total_seats", nullable = false)
-    private Integer totalSeats;
-
-    @Column(name = "available_seats", nullable = false)
-    private Integer availableSeats;
+    @Column(name = "vip_price")
+    private BigDecimal vipPrice;
 }
