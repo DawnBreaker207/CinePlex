@@ -20,6 +20,21 @@
             <artifactId>dawn-common</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>com.dawn.backend</groupId>
+            <artifactId>dawn-identity</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.dawn.backend</groupId>
+            <artifactId>dawn-booking</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.dawn.backend</groupId>
+            <artifactId>dawn-payment</artifactId>
+        </dependency>
+
     </dependencies>
 
 </project>

@@ -478,6 +478,30 @@ public class ReservationServiceImpl implements ReservationService {
         }
     }
 
+    @Override
+    public void forceCancelReservation(String reservationId) {
+        log.info("Force cancel reservation: {}", reservationId);
+        Optional<Reservation> existing = reservationRepository.findById(reservationId);
+        if (existing.isPresent()) {
+            Reservation r = existing.get();
+            r.setReservationStatus(ReservationStatus.CANCELED);
+            r.setIsDeleted(true);
+            reservationRepository.save(r);
+        }
+        try {
+            ReservationRedisDTO cachedData = reservationRedisService.getFromRedis(reservationId);
+            if (cachedData != null) {
+                List<Long> seatIds = cachedData.getSeatsIds();
+                if (seatIds != null && !seatIds.isEmpty()) {
+                    reservationRedisService.deleteSeatLocks(seatIds, reservationId);
+                }
+                reservationRedisService.deleteReservation(reservationId);
+            }
+        } catch (Exception e) {
+            log.warn("Redis cleanup failed for force-canceled reservation {}", reservationId);
+        }
+    }
+
     private void validateSeatsForReservation(List<SeatDTO> seats, Long showtimeId, List<Long> seatIds) {
         if (seats.size() != seatIds.size()) {
             List<Long> foundSeatIds = seats
