@@ -355,8 +355,8 @@ class VoucherServiceImplTest {
             var results = service.getUserVouchers(1L);
 
             assertThat(results).hasSize(1);
-            assertThat(results.get(0).getVoucherName()).isEqualTo("Test Voucher");
-            assertThat(results.get(0).getDiscountType()).isEqualTo(DiscountType.PERCENT);
+            assertThat(results.getFirst().getVoucherName()).isEqualTo("Test Voucher");
+            assertThat(results.getFirst().getDiscountType()).isEqualTo(DiscountType.PERCENT);
         }
 
         @Test

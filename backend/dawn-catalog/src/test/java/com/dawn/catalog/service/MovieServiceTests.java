@@ -117,8 +117,8 @@ public class MovieServiceTests {
         // Assert
         assertNotNull(result);
         assertEquals(1, result.size());
-        assertEquals(movie.getId(), result.get(0).getId());
-        assertEquals(filter.getTitle(), result.get(0).getTitle());
+        assertEquals(movie.getId(), result.getFirst().getId());
+        assertEquals(filter.getTitle(), result.getFirst().getTitle());
 
         verify(movieRepository, times(1)).findAll();
     }

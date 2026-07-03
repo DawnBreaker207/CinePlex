@@ -120,12 +120,12 @@ public class ReservationRedisService {
 
         List result = redisService.lockMulti(keys, redisKey, HOLD_TIMEOUT);
 
-        if (result == null || result.isEmpty() || result.get(0) == null) {
+        if (result == null || result.isEmpty() || result.getFirst() == null) {
             log.error("Lua script returned null or empty result for reservation {}", redisKey);
             throw new SeatUnavailableException(Message.Exception.FAILED_SEAT_LOCK);
         }
 
-        Long status = Long.parseLong(result.get(0).toString());
+        Long status = Long.parseLong(result.getFirst().toString());
 
         if (status == 1) {
             log.info("Successfully locked {} seats for reservation {}", seatIds.size(), redisKey);

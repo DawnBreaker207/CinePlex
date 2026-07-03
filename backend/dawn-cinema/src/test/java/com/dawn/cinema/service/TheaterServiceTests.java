@@ -180,7 +180,7 @@ public class TheaterServiceTests {
         // Assert
         assertNotNull(result);
         assertEquals(1, result.size());
-        assertEquals(theaterResponse.getName(), result.get(0).getName());
+        assertEquals(theaterResponse.getName(), result.getFirst().getName());
         verify(theaterRepository, times(1))
                 .findByLocationContainingIgnoreCase("HaNoi", Pageable.unpaged());
     }
