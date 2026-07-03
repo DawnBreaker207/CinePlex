@@ -14,6 +14,7 @@ import java.util.Optional;
 
 @Repository
 public interface VoucherRepository extends JpaRepository<Voucher, Long> {
+
     @Override
     Page<Voucher> findAll(Pageable pageable);
 
@@ -23,7 +24,7 @@ public interface VoucherRepository extends JpaRepository<Voucher, Long> {
     @Query("""
             UPDATE Voucher v SET v.quantityUsed = v.quantityUsed + 1
             WHERE v.code = :code
-            AND v.isActive = true
+            AND v.status = 'ACTIVE'
             AND v.quantityUsed < v.quantityTotal
             AND :now BETWEEN v.startAt AND v.endAt
             """)
@@ -33,8 +34,14 @@ public interface VoucherRepository extends JpaRepository<Voucher, Long> {
     @Query("""
             UPDATE Voucher v SET v.quantityUsed = v.quantityUsed - 1
             WHERE v.code = :code
-            AND v.isActive = true
+            AND v.status = 'ACTIVE'
             AND v.quantityUsed > 0
             """)
-    void releaseVoucher(@Param("code") String code);
+    int releaseVoucher(@Param("code") String code);
+
+    @Query("""
+            SELECT COUNT(uv) FROM UserVoucher uv
+            WHERE uv.userId = :userId AND uv.voucherId = :voucherId AND uv.status = 'AVAILABLE'
+            """)
+    long countActiveByUserIdAndVoucherId(@Param("userId") Long userId, @Param("voucherId") Long voucherId);
 }

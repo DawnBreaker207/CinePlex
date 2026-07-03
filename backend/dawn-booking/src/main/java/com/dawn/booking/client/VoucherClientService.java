@@ -7,7 +7,7 @@ import java.math.BigDecimal;
 public interface VoucherClientService {
     public VoucherDiscountDTO calculateVoucher(String code, BigDecimal totalAmount);
 
-    public void useVoucher(String code);
+    public void useVoucher(String code, Long userId, String reservationId);
 
-    public void releaseVoucher(String code);
+    public void releaseVoucher(String code, Long userId);
 }

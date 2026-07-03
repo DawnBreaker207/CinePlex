@@ -2,11 +2,13 @@ package com.dawn.catalog.model;
 
 import com.dawn.catalog.constant.DiscountType;
 import com.dawn.catalog.constant.VoucherType;
+import com.dawn.common.core.constant.VoucherStatus;
 import com.dawn.common.core.model.AbstractMappedEntity;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 
 @Entity
@@ -36,11 +38,11 @@ public class Voucher extends AbstractMappedEntity {
 
     @Column(name = "quantity_total", nullable = false)
     @Builder.Default
-    private Long quantityTotal = 0L;
+    private Integer quantityTotal = 0;
 
     @Column(name = "quantity_used", nullable = false)
     @Builder.Default
-    private Long quantityUsed = 0L;
+    private Integer quantityUsed = 0;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "category", length = 20)
@@ -53,23 +55,29 @@ public class Voucher extends AbstractMappedEntity {
     @Column(name = "discount_type", nullable = false, length = 10)
     private DiscountType discountType;
 
-    @Column(name = "discount_value")
-    private Long discountValue;
-    @Column(name = "max_discount_amount")
-    private Long maxDiscountAmount;
+    @Column(name = "discount_value", precision = 10, scale = 2)
+    private BigDecimal discountValue;
 
-    @Column(name = "min_order_value", nullable = false)
+    @Column(name = "max_discount_amount", precision = 10, scale = 2)
+    private BigDecimal maxDiscountAmount;
+
+    @Column(name = "min_order_value", nullable = false, precision = 10, scale = 2)
     @Builder.Default
-    private Long minOrderValue = 0L;
+    private BigDecimal minOrderValue = BigDecimal.ZERO;
 
-    @Column(name = "conditions", columnDefinition = "jsonb")
+    @Column(name = "conditions", columnDefinition = "json")
     private String conditions;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 20)
+    @Builder.Default
+    private VoucherStatus status = VoucherStatus.SCHEDULED;
+
+    @Column(name = "max_per_user", nullable = false)
+    @Builder.Default
+    private Integer maxPerUser = 1;
 
     @Version
     @Column(name = "version")
     private Long version;
-
-    @Column(name = "is_active", nullable = false)
-    @Builder.Default
-    private Boolean isActive = false;
 }
