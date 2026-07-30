@@ -1,5 +1,6 @@
 import { Component, ElementRef, inject, OnInit, signal, viewChild } from '@angular/core';
-import { AbstractControl, FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { matchValidator } from '@shared/utils/validators';
 import { NzButtonComponent } from 'ng-zorro-antd/button';
 import { NzAlertComponent } from 'ng-zorro-antd/alert';
 import { NzIconDirective } from 'ng-zorro-antd/icon';
@@ -90,7 +91,7 @@ export class AuthComponent implements OnInit {
       email: ['', [Validators.required, Validators.email]],
       username: ['', [Validators.required]],
       password: ['', [Validators.required, Validators.minLength(6)]],
-      confirmPassword: ['', [Validators.required, this.confirmValidator.bind(this)]],
+      confirmPassword: ['', [Validators.required, matchValidator('password')]],
     });
   }
 
@@ -131,12 +132,7 @@ export class AuthComponent implements OnInit {
     }
   }
 
-  private confirmValidator(control: AbstractControl) {
-    if (!control.value) return { required: true };
-    const password = this.formRegister?.get('password')?.value;
-    if (control.value !== password) return { confirm: true };
-    return null;
-  }
+
 
   private markInvalid(form: FormGroup) {
     Object.values(form.controls).forEach((control) => {
