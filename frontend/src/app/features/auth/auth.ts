@@ -101,7 +101,7 @@ export class AuthComponent implements OnInit {
       this.loginError.set(null);
       const { identifier, password } = this.formLogin.value;
       this.store.dispatch(AuthActions.loadLogin({ user: { identifier, password } }));
-      this.actions$.pipe(ofType(AuthActions.loadLoginSuccess, AuthActions.loadLoginFailure), take(1)).subscribe(() => {
+      this.actions$.pipe(ofType(AuthActions.loadLoginSuccess, AuthActions.loadLoginFailure), take(1), takeUntilDestroyed()).subscribe(() => {
         this.isLoginLoading = false;
       });
     } else {
@@ -118,7 +118,7 @@ export class AuthComponent implements OnInit {
 
       this.actions$.pipe(
         ofType(AuthActions.loadRegisterSuccess, AuthActions.loadRegisterFailure),
-        take(1),
+        take(1), takeUntilDestroyed(),
       ).subscribe((action) => {
         this.isRegisterLoading = false;
         if (action.type === AuthActions.loadRegisterSuccess.type) {

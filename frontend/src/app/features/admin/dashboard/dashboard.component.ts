@@ -1,4 +1,5 @@
-import { Component, inject } from '@angular/core';
+import { Component, DestroyRef, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { NzLayoutModule } from 'ng-zorro-antd/layout';
 import { NzSelectModule } from 'ng-zorro-antd/select';
@@ -62,6 +63,7 @@ import {
 export class DashboardComponent {
   readonly dashboardStore = inject(DashboardStore);
   private reportService = inject(ReportService);
+  private destroyRef = inject(DestroyRef);
 
   quarters = [
     { label: 'Quý 1 (Q1)', value: 1 },
@@ -82,7 +84,7 @@ export class DashboardComponent {
 
   async exportReport(type: 'pdf' | 'excel') {
     const { saveAs } = await import('file-saver');
-    this.reportService.downloadReport(type).subscribe({
+    this.reportService.downloadReport(type).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (res) => {
         const ext = type === 'excel' ? 'xlsx' : type;
         saveAs(res, `report.${ext}`);

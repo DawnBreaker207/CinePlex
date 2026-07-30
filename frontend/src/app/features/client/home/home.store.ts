@@ -1,7 +1,8 @@
 import { Theater } from '@domain/theater/models/theater.model';
 import { Movie } from '@domain/movie/models/movie.model';
 import { signalStore, withMethods } from '@ngrx/signals';
-import { computed, inject, signal, effect, untracked } from '@angular/core';
+import { computed, inject, signal, effect, untracked, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import dayjs from 'dayjs';
@@ -160,7 +161,8 @@ export const HomeStore = signalStore(
             nzData: { showtimes: movieShowtimes, movieTitle: movie?.title },
             nzFooter: null,
           });
-          modal.afterClose.subscribe((stId) => {
+          const destroyRef = inject(DestroyRef);
+          modal.afterClose.pipe(takeUntilDestroyed(destroyRef)).subscribe((stId) => {
             if (stId) this.proceedToReservation(stId);
           });
         },

@@ -1,11 +1,13 @@
 import {
   Component,
+  DestroyRef,
   effect,
   ElementRef,
   inject,
   signal,
   viewChild,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NzButtonModule } from 'ng-zorro-antd/button';
@@ -41,6 +43,7 @@ interface Message {
 })
 export class ChatComponent {
   private chatboxService = inject(ChatboxService);
+  private destroyRef = inject(DestroyRef);
   scrollBottom = viewChild<ElementRef>('scrollBottom');
 
   isOpen = signal<boolean>(false);
@@ -80,7 +83,7 @@ export class ChatComponent {
     this.inputValue.set('');
     this.isTyping.set(true);
 
-    this.chatboxService.sendMessage(text).subscribe({
+    this.chatboxService.sendMessage(text).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (res) => {
         this.messages.update((prev) => [
           ...prev,
