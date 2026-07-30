@@ -14,7 +14,7 @@
  class="flex cursor-pointer select-none items-center gap-2 py-1 text-sm font-semibold text-slate-700 transition-colors hover:text-[#E53E3E]"
  >
  <span class="max-w-[180px] truncate lg:max-w-[220px]">
- {{ selectTheaterName$ | async }}
+  {{ selectTheaterName() }}
  </span>
  <nz-icon
  nzType="down"
@@ -23,7 +23,7 @@
  </a>
 
  <nz-dropdown-menu #cinemaMenu="nzDropdownMenu">
- @if (theaters$ | async; as theaters) {
+ @if (theaterList(); as theaters) {
  <ul
  nz-menu
  class="my-2 max-h-64 w-full min-w-[260px] overflow-y-auto rounded-xl border border-slate-100 p-2 shadow-xl"
@@ -36,7 +36,7 @@
  (keyup.enter)="onSelect(theater.id)"
  tabindex="0"
  role="tab"
- [nzSelected]="(selectedTheaterId$ | async) === theater.id"
+ [nzSelected]="currentTheaterId() === theater.id"
  >
  {{ theater.name }}
  </li>

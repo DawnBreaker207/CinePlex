@@ -1,12 +1,10 @@
-import { Component, inject } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { Store } from '@ngrx/store';
-import { NzSelectModule } from 'ng-zorro-antd/select';
-import { AsyncPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NzIconDirective } from 'ng-zorro-antd/icon';
 import { NzDropDownModule } from 'ng-zorro-antd/dropdown';
 import { TranslatePipe } from '@ngx-translate/core';
-import { combineLatest, map } from 'rxjs';
 import {
   selectAllTheaters,
   selectSelectedTheaterId,
@@ -19,8 +17,6 @@ import { Theater } from '@domain/theater/models/theater.model';
 @Component({
   selector: 'app-theater-select',
   imports: [
-    NzSelectModule,
-    AsyncPipe,
     FormsModule,
     NzIconDirective,
     NzDropDownModule,
@@ -32,18 +28,15 @@ export class SelectShowtimeComponent {
   private store = inject(Store);
   private storage = inject(StorageService);
 
-  theaters$ = this.store.select(selectAllTheaters);
-  selectedTheaterId$ = this.store.select(selectSelectedTheaterId);
+  private theaters = toSignal(this.store.select(selectAllTheaters), { initialValue: [] });
+  private selectedTheaterId = toSignal(this.store.select(selectSelectedTheaterId), { initialValue: 0 });
 
-  selectTheaterName$ = combineLatest([
-    this.theaters$,
-    this.selectedTheaterId$,
-  ]).pipe(
-    map(([theaters, id]) => {
-      const found = theaters.find((t: Theater) => t.id === id);
-      return found ? found.name : 'Chọn rạp chiếu';
-    }),
-  );
+  readonly theaterList = this.theaters;
+  readonly currentTheaterId = this.selectedTheaterId;
+  readonly selectTheaterName = computed(() => {
+    const found = this.theaters().find((t: Theater) => t.id === this.selectedTheaterId());
+    return found ? found.name : 'Chọn rạp chiếu';
+  });
 
   onSelect(theaterId: number) {
     this.store.dispatch(TheaterActions.setSelectedTheaterId({ theaterId }));

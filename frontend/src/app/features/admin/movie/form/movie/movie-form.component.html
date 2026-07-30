@@ -1,4 +1,4 @@
-<nz-spin [nzSpinning]="(loading$ | async) || (saving$ | async)">
+<nz-spin [nzSpinning]="loading() || saving()">
   <form nz-form [formGroup]="form" class="w-full">
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
       <!-- LEFT COLUMN -->
@@ -235,12 +235,11 @@
 </nz-spin>
 
 <!-- Error Alert (Giữ nguyên logic cũ) -->
-@let error = error$ | async;
-@if (error) {
+@if (error(); as currentError) {
   <div class="mt-4">
     <nz-alert
       nzType="error"
-      [nzMessage]="error"
+      [nzMessage]="currentError"
       nzShowIcon
       nzCloseable
     ></nz-alert>

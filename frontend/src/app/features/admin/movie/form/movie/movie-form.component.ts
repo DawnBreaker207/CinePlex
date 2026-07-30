@@ -1,8 +1,8 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
+import { toSignal, takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { NzModalModule, NzModalRef, NzModalService } from 'ng-zorro-antd/modal';
 import { filter, map, take } from 'rxjs';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NzAutosizeDirective, NzInputDirective } from 'ng-zorro-antd/input';
 import {
   NzFormControlComponent,
@@ -16,7 +16,6 @@ import { NzButtonComponent } from 'ng-zorro-antd/button';
 import { NzSpaceModule } from 'ng-zorro-antd/space';
 import { Store } from '@ngrx/store';
 import { Actions, ofType } from '@ngrx/effects';
-import { AsyncPipe } from '@angular/common';
 import { NzAlertComponent } from 'ng-zorro-antd/alert';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { MovieService } from '@domain/movie/data-access/movie.service';
@@ -49,7 +48,6 @@ import { TranslatePipe } from '@ngx-translate/core';
     NzButtonComponent,
     NzSpaceModule,
     NzAutosizeDirective,
-    AsyncPipe,
     NzAlertComponent,
     NzIconModule,
     NzSpinModule,
@@ -72,9 +70,12 @@ export class FormMovieComponent implements OnInit {
   imageBase = environment.tmbd.imageUrl;
 
   // NgRx State
-  loading$ = this.store.select(selectMovieLoadingDetails);
-  saving$ = this.store.select(selectMoviesSaving);
-  error$ = this.store.select(selectMoviesError);
+  private loading$ = this.store.select(selectMovieLoadingDetails);
+  private saving$ = this.store.select(selectMoviesSaving);
+  private error$ = this.store.select(selectMoviesError);
+  readonly loading = toSignal(this.loading$, { initialValue: false });
+  readonly saving = toSignal(this.saving$, { initialValue: false });
+  readonly error = toSignal(this.error$, { initialValue: null });
 
   readonly submitting = signal(false);
   private initialFormValue: any = null;
