@@ -45,7 +45,7 @@ export const HEADER_COLUMNS = {
   ],
   VOUCHER: [
     marker('Thông tin'),
-    marker('Thởi gian'),
+    marker('Thời gian'),
     marker('Mức giảm'),
     marker('Tình trạng'),
     marker('Phạm vi'),
@@ -55,9 +55,7 @@ export const HEADER_COLUMNS = {
 };
 
 export const HEADERS = [
-  { name: marker('Phim'), path: '/client' },
-  { name: marker('Rạp'), path: '' },
-  { name: marker('Tin mới và ưu đãi'), path: '' },
+  { name: marker('Phim'), path: '/movies' },
 ];
 
 export const PROFILE_MENU = [
@@ -74,12 +72,6 @@ export const PROFILE_MENU = [
     role: 'user',
   },
   {
-    title: marker('Cài đặt'),
-    icon: 'Settings',
-    link: '/settings',
-    role: 'user',
-  },
-  {
     title: marker('Đăng xuất'),
     icon: 'LogOut',
     action: 'logout',
@@ -91,9 +83,13 @@ export const PROFILE_MENU = [
 export const RESERVATION_STATUS_LABELS: Record<ReservationStatus, string> = {
   CONFIRMED: marker('Đã xác nhận'),
   CANCELED: marker('Đã hủy'),
+  PENDING: marker('Đang chờ'),
+  REFUNDED: marker('Đã hoàn tiền'),
 };
 
 export const RESERVATION_STATUS = [
   { value: 'CONFIRMED', label: RESERVATION_STATUS_LABELS.CONFIRMED },
   { value: 'CANCELED', label: RESERVATION_STATUS_LABELS.CANCELED },
+  { value: 'PENDING', label: RESERVATION_STATUS_LABELS.PENDING },
+  { value: 'REFUNDED', label: RESERVATION_STATUS_LABELS.REFUNDED },
 ];

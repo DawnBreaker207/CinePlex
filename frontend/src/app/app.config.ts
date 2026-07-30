@@ -1,13 +1,19 @@
 import {
   ApplicationConfig,
   importProvidersFrom,
+  inject,
   isDevMode,
   LOCALE_ID,
+  provideAppInitializer,
   provideBrowserGlobalErrorListeners,
   provideZoneChangeDetection,
 } from '@angular/core';
-import { provideRouter } from '@angular/router';
+import { provideRouter, TitleStrategy, withComponentInputBinding, withInMemoryScrolling, withViewTransitions } from '@angular/router';
 import { routes } from './app.routes';
+import { Store } from '@ngrx/store';
+import { MovieActions } from '@domain/movie/data-access/movie.actions';
+import { TheaterActions } from '@domain/theater/data-access/theater.actions';
+import { environment } from '../environments/environment';
 import { provideStore } from '@ngrx/store';
 import { nzIcons } from './icons-provider';
 import { provideNzIcons } from 'ng-zorro-antd/icon';
@@ -26,8 +32,10 @@ import { NgxEchartsModule } from 'ngx-echarts';
 import { icons, LucideAngularModule } from 'lucide-angular';
 import localVi from '@angular/common/locales/vi';
 import { CurrencyFormatPipe } from '@shared/pipes/currency-format.pipe';
+import { NzModalModule } from 'ng-zorro-antd/modal';
 import { AuthInterceptor } from '@core/interceptor/auth.interceptor';
 import { ErrorInterceptor } from '@core/interceptor/error.interceptor';
+import { mockInterceptor } from '@core/mock/mock-interceptor';
 import { authFeatureKey, authReducer } from '@core/auth/auth.reducers';
 import {
   movieFeatureKey,
@@ -48,6 +56,7 @@ import { ShowtimeEffects } from '@domain/showtime/data-access/showtime.effects';
 import { provideTranslateHttpLoader } from '@ngx-translate/http-loader';
 import { provideTranslateService } from '@ngx-translate/core';
 import { provideAppSecurity } from '@core/config/app.security';
+import { AppTitleStrategy } from '@core/config/title-strategy';
 import { provideMarkdown } from 'ngx-markdown';
 
 registerLocaleData(localVi);
@@ -57,10 +66,14 @@ export const appConfig: ApplicationConfig = {
     CurrencyPipe,
     CurrencyFormatPipe,
     provideZoneChangeDetection({ eventCoalescing: true }),
-    provideHttpClient(withInterceptors([AuthInterceptor, ErrorInterceptor])),
-    provideRouter(routes),
+    provideHttpClient(withInterceptors([
+      ...(environment.useMock ? [mockInterceptor] : []),
+      AuthInterceptor, ErrorInterceptor,
+    ])),
+    provideRouter(routes, withInMemoryScrolling({ anchorScrolling: 'enabled', scrollPositionRestoration: 'enabled' }), withComponentInputBinding(), withViewTransitions()),
     provideNzIcons(nzIcons),
     provideNzI18n(en_US),
+    importProvidersFrom(NzModalModule),
     provideStore({
       [authFeatureKey]: authReducer,
       [movieFeatureKey]: movieReducer,
@@ -73,6 +86,11 @@ export const appConfig: ApplicationConfig = {
       TheaterEffects,
       ShowtimeEffects,
     ]),
+    provideAppInitializer(() => {
+      const store = inject(Store);
+      store.dispatch(MovieActions.loadMovies({ page: 0, size: 100 }));
+      store.dispatch(TheaterActions.loadTheaters({ page: 0, size: 10 }));
+    }),
     provideTranslateService({
       lang: 'vi',
       fallbackLang: 'vi',
@@ -94,6 +112,7 @@ export const appConfig: ApplicationConfig = {
     ),
     { provide: LOCALE_ID, useValue: 'vi' },
     provideAppSecurity(),
+    { provide: TitleStrategy, useClass: AppTitleStrategy },
     provideMarkdown(),
     provideAnimationsAsync(),
     provideStoreDevtools({ maxAge: 25, logOnly: !isDevMode() }),
