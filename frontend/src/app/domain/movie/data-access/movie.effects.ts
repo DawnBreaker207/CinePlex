@@ -32,7 +32,7 @@ export class MovieEffects {
         const network$ = this.movieService.getMovieLists({ page, size }).pipe(
           tap(({ content }) => this.storage.cacheMovie(content)),
           catchError((err) => {
-            console.log('Network error ', err);
+            console.error('Network error ', err);
             return EMPTY;
           }),
         );

@@ -62,7 +62,6 @@ export class MovieService {
 
   removeMovie(id: number) {
     return this.http.delete<void>(`${this.URL}/${id}`).pipe(
-      map((res) => console.log(res)),
       catchError(this.handleError<void>('movie')),
     );
   }
@@ -90,7 +89,7 @@ export class MovieService {
 
   private handleError<T>(operation = 'operation') {
     return (error: any): Observable<T> => {
-      console.log(`${operation} failed: ${error}`);
+      console.error(`${operation} failed: ${error}`);
       return throwError(() => error);
     };
   }

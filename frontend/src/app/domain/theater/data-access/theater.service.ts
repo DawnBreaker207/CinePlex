@@ -74,7 +74,7 @@ export class TheaterService {
 
   private handleError<T>(operation = 'operation') {
     return (error: any): Observable<T> => {
-      console.log(`${operation} failed: ${error}`);
+      console.error(`${operation} failed: ${error}`);
       return throwError(() => error);
     };
   }

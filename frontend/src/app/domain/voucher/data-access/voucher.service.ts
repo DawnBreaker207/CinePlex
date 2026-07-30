@@ -73,8 +73,9 @@ export class VoucherService {
   }
   private handleError<T>(operation = 'operation') {
     return (error: any): Observable<T> => {
-      console.log(`${operation} failed: ${error}`);
-      return throwError(() => error);
+      console.error(`${operation} failed:`, error);
+      const message = error?.error?.message || error?.message || error?.error || `Lỗi ${operation}`;
+      return throwError(() => ({ message }));
     };
   }
 }

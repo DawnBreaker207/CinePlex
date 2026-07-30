@@ -26,7 +26,6 @@ export class ReservationService {
     page: number = 0,
     size: number = 0,
   ) {
-    console.log(filter);
     let params = new HttpParams();
 
     params = params.set('page', page.toString());
@@ -113,7 +112,7 @@ export class ReservationService {
 
   private handleError<T>(operation = 'operation') {
     return (error: any): Observable<T> => {
-      console.log(`${operation} failed: ${error}`);
+      console.error(`${operation} failed: ${error}`);
       return throwError(() => error);
     };
   }

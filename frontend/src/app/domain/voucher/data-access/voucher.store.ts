@@ -8,7 +8,7 @@ import {
 } from '@ngrx/signals';
 import { computed, inject } from '@angular/core';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { debounceTime, pipe, switchMap, tap } from 'rxjs';
+import { finalize, pipe, switchMap, tap } from 'rxjs';
 import { tapResponse } from '@ngrx/operators';
 import {
   Voucher,
@@ -59,6 +59,10 @@ export const VoucherStore = signalStore(
     //
     clearError() {
       patchState(store, { error: null });
+    },
+    //
+    clearCalculation() {
+      patchState(store, { calculateResult: null, loadingDetails: false, error: null });
     },
     //
     loadVouchers: rxMethod<{ page: number; size: number }>(
@@ -187,18 +191,17 @@ export const VoucherStore = signalStore(
             error: null,
           }),
         ),
-        debounceTime(300),
         switchMap(({ code, total }) =>
           voucherService.calculateDiscount(code, total).pipe(
+            finalize(() => patchState(store, { loadingDetails: false })),
             tapResponse({
               next: (result) => {
-                patchState(store, {
-                  calculateResult: result,
-                  loadingDetails: false,
-                });
+                patchState(store, { calculateResult: result });
               },
-              error: (error: any) =>
-                patchState(store, { error, loadingDetails: false }),
+              error: (error: any) => {
+                const msg = typeof error === 'string' ? error : error?.message || error?.error || 'Mã giảm giá không hợp lệ';
+                patchState(store, { error: msg });
+              },
             }),
           ),
         ),
