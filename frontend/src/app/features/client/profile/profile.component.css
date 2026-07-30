@@ -9,12 +9,12 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #e5e7eb;
-  border-radius: 99px;
+  background: var(--color-border);
+  border-radius: 8px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #d1d5db;
+  background: var(--color-muted);
 }
 
 /* Style cho Tab Left */
@@ -23,20 +23,20 @@
   text-align: left;
   justify-content: flex-start;
   font-weight: 500;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease, color 0.2s ease;
   margin: 0 0 4px 0;
   border-radius: 8px;
-  color: #4b5563;
+  color: var(--color-text-secondary);
 }
 
 :host ::ng-deep .ant-tabs-left > .ant-tabs-nav .ant-tabs-tab:hover {
-  background-color: #f9fafb;
-  color: #2563eb;
+  background-color: var(--color-primary-light);
+  color: var(--color-primary);
 }
 
 :host ::ng-deep .ant-tabs-left > .ant-tabs-nav .ant-tabs-tab-active {
-  background-color: #eff6ff !important;
-  color: #2563eb !important;
+  background-color: var(--color-primary-light) !important;
+  color: var(--color-primary) !important;
   font-weight: 600;
 }
 
@@ -45,7 +45,7 @@
 }
 
 :host ::ng-deep .ant-tabs-left > .ant-tabs-content-holder {
-  border-left: 1px solid #f3f4f6;
+  border-left: 1px solid var(--color-border);
 }
 
 /* Mobile Responsive */
@@ -57,7 +57,7 @@
 
   :host ::ng-deep .ant-tabs-content-holder {
     border-left: none;
-    border-top: 1px solid #f3f4f6;
+    border-top: 1px solid var(--color-border);
   }
 }
 

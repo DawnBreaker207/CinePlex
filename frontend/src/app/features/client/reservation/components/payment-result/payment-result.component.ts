@@ -1,8 +1,7 @@
 import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
-import { NzResultModule } from 'ng-zorro-antd/result';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { ActivatedRoute, Router } from '@angular/router';
-import { NzSpinModule } from 'ng-zorro-antd/spin';
+import { NzIconModule } from 'ng-zorro-antd/icon';
 import { Store } from '@ngrx/store';
 import { StorageService } from '@core/services/storage/storage.service';
 import { ReservationRequest } from '@domain/reservation/models/reservation.model';
@@ -15,9 +14,8 @@ import { BarcodeComponent } from '@shared/components/barcode/barcode.component';
 @Component({
   selector: 'app-payment-result',
   imports: [
-    NzResultModule,
     NzButtonModule,
-    NzSpinModule,
+    NzIconModule,
     TranslatePipe,
     BarcodeComponent,
   ],
@@ -47,7 +45,7 @@ export class PaymentResultComponent implements OnInit, OnDestroy {
 
     if (!state || !query) {
       this.status.set('error');
-      this.errorMessage.set(`Không tìm thấy thông tin phiên giao dịch`);
+      this.errorMessage.set(`Không tìm thấy thông tin phiên giao dịch. Vui lòng đặt vé lại từ đầu.`);
       this.startCountDown();
       return;
     }
@@ -60,13 +58,22 @@ export class PaymentResultComponent implements OnInit, OnDestroy {
     if (reservationCode && status === 'success') {
       this.status.set('success');
       this.reservationStore.confirm(reservationCode);
+      this.storageService.removeItem('reservationState');
     } else {
       this.status.set('error');
-      this.errorMessage.set(`Thanh toán thất bại`);
+      this.errorMessage.set(`Thanh toán không thành công. Vui lòng thử lại hoặc chọn phương thức khác.`);
       this.reservationStore.cancel();
     }
-    this.storageService.removeItem('reservationState');
     this.startCountDown();
+  }
+
+  retryPayment() {
+    const state = this.storageService.getItem<any>('reservationState');
+    if (state?.showtimeId) {
+      this.router.navigate(['/reservation', state.reservationId, state.showtimeId]);
+    } else {
+      this.router.navigate(['/home']);
+    }
   }
 
   goHome() {

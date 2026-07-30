@@ -1,10 +1,47 @@
+:host ::ng-deep nz-radio-group#payment-group {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+}
+
+@media (min-width: 640px) {
+  :host ::ng-deep nz-radio-group#payment-group {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
 :host ::ng-deep .ant-radio-wrapper {
-  width: 100%;
   white-space: normal;
   display: flex;
   align-items: center;
+  margin: 0 !important;
+  border: 2px solid var(--color-border);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  transition: border-color 0.2s, background-color 0.2s;
+  cursor: pointer;
 }
 
-:host ::ng-deep .ant-radio-wrapper span:nth-child(2) {
-  width: 100%;
+.dark :host ::ng-deep .ant-radio-wrapper {
+  border-color: var(--color-border);
+}
+
+:host ::ng-deep .ant-radio-wrapper:hover {
+  border-color: var(--color-text-secondary);
+}
+
+.dark :host ::ng-deep .ant-radio-wrapper:hover {
+  border-color: var(--color-text-secondary);
+}
+
+:host ::ng-deep .ant-radio-wrapper-checked {
+  border-color: var(--color-primary, #e53e3e);
+  background-color: var(--color-primary-light, rgba(229, 62, 62, 0.08));
+}
+
+:host ::ng-deep .ant-radio-wrapper .ant-radio {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
 }

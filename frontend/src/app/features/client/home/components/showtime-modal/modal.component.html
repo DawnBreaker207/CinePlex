@@ -1,35 +1,39 @@
 <div class="p-2">
-  <p class="text-lg font-bold mb-4 text-blue-600">
+  <p class="text-lg font-bold mb-4 text-primary">
     {{ "Lịch chiếu phim" | translate }}
   </p>
 
-  <div class="max-h-[25rem] overflow-y-auto pr-2">
-    @for (group of groupShowtimes(); track group.date) {
+  <div class="max-h-[22rem] overflow-y-auto pr-2">
+    @for (group of groupShowtimes(); track group.rawDate) {
       <div class="mb-6">
         <div class="flex items-center gap-2 mb-3">
           <span
-            class="bg-blue-500 text-white px-2 py-1 rounded text-xs font-bold"
+            class="bg-primary text-white px-2 py-1 rounded text-xs font-bold"
             >{{ "Ngày" | translate }}</span
           >
-          <span class="font-bold text-gray-700">{{
-            formatShowtime(group.date)
-          }}</span>
+          <span class="font-bold text-gray-700">
+            @if (getDateLabel(group.rawDate); as label) {
+              {{ label }}
+            } @else {
+              {{ group.label }}
+            }
+          </span>
         </div>
         <div class="grid grid-cols-3 gap-3">
           @for (st of group.items; track st.id) {
             <button
               (click)="onSelect(st.id)"
               [disabled]="st.availableSeats === 0"
-              class="relative flex flex-col items-center p-3 border-2 rounded-lg transition-all duration-200"
+              class="relative flex flex-col items-center p-3 border-2 rounded-lg transition-colors duration-200"
               [ngClass]="{
-                'border-blue-500 bg-blue-50': st.id === selectedShowtimeId(),
-                'border-gray-200 hover:border-blue-300':
+                'border-primary bg-primary-light': st.id === selectedShowtimeId(),
+                'border-gray-200 hover:border-primary/40':
                   st.id !== selectedShowtimeId() && st.availableSeats > 0,
                 'bg-gray-100 opacity-50 cursor-not-allowed':
                   st.availableSeats === 0,
               }"
             >
-              <span class="text-sm">{{ st.showTime }}</span>
+              <span class="text-sm">{{ formatShowTime(st.showTime) }}</span>
               <span class="text-[10px] text-gray-600">
                 {{ st?.availableSeats }}/{{ st?.totalSeats }}
                 {{ "ghế" | translate }}
@@ -39,7 +43,7 @@
                 <nz-icon
                   nzType="check"
                   nzTheme="outline"
-                  class="absolute -top-2 -right-2 bg-blue-500 text-white! rounded-full w-5 h-5 flex items-center justify-center text-[10px]"
+                  class="absolute -top-2 -right-2 bg-primary text-white! rounded-full w-5 h-5 flex items-center justify-center text-[10px]"
                 />
               }
             </button>
@@ -48,22 +52,20 @@
       </div>
     } @empty {
       <div class="text-center py-10 text-gray-400">
-        {{ "Rất tiếc, hiện không có suất chiếu này" | translate }}
+        <nz-icon nzType="calendar" class="text-3xl mb-2"/>
+        <p>{{ "Không có suất chiếu" | translate }}</p>
       </div>
     }
   </div>
 
-  <div class="mt-6 flex flex-col gap-2">
-    <button
-      nz-button
-      nzType="primary"
-      nzBlock
-      nzSize="large"
-      [disabled]="!selectedShowtimeId()"
-      (click)="confirmSelection()"
-      class="rounded-lg font-bold"
-    >
-      {{ "XÁC NHẬN CHỌN SUẤT CHIẾU" | translate }}
-    </button>
-  </div>
+  <button
+    nz-button
+    nzType="primary"
+    nzBlock
+    class="mt-4 h-11 rounded-lg font-bold text-base !bg-primary !border-primary !text-white hover:!bg-primary-dark"
+    [disabled]="!selectedShowtimeId()"
+    (click)="confirmSelection()"
+  >
+    {{ "Xác nhận" | translate }}
+  </button>
 </div>

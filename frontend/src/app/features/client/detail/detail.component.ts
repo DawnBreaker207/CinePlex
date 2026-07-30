@@ -1,8 +1,7 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Component, computed, effect, inject, input, linkedSignal, numberAttribute, OnInit, signal } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
 import { Store } from '@ngrx/store';
-import { DatePipe, NgClass } from '@angular/common';
-import { map } from 'rxjs';
+import { DatePipe, DOCUMENT, NgClass, NgOptimizedImage } from '@angular/common';
 import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzIconModule } from 'ng-zorro-antd/icon';
@@ -12,8 +11,8 @@ import { NzRateModule } from 'ng-zorro-antd/rate';
 import { FormsModule } from '@angular/forms';
 import { selectMovieById } from '@domain/movie/data-access/movie.selectors';
 import { MovieActions } from '@domain/movie/data-access/movie.actions';
-import { toSignal } from '@angular/core/rxjs-interop';
 import { LoadingComponent } from '@shared/components/loading/loading.component';
+import { NzSkeletonModule } from 'ng-zorro-antd/skeleton';
 import { selectAllShowtimes } from '@domain/showtime/data-access/showtime.selectors';
 import {
   selectAllTheaters,
@@ -21,8 +20,18 @@ import {
 } from '@domain/theater/data-access/theater.selectors';
 import { ShowtimeActions } from '@domain/showtime/data-access/showtime.actions';
 import { TheaterActions } from '@domain/theater/data-access/theater.actions';
+import { selectUserId, selectIsAuthenticated } from '@core/auth/auth.selectors';
+import { ReservationStore } from '@features/client/reservation/reservation.store';
 import dayjs from 'dayjs';
 import { TranslatePipe } from '@ngx-translate/core';
+
+interface Review {
+  user: string;
+  avatar: string;
+  rating: number;
+  comment: string;
+  date: string;
+}
 
 @Component({
   selector: 'app-detail',
@@ -36,22 +45,32 @@ import { TranslatePipe } from '@ngx-translate/core';
     NzRateModule,
     FormsModule,
     LoadingComponent,
+    RouterLink,
+    NzSkeletonModule,
     NgClass,
+    NgOptimizedImage,
     TranslatePipe,
   ],
   templateUrl: './detail.component.html',
-  styleUrl: './detail.component.css',
 })
 export class DetailComponent implements OnInit {
-  private route = inject(ActivatedRoute);
   private store = inject(Store);
   private router = inject(Router);
+  private reservationStore = inject(ReservationStore);
+  private document = inject(DOCUMENT);
 
-  private movieId = toSignal(this.route.params.pipe(map((p) => +p['id'])));
-  selectedDate = signal<Date>(dayjs().startOf('day').toDate());
+  id = input(0, { transform: numberAttribute });
+  selectedDate = linkedSignal({
+    source: this.id,
+    computation: () => dayjs().startOf('day').toDate(),
+  });
+  showtimesLoading = signal(true);
+
+  isAuthenticated = this.store.selectSignal(selectIsAuthenticated);
+  userId = this.store.selectSignal(selectUserId);
 
   movie = computed(() => {
-    const id = this.movieId();
+    const id = this.id();
     return id ? this.store.selectSignal(selectMovieById(id))() : null;
   });
 
@@ -105,9 +124,18 @@ export class DetailComponent implements OnInit {
     return Array.from(groupTheater.values());
   });
 
+  constructor() {
+    effect(() => {
+      if (this.allShowtimes().length > 0) {
+        this.showtimesLoading.set(false);
+      }
+    });
+  }
+
   ngOnInit() {
-    const id = this.movieId();
+    const id = this.id();
     if (id) {
+      this.showtimesLoading.set(true);
       this.store.dispatch(MovieActions.loadMovie({ id: id }));
       this.store.dispatch(
         ShowtimeActions.loadShowtimesByMovieId({
@@ -128,20 +156,25 @@ export class DetailComponent implements OnInit {
     this.selectedDate.set(date);
   }
 
-  reviews = [
-    {
-      user: 'Minh Tuấn',
-      avatar: 'https://i.pravatar.cc/150?u=99',
-      rating: 5,
-      comment: 'Phim đỉnh cao, hình ảnh và âm thanh quá tuyệt vời!',
-      date: '02/03/2025',
-    },
-    {
-      user: 'Lan Ngọc',
-      avatar: 'https://i.pravatar.cc/150?u=88',
-      rating: 4,
-      comment: 'Hơi dài nhưng xứng đáng.',
-      date: '03/03/2025',
-    },
-  ];
+  scrollToShowtimes() {
+    this.document.getElementById('showtime-section')?.scrollIntoView({ behavior: 'smooth' });
+  }
+
+  bookShowtime(showtimeId: number) {
+    if (!this.isAuthenticated()) {
+      this.router.navigate(['/login'], { queryParams: { returnUrl: this.router.url } });
+      return;
+    }
+    const theaterId = this.selectedTheaterId();
+    const uid = this.userId();
+    if (!theaterId || !uid) return;
+    this.reservationStore.initReservation({
+      reservationId: '',
+      userId: uid,
+      showtimeId: showtimeId,
+      theaterId: theaterId,
+    });
+  }
+
+  reviews: Review[] = [];
 }

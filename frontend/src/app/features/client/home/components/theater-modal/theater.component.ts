@@ -7,7 +7,6 @@ import { TranslatePipe } from '@ngx-translate/core';
   selector: 'app-theater',
   imports: [TranslatePipe],
   templateUrl: './theater.component.html',
-  styleUrl: './theater.component.css',
 })
 export class TheaterModalComponent implements OnInit {
   private modelRef = inject(NzModalRef);

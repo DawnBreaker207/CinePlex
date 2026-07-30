@@ -9,7 +9,7 @@ import {
 import { computed, inject } from '@angular/core';
 import { SeatService } from '@domain/seat/data-access/seat.service';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { pipe, switchMap, tap } from 'rxjs';
+import { EMPTY, pipe, switchMap, tap, catchError } from 'rxjs';
 import { tapResponse } from '@ngrx/operators';
 import { SeatStatus } from '@core/constants/enum';
 import { SseService } from '@core/services/sse/sse.service';
@@ -132,11 +132,12 @@ export const SeatStore = signalStore(
           ),
           switchMap(({ showtimeId, userId, reservationId }) =>
             seatService.getSeatByShowtime(showtimeId).pipe(
-              tapResponse({
-                next: (seats) => {
-                  patchState(store, { seats, loading: false });
-
-                  sseService.connect(showtimeId, userId).subscribe({
+              tap((seats) =>
+                patchState(store, { seats, loading: false }),
+              ),
+              switchMap(() =>
+                sseService.connect(showtimeId, userId).pipe(
+                  tap({
                     next: (res: any) => {
                       if (
                         res.event === 'SEAT_STATE_INIT' ||
@@ -185,17 +186,26 @@ export const SeatStore = signalStore(
                         }));
                       }
                     },
-                    error: (err) => console.error('SSE Error:', err),
-                  });
-                },
-                error: (error: any) =>
-                  patchState(store, { error, loading: false }),
+                  }),
+                  catchError((err) => {
+                    console.error('SSE Error:', err);
+                    patchState(store, { error: 'Kết nối thời gian thực bị gián đoạn. Dữ liệu ghế có thể không còn chính xác.' });
+                    return EMPTY;
+                  }),
+                ),
+              ),
+              catchError((error: any) => {
+                patchState(store, { error, loading: false });
+                return EMPTY;
               }),
             ),
           ),
         ),
       ),
       //
+      clearError: () => patchState(store, { error: null }),
+      //
+
       toggleSeat(seat: Seat) {
         if (seat.status === 'BOOKED' || seat.status === 'HOLD') return;
         patchState(store, (state) => ({

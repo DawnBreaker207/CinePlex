@@ -75,7 +75,6 @@ export const ReservationStore = signalStore(
 
       const startCountdown = (ttl: number) => {
         stopCountdown();
-        console.log(`ttl: `, ttl);
         patchState(store, (state) => ({
           currentTTL: {
             reservationId: store.reservationId() || '',
@@ -85,22 +84,22 @@ export const ReservationStore = signalStore(
         }));
 
         timerIdx = setInterval(() => {
-          patchState(store, (s) => {
-            if (s.currentTTL && s.currentTTL.ttl > 0) {
-              return {
-                currentTTL: {
-                  ...s.currentTTL,
-                  ttl: s.currentTTL.ttl - 1,
-                },
-              };
-            } else {
-              stopCountdown();
-              return {
-                currentTTL: null,
-                reservationId: null,
-              };
-            }
-          });
+          const ttl = store.currentTTL()?.ttl;
+          if (!ttl || ttl <= 0) {
+            stopCountdown();
+            patchState(store, {
+              currentTTL: null,
+              reservationId: null,
+              error: 'Phiên đặt vé đã hết hạn.',
+            });
+            router.navigate(['/home']);
+            return;
+          }
+          patchState(store, (s) => ({
+            currentTTL: s.currentTTL
+              ? { ...s.currentTTL, ttl: s.currentTTL.ttl - 1 }
+              : null,
+          }));
         }, 1000);
       };
 
@@ -208,7 +207,7 @@ export const ReservationStore = signalStore(
                     startCountdown(ttl);
                   },
                   error: (err: any) => {
-                    storageService.removeItem('reservationStore');
+                    storageService.removeItem('reservationState');
                     patchState(store, { error: err.message, saving: false });
                     router.navigate(['/home']);
                   },

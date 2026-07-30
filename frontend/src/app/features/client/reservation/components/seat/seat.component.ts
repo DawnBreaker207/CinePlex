@@ -43,16 +43,16 @@ export class SeatComponent {
   }
 
   getSeatClass(seat: Seat): string {
-    const base = 'transition-colors  duration-200 ease-in-out';
+    const base = 'transition-colors duration-200 ease-in-out';
     switch (seat.status) {
       case 'BOOKED':
-        return `${base} text-red-500 cursor-not-allowed`;
+        return `${base} text-danger cursor-not-allowed`;
       case 'HOLD':
-        return `${base} text-orange-500 cursor-not-allowed`;
+        return `${base} text-warning cursor-not-allowed`;
       case 'SELECTED':
-        return `${base} text-blue-500 cursor-pointer scale-110 drop-shadow-sm`;
+        return `${base} text-primary cursor-pointer scale-110 drop-shadow-sm`;
       default:
-        return `${base} text-gray-400 cursor-pointer hover:text-green-500 hover:scale-105`;
+        return `${base} text-muted cursor-pointer hover:text-success hover:scale-105`;
     }
   }
 }
