@@ -7,7 +7,8 @@ import { NzSpinModule } from 'ng-zorro-antd/spin';
 import { DatePipe } from '@angular/common';
 import { NzTagComponent } from 'ng-zorro-antd/tag';
 import { FormsModule } from '@angular/forms';
-import { IsDeletedPipe } from '@core/pipes/is-deleted.pipe';
+import { NzAlertModule } from 'ng-zorro-antd/alert';
+import { IsDeletedPipe } from '@shared/pipes/is-deleted.pipe';
 import { LoadingComponent } from '@shared/components/loading/loading.component';
 import { UserStore } from '@domain/user/data-access/user.store';
 import { TranslatePipe } from '@ngx-translate/core';
@@ -21,6 +22,7 @@ import { HEADER_COLUMNS } from '@core/constants/column';
     NzSwitchModule,
     NzIconModule,
     NzSpinModule,
+    NzAlertModule,
     DatePipe,
     IsDeletedPipe,
     NzTagComponent,
@@ -30,7 +32,6 @@ import { HEADER_COLUMNS } from '@core/constants/column';
     TranslatePipe,
   ],
   templateUrl: './user.component.html',
-  styleUrl: './user.component.css',
 })
 export class UserComponent implements OnInit {
   readonly userStore = inject(UserStore);

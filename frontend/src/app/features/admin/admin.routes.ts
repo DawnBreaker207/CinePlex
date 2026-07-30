@@ -7,7 +7,7 @@ import { ReservationComponent } from '@features/admin/reservation/reservation.co
 import { UserComponent } from '@features/admin/user/user.component';
 import { ArticleComponent } from '@features/admin/article/article.component';
 import { AdminLayoutComponent } from '../../layout/admin-layout/admin-layout.component';
-import { VoucherComponent } from '@features/admin/voucher/voucher.component';
+import { VoucherListComponent } from '@features/admin/voucher/pages/voucher-list/voucher-list.component';
 
 export const ADMIN_ROUTES: Routes = [
   {
@@ -21,43 +21,43 @@ export const ADMIN_ROUTES: Routes = [
       },
       {
         path: 'dashboard',
+        title: 'Thống kê',
         component: DashboardComponent,
-        data: { breadcrumb: 'Dashboard' },
       },
       {
         path: 'movie',
+        title: 'Quản lý phim',
         component: MovieComponent,
-        data: { breadcrumb: 'Movie Manager' },
       },
       {
         path: 'theater',
+        title: 'Quản lý rạp',
         component: TheaterComponent,
-        data: { breadcrumb: 'Theater Manager' },
       },
       {
         path: 'showtime',
+        title: 'Quản lý suất chiếu',
         component: ShowtimeComponent,
-        data: { breadcrumb: 'Showtime Manager' },
       },
       {
         path: 'reservation',
+        title: 'Quản lý vé đặt',
         component: ReservationComponent,
-        data: { breadcrumb: 'Reservation Manager' },
       },
       {
         path: 'user',
+        title: 'Quản lý người dùng',
         component: UserComponent,
-        data: { breadcrumb: 'User Manager' },
       },
       {
         path: 'article',
+        title: 'Quản lý bài viết',
         component: ArticleComponent,
-        data: { breadcrumb: 'Article Manager' },
       },
       {
         path: 'voucher',
-        component: VoucherComponent,
-        data: { breadcrumb: 'Voucher Manager' },
+        title: 'Quản lý voucher',
+        component: VoucherListComponent,
       },
     ],
   },

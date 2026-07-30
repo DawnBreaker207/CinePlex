@@ -13,6 +13,7 @@ import { Article } from '@domain/article/models/article.model';
 import { ArticleFormComponent } from '@features/admin/article/form/article-form.component';
 import { TranslateModule } from '@ngx-translate/core';
 import { HEADER_COLUMNS } from '@core/constants/column';
+import { NzAlertModule } from 'ng-zorro-antd/alert';
 import { ArticleStore } from '@domain/article/data-access/article.store';
 import { LoadingComponent } from '@shared/components/loading/loading.component';
 
@@ -29,10 +30,10 @@ import { LoadingComponent } from '@shared/components/loading/loading.component';
     FormsModule,
     NzPopconfirmModule,
     TranslateModule,
+    NzAlertModule,
     LoadingComponent,
   ],
   templateUrl: './article.component.html',
-  styleUrl: './article.component.css',
 })
 export class ArticleComponent {
   readonly articleStore = inject(ArticleStore);

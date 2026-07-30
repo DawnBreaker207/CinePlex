@@ -12,6 +12,7 @@ import {
   FormGroup,
   FormsModule,
   ReactiveFormsModule,
+  Validators,
 } from '@angular/forms';
 import { DatePipe, SlicePipe } from '@angular/common';
 import { NzDatePickerModule } from 'ng-zorro-antd/date-picker';
@@ -71,6 +72,7 @@ export class FormShowtimeComponent implements OnInit, OnDestroy {
   private actions$ = inject(Actions);
 
   mode: 'add' | 'edit' | 'view' = 'add';
+  readonly submitting = signal(false);
   showtimeId!: number;
   form!: FormGroup;
   searchCtrl = this.fb.control('');
@@ -153,15 +155,15 @@ export class FormShowtimeComponent implements OnInit, OnDestroy {
 
   initForm() {
     this.form = this.fb.group({
-      movieId: [''],
+      movieId: ['', Validators.required],
       moviePosterUrl: [''],
-      theaterId: [''],
+      theaterId: ['', Validators.required],
 
-      showDate: [null],
-      showTime: [null],
+      showDate: [null, Validators.required],
+      showTime: [null, Validators.required],
 
-      price: [''],
-      totalSeats: [''],
+      price: [null, [Validators.required, Validators.min(1)]],
+      totalSeats: [null, [Validators.required, Validators.min(1)]],
     });
   }
 
@@ -182,13 +184,14 @@ export class FormShowtimeComponent implements OnInit, OnDestroy {
   }
 
   submit() {
-    if (this.form.invalid) {
+    if (this.form.invalid || this.submitting()) {
       Object.keys(this.form.controls).forEach((key) => {
         this.form.get(key)?.markAllAsTouched();
       });
       return;
     }
 
+    this.submitting.set(true);
     const showtimeData = {
       ...this.form.value,
       showDate: this.form.value.showDate
@@ -222,6 +225,7 @@ export class FormShowtimeComponent implements OnInit, OnDestroy {
         takeUntil(this.destroy$),
       )
       .subscribe(() => {
+        this.submitting.set(false);
         this.modelRef.close();
       });
 
@@ -235,6 +239,7 @@ export class FormShowtimeComponent implements OnInit, OnDestroy {
         takeUntil(this.destroy$),
       )
       .subscribe(({ error }) => {
+        this.submitting.set(false);
         console.error('Save showtime failed', error);
       });
   }

@@ -1,13 +1,13 @@
-<div class="min-h-screen bg-slate-50 py-10 px-4 sm:px-6 lg:px-5">
+<div class="min-h-screen bg-[var(--color-bg-admin)] py-10 px-4 sm:px-6 lg:px-5">
   <!-- TITLE -->
   <div
     class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8"
   >
     <div>
-      <h1 class="text-2xl font-bold text-gray-900 mb-0">
+      <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-0">
         {{ "Quản Lý Suất Chiếu" | translate }}
       </h1>
-      <p class="text-gray-500 text-sm mt-1">
+      <p class="text-gray-500 dark:text-gray-400 text-sm mt-1">
         {{ "Quản lý danh sách và lịch chiếu phim" | translate }}
       </p>
     </div>
@@ -18,12 +18,12 @@
       class=""
       (click)="openModal('add')"
     >
-      <nz-icon nzType="plus" nzTheme="outline" />
+      <nz-icon nzType="plus" nzTheme="outline" aria-hidden="true" />
     </button>
   </div>
 
   <!-- FORM FILTER -->
-  <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5 mb-6">
+  <div class="bg-white dark:bg-[#1a202c] rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-5 mb-6">
     <form
       [formGroup]="form"
       class="flex flex-col md:flex-row gap-4 items-end md:items-center"
@@ -46,7 +46,7 @@
       </nz-form-item>
 
       <nz-form-item>
-        <nz-form-label class="font-semibold text-gray-700"
+        <nz-form-label class="font-semibold text-gray-700 dark:text-gray-300"
           >{{ "Khoảng thời gian" | translate }}
         </nz-form-label>
         <nz-form-control>
@@ -61,7 +61,7 @@
 
       <div class="flex gap-2">
         <button nz-button nzType="default" (click)="resetForm()">
-          <nz-icon nzType="reload" />
+          <nz-icon nzType="reload" aria-hidden="true" />
         </button>
       </div>
     </form>
@@ -72,7 +72,7 @@
   @let pag = pagination();
   <app-loading [isLoading]="loading()">
     <div
-      class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 overflow-hidden"
+      class="bg-white dark:bg-[#1a202c] rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-6 overflow-x-auto"
     >
       <nz-table
         [nzData]="showtimes()"
@@ -82,6 +82,7 @@
         [nzPageSize]="pag?.pageSize ?? 10"
         [nzShowSizeChanger]="true"
         nzShowPagination
+        [nzNoResult]="'Không tìm thấy suất chiếu. Hãy thử thay đổi bộ lọc.' | translate"
         (nzQueryParams)="onQueryParamsChange($event)"
       >
         <thead>
@@ -90,7 +91,7 @@
               <th
                 [nzWidth]="'300px'"
                 [nzAlign]="'center'"
-                class="font-semibold text-gray-700"
+                class="font-semibold text-gray-700 dark:text-gray-300"
               >
                 {{ item | translate }}
               </th>
@@ -100,13 +101,13 @@
         <tbody>
           @for (item of showtimes(); track item.id) {
             <tr
-              class="group hover:bg-gray-50 transition-colors border-b border-gray-100"
+              class="group hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors border-b border-gray-100 dark:border-gray-700"
             >
               <td class="pl-6 py-4">
                 <div class="flex items-start gap-4">
                   <!--  Poster  -->
                   <div
-                    class="w-12 h-16 rounded overflow-hidden shadow-sm shrink-0 border border-gray-200"
+                    class="w-12 h-16 rounded overflow-hidden shadow-sm shrink-0 border border-gray-200 dark:border-gray-700"
                   >
                     <img
                       class="w-full h-full object-cover group-cover:scale-110 transition-transform duration-500"
@@ -119,7 +120,7 @@
                   <!--   Text Info  -->
                   <div class="flex flex-col gap-1">
                     <h4
-                      class="font-bold! text-gray-800 text-sm line-clamp-2 leading-tight"
+                      class="font-bold! text-gray-800 dark:text-gray-100 text-sm line-clamp-2 leading-tight"
                       [title]="item.movieTitle"
                     >
                       {{ item.movieTitle }}
@@ -132,12 +133,12 @@
               <td class="text-center">
                 <div class="flex flex-col items-center">
                   <nz-tag
-                    [nzColor]="'blue'"
+                    [nzColor]="'#e53e3e'"
                     class="mb-0 font-bold text-sm border-blue-200 px3"
                   >
                     {{ item.showTime }}
                   </nz-tag>
-                  <span class="text-xs text-gray-500 mt-1.5 font-medium">
+                  <span class="text-xs text-gray-500 dark:text-gray-400 mt-1.5 font-medium">
                     {{ item.showDate | date: "dd/MM/yyyy" }}
                   </span>
                 </div>
@@ -147,13 +148,13 @@
               <td lass="text-center">
                 <div class="flex flex-col items-center gap-1">
                   <span
-                    class="font-semibold text-gray-700 flex items-center gap-1"
+                    class="font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-1"
                   >
-                    <nz-icon nzType="shop" class="text-gray-400" />
+                     <nz-icon nzType="shop" class="text-gray-500 dark:text-gray-400" aria-hidden="true" />
                     {{ item.theaterName }}
                   </span>
                   <span
-                    class="text-xs text-gray-400 truncate max-w-[220px]"
+                    class="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[220px]"
                     nz-tooltip
                     [nzTooltipTitle]="item.theaterLocation"
                   >
@@ -168,13 +169,13 @@
                     <span
                       [class]="
                         item.availableSeats > 0
-                          ? 'text-green-600 font-bold'
-                          : 'text-red-500 font-bold'
+                          ? 'text-success font-bold'
+                          : 'text-danger font-bold'
                       "
                     >
                       {{ item.availableSeats }}
                     </span>
-                    <span class="text-gray-400 text-xs">
+                    <span class="text-gray-500 dark:text-gray-400 text-xs">
                       / {{ item.totalSeats }} ghế</span
                     >
                   </div>
@@ -187,7 +188,7 @@
                     "
                     [nzShowInfo]="false"
                     nzSize="small"
-                    [nzStrokeColor]="{ '0%': '#87d068', '100%': '#108ee9' }"
+                    [nzStrokeColor]="progressStrokeColor"
                     class="w-24"
                   >
                   </nz-progress>
@@ -200,16 +201,18 @@
                     nz-button
                     nzType="text"
                     nzShape="circle"
+                    [attr.aria-label]="'Xem' | translate"
                     nz-tooltip
                     nzTooltipTitle="Xem chi tiết"
                     (click)="openModal('view', item.id)"
                   >
-                    <nz-icon nzType="eye" nzTheme="twotone" />
+                    <nz-icon nzType="eye" nzTheme="twotone" aria-hidden="true" />
                   </button>
                   <button
                     nz-button
                     nzType="text"
                     nzShape="circle"
+                    [attr.aria-label]="'Sửa' | translate"
                     nz-tooltip
                     nzTooltipTitle="Xem chi tiết"
                     (click)="openModal('edit', item.id)"
@@ -217,13 +220,14 @@
                     <nz-icon
                       nzType="edit"
                       nzTheme="twotone"
-                      nzTwotoneColor="#52c41a"
+                        [nzTwotoneColor]="ICON_COLORS.edit()"
                     />
                   </button>
                   <button
                     nz-button
                     nzType="text"
                     nzShape="circle"
+                    [attr.aria-label]="'Xóa' | translate"
                     nz-tooltip
                     nzTooltipTitle="Xem chi tiết"
                     (click)="onDelete(item.id)"
@@ -231,7 +235,7 @@
                     <nz-icon
                       nzType="delete"
                       nzTheme="twotone"
-                      nzTwotoneColor="#e7000b"
+                        [nzTwotoneColor]="ICON_COLORS.delete()"
                     />
                   </button>
                 </div>

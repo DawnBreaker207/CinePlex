@@ -1,35 +1,27 @@
-import { Component, input, OnInit } from '@angular/core';
+import { Component, effect, input } from '@angular/core';
 import type { EChartsCoreOption } from 'echarts/core';
 import { NgxEchartsDirective } from 'ngx-echarts';
-import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { TopMovie } from '@domain/dashboard/models/dashboard.model';
 import { TranslatePipe } from '@ngx-translate/core';
+import { CHART_COLORS } from '@shared/utils/colors';
 
 @Component({
   selector: 'app-movie-chart',
-  imports: [NgxEchartsDirective, NzIconModule, NzButtonModule, TranslatePipe],
+  imports: [NgxEchartsDirective, NzIconModule, TranslatePipe],
   templateUrl: './movie-chart.component.html',
-  styleUrl: './movie-chart.component.css',
 })
-export class MovieChartComponent implements OnInit {
+export class MovieChartComponent {
   movies = input<TopMovie[]>([]);
   options!: EChartsCoreOption;
 
-  ngOnInit() {
-    const { movieName, totalRevenue } = this.movies().reduce(
-      (acc, m) => {
-        acc.movieName.push(m.movieName);
-        acc.totalRevenue.push(m.revenue);
-        return acc;
-      },
-      {
-        movieName: [] as string[],
-        totalRevenue: [] as number[],
-      },
-    );
-
-    this.loadChartData(movieName, totalRevenue);
+  constructor() {
+    effect(() => {
+      const movies = this.movies();
+      const name = movies.map(m => m.movieName);
+      const data = movies.map(m => m.revenue);
+      this.loadChartData(name, data);
+    });
   }
 
   loadChartData(name: string[], data: number[]) {
@@ -42,7 +34,7 @@ export class MovieChartComponent implements OnInit {
       xAxis: {
         type: 'value',
         boundaryGap: [0, 0.01],
-        splitLine: { lineStyle: { type: 'dashes', color: '#f0f0f0' } },
+        splitLine: { lineStyle: { type: 'dashes', color: CHART_COLORS.border() } },
       },
       yAxis: {
         type: 'category',
@@ -56,7 +48,7 @@ export class MovieChartComponent implements OnInit {
           type: 'bar',
           data: data,
           itemStyle: {
-            color: '#1890ff',
+            color: CHART_COLORS.primary(),
             borderRadius: [0, 4, 4, 0],
           },
           barWidth: 20,

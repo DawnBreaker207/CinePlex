@@ -28,6 +28,7 @@ import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzTooltipModule } from 'ng-zorro-antd/tooltip';
 import { NzProgressModule } from 'ng-zorro-antd/progress';
 import { NzDropDownModule } from 'ng-zorro-antd/dropdown';
+import { ICON_COLORS, CHART_COLORS } from '@shared/utils/colors';
 import {
   selectAllShowtimes,
   selectPaginationShowtime,
@@ -70,7 +71,6 @@ import { HEADER_COLUMNS } from '@core/constants/column';
     TranslatePipe,
   ],
   templateUrl: './showtime.component.html',
-  styleUrl: './showtime.component.css',
   providers: [NzModalService],
 })
 export class ShowtimeComponent implements OnInit {
@@ -85,6 +85,8 @@ export class ShowtimeComponent implements OnInit {
   error = this.store.selectSignal(selectShowtimeError);
 
   headerColumn = HEADER_COLUMNS.SHOWTIME;
+  readonly ICON_COLORS = ICON_COLORS;
+  readonly progressStrokeColor = { '0%': CHART_COLORS.success(), '100%': CHART_COLORS.primary() };
   form!: FormGroup;
 
   constructor() {
@@ -147,14 +149,13 @@ export class ShowtimeComponent implements OnInit {
           ? null
           : [
               {
-                label: 'Confirm',
+                label: 'Lưu',
                 type: 'primary',
                 onClick: () => {
                   const form =
                     modal.getContentComponent() as FormShowtimeComponent;
-                  if (form.form.valid) {
+                  if (form.form.valid && !form.submitting()) {
                     form.submit();
-                    modal.close();
                   }
                 },
               },
@@ -163,7 +164,14 @@ export class ShowtimeComponent implements OnInit {
   }
 
   onDelete(id: number) {
-    this.store.dispatch(ShowtimeActions.deleteShowtime({ id }));
+    this.modalService.confirm({
+      nzTitle: 'Xóa suất chiếu này?',
+      nzContent: 'Dữ liệu sẽ không thể khôi phục sau khi xóa.',
+      nzOkText: 'Xóa',
+      nzOkDanger: true,
+      nzOnOk: () => this.store.dispatch(ShowtimeActions.deleteShowtime({ id })),
+      nzCancelText: 'Hủy',
+    });
   }
 
   resetForm() {

@@ -8,7 +8,7 @@
         {{ reservation.showtime.showDate | date: "dd/MM/yyyy" }}
       </div>
       <div>
-        Status:
+        {{ "Trạng thái" | translate }}:
         <nz-tag [nzColor]="(reservation.reservationStatus | tags).color">
           {{ (reservation.reservationStatus | tags).status }}
         </nz-tag>

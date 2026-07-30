@@ -1,37 +1,31 @@
-import { Component, input, OnInit } from '@angular/core';
+import { Component, effect, input } from '@angular/core';
 import { NgxEchartsDirective } from 'ngx-echarts';
 import type { EChartsCoreOption } from 'echarts/core';
-import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { RevenuePoint } from '@domain/dashboard/models/dashboard.model';
 import { TranslatePipe } from '@ngx-translate/core';
+import { CHART_COLORS } from '@shared/utils/colors';
 
 @Component({
   selector: 'app-revenue-chart',
-  imports: [NgxEchartsDirective, NzIconModule, NzButtonModule, TranslatePipe],
+  imports: [NgxEchartsDirective, NzIconModule, TranslatePipe],
   templateUrl: './revenue-chart.component.html',
-  styleUrl: './revenue-chart.component.css',
 })
-export class RevenueChartComponent implements OnInit {
+export class RevenueChartComponent {
   revenues = input<RevenuePoint[]>([]);
   options!: EChartsCoreOption;
 
-  ngOnInit() {
-    const { date, revenue } = this.revenues().reduce(
-      (acc, r) => {
-        acc.date.push(r.date.toString());
-        acc.revenue.push(r.revenue);
-        return acc;
-      },
-      {
-        date: [] as string[],
-        revenue: [] as number[],
-      },
-    );
-    this.loadChartData(date, revenue);
+  constructor() {
+    effect(() => {
+      const revenues = this.revenues();
+      const date = revenues.map(r => r.date.toString());
+      const revenue = revenues.map(r => r.revenue);
+      this.loadChartData(date, revenue);
+    });
   }
 
   loadChartData(name: string[], data: number[]) {
+    const primary = CHART_COLORS.primary();
     this.options = {
       tooltip: {
         trigger: 'axis',
@@ -48,11 +42,11 @@ export class RevenueChartComponent implements OnInit {
         data: name,
         axisLine: {
           lineStyle: {
-            color: '#e0e0e0',
+            color: CHART_COLORS.border(),
           },
         },
         axisLabel: {
-          color: '#666',
+          color: CHART_COLORS.textSecondary(),
         },
       },
       yAxis: {
@@ -63,7 +57,7 @@ export class RevenueChartComponent implements OnInit {
         splitLine: {
           lineStyle: {
             type: 'dashed',
-            color: '#f0f0f0',
+            color: CHART_COLORS.border(),
           },
         },
       },
@@ -84,17 +78,17 @@ export class RevenueChartComponent implements OnInit {
               colorStops: [
                 {
                   offset: 0,
-                  color: 'rgba(24,144,255,0.2)',
+                  color: primary + '33',
                 },
                 {
                   offset: 1,
-                  color: 'rgba(24,144,255,0)',
+                  color: primary + '00',
                 },
               ],
             },
           },
           itemStyle: {
-            color: '#1890ff',
+            color: primary,
           },
           lineStyle: {
             width: 3,

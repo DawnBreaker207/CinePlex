@@ -23,6 +23,7 @@ import { formatDate } from '@shared/utils/date.helper';
 
 export interface DashboardState {
   isLoading: boolean;
+  error: string | null;
   filterType: 'week' | 'month' | 'quarter' | 'year';
   selectedDate: Date;
   selectedQuarterYear: number;
@@ -37,6 +38,7 @@ export interface DashboardState {
 
 export const initialState: DashboardState = {
   isLoading: false,
+  error: null,
   filterType: 'week',
   selectedDate: new Date(),
   selectedQuarter: Math.floor((new Date().getMonth() + 3) / 3),
@@ -118,7 +120,10 @@ export const DashboardStore = signalStore(
                   payments: payments,
                 }),
               ),
-              catchError(() => of(null)),
+              catchError((err) => {
+                patchState(store, { error: 'Không thể tải dữ liệu. Vui lòng thử lại.' });
+                return of(null);
+              }),
               finalize(() => patchState(store, { isLoading: false })),
             ),
           ),
@@ -126,12 +131,12 @@ export const DashboardStore = signalStore(
       );
 
       return {
-        //
+        setError: (message: string) => patchState(store, { error: message }),
+        clearError: () => patchState(store, { error: null }),
         updateFilter: (key: keyof DashboardState, value: any) => {
           patchState(store, { [key]: value });
           loadSummary();
         },
-        //
         toggleAutoUpdate: () => {
           const state = !store.isAutoUpdate();
           patchState(store, { isAutoUpdate: state });
@@ -139,7 +144,6 @@ export const DashboardStore = signalStore(
             loadSummary();
           }
         },
-        //
         listenRealtime: rxMethod<void>(
           pipe(
             switchMap(() =>
@@ -152,7 +156,6 @@ export const DashboardStore = signalStore(
             }),
           ),
         ),
-        //
         loadSummary,
       };
     },

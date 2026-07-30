@@ -1,5 +1,5 @@
-import { Component, inject, OnDestroy, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { NzModalModule, NzModalRef, NzModalService } from 'ng-zorro-antd/modal';
 import { filter, map, Subject, take, takeUntil } from 'rxjs';
 import { NzAutosizeDirective, NzInputDirective } from 'ng-zorro-antd/input';
@@ -55,7 +55,6 @@ import { TranslatePipe } from '@ngx-translate/core';
     TranslatePipe,
   ],
   templateUrl: './movie-form.component.html',
-  styleUrl: './movie-form.component.css',
 })
 export class FormMovieComponent implements OnInit, OnDestroy {
   private fb = inject(FormBuilder);
@@ -76,6 +75,7 @@ export class FormMovieComponent implements OnInit, OnDestroy {
   saving$ = this.store.select(selectMoviesSaving);
   error$ = this.store.select(selectMoviesError);
 
+  readonly submitting = signal(false);
   private initialFormValue: any = null;
   private destroy$: Subject<void> = new Subject<void>();
 
@@ -121,16 +121,16 @@ export class FormMovieComponent implements OnInit, OnDestroy {
   initForm() {
     this.form = this.fb.group({
       id: [''],
-      title: [''],
-      originalTitle: [''],
-      poster: [''],
+      title: ['', Validators.required],
+      originalTitle: ['', Validators.required],
+      poster: ['', Validators.required],
       backdrop: [''],
-      overview: [''],
-      duration: [null],
-      language: [''],
-      country: [''],
-      genres: [[]],
-      releaseDate: [null],
+      overview: ['', Validators.required],
+      duration: [null, [Validators.required, Validators.min(1)]],
+      language: ['', Validators.required],
+      country: ['', Validators.required],
+      genres: [[], Validators.required],
+      releaseDate: [null, Validators.required],
       imdbId: [''],
       filmId: [null],
     });
@@ -165,13 +165,14 @@ export class FormMovieComponent implements OnInit, OnDestroy {
   }
 
   submit() {
-    if (!this.form.valid) {
+    if (!this.form.valid || this.submitting()) {
       Object.keys(this.form.controls).forEach((key) => {
         this.form.get(key)?.markAllAsTouched();
       });
       return;
     }
 
+    this.submitting.set(true);
     const movieData = this.form.value;
 
     if (this.mode === 'edit') {
@@ -192,6 +193,7 @@ export class FormMovieComponent implements OnInit, OnDestroy {
         takeUntil(this.destroy$),
       )
       .subscribe(() => {
+        this.submitting.set(false);
         this.modelRef.close();
       });
 
@@ -202,6 +204,7 @@ export class FormMovieComponent implements OnInit, OnDestroy {
         takeUntil(this.destroy$),
       )
       .subscribe(({ error }) => {
+        this.submitting.set(false);
         console.error('Save movie failed: ', error);
       });
   }

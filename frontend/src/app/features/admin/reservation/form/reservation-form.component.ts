@@ -19,7 +19,6 @@ import { TranslatePipe } from '@ngx-translate/core';
     TranslatePipe,
   ],
   templateUrl: './reservation-form.component.html',
-  styleUrl: './reservation-form.component.css',
 })
 export class FormReservationComponent implements OnInit, OnDestroy {
   private modelRef = inject(NzModalRef);

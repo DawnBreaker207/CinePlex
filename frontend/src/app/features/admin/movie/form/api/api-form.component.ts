@@ -26,7 +26,6 @@ import { TranslatePipe } from '@ngx-translate/core';
     TranslatePipe,
   ],
   templateUrl: './api-form.component.html',
-  styleUrl: './api-form.component.css',
 })
 export class FormMovieAPIComponent {
   private fb = inject(FormBuilder);

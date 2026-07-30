@@ -2,20 +2,21 @@
   <nz-row [nzGutter]="16">
     <!--  Poster-->
     <nz-col [nzSpan]="8">
-      <nz-form-item class="mt-[60px]">
+      <nz-form-item class="mt-8">
         <nz-form-label>{{ "Tên rạp" | translate }}</nz-form-label>
         <nz-form-control>
           <input
             nz-input
             formControlName="name"
             type="text"
-            placeholder="Điền tên rạp"
+            [placeholder]="'Điền tên rạp' | translate"
             [readOnly]="mode === 'view'"
+            maxlength="255"
           />
         </nz-form-control>
       </nz-form-item>
 
-      <nz-form-item class="mt-[60px]">
+      <nz-form-item class="mt-8">
         <nz-form-label>{{ "Địa điểm" | translate }}</nz-form-label>
         <nz-form-control>
           <input
@@ -24,10 +25,11 @@
             type="text"
             [placeholder]="'Điền địa điểm' | translate"
             [readOnly]="mode === 'view'"
+            maxlength="500"
           />
         </nz-form-control>
       </nz-form-item>
-      <nz-form-item class="mt-[60px]">
+      <nz-form-item class="mt-8">
         <nz-form-label>{{ "Sức chứa" | translate }}</nz-form-label>
 
         <nz-select

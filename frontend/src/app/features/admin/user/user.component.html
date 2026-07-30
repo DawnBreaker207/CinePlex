@@ -1,15 +1,19 @@
-<div class="min-h-screen bg-slate-50 py-10 px-4 sm:px-6 lg:px-5">
+<div class="min-h-screen bg-[var(--color-bg-admin)] py-10 px-4 sm:px-6 lg:px-5">
   <div
     class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8"
   >
-    <div class="text-3xl font-bold text-gray-900">
+    <div class="text-3xl font-bold text-gray-900 dark:text-gray-100">
       {{ "Quản lý người dùng" | translate }}
     </div>
   </div>
 
+  @if (userStore.error(); as error) {
+    <nz-alert nzType="error" [nzMessage]="error" nzShowIcon nzCloseable class="mb-4" (nzOnClose)="userStore.clearError()"></nz-alert>
+  }
+
   <app-loading [isLoading]="userStore.loading()">
     <div
-      class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 overflow-hidden"
+      class="bg-white dark:bg-[#1a202c] rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-6 overflow-hidden"
     >
       <nz-table
         [nzData]="userStore.users()"
@@ -20,6 +24,7 @@
         [nzPageSize]="pageSize"
         (nzQueryParams)="onQueryParamsChange($event)"
         [nzShowSizeChanger]="true"
+        [nzNoResult]="'Không tìm thấy người dùng. Hãy thử thay đổi bộ lọc.' | translate"
       >
         <thead>
           <tr>
@@ -31,13 +36,13 @@
         <tbody>
           @for (item of userStore.users(); track item.userId) {
             <tr
-              class="group hover:bg-gray-50 transition-colors border-b border-gray-100"
+              class="group hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors border-b border-gray-100 dark:border-gray-700"
             >
               <td class="px-6 py-4">
-                <div class="font-bold text-gray-900 text-base">
+                <div class="font-bold text-gray-900 dark:text-gray-100 text-base">
                   {{ item.username }}
                 </div>
-                <div class="text-sm text-gray-500">
+                <div class="text-sm text-gray-500 dark:text-gray-400">
                   {{ item.email }} &bull;
                   {{ item.createdAt | date: "dd/MM/yyyy" }}
                 </div>

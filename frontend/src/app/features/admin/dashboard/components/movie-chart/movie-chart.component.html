@@ -1,17 +1,9 @@
-<div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+<div class="bg-white dark:bg-[#1a202c] p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
   <div class="flex justify-between items-center mb-4">
-    <h4 class="text-base font-bold text-gray-800 flex items-center gap-2">
-      <nz-icon nzType="video-camera" nzTheme="fill" class="text-primary" />
+    <h4 class="text-base font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
+      <nz-icon nzType="video-camera" nzTheme="fill" class="text-primary" aria-hidden="true" />
       {{ "Top 5 phim nổi bật" | translate }}
     </h4>
-    <button
-      nz-button
-      nzType="text"
-      nzSize="small"
-      class="text-gray-400 hover:bg-gray-100"
-    >
-      <nz-icon nzType="more" nzTheme="outline" class="text-xl" />
-    </button>
   </div>
-  <div echarts [options]="options" class="w-full h-[350px]"></div>
+  <div echarts [options]="options" class="w-full h-[250px] sm:h-[350px]"></div>
 </div>

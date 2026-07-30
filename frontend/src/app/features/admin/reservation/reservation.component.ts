@@ -44,7 +44,6 @@ import { HEADER_COLUMNS, RESERVATION_STATUS } from '@core/constants/column';
     TranslatePipe,
   ],
   templateUrl: './reservation.component.html',
-  styleUrl: './reservation.component.css',
   providers: [NzModalService],
 })
 export class ReservationComponent implements OnInit {
@@ -75,7 +74,6 @@ export class ReservationComponent implements OnInit {
   private getFilter(pageIndex: number, pageSize: number) {
     const { query, userId, reservationStatus, dateRange, totalAmount, sortBy } =
       this.form.value;
-    console.log(dateRange);
     return {
       query: query.trim() || undefined,
       userId: userId || undefined,

@@ -15,6 +15,7 @@
         nz-input
         formControlName="title"
         [placeholder]="'Nhập tiêu đề...' | translate"
+        maxlength="255"
       />
     </nz-form-control>
   </nz-form-item>
@@ -27,11 +28,12 @@
         >{{ "Hình ảnh(URL)" | translate }}
       </nz-form-label>
       <nz-form-control>
-        <input nz-input formControlName="thumbnail" placeholder="https://..." />
+        <input nz-input formControlName="thumbnail" [placeholder]="'https://...' | translate" maxlength="500" />
         @if (form.get("thumbnail")?.value) {
           <img
             [src]="form.get('thumbnail')?.value"
             [alt]="form.get('title')?.value"
+            loading="lazy"
             class="h-32 w-full object-cover rounded-lg border border-gray-600"
           />
         }
@@ -48,6 +50,7 @@
           formControlName="summary"
           rows="5"
           [placeholder]="'Mô tả ngắn gọn...' | translate"
+          maxlength="500"
         ></textarea>
       </nz-form-control>
     </nz-form-item>
@@ -111,7 +114,7 @@
 
   <!-- FOOTER -->
   <div
-    class="absolute bottom-0 left-0 w-full bg-white border-t border-gray-200 p-4 flex justify-end gap-3 z-50 shadow-md"
+    class="absolute bottom-0 left-0 w-full bg-white dark:bg-[#1a202c] border-t border-gray-200 dark:border-gray-700 p-4 flex justify-end gap-3 z-50 shadow-md"
   >
     <button nz-button nzType="default" (click)="close()">
       {{ "Hủy bỏ" | translate }}
@@ -120,6 +123,7 @@
       nz-button
       nzType="primary"
       [nzLoading]="isLoading()"
+      [disabled]="form.invalid"
       (click)="submit()"
     >
       {{ (nzData.isEditMode ? "Cập nhật" : "Đăng bài") | translate }}

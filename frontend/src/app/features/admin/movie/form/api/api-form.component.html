@@ -15,7 +15,7 @@
       class="rounded-lg"
       [nzLoading]="isLoading()"
     >
-      Tìm kiếm
+      {{ "Tìm kiếm" | translate }}
     </button>
   </div>
 
@@ -30,7 +30,7 @@
         <div class="space-y-3">
           @for (movie of searchResults(); track movie.id) {
             <div
-              class="flex gap-4 p-3 rounded-xl border border-gray-100 hover:bg-blue-50 hover:border-blue-200 bg-white cursor-pointer transition-all group"
+              class="flex gap-4 p-3 rounded-xl border border-gray-100 dark:border-gray-700 hover:bg-primary-light hover:border-primary/30 bg-white dark:bg-[#1a202c] cursor-pointer transition-colors group"
               (click)="selectMovie(movie)"
               (keyup.enter)="selectMovie(movie)"
               tabindex="0"
@@ -40,15 +40,16 @@
               <img
                 [src]="'https://image.tmdb.org/t/p/w92' + movie.poster_path"
                 [alt]="movie.title"
+                loading="lazy"
                 class="w-16 h-24 object-cover rounded-lg bg-gray-200 shrink-0"
               />
 
               <!-- Content -->
               <div class="flex-1">
-                <h4 class="font-bold text-gray-800 group-hover:text-primary">
+                <h4 class="font-bold text-gray-800 dark:text-gray-100 group-hover:text-primary">
                   {{ movie.title }}
                 </h4>
-                <p class="text-xs text-gray-500 mb-1">
+                <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">
                   {{ "Phát hành" | translate }}:
                   {{ movie.release_date | date: "yyyy" }}
                 </p>
@@ -56,24 +57,25 @@
                 <!-- Rating -->
                 @if (movie.vote_average) {
                   <div
-                    class="flex items-center gap-1 text-xs font-bold text-orange-500"
+                    class="flex items-center gap-1 text-xs font-bold text-warning"
                   >
-                    <nz-icon nzType="star" nzTheme="fill" />
+                    <nz-icon nzType="star" nzTheme="fill" aria-hidden="true" />
                     {{ movie.vote_average }}
                   </div>
                 }
 
-                <p class="text-xs text-gray-400 line-clamp-2 mt-2">
-                  {{ movie.overview || "Chưa có mô tả" }}
+                <p class="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mt-2">
+                  {{ movie.overview || ("Chưa có mô tả" | translate) }}
                 </p>
               </div>
 
               <!-- Action Icon -->
               <div class="flex items-center px-2">
-                <nz-icon
-                  nzType="plus-circle"
-                  class="text-2xl text-gray-300 group-hover:text-primary transition-colors"
-                />
+                  <nz-icon
+                    nzType="plus-circle"
+                    class="text-2xl text-gray-400 group-hover:text-primary transition-colors"
+                    aria-hidden="true"
+                  />
               </div>
             </div>
           }
@@ -81,9 +83,9 @@
       } @else {
         <!-- Empty State -->
         <div
-          class="flex flex-col items-center justify-center h-full text-gray-400"
+          class="flex flex-col items-center justify-center h-full text-gray-500 dark:text-gray-400"
         >
-          <span nz-icon nzType="search" class="text-4xl mb-2"></span>
+          <span nz-icon nzType="search" class="text-4xl mb-2" aria-hidden="true"></span>
           <p>{{ "Chưa có kết quả tìm kiếm" | translate }}</p>
         </div>
       }

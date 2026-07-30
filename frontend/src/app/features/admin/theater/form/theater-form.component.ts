@@ -1,9 +1,10 @@
-import { Component, inject, OnDestroy, OnInit } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import {
   FormBuilder,
   FormGroup,
   FormsModule,
   ReactiveFormsModule,
+  Validators,
 } from '@angular/forms';
 import { NzModalRef } from 'ng-zorro-antd/modal';
 import { filter, Subject, take, takeUntil } from 'rxjs';
@@ -41,6 +42,7 @@ import { TranslatePipe } from '@ngx-translate/core';
   styleUrl: './theater-form.component.css',
 })
 export class FormTheaterComponent implements OnInit, OnDestroy {
+  readonly submitting = signal(false);
   mode: 'add' | 'edit' | 'view' = 'add';
   theaterId!: number;
   form!: FormGroup;
@@ -95,9 +97,9 @@ export class FormTheaterComponent implements OnInit, OnDestroy {
   initForm() {
     this.form = this.fb.group({
       id: [''],
-      name: [''],
-      location: [''],
-      capacity: [''],
+      name: ['', Validators.required],
+      location: ['', Validators.required],
+      capacity: [null, [Validators.required, Validators.min(1)]],
     });
   }
 
@@ -116,47 +118,50 @@ export class FormTheaterComponent implements OnInit, OnDestroy {
   }
 
   submit() {
-    if (this.form.valid) {
-      const theaterData = this.form.value;
-      if (this.mode === 'edit') {
-        this.store.dispatch(
-          TheaterActions.updateTheater({
-            id: this.theaterId as number,
-            theater: theaterData,
-          }),
-        );
-      } else if (this.mode === 'add') {
-        this.store.dispatch(
-          TheaterActions.createTheater({ theater: theaterData }),
-        );
-      }
+    if (!this.form.valid || this.submitting()) return;
 
-      this.actions$
-        .pipe(
-          ofType(
-            TheaterActions.createTheaterSuccess,
-            TheaterActions.updateTheaterSuccess,
-          ),
-          take(1),
-          takeUntil(this.destroy$),
-        )
-        .subscribe(() => {
-          this.modelRef.close();
-        });
-
-      this.actions$
-        .pipe(
-          ofType(
-            TheaterActions.createTheaterFailed,
-            TheaterActions.updateTheaterFailed,
-          ),
-          take(1),
-          takeUntil(this.destroy$),
-        )
-        .subscribe(({ error }) => {
-          console.error('Save theater failed', error);
-        });
+    this.submitting.set(true);
+    const theaterData = this.form.value;
+    if (this.mode === 'edit') {
+      this.store.dispatch(
+        TheaterActions.updateTheater({
+          id: this.theaterId as number,
+          theater: theaterData,
+        }),
+      );
+    } else if (this.mode === 'add') {
+      this.store.dispatch(
+        TheaterActions.createTheater({ theater: theaterData }),
+      );
     }
+
+    this.actions$
+      .pipe(
+        ofType(
+          TheaterActions.createTheaterSuccess,
+          TheaterActions.updateTheaterSuccess,
+        ),
+        take(1),
+        takeUntil(this.destroy$),
+      )
+      .subscribe(() => {
+        this.submitting.set(false);
+        this.modelRef.close();
+      });
+
+    this.actions$
+      .pipe(
+        ofType(
+          TheaterActions.createTheaterFailed,
+          TheaterActions.updateTheaterFailed,
+        ),
+        take(1),
+        takeUntil(this.destroy$),
+      )
+      .subscribe(({ error }) => {
+        this.submitting.set(false);
+        console.error('Save theater failed', error);
+      });
   }
 
   ngOnDestroy() {

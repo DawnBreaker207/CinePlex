@@ -1,25 +1,25 @@
-<div class="min-h-screen bg-slate-50 py-10 px-4 sm:px-6 lg:px-8">
+<div class="min-h-screen bg-[var(--color-bg-admin)] py-10 px-4 sm:px-6 lg:px-8">
   <!-- HEADER -->
   <div
     class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8"
   >
     <div>
-      <h1 class="text-3xl font-bold text-gray-900">
+      <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">
         {{ "Quản lý đơn đặt" | translate }}
       </h1>
-      <p class="text-gray-500 text-sm mt-1">
+      <p class="text-gray-500 dark:text-gray-400 text-sm mt-1">
         {{ "Theo dõi và xử lý các đơn đặt vé" | translate }}
       </p>
     </div>
   </div>
 
   <!--  FILTER -->
-  <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5 mb-6">
+  <div class="bg-white dark:bg-[#1a202c] rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-5 mb-6">
     <form [formGroup]="form" (submit)="onSubmit()">
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
         <!--  Search  -->
         <div class="lg:col-span-1">
-          <nz-form-label class="font-semibold text-xs text-gray-500 uppercase"
+          <nz-form-label class="font-semibold text-sm text-gray-700 dark:text-gray-300"
             >{{ "Tìm kiếm" | translate }}
           </nz-form-label>
           <nz-input-group nzPrefixIcon="search" class="w-full rounded-lg">
@@ -33,7 +33,7 @@
 
         <!--  Status  -->
         <div class="">
-          <nz-form-label class="font-semibold text-xs text-gray-500 uppercase"
+          <nz-form-label class="font-semibold text-sm text-gray-700 dark:text-gray-300"
             >{{ "Trạng thái đơn" | translate }}
           </nz-form-label>
           <nz-select
@@ -50,7 +50,7 @@
 
         <!--  Day filter -->
         <div>
-          <nz-form-label class="font-semibold text-xs text-gray-500 uppercase"
+          <nz-form-label class="font-semibold text-sm text-gray-700 dark:text-gray-300"
             >{{ "Ngày tạo đơn" | translate }}
           </nz-form-label>
           <nz-range-picker
@@ -61,7 +61,7 @@
 
         <!--  Total Amount -->
         <div>
-          <nz-form-label class="font-semibold text-xs text-gray-500 uppercase"
+          <nz-form-label class="font-semibold text-sm text-gray-700 dark:text-gray-300"
             >{{ "Tổng tiền" | translate }}
           </nz-form-label>
           <nz-input-group nzPrefixIcon="dollar" class="w-full rounded-lg">
@@ -70,14 +70,14 @@
               nz-input
               [placeholder]="'Giá' | translate"
               type="number"
-              class="!w-[100px]"
+              class="w-full sm:w-[100px]"
             />
           </nz-input-group>
         </div>
 
         <!--  Sort  -->
         <div>
-          <nz-form-label class="font-semibold text-xs text-gray-500 uppercase"
+          <nz-form-label class="font-semibold text-sm text-gray-700 dark:text-gray-300"
             >{{ "Sắp xếp theo" | translate }}
           </nz-form-label>
           <nz-select formControlName="sortBy" class="w-full">
@@ -98,8 +98,10 @@
             nzType="primary"
             class="flex-1 font-semibold"
             type="submit"
+            [nzLoading]="reservationStore.loading()"
+            [disabled]="reservationStore.loading()"
           >
-            <nz-icon nzType="filter" />
+            <nz-icon nzType="filter" aria-hidden="true" />
             {{ "Áp dụng" | translate }}
           </button>
           <button
@@ -121,7 +123,7 @@
   <app-loading [isLoading]="reservationStore.loading()">
     @if (reservationStore.reservations(); as reservations) {
       <div
-        class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 overflow-hidden"
+        class="bg-white dark:bg-[#1a202c] rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-6 overflow-x-auto"
       >
         <nz-table
           [nzData]="reservations"
@@ -131,9 +133,10 @@
           [nzPageSize]="pag?.pageSize ?? 10"
           [nzShowSizeChanger]="true"
           nzShowPagination
+          [nzNoResult]="'Không tìm thấy đơn đặt. Hãy thử thay đổi bộ lọc.' | translate"
           (nzQueryParams)="onQueryParamsChange($event)"
         >
-          <thead class="bg-gray-50">
+          <thead class="bg-gray-50 dark:bg-gray-800">
             <tr>
               @for (item of headerColumn; track item) {
                 <th nzAlign="center">
@@ -145,9 +148,9 @@
           <tbody>
             @for (item of reservations; track item.id) {
               <tr
-                class="group hover:bg-gray-50 transition-colors border-b border-gray-100"
+                class="group hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors border-b border-gray-100 dark:border-gray-700"
               >
-                <td class="font-mono text-center text-gray-500">
+                <td class="font-mono text-center text-gray-700 dark:text-gray-300">
                   {{ item.id }}
                 </td>
 
@@ -160,13 +163,13 @@
                   </nz-tag>
                 </td>
 
-                <td class="text-center font-bold text-gray-800">
+                <td class="text-center font-bold text-gray-800 dark:text-gray-100">
                   {{ item.totalAmount | currency: "VND" }}
                 </td>
 
-                <td class="text-gray-600 text-center">
+                <td class="text-gray-600 dark:text-gray-400 text-center">
                   {{ item.createdAt | date: "dd/MM/yyyy" }}
-                  <div class="text-xs text-gray-400">
+                  <div class="text-xs text-gray-500 dark:text-gray-400">
                     {{ item.createdAt | date: "HH:mm" }}
                   </div>
                 </td>
@@ -177,28 +180,16 @@
                       nz-button
                       nzType="text"
                       nzShape="circle"
+                      [attr.aria-label]="'Xem' | translate"
                       nz-tooltip
                       nzTooltipTitle="Xem chi tiết"
-                      class="text-blue-600 hover:bg-blue-100"
+                      class="text-primary hover:bg-primary-light"
                       (click)="openModal(item.id)"
                     >
-                      <nz-icon nzType="eye" nzTheme="twotone" />
+                      <nz-icon nzType="eye" nzTheme="twotone" aria-hidden="true" />
                     </button>
 
-                    <button
-                      nz-button
-                      nzType="text"
-                      nzShape="circle"
-                      nz-tooltip
-                      nzTooltipTitle="Xóa đơn"
-                      class="text-red-500 hover:bg-red-100"
-                    >
-                      <nz-icon
-                        nzType="delete"
-                        nzTheme="twotone"
-                        nzTwotoneColor="#e7000b"
-                      />
-                    </button>
+
                   </div>
                 </td>
               </tr>

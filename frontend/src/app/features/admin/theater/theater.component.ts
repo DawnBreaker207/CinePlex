@@ -1,5 +1,5 @@
-import { Component, inject } from '@angular/core';
-import { ReactiveFormsModule } from '@angular/forms';
+import { Component, computed, inject } from '@angular/core';
+import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { DatePipe } from '@angular/common';
 import { NzButtonModule } from 'ng-zorro-antd/button';
@@ -21,6 +21,7 @@ import { FormTheaterComponent } from '@features/admin/theater/form/theater-form.
 import { LoadingComponent } from '@shared/components/loading/loading.component';
 import { TranslatePipe } from '@ngx-translate/core';
 import { HEADER_COLUMNS } from '@core/constants/column';
+import { ICON_COLORS } from '@shared/utils/colors';
 
 @Component({
   selector: 'app-theater',
@@ -39,17 +40,32 @@ import { HEADER_COLUMNS } from '@core/constants/column';
   ],
   providers: [NzModalService],
   templateUrl: './theater.component.html',
-  styleUrl: './theater.component.css',
 })
 export class TheaterComponent {
   private modalService = inject(NzModalService);
   private store = inject(Store);
+  private fb = inject(FormBuilder);
 
   readonly headerColumn = HEADER_COLUMNS.THEATER;
+  readonly ICON_COLORS = ICON_COLORS;
   theaters = this.store.selectSignal(selectAllTheaters);
   pagination = this.store.selectSignal(selectPaginationTheater);
   loading = this.store.selectSignal(selectTheaterLoading);
   error = this.store.selectSignal(selectTheaterError);
+
+  searchCtrl = this.fb.control('');
+  sortCtrl = this.fb.control('newest');
+
+  filteredTheaters = computed(() => {
+    const list = this.theaters();
+    const q = (this.searchCtrl.value || '').toLowerCase().trim();
+    const sort = this.sortCtrl.value || 'newest';
+    let result = q
+      ? list.filter(t => t.name.toLowerCase().includes(q) || t.location.toLowerCase().includes(q))
+      : list;
+    if (sort === 'oldest') result = [...result].reverse();
+    return result;
+  });
 
   openModal(mode: 'add' | 'edit' | 'view', id?: number) {
     const modal = this.modalService.create({
@@ -66,15 +82,13 @@ export class TheaterComponent {
         mode !== 'view'
           ? [
               {
-                label: 'Confirm',
+                label: 'Lưu',
                 type: 'primary',
                 onClick: () => {
                   const form =
                     modal.getContentComponent() as FormTheaterComponent;
-                  console.log(form.form.valid);
-                  if (form.form.valid) {
+                  if (form.form.valid && !form.submitting()) {
                     form.submit();
-                    modal.close();
                   }
                 },
               },
@@ -91,6 +105,13 @@ export class TheaterComponent {
   }
 
   onDelete(id: number) {
-    this.store.dispatch(TheaterActions.deleteTheater({ id }));
+    this.modalService.confirm({
+      nzTitle: 'Xóa rạp chiếu này?',
+      nzContent: 'Dữ liệu sẽ không thể khôi phục sau khi xóa.',
+      nzOkText: 'Xóa',
+      nzOkDanger: true,
+      nzOnOk: () => this.store.dispatch(TheaterActions.deleteTheater({ id })),
+      nzCancelText: 'Hủy',
+    });
   }
 }

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, input } from '@angular/core';
 import {
   NzTableCellDirective,
   NzTableComponent,
@@ -8,6 +8,8 @@ import {
   NzTrDirective,
 } from 'ng-zorro-antd/table';
 import { TranslatePipe } from '@ngx-translate/core';
+import { CurrencyFormatPipe } from '@shared/pipes/currency-format.pipe';
+import { TopTheater } from '@domain/dashboard/models/dashboard.model';
 
 @Component({
   selector: 'app-movie-table',
@@ -19,46 +21,10 @@ import { TranslatePipe } from '@ngx-translate/core';
     NzTheadComponent,
     NzTrDirective,
     TranslatePipe,
+    CurrencyFormatPipe,
   ],
   templateUrl: './movie-table.component.html',
-  styleUrl: './movie-table.component.css',
 })
 export class MovieTableComponent {
-  data: any[] = [
-    {
-      theater: 'Theater A',
-      tickets: 9394,
-      revenue: 3499,
-      seat: 65.4,
-      cancel: 39.4,
-    },
-    {
-      theater: 'Theater B',
-      tickets: 9394,
-      revenue: 3499,
-      seat: 65.4,
-      cancel: 39.4,
-    },
-    {
-      theater: 'Theater C',
-      tickets: 9394,
-      revenue: 3499,
-      seat: 65.4,
-      cancel: 39.4,
-    },
-    {
-      theater: 'Theater D',
-      tickets: 9394,
-      revenue: 3499,
-      seat: 65.4,
-      cancel: 39.4,
-    },
-    {
-      theater: 'Theater E',
-      tickets: 9394,
-      revenue: 3499,
-      seat: 65.4,
-      cancel: 39.4,
-    },
-  ];
+  data = input<TopTheater[]>([]);
 }
