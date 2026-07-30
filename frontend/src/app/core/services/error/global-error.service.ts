@@ -35,43 +35,44 @@ export class GlobalErrorService {
   private parseError(error: HttpErrorResponse) {
     const status = error.status;
     let type = 'error';
-    let title = `Error ${status}`;
+    let title = `Lỗi ${status}`;
     const serverMessage = error.error?.message;
-    let message = serverMessage || error.message || 'Unknown error';
+    let message = serverMessage || error.message || 'Lỗi không xác định';
 
     switch (status) {
       case 400:
-        title = `${status}:Bad Request`;
+        title = `${status}: Yêu cầu không hợp lệ`;
+        if (!serverMessage) message = 'Dữ liệu gửi lên không đúng. Vui lòng kiểm tra lại.';
         break;
       case 401:
-        title = `${status}: Unauthorized`;
-        if (!serverMessage) message = 'Unauthorized';
+        title = `${status}: Chưa đăng nhập`;
+        if (!serverMessage) message = 'Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.';
         break;
       case 403:
         type = 'warning';
-        title = `${status}: Forbidden`;
-        if (!serverMessage) message = 'Forbidden';
+        title = `${status}: Không có quyền truy cập`;
+        if (!serverMessage) message = 'Bạn không có quyền thực hiện thao tác này.';
         break;
       case 404:
-        title = `${status}: Not Found`;
-        if (!serverMessage) message = 'Not Found';
+        title = `${status}: Không tìm thấy`;
+        if (!serverMessage) message = 'Dữ liệu yêu cầu không tồn tại.';
         break;
       case 429:
         type = 'warning';
-        title = `${status}: Too Many Requests`;
-        if (!serverMessage) message = 'Too Many Requests';
+        title = `${status}: Quá nhiều yêu cầu`;
+        if (!serverMessage) message = 'Bạn đã gửi quá nhiều yêu cầu. Vui lòng thử lại sau.';
         break;
       case 500:
-        title = `${status}: Server Error`;
-        if (!serverMessage) message = 'Server Error';
+        title = `${status}: Lỗi máy chủ`;
+        if (!serverMessage) message = 'Máy chủ gặp sự cố. Vui lòng thử lại sau.';
         break;
       case 503:
         type = 'warning';
-        title = `${status}: Service Unavailable`;
-        if (!serverMessage) message = 'Service Unavailable';
+        title = `${status}: Dịch vụ tạm ngưng`;
+        if (!serverMessage) message = 'Dịch vụ đang bảo trì. Vui lòng thử lại sau.';
         break;
       default:
-        title = `Error ${status}`;
+        title = `Lỗi ${status}`;
         break;
     }
     return { type, title, message };

@@ -66,6 +66,7 @@ export class AuthEffects {
       switchMap(({ user }) =>
         this.authService.login(user).pipe(
           tap((jwt) => {
+            console.log('[login$] jwt received:', jwt);
             this.storageService.setJWT(jwt);
             this.toastService.createNotification({
               message: 'Đăng nhập thành công',
@@ -74,7 +75,13 @@ export class AuthEffects {
             });
             this.router.navigate(['/home']);
           }),
-          map((jwt) => AuthActions.loadLoginSuccess({ jwt })),
+          map((jwt) => {
+            if (!jwt || !jwt.accessToken) {
+              console.error('[login$] invalid jwt from service, dispatching failure:', jwt);
+              return AuthActions.loadLoginFailure({ error: 'Invalid JWT response' });
+            }
+            return AuthActions.loadLoginSuccess({ jwt });
+          }),
           catchError((err) => of(AuthActions.loadLoginFailure({ error: err }))),
         ),
       ),

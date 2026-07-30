@@ -18,6 +18,10 @@ export class StorageService extends Dexie {
   }
 
   setJWT(jwt: Jwt) {
+    if (!jwt || !jwt.accessToken) {
+      console.error('setJWT called with invalid jwt:', jwt);
+      return;
+    }
     try {
       localStorage.setItem(this.JWT_KEY, JSON.stringify(jwt));
       localStorage.setItem(this.ACCESS_TOKEN_KEY, jwt.accessToken);

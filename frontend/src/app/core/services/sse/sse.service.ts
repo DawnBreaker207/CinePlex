@@ -39,9 +39,7 @@ export class SseService {
         handleEvent('SEAT_RELEASE', e.data),
       );
 
-      source.addEventListener('CONNECTED', (e: MessageEvent) =>
-        console.log('SSE Handshake: connected'),
-      );
+      source.addEventListener('CONNECTED', () => {});
 
       // ✅ Optional: thêm handler fallback cho các event khác
       source.onmessage = (event) => {
@@ -65,7 +63,6 @@ export class SseService {
 
       // Clean up
       return () => {
-        console.log('Closing SSE connection for client: ', clientId);
         source?.close();
       };
     });

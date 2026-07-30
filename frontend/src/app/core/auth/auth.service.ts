@@ -25,7 +25,11 @@ export class AuthService {
 
   login(request: LoginRequest): Observable<any> {
     return this.http.post<ApiRes<Jwt>>(`${this.URL}/login`, request).pipe(
-      map((res) => res.data),
+      tap((res) => console.log('[auth.service] login response:', res)),
+      map((res) => {
+        console.log('[auth.service] res.data:', res?.data);
+        return res?.data;
+      }),
       catchError(this.handleError<Jwt>('login')),
     );
   }
@@ -82,7 +86,6 @@ export class AuthService {
 
   hasRole(role: string) {
     const user = this.getCurrentUser();
-    console.log(user?.roles);
     return user?.roles.includes(role) || false;
   }
 
@@ -95,7 +98,7 @@ export class AuthService {
 
   private handleError<T>(operation = 'operation', result?: T) {
     return (error: any): Observable<T> => {
-      console.log(`${operation} failed: ${error}`);
+      console.error(`${operation} failed: ${error}`);
       return throwError(() => error);
     };
   }
