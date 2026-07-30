@@ -1,4 +1,4 @@
-import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NzIconModule } from 'ng-zorro-antd/icon';
@@ -22,11 +22,12 @@ import { BarcodeComponent } from '@shared/components/barcode/barcode.component';
   templateUrl: './payment-result.component.html',
   styleUrl: './payment-result.component.css',
 })
-export class PaymentResultComponent implements OnInit, OnDestroy {
+export class PaymentResultComponent implements OnInit {
   private store = inject(Store);
   private storageService = inject(StorageService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private destroyRef = inject(DestroyRef);
 
   readonly reservationStore = inject(ReservationStore);
   readonly params = toSignal(this.route.queryParams);
@@ -89,10 +90,9 @@ export class PaymentResultComponent implements OnInit, OnDestroy {
         this.goHome();
       }
     }, 1000);
-  }
-
-  ngOnDestroy() {
-    if (this.intervalId) clearInterval(this.intervalId);
-    this.reservationStore.stopCountdown();
+    this.destroyRef.onDestroy(() => {
+      if (this.intervalId) clearInterval(this.intervalId);
+      this.reservationStore.stopCountdown();
+    });
   }
 }

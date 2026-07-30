@@ -1,4 +1,4 @@
-import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import {
   FormBuilder,
   FormGroup,
@@ -7,7 +7,8 @@ import {
   Validators,
 } from '@angular/forms';
 import { NzModalRef } from 'ng-zorro-antd/modal';
-import { filter, Subject, take, takeUntil } from 'rxjs';
+import { filter, take } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NzInputDirective } from 'ng-zorro-antd/input';
 import { NzColDirective, NzRowDirective } from 'ng-zorro-antd/grid';
 import {
@@ -41,7 +42,7 @@ import { TranslatePipe } from '@ngx-translate/core';
   templateUrl: './theater-form.component.html',
   styleUrl: './theater-form.component.css',
 })
-export class FormTheaterComponent implements OnInit, OnDestroy {
+export class FormTheaterComponent implements OnInit {
   readonly submitting = signal(false);
   mode: 'add' | 'edit' | 'view' = 'add';
   theaterId!: number;
@@ -52,7 +53,6 @@ export class FormTheaterComponent implements OnInit, OnDestroy {
   private actions$ = inject(Actions);
 
   private initialForm: any = null;
-  destroy$: Subject<void> = new Subject<void>();
 
   ngOnInit() {
     this.initForm();
@@ -72,7 +72,7 @@ export class FormTheaterComponent implements OnInit, OnDestroy {
             (theater) => theater !== null && theater.id === this.theaterId,
           ),
           take(1),
-          takeUntil(this.destroy$),
+          takeUntilDestroyed(),
         )
         .subscribe((theater) => {
           if (theater) {
@@ -142,7 +142,7 @@ export class FormTheaterComponent implements OnInit, OnDestroy {
           TheaterActions.updateTheaterSuccess,
         ),
         take(1),
-        takeUntil(this.destroy$),
+        takeUntilDestroyed(),
       )
       .subscribe(() => {
         this.submitting.set(false);
@@ -156,7 +156,7 @@ export class FormTheaterComponent implements OnInit, OnDestroy {
           TheaterActions.updateTheaterFailed,
         ),
         take(1),
-        takeUntil(this.destroy$),
+        takeUntilDestroyed(),
       )
       .subscribe(({ error }) => {
         this.submitting.set(false);
@@ -164,8 +164,4 @@ export class FormTheaterComponent implements OnInit, OnDestroy {
       });
   }
 
-  ngOnDestroy() {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
 }

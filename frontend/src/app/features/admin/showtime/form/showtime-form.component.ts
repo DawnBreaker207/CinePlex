@@ -2,7 +2,6 @@ import {
   Component,
   computed,
   inject,
-  OnDestroy,
   OnInit,
   signal,
 } from '@angular/core';
@@ -25,10 +24,9 @@ import {
   distinctUntilChanged,
   filter,
   map,
-  Subject,
   take,
-  takeUntil,
 } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NzSelectModule } from 'ng-zorro-antd/select';
 import { NzTimePickerModule } from 'ng-zorro-antd/time-picker';
 import { NzIconModule } from 'ng-zorro-antd/icon';
@@ -65,7 +63,7 @@ import { TranslatePipe } from '@ngx-translate/core';
   templateUrl: './showtime-form.component.html',
   styleUrl: './showtime-form.component.css',
 })
-export class FormShowtimeComponent implements OnInit, OnDestroy {
+export class FormShowtimeComponent implements OnInit {
   private fb = inject(FormBuilder);
   private modelRef = inject(NzModalRef);
   private store = inject(Store);
@@ -86,7 +84,6 @@ export class FormShowtimeComponent implements OnInit, OnDestroy {
       ? this.searchMovie()
       : [];
   });
-  destroy$: Subject<void> = new Subject<void>();
 
   ngOnInit() {
     this.initForm();
@@ -105,7 +102,7 @@ export class FormShowtimeComponent implements OnInit, OnDestroy {
             (showtime) => showtime !== null && showtime.id === this.showtimeId,
           ),
           take(1),
-          takeUntil(this.destroy$),
+          takeUntilDestroyed(),
         )
         .subscribe((theater) => {
           if (theater) {
@@ -222,7 +219,7 @@ export class FormShowtimeComponent implements OnInit, OnDestroy {
           ShowtimeActions.updateShowtimeSuccess,
         ),
         take(1),
-        takeUntil(this.destroy$),
+        takeUntilDestroyed(),
       )
       .subscribe(() => {
         this.submitting.set(false);
@@ -236,7 +233,7 @@ export class FormShowtimeComponent implements OnInit, OnDestroy {
           ShowtimeActions.updateShowtimeFailed,
         ),
         take(1),
-        takeUntil(this.destroy$),
+        takeUntilDestroyed(),
       )
       .subscribe(({ error }) => {
         this.submitting.set(false);
@@ -244,8 +241,4 @@ export class FormShowtimeComponent implements OnInit, OnDestroy {
       });
   }
 
-  ngOnDestroy() {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
 }

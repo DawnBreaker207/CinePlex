@@ -1,7 +1,8 @@
-import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { NzModalModule, NzModalRef, NzModalService } from 'ng-zorro-antd/modal';
-import { filter, map, Subject, take, takeUntil } from 'rxjs';
+import { filter, map, take } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NzAutosizeDirective, NzInputDirective } from 'ng-zorro-antd/input';
 import {
   NzFormControlComponent,
@@ -56,7 +57,7 @@ import { TranslatePipe } from '@ngx-translate/core';
   ],
   templateUrl: './movie-form.component.html',
 })
-export class FormMovieComponent implements OnInit, OnDestroy {
+export class FormMovieComponent implements OnInit {
   private fb = inject(FormBuilder);
   private store = inject(Store);
   private actions$ = inject(Actions);
@@ -77,7 +78,6 @@ export class FormMovieComponent implements OnInit, OnDestroy {
 
   readonly submitting = signal(false);
   private initialFormValue: any = null;
-  private destroy$: Subject<void> = new Subject<void>();
 
   ngOnInit() {
     this.initForm();
@@ -92,7 +92,7 @@ export class FormMovieComponent implements OnInit, OnDestroy {
         .pipe(
           filter((movie) => movie !== null && movie.id === this.movieId),
           take(1),
-          takeUntil(this.destroy$),
+          takeUntilDestroyed(),
         )
         .subscribe((movie) => {
           if (movie) {
@@ -134,11 +134,6 @@ export class FormMovieComponent implements OnInit, OnDestroy {
       imdbId: [''],
       filmId: [null],
     });
-  }
-
-  ngOnDestroy() {
-    this.destroy$.next();
-    this.destroy$.complete();
   }
 
   private disableForm() {
@@ -190,7 +185,7 @@ export class FormMovieComponent implements OnInit, OnDestroy {
           MovieActions.updateMovieSuccess,
         ),
         take(1),
-        takeUntil(this.destroy$),
+        takeUntilDestroyed(),
       )
       .subscribe(() => {
         this.submitting.set(false);
@@ -201,7 +196,7 @@ export class FormMovieComponent implements OnInit, OnDestroy {
       .pipe(
         ofType(MovieActions.createMovieFailed, MovieActions.updateMovieFailed),
         take(1),
-        takeUntil(this.destroy$),
+        takeUntilDestroyed(),
       )
       .subscribe(({ error }) => {
         this.submitting.set(false);
@@ -238,7 +233,7 @@ export class FormMovieComponent implements OnInit, OnDestroy {
               : [],
           })),
           take(1),
-          takeUntil(this.destroy$),
+          takeUntilDestroyed(),
         )
         .subscribe({
           next: (result: any) => {

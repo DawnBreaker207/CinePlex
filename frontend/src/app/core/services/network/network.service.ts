@@ -1,11 +1,11 @@
 import { DOCUMENT } from '@angular/common';
-import { inject, Injectable, NgZone, OnDestroy } from '@angular/core';
+import { DestroyRef, inject, Injectable, NgZone } from '@angular/core';
 import { ToastService } from '@core/services/toast/toast.service';
 
 @Injectable({
   providedIn: 'root',
 })
-export class NetworkService implements OnDestroy {
+export class NetworkService {
   private toast = inject(ToastService);
   private zone = inject(NgZone);
   private window = inject(DOCUMENT).defaultView!;
@@ -15,11 +15,10 @@ export class NetworkService implements OnDestroy {
   constructor() {
     this.window.addEventListener('online', this.onlineHandler);
     this.window.addEventListener('offline', this.offlineHandler);
-  }
-
-  ngOnDestroy() {
-    this.window.removeEventListener('online', this.onlineHandler);
-    this.window.removeEventListener('offline', this.offlineHandler);
+    inject(DestroyRef).onDestroy(() => {
+      this.window.removeEventListener('online', this.onlineHandler);
+      this.window.removeEventListener('offline', this.offlineHandler);
+    });
   }
 
   private onOnline() {
