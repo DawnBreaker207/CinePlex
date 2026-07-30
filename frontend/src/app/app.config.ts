@@ -8,7 +8,7 @@ import {
   provideBrowserGlobalErrorListeners,
   provideZoneChangeDetection,
 } from '@angular/core';
-import { provideRouter, TitleStrategy, withComponentInputBinding, withInMemoryScrolling, withViewTransitions } from '@angular/router';
+import { PreloadAllModules, provideRouter, TitleStrategy, withComponentInputBinding, withInMemoryScrolling, withPreloading, withViewTransitions } from '@angular/router';
 import { routes } from './app.routes';
 import { Store } from '@ngrx/store';
 import { MovieActions } from '@domain/movie/data-access/movie.actions';
@@ -70,7 +70,7 @@ export const appConfig: ApplicationConfig = {
       ...(environment.useMock ? [mockInterceptor] : []),
       AuthInterceptor, ErrorInterceptor,
     ])),
-    provideRouter(routes, withInMemoryScrolling({ anchorScrolling: 'enabled', scrollPositionRestoration: 'enabled' }), withComponentInputBinding(), withViewTransitions()),
+    provideRouter(routes, withInMemoryScrolling({ anchorScrolling: 'enabled', scrollPositionRestoration: 'enabled' }), withComponentInputBinding(), withViewTransitions(), withPreloading(PreloadAllModules)),
     provideNzIcons(nzIcons),
     provideNzI18n(en_US),
     importProvidersFrom(NzModalModule),
