@@ -34,6 +34,7 @@ import localVi from '@angular/common/locales/vi';
 import { CurrencyFormatPipe } from '@shared/pipes/currency-format.pipe';
 import { NzModalModule } from 'ng-zorro-antd/modal';
 import { AuthInterceptor } from '@core/interceptor/auth.interceptor';
+import { CacheInterceptor } from '@core/interceptor/cache.interceptor';
 import { ErrorInterceptor } from '@core/interceptor/error.interceptor';
 import { mockInterceptor } from '@core/mock/mock-interceptor';
 import { authFeatureKey, authReducer } from '@core/auth/auth.reducers';
@@ -68,7 +69,7 @@ export const appConfig: ApplicationConfig = {
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideHttpClient(withInterceptors([
       ...(environment.useMock ? [mockInterceptor] : []),
-      AuthInterceptor, ErrorInterceptor,
+      AuthInterceptor, CacheInterceptor, ErrorInterceptor,
     ])),
     provideRouter(routes, withInMemoryScrolling({ anchorScrolling: 'enabled', scrollPositionRestoration: 'enabled' }), withComponentInputBinding(), withViewTransitions(), withPreloading(PreloadAllModules)),
     provideNzIcons(nzIcons),
