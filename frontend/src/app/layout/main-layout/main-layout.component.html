@@ -1,16 +1,19 @@
-<nz-layout>
-  <app-header />
-  <nz-content>
-    <div class="relative">
-      @if (loading()) {
-        <app-loading tip="Loading...">
-          <router-outlet />
-        </app-loading>
-      } @else {
-        <router-outlet />
-        <nz-float-button-top />
-      }
-    </div>
-  </nz-content>
-  <app-footer />
+<a href="#main-content" class="skip-link">
+ {{ "Chuyển đến nội dung chính" | translate }}
+</a>
+<nz-layout data-theme="client">
+ <app-header/>
+ <nz-content id="main-content">
+ <div class="relative">
+ @if (loading()) {
+ <app-loading [tip]="'Đang tải...' | translate">
+ <router-outlet/>
+ </app-loading>
+ } @else {
+ <router-outlet/>
+ <nz-float-button-top/>
+ }
+ </div>
+ </nz-content>
+ <app-footer/>
 </nz-layout>

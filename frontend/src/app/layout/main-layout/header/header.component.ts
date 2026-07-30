@@ -25,7 +25,6 @@ import { HEADERS } from '@core/constants/column';
     TranslateModule,
   ],
   templateUrl: './header.component.html',
-  styleUrl: './header.component.css',
 })
 export class HeaderComponent {
   authService = inject(AuthService);
@@ -34,7 +33,6 @@ export class HeaderComponent {
   headers = HEADERS;
 
   useLanguage(lang: string) {
-    console.log('Use lang ', lang);
     this.translateService.use(lang);
   }
 }

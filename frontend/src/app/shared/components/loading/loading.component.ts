@@ -1,6 +1,6 @@
 import { Component, inject, input } from '@angular/core';
 import { NzSpinComponent } from 'ng-zorro-antd/spin';
-import { LoadingService } from '@shared/service/loading.service';
+import { LoadingService } from '@core/services/loading/loading.service';
 import { SpinnerComponent } from '@shared/components/spinner/spinner.component';
 
 @Component({
@@ -11,6 +11,6 @@ import { SpinnerComponent } from '@shared/components/spinner/spinner.component';
 })
 export class LoadingComponent {
   isLoading = input<boolean | null | undefined>(true);
-  tip = input<string>('lmao');
+  tip = input<string>('Đang tải...');
   protected loadingService = inject(LoadingService);
 }

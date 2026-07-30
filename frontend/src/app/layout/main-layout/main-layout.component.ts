@@ -12,6 +12,7 @@ import { FooterComponent } from './footer/footer.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { LoadingComponent } from '@shared/components/loading/loading.component';
 import { NzFloatButtonModule } from 'ng-zorro-antd/float-button';
+import { TranslatePipe } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-main-layout',
@@ -24,6 +25,7 @@ import { NzFloatButtonModule } from 'ng-zorro-antd/float-button';
     NzMenuModule,
     LoadingComponent,
     NzFloatButtonModule,
+    TranslatePipe,
   ],
   templateUrl: './main-layout.component.html',
   styleUrl: './main-layout.component.css',

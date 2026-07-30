@@ -1,30 +1,25 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import {
-  PaymentMethod,
-  PaymentStatus,
-  ReservationStatus,
-} from '@core/constants/enum';
-
-type AllStatus = ReservationStatus | PaymentStatus | PaymentMethod;
 
 @Pipe({
   name: 'tags',
 })
 export class StatusTagsPipe implements PipeTransform {
-  private statusColors: Record<AllStatus, string> = {
+  private statusColors: Record<string, string> = {
     CONFIRMED: 'green',
     CANCELED: 'red',
+    PENDING: 'orange',
+    REFUNDED: 'gray',
 
     MOMO: 'purple',
     VNPAY: 'blue',
     ZALOPAY: 'cyan',
+    CASH: 'green',
 
-    PENDING: 'yellow',
     PAID: 'green',
   };
 
   transform(status: string): { status: string; color: string } {
-    const color = this.statusColors[status as AllStatus] || 'gray';
+    const color = this.statusColors[status] || 'default';
     return { color, status };
   }
 }

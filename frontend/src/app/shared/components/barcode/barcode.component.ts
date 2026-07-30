@@ -15,7 +15,6 @@ export class BarcodeComponent implements OnInit {
   ngOnInit() {
     const code = this.value();
     const el = this.barcodeEl()?.nativeElement;
-    console.log(code, el);
     if (code && el) {
       try {
         JsBarcode(el, code, {
@@ -27,9 +26,7 @@ export class BarcodeComponent implements OnInit {
           fontSize: 14,
           margin: 0,
         });
-      } catch (err) {
-        console.log(err);
-      }
+      } catch (_) {}
     }
   }
 }

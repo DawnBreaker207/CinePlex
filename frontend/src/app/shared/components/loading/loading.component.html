@@ -1,23 +1,23 @@
 <nz-spin
-  class="relative w-full h-full min-h-[19rem] transition-all duration-300"
-  [nzSpinning]="!!isLoading() || loadingService.isLoading()"
-  [nzIndicator]="indicator"
-  [nzTip]="tip()"
+ class="relative w-full h-full min-h-[19rem] transition-all duration-300"
+ [nzSpinning]="!!isLoading() || loadingService.isLoading()"
+ [nzIndicator]="indicator"
+ [nzTip]="tip()"
 >
-  <ng-content></ng-content>
+ <ng-content></ng-content>
 </nz-spin>
 
 <ng-template #indicator>
-  <div
-    class="absolute inset-0 flex flex-col items-center justify-center z-50 pointer-events-none bg-white/10 backdrop-blur-[1px]"
-  >
-    <app-spinner />
-    @if (tip()) {
-      <p
-        class="mt-4 text-sm font-medium text-gray-500 animate-pulse text-center px-4"
-      >
-        {{ tip() }}
-      </p>
-    }
-  </div>
+ <div
+ class="absolute inset-0 flex flex-col items-center justify-center z-50 pointer-events-none bg-white/10 backdrop-blur-[1px]"
+ >
+ <app-spinner />
+ @if (tip()) {
+ <p
+ class="mt-4 text-sm font-medium text-gray-500 animate-pulse text-center px-4"
+ >
+ {{ tip() }}
+ </p>
+ }
+ </div>
 </ng-template>

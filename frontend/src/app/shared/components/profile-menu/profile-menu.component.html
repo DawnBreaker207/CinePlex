@@ -1,77 +1,77 @@
 <div class="relative ml-3">
-  @if (userStore.selectedUser(); as user) {
-    <!-- Trigger Button -->
-    <button
-      nz-dropdown
-      nzTrigger="click"
-      [nzDropdownMenu]="profile"
-      [nzPlacement]="'bottomRight'"
-      class="flex items-center justify-center rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-primary/50 hover:ring-2 hover:ring-primary/20"
-      type="button"
-    >
-      <span class="sr-only">{{ "Mở menu người dùng" | translate }}</span>
-      <!-- Avatar-->
-      <nz-avatar
-        [nzSize]="40"
-        [nzSrc]="
-          user.avatar || 'https://avatars.githubusercontent.com/u/12519008?v=4'
-        "
-        class="cursor-pointer shadow-sm border border-gray-200"
-      ></nz-avatar>
-    </button>
+ @if (userStore.selectedUser(); as user) {
+ <!-- Trigger Button -->
+ <button
+ nz-dropdown
+ nzTrigger="click"
+ [nzDropdownMenu]="profile"
+ [nzPlacement]="'bottomRight'"
+ class="flex items-center justify-center rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-primary/50 hover:ring-2 hover:ring-primary/20"
+ type="button"
+ >
+ <span class="sr-only">{{ "Mở menu người dùng" | translate }}</span>
+ <!-- Avatar-->
+ <nz-avatar
+ [nzSize]="40"
+ [nzSrc]="
+ user.avatar || 'https://avatars.githubusercontent.com/u/12519008?v=4'
+ "
+ class="cursor-pointer shadow-sm border border-gray-200"
+ ></nz-avatar>
+ </button>
 
-    <!-- Dropdown Menu Content -->
-    <nz-dropdown-menu #profile="nzDropdownMenu">
-      <div
-        class="bg-white min-w-[240px] rounded-xl shadow-xl border border-gray-100 py-2 mt-2 overflow-hidden"
-      >
-        <!-- User Info Header -->
-        <div
-          class="px-4 py-3 bg-gray-50/50 border-b border-gray-100 flex items-center gap-3"
-        >
-          <nz-avatar
-            [nzSize]="40"
-            [nzSrc]="
-              user.avatar ||
-              'https://avatars.githubusercontent.com/u/12519008?v=4'
-            "
-            class="shrink-0 border border-white shadow-sm"
-          ></nz-avatar>
-          <div class="flex-1 min-w-0">
-            <p class="text-sm font-bold text-gray-900 truncate">
-              {{ user.username || "User" }}
-            </p>
-            <p class="text-xs text-gray-500 truncate">
-              {{ user.email }}
-            </p>
-          </div>
-        </div>
+ <!-- Dropdown Menu Content -->
+ <nz-dropdown-menu #profile="nzDropdownMenu">
+ <div
+ class="bg-white min-w-[240px] rounded-xl shadow-xl border border-gray-100 py-2 mt-2 overflow-hidden"
+ >
+ <!-- User Info Header -->
+ <div
+ class="px-4 py-3 bg-gray-50/50 border-b border-gray-100 flex items-center gap-3"
+ >
+ <nz-avatar
+ [nzSize]="40"
+ [nzSrc]="
+ user.avatar ||
+ 'https://avatars.githubusercontent.com/u/12519008?v=4'
+ "
+ class="shrink-0 border border-white shadow-sm"
+ ></nz-avatar>
+ <div class="flex-1 min-w-0">
+ <p class="text-sm font-bold text-gray-900 truncate">
+ {{ user.username || "User" }}
+ </p>
+ <p class="text-xs text-gray-500 truncate">
+ {{ user.email }}
+ </p>
+ </div>
+ </div>
 
-        <!-- Menu List -->
-        <ul class="p-2 flex flex-col gap-1">
-          @for (item of filterMenu(); track $index) {
-            <li
-              (click)="handleItemClick(item)"
-              (keydown.enter)="handleItemClick(item)"
-              (keydown.space)="handleItemClick(item)"
-              tabindex="0"
-              [class]="
-                'flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg cursor-pointer transition-colors outline-none ' +
-                (item.isDanger
-                  ? 'text-red-600 hover:bg-red-50'
-                  : 'text-gray-700 hover:bg-gray-100 hover:text-primary')
-              "
-            >
-              <!-- Icon wrapper -->
-              <i-lucide
-                [name]="item.icon"
-                class="w-4 h-4 opacity-70"
-              ></i-lucide>
-              {{ item.title | translate }}
-            </li>
-          }
-        </ul>
-      </div>
-    </nz-dropdown-menu>
-  }
+ <!-- Menu List -->
+ <ul class="p-2 flex flex-col gap-1">
+ @for (item of filterMenu(); track $index) {
+ <li
+ (click)="handleItemClick(item)"
+ (keydown.enter)="handleItemClick(item)"
+ (keydown.space)="handleItemClick(item)"
+ tabindex="0"
+ [class]="
+ 'flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg cursor-pointer transition-colors outline-none' +
+ (item.isDanger
+ ? 'text-red-600 hover:bg-red-50'
+ : 'text-gray-700 hover:bg-gray-100 hover:text-primary')
+ "
+ >
+ <!-- Icon wrapper -->
+ <i-lucide
+ [name]="item.icon"
+ class="w-4 h-4 opacity-70"
+ ></i-lucide>
+ {{ item.title | translate }}
+ </li>
+ }
+ </ul>
+ </div>
+ </nz-dropdown-menu>
+ }
 </div>
