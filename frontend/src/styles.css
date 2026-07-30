@@ -11,6 +11,10 @@
   --color-border: #e2e8f0;
   --color-bg: #f7fafc;
   --color-success: #2d7d46;
+  --color-warning: #d97706;
+  --color-info: #2563eb;
+  --color-danger: #dc2626;
+  --color-text-secondary: #475569;
 
   --font-display: "Bricolage Grotesque", sans-serif;
   --font-sans: "Plus Jakarta Sans", sans-serif;
@@ -28,6 +32,82 @@
       opacity: 1;
       transform: translateY(0);
     }
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-primary: #e53e3e;
+    --color-primary-dark: #c53030;
+    --color-primary-light: #2d1515;
+    --color-muted: #a0aec0;
+    --color-border: #2d3748;
+    --color-bg: #0f1114;
+    --color-surface: #edf2f7;
+    --color-surface-card: #1a202c;
+    --color-text-secondary: #a0aec0;
+    --color-success: #48bb78;
+    --color-warning: #ecc94b;
+    --color-info: #63b3ed;
+    --color-danger: #fc8181;
+  }
+  body {
+    background-color: #0f1114;
+    color: #edf2f7;
+  }
+  .ant-input,
+  .ant-input-affix-wrapper,
+  .ant-select-selector,
+  .ant-picker {
+    background-color: #1a202c !important;
+    color: #edf2f7 !important;
+    border-color: #2d3748 !important;
+  }
+  .ant-layout {
+    background-color: #0f1114 !important;
+  }
+  ::-webkit-scrollbar-track {
+    background: #1a202c;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #4a5568;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #718096;
+  }
+}
+
+/* Client theme — always-light content on dark cinema shell */
+[nz-layout][data-theme="client"],
+[data-theme="client"] {
+  --color-primary-light: #fff5f5;
+  --color-muted: #718096;
+  --color-border: #e2e8f0;
+  --color-bg: #f7fafc;
+  --color-surface-card: #ffffff;
+  --color-text-secondary: #475569;
+  --color-success: #2d7d46;
+  --color-warning: #d97706;
+  --color-info: #2563eb;
+  --color-danger: #dc2626;
+  background-color: #0f1114;
+}
+[data-theme="client"] .ant-input,
+[data-theme="client"] .ant-input-affix-wrapper,
+[data-theme="client"] .ant-select-selector,
+[data-theme="client"] .ant-picker {
+  background-color: #ffffff !important;
+  color: #1a202c !important;
+  border-color: #e2e8f0 !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
 
@@ -54,18 +134,18 @@ body {
 .ant-select-selector,
 .ant-picker {
   background-color: #ffffff !important;
-  color: #1e293b !important;
-  border-color: #e2e8f0 !important;
+  color: var(--color-surface) !important;
+  border-color: var(--color-border) !important;
 }
 .ant-input::placeholder {
-  color: #94a3b8 !important;
+  color: var(--color-text-secondary) !important;
 }
 .ant-input:focus,
 .ant-input-focused,
 .ant-select-focused .ant-select-selector,
 .ant-picker-focused {
-  border-color: #e53e3e !important;
-  box-shadow: 0 0 0 3px rgba(229, 62, 62, 0.1) !important;
+  border-color: var(--color-primary) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 10%, transparent) !important;
 }
 
 ::-webkit-scrollbar {
@@ -73,14 +153,14 @@ body {
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: var(--color-bg);
 }
 ::-webkit-scrollbar-thumb {
-  background: #ccc;
+  background: var(--color-border);
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #aaa;
+  background: var(--color-muted);
 }
 h1,
 h2,
@@ -89,4 +169,34 @@ h4,
 h5,
 h6 {
   color: currentColor !important;
+}
+
+/* Hardening: prevent long text from breaking layouts */
+* {
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+}
+
+/* Allow flex children to shrink below content size */
+.flex,
+.inline-flex {
+  min-width: 0;
+}
+
+.skip-link {
+  position: absolute;
+  top: 0;
+  left: 1rem;
+  z-index: 9999;
+  padding: 0.5rem 1rem;
+  background: var(--color-primary);
+  color: #fff;
+  text-decoration: none;
+  font-weight: 600;
+  border-radius: var(--radius-btn);
+  transform: translateY(-120%);
+  transition: transform 0.15s ease-out;
+}
+.skip-link:focus {
+  transform: translateY(0.5rem);
 }
