@@ -1,7 +1,8 @@
 <nz-sider
   nzCollapsible
   [nzCollapsed]="isCollapsed()"
-  [nzTrigger]="null"
+  [nzTrigger]="triggerTemplate"
+  (nzCollapsedChange)="triggerCollapsed.emit($event)"
   nzWidth="280px"
   nzBreakpoint="lg"
   [nzCollapsedWidth]="80"
@@ -21,13 +22,12 @@
           class="text-xl text-white"
         />
       </div>
-      @if (!isCollapsed()) {
-        <h1
-          class="text-2xl font-black tracking-tight text-slate-800 dark:text-gray-100 m-0"
-        >
-          CINE<span class="text-primary">ADMIN</span>
-        </h1>
-      }
+      <h1
+        class="text-2xl font-black tracking-tight text-slate-800 dark:text-gray-100 m-0 overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-300 ease-out"
+        [class]="isCollapsed() ? 'max-w-0 opacity-0' : 'max-w-[180px] opacity-100'"
+      >
+        CINE<span class="text-primary">ADMIN</span>
+      </h1>
     </a>
   </div>
 
@@ -53,7 +53,10 @@
       </li>
 
       <li
-        class="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 px-3 pt-4 pb-1 pointer-events-none select-none"
+        [class]="isCollapsed()
+          ? 'sidebar-section h-px my-3 mx-4 overflow-hidden text-transparent bg-(--color-border) rounded-sm'
+          : 'sidebar-section text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 px-3 pt-4 pb-1'"
+        class="pointer-events-none select-none transition-[height,margin,padding] duration-300"
       >
         {{ "sidebar.cinema" | translate }}
       </li>
@@ -86,7 +89,10 @@
       </li>
 
       <li
-        class="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 px-3 pt-4 pb-1 pointer-events-none select-none"
+        [class]="isCollapsed()
+          ? 'sidebar-section h-px my-3 mx-4 overflow-hidden text-transparent bg-(--color-border) rounded-sm'
+          : 'sidebar-section text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 px-3 pt-4 pb-1'"
+        class="pointer-events-none select-none transition-[height,margin,padding] duration-300"
       >
         {{ "sidebar.operations" | translate }}
       </li>
@@ -119,7 +125,10 @@
       </li>
 
       <li
-        class="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 px-3 pt-4 pb-1 pointer-events-none select-none"
+        [class]="isCollapsed()
+          ? 'sidebar-section h-px my-3 mx-4 overflow-hidden text-transparent bg-(--color-border) rounded-sm'
+          : 'sidebar-section text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 px-3 pt-4 pb-1'"
+        class="pointer-events-none select-none transition-[height,margin,padding] duration-300"
       >
         {{ "sidebar.system" | translate }}
       </li>
@@ -143,23 +152,13 @@
       </li>
     </ul>
   </div>
-
-  <div
-    class="h-16 shrink-0 flex items-center justify-center border-t border-slate-100 dark:border-primary/25"
-  >
-    <div
-      class="w-10 h-10 rounded-xl bg-slate-50 dark:bg-gray-800 border border-slate-100 dark:border-gray-700 flex items-center justify-center text-slate-500 dark:text-gray-400 hover:text-primary hover:bg-primary-light cursor-pointer transition-colors shadow-sm"
-      (click)="triggerCollapsed.emit(!isCollapsed())"
-      (keydown.enter)="triggerCollapsed.emit(!isCollapsed())"
-      tabindex="0"
-      role="button"
-      [attr.aria-label]="'navbar.toggleSidebar' | translate"
-    >
-      <nz-icon
-        [nzType]="isCollapsed() ? 'menu-unfold' : 'menu-fold'"
-        class="text-lg"
-      />
-    </div>
-  </div>
 </nz-sider>
+
+<ng-template #triggerTemplate>
+  <nz-icon
+    [nzType]="isCollapsed() ? 'double-right' : 'double-left'"
+    class="text-lg"
+    [@iconFade]="isCollapsed() ? 'closed' : 'open'"
+  />
+</ng-template>
 
