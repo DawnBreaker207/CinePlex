@@ -1,4 +1,9 @@
-import { Component, inject, signal } from '@angular/core';
+import {
+  Component,
+  inject,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { NzContentComponent, NzLayoutComponent } from 'ng-zorro-antd/layout';
 import {
   RouteConfigLoadEnd,
@@ -29,6 +34,7 @@ import { TranslatePipe } from '@ngx-translate/core';
   ],
   templateUrl: './main-layout.component.html',
   styleUrl: './main-layout.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MainLayoutComponent {
   private router = inject(Router);

@@ -1,4 +1,9 @@
-import { Component, inject, OnInit } from '@angular/core';
+import {
+  Component,
+  inject,
+  OnInit,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { NzTableModule, NzTableQueryParams } from 'ng-zorro-antd/table';
 import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzSwitchModule } from 'ng-zorro-antd/switch';
@@ -32,6 +37,7 @@ import { HEADER_COLUMNS } from '@core/constants/column';
     TranslatePipe,
   ],
   templateUrl: './user.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class UserComponent implements OnInit {
   readonly userStore = inject(UserStore);

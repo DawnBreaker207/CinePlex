@@ -1,6 +1,18 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import {
+  Component,
+  inject,
+  OnInit,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { toSignal, takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { NonNullableFormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  NonNullableFormBuilder,
+  FormControl,
+  FormGroup,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
 import { NzModalModule, NzModalRef, NzModalService } from 'ng-zorro-antd/modal';
 import { filter, map, take } from 'rxjs';
 import { NzAutosizeDirective, NzInputDirective } from 'ng-zorro-antd/input';
@@ -54,6 +66,7 @@ import { TranslatePipe } from '@ngx-translate/core';
     TranslatePipe,
   ],
   templateUrl: './movie-form.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FormMovieComponent implements OnInit {
   private fb = inject(NonNullableFormBuilder);
@@ -92,7 +105,7 @@ export class FormMovieComponent implements OnInit {
   readonly error = toSignal(this.error$, { initialValue: null });
 
   readonly submitting = signal(false);
-  private initialFormValue: any = null;
+  private initialFormValue: MovieRequest | null = null;
 
   ngOnInit() {
     this.initForm();
@@ -112,12 +125,12 @@ export class FormMovieComponent implements OnInit {
         .subscribe((movie) => {
           if (movie) {
             this.patchFormValue(movie);
-            this.initialFormValue = this.form.value;
+            this.initialFormValue = this.form.getRawValue() as MovieRequest;
             if (this.mode === 'view') {
               this.disableForm();
             }
           } else {
-            this.initialFormValue = this.form.value;
+            this.initialFormValue = this.form.getRawValue() as MovieRequest;
           }
         });
     }
@@ -141,7 +154,10 @@ export class FormMovieComponent implements OnInit {
       poster: ['', Validators.required],
       backdrop: [''],
       overview: ['', Validators.required],
-      duration: [null as number | null, [Validators.required, Validators.min(1)]],
+      duration: [
+        null as number | null,
+        [Validators.required, Validators.min(1)],
+      ],
       language: ['', Validators.required],
       country: ['', Validators.required],
       genres: [[] as string[], Validators.required],

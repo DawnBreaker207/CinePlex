@@ -1,4 +1,4 @@
-import { Component, input } from '@angular/core';
+import { Component, input, ChangeDetectionStrategy } from '@angular/core';
 import {
   NzTableCellDirective,
   NzTableComponent,
@@ -24,6 +24,7 @@ import { TopTheater } from '@domain/dashboard/models/dashboard.model';
     CurrencyFormatPipe,
   ],
   templateUrl: './movie-table.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MovieTableComponent {
   data = input<TopTheater[]>([]);

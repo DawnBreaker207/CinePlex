@@ -1,4 +1,9 @@
-import { Component, inject, OnInit } from '@angular/core';
+import {
+  Component,
+  inject,
+  OnInit,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { HEADER_COLUMNS } from '@core/constants/column';
 import {
   NzTableModule,
@@ -17,7 +22,7 @@ import { NzSpaceComponent } from 'ng-zorro-antd/space';
 import { NzWaveDirective } from 'ng-zorro-antd/core/wave';
 import { TranslatePipe } from '@ngx-translate/core';
 import { NzModalService } from 'ng-zorro-antd/modal';
-import { FormVoucherComponent } from '@features/admin/voucher/voucher-form/voucher-form.component';
+import { FormVoucherComponent } from '@features/admin/voucher/components/voucher-form/voucher-form.component';
 import { NzProgressComponent } from 'ng-zorro-antd/progress';
 import { CurrencyFormatPipe } from '@shared/pipes/currency-format.pipe';
 import { NzTagModule } from 'ng-zorro-antd/tag';
@@ -45,6 +50,7 @@ import { Mode } from '@core/constants/enum';
   ],
   templateUrl: './voucher.component.html',
   styleUrl: './voucher.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [NzModalService],
 })
 export class VoucherComponent implements OnInit {

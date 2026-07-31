@@ -1,4 +1,11 @@
-import { Component, ElementRef, input, OnInit, viewChild } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  input,
+  OnInit,
+  viewChild,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import JsBarcode from 'jsbarcode';
 
 @Component({
@@ -6,6 +13,7 @@ import JsBarcode from 'jsbarcode';
   imports: [],
   templateUrl: './barcode.component.html',
   styleUrl: './barcode.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BarcodeComponent implements OnInit {
   value = input.required<string>();

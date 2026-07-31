@@ -1,4 +1,9 @@
-import { Component, DestroyRef, inject } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  inject,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { NzLayoutModule } from 'ng-zorro-antd/layout';
@@ -59,6 +64,7 @@ import {
     NzAlertModule,
   ],
   templateUrl: './dashboard.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DashboardComponent {
   readonly dashboardStore = inject(DashboardStore);
@@ -84,14 +90,19 @@ export class DashboardComponent {
 
   async exportReport(type: 'pdf' | 'excel') {
     const { saveAs } = await import('file-saver');
-    this.reportService.downloadReport(type).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: (res) => {
-        const ext = type === 'excel' ? 'xlsx' : type;
-        saveAs(res, `report.${ext}`);
-      },
-      error: () => {
-        this.dashboardStore.setError('Xuất báo cáo thất bại. Vui lòng thử lại.');
-      },
-    });
+    this.reportService
+      .downloadReport(type)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          const ext = type === 'excel' ? 'xlsx' : type;
+          saveAs(res, `report.${ext}`);
+        },
+        error: () => {
+          this.dashboardStore.setError(
+            'Xuất báo cáo thất bại. Vui lòng thử lại.',
+          );
+        },
+      });
   }
 }

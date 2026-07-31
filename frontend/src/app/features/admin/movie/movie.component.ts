@@ -1,4 +1,10 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import {
+  Component,
+  computed,
+  inject,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { NzTableModule, NzTableQueryParams } from 'ng-zorro-antd/table';
 import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzSelectModule } from 'ng-zorro-antd/select';
@@ -25,6 +31,7 @@ import {
   selectMovieLoading,
   selectMoviesError,
   selectPaginationMovie,
+  selectSelectedMovie,
 } from '@domain/movie/data-access/movie.selectors';
 import { MovieActions } from '@domain/movie/data-access/movie.actions';
 import { FormMovieComponent } from '@features/admin/movie/form/movie/movie-form.component';
@@ -33,6 +40,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TranslatePipe } from '@ngx-translate/core';
 import { HEADER_COLUMNS } from '@core/constants/column';
 import { ICON_COLORS } from '@shared/utils/colors';
+import { confirmDelete } from '@shared/utils/confirm-delete';
 
 @Component({
   selector: 'app-movie',
@@ -58,6 +66,7 @@ import { ICON_COLORS } from '@shared/utils/colors';
     TranslatePipe,
   ],
   templateUrl: './movie.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [NzModalService],
 })
 export class MovieComponent {
@@ -77,14 +86,15 @@ export class MovieComponent {
   readonly searchCtrl = this.fb.control('');
 
   isSearching = signal(false);
-  selectedMovie = signal<any>(null);
+  readonly selectedMovie = this.store.selectSignal(selectSelectedMovie);
   searchResults = computed(() => {
     if (!this.isSearching()) return [];
     const q = (this.searchCtrl.value || '').toLowerCase().trim();
     if (!q) return [];
-    return this.movies().filter(m =>
-      m.title.toLowerCase().includes(q) ||
-      (m.originalTitle || '').toLowerCase().includes(q),
+    return this.movies().filter(
+      (m) =>
+        m.title.toLowerCase().includes(q) ||
+        (m.originalTitle || '').toLowerCase().includes(q),
     );
   });
 
@@ -111,7 +121,6 @@ export class MovieComponent {
     const movie = this.movies().find((m) => m.id === id);
     if (movie) {
       this.store.dispatch(MovieActions.selectedMovie({ movie }));
-      this.selectedMovie.set(movie);
       this.openMovieModal('view', id);
     }
     this.isSearching.set(false);
@@ -173,13 +182,8 @@ export class MovieComponent {
   }
 
   onDelete(id: number) {
-    this.modalService.confirm({
-      nzTitle: 'Xóa phim này?',
-      nzContent: 'Dữ liệu sẽ không thể khôi phục sau khi xóa.',
-      nzOkText: 'Xóa',
-      nzOkDanger: true,
-      nzOnOk: () => this.store.dispatch(MovieActions.deleteMovie({ id })),
-      nzCancelText: 'Hủy',
-    });
+    confirmDelete(this.modalService, 'Xóa phim này?', () =>
+      this.store.dispatch(MovieActions.deleteMovie({ id })),
+    );
   }
 }

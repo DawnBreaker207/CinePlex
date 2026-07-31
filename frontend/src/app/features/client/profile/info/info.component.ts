@@ -5,6 +5,7 @@ import {
   input,
   OnInit,
 } from '@angular/core';
+import { ChangeDetectionStrategy } from '@angular/core';
 import {
   FormControl,
   FormGroup,
@@ -46,6 +47,7 @@ import { TranslatePipe } from '@ngx-translate/core';
   ],
   templateUrl: './info.component.html',
   styleUrl: './info.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InfoComponent implements OnInit {
   user = input.required<UserProfile>();

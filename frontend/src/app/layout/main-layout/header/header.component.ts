@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { UpperCasePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { NzButtonComponent } from 'ng-zorro-antd/button';
@@ -25,6 +25,7 @@ import { HEADERS } from '@core/constants/column';
     TranslateModule,
   ],
   templateUrl: './header.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HeaderComponent {
   authService = inject(AuthService);

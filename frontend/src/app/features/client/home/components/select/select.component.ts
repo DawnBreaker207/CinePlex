@@ -1,4 +1,9 @@
-import { Component, computed, inject } from '@angular/core';
+import {
+  Component,
+  computed,
+  inject,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { Store } from '@ngrx/store';
 import { FormsModule } from '@angular/forms';
@@ -16,31 +21,40 @@ import { Theater } from '@domain/theater/models/theater.model';
 
 @Component({
   selector: 'app-theater-select',
-  imports: [
-    FormsModule,
-    NzIconDirective,
-    NzDropDownModule,
-    TranslatePipe,
-  ],
+  imports: [FormsModule, NzIconDirective, NzDropDownModule, TranslatePipe],
   templateUrl: './select.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SelectShowtimeComponent {
   private store = inject(Store);
   private storage = inject(StorageService);
 
-  private theaters = toSignal(this.store.select(selectAllTheaters), { initialValue: [] });
-  private selectedTheaterId = toSignal(this.store.select(selectSelectedTheaterId), { initialValue: 0 });
+  private theaters = toSignal(this.store.select(selectAllTheaters), {
+    initialValue: [],
+  });
+  private selectedTheaterId = toSignal(
+    this.store.select(selectSelectedTheaterId),
+    { initialValue: 0 },
+  );
 
   readonly theaterList = this.theaters;
   readonly currentTheaterId = this.selectedTheaterId;
   readonly selectTheaterName = computed(() => {
-    const found = this.theaters().find((t: Theater) => t.id === this.selectedTheaterId());
+    const found = this.theaters().find(
+      (t: Theater) => t.id === this.selectedTheaterId(),
+    );
     return found ? found.name : 'Chọn rạp chiếu';
   });
 
   onSelect(theaterId: number) {
     this.store.dispatch(TheaterActions.setSelectedTheaterId({ theaterId }));
     this.storage.setSelectedTheaterId(theaterId);
-    this.store.dispatch(ShowtimeActions.loadShowtimesByTheaterId({ theaterId, page: 0, size: 100 }));
+    this.store.dispatch(
+      ShowtimeActions.loadShowtimesByTheaterId({
+        theaterId,
+        page: 0,
+        size: 100,
+      }),
+    );
   }
 }

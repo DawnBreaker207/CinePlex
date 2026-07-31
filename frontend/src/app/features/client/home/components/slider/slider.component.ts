@@ -1,4 +1,10 @@
-import { Component, input, output, signal } from '@angular/core';
+import {
+  Component,
+  input,
+  output,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { NzCarouselModule } from 'ng-zorro-antd/carousel';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzIconModule } from 'ng-zorro-antd/icon';
@@ -11,6 +17,7 @@ import dayjs from 'dayjs';
   imports: [NzCarouselModule, NzButtonModule, NzIconModule, TranslatePipe],
   templateUrl: './slider.component.html',
   styleUrl: './slider.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SliderComponent {
   movies = input<Movie[]>([]);
@@ -22,16 +29,14 @@ export class SliderComponent {
       id: 1,
       title: 'Dune: Part Two',
       desc: 'The saga continues as Paul Atreides unites with Chani and the Fremen while on a warpath of revenge.',
-      image:
-        'https://image.tmdb.org/t/p/w1280/xOMo8BRK7PfcJv9JCnx7s5hj0PX.jpg',
+      image: 'https://image.tmdb.org/t/p/w1280/xOMo8BRK7PfcJv9JCnx7s5hj0PX.jpg',
       isComingSoon: false,
     },
     {
       id: 2,
       title: 'Kung Fu Panda 4',
       desc: 'Po is gearing up to become the spiritual leader of his Valley of Peace.',
-      image:
-        'https://image.tmdb.org/t/p/w1280/kYgQzzjNis5jJalYtIHgrom0gOx.jpg',
+      image: 'https://image.tmdb.org/t/p/w1280/kYgQzzjNis5jJalYtIHgrom0gOx.jpg',
       isComingSoon: false,
     },
   ];

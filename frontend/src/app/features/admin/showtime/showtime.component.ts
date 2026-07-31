@@ -1,4 +1,9 @@
-import { Component, inject, OnInit } from '@angular/core';
+import {
+  Component,
+  inject,
+  OnInit,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { Store } from '@ngrx/store';
 import { DatePipe } from '@angular/common';
@@ -30,6 +35,7 @@ import { NzTooltipModule } from 'ng-zorro-antd/tooltip';
 import { NzProgressModule } from 'ng-zorro-antd/progress';
 import { NzDropDownModule } from 'ng-zorro-antd/dropdown';
 import { ICON_COLORS, CHART_COLORS } from '@shared/utils/colors';
+import { confirmDelete } from '@shared/utils/confirm-delete';
 import {
   selectAllShowtimes,
   selectPaginationShowtime,
@@ -72,6 +78,7 @@ import { HEADER_COLUMNS } from '@core/constants/column';
     TranslatePipe,
   ],
   templateUrl: './showtime.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [NzModalService],
 })
 export class ShowtimeComponent implements OnInit {
@@ -87,7 +94,10 @@ export class ShowtimeComponent implements OnInit {
 
   headerColumn = HEADER_COLUMNS.SHOWTIME;
   readonly ICON_COLORS = ICON_COLORS;
-  readonly progressStrokeColor = { '0%': CHART_COLORS.success(), '100%': CHART_COLORS.primary() };
+  readonly progressStrokeColor = {
+    '0%': CHART_COLORS.success(),
+    '100%': CHART_COLORS.primary(),
+  };
   form!: FormGroup<{
     theaterId: FormControl<number | null>;
     dateRange: FormControl<Date[] | null>;
@@ -168,14 +178,9 @@ export class ShowtimeComponent implements OnInit {
   }
 
   onDelete(id: number) {
-    this.modalService.confirm({
-      nzTitle: 'Xóa suất chiếu này?',
-      nzContent: 'Dữ liệu sẽ không thể khôi phục sau khi xóa.',
-      nzOkText: 'Xóa',
-      nzOkDanger: true,
-      nzOnOk: () => this.store.dispatch(ShowtimeActions.deleteShowtime({ id })),
-      nzCancelText: 'Hủy',
-    });
+    confirmDelete(this.modalService, 'Xóa suất chiếu này?', () =>
+      this.store.dispatch(ShowtimeActions.deleteShowtime({ id })),
+    );
   }
 
   resetForm() {

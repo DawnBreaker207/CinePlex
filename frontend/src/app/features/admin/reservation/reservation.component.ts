@@ -1,4 +1,9 @@
-import { Component, inject, OnInit } from '@angular/core';
+import {
+  Component,
+  inject,
+  OnInit,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { NzTableModule, NzTableQueryParams } from 'ng-zorro-antd/table';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzInputModule } from 'ng-zorro-antd/input';
@@ -6,7 +11,12 @@ import { NzSelectModule } from 'ng-zorro-antd/select';
 import { NzSpaceModule } from 'ng-zorro-antd/space';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { CommonModule } from '@angular/common';
-import { FormControl, FormGroup, NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
+import {
+  FormControl,
+  FormGroup,
+  NonNullableFormBuilder,
+  ReactiveFormsModule,
+} from '@angular/forms';
 import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { NzDropDownModule } from 'ng-zorro-antd/dropdown';
@@ -45,6 +55,7 @@ import { HEADER_COLUMNS, RESERVATION_STATUS } from '@core/constants/column';
     TranslatePipe,
   ],
   templateUrl: './reservation.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [NzModalService],
 })
 export class ReservationComponent implements OnInit {

@@ -1,4 +1,9 @@
-import { Component, effect, inject } from '@angular/core';
+import {
+  Component,
+  effect,
+  inject,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Store } from '@ngrx/store';
 import { NzIconModule } from 'ng-zorro-antd/icon';
@@ -15,6 +20,7 @@ import { SeatStore } from '@features/client/reservation/components/seat/seat.sto
   imports: [CommonModule, NzIconModule, SeatIconComponent, TranslatePipe],
   templateUrl: './seat.component.html',
   styleUrl: './seat.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SeatComponent {
   private store = inject(Store);

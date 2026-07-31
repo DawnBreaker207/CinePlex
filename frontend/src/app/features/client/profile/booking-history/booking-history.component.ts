@@ -1,4 +1,4 @@
-import { Component, input } from '@angular/core';
+import { Component, input, ChangeDetectionStrategy } from '@angular/core';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzEmptyModule } from 'ng-zorro-antd/empty';
 import { NzIconModule } from 'ng-zorro-antd/icon';
@@ -42,6 +42,7 @@ export interface MovieTicket {
   ],
   templateUrl: './booking-history.component.html',
   styleUrl: './booking-history.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BookingHistoryComponent {
   tickets = input<ReservationProfile[]>([]);

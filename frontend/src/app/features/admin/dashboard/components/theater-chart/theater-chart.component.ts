@@ -1,4 +1,9 @@
-import { Component, computed, input } from '@angular/core';
+import {
+  Component,
+  computed,
+  input,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import type { EChartsCoreOption } from 'echarts/core';
 import { NgxEchartsDirective } from 'ngx-echarts';
 import { NzIconModule } from 'ng-zorro-antd/icon';
@@ -10,13 +15,14 @@ import { CHART_COLORS } from '@shared/utils/colors';
   selector: 'app-theater-chart',
   imports: [NgxEchartsDirective, NzIconModule, TranslatePipe],
   templateUrl: './theater-chart.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TheaterChartComponent {
   theaters = input<TopTheater[]>([]);
   options = computed<EChartsCoreOption>(() => {
     const theaters = this.theaters();
-    const name = theaters.map(t => t.theaterName);
-    const data = theaters.map(t => t.totalRevenue);
+    const name = theaters.map((t) => t.theaterName);
+    const data = theaters.map((t) => t.totalRevenue);
     return {
       tooltip: {
         trigger: 'item',

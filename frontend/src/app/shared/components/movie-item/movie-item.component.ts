@@ -1,4 +1,9 @@
-import { Component, input, output } from '@angular/core';
+import {
+  Component,
+  input,
+  output,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { NgOptimizedImage } from '@angular/common';
 import { NzButtonComponent } from 'ng-zorro-antd/button';
 import { RouterLink } from '@angular/router';
@@ -18,6 +23,7 @@ import { TranslatePipe } from '@ngx-translate/core';
     TranslatePipe,
   ],
   templateUrl: './movie-item.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MovieItemComponent {
   movie = input.required<Movie>();

@@ -1,4 +1,9 @@
-import { Component, computed, input } from '@angular/core';
+import {
+  Component,
+  computed,
+  input,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import type { EChartsCoreOption } from 'echarts/core';
 import { NgxEchartsDirective } from 'ngx-echarts';
 import { NzIconModule } from 'ng-zorro-antd/icon';
@@ -10,12 +15,16 @@ import { CHART_COLORS } from '@shared/utils/colors';
   selector: 'app-payment-chart',
   imports: [NgxEchartsDirective, NzIconModule, TranslatePipe],
   templateUrl: './payment-chart.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PaymentChartComponent {
   payments = input<PaymentDistribution[]>([]);
   options = computed<EChartsCoreOption>(() => {
     const payments = this.payments();
-    const chartData = payments.map(p => ({ name: p.method, value: p.amount }));
+    const chartData = payments.map((p) => ({
+      name: p.method,
+      value: p.amount,
+    }));
     return {
       tooltip: {
         trigger: 'item',
@@ -27,7 +36,11 @@ export class PaymentChartComponent {
           type: 'pie',
           radius: ['40%', '70%'],
           center: ['50%', '45%'],
-          color: [CHART_COLORS.primary(), CHART_COLORS.info(), CHART_COLORS.warning()],
+          color: [
+            CHART_COLORS.primary(),
+            CHART_COLORS.info(),
+            CHART_COLORS.warning(),
+          ],
           itemStyle: { borderRadius: 2, borderColor: '#fff', borderWidth: 2 },
           label: { show: false },
           data: chartData,

@@ -1,4 +1,9 @@
-import { Component, computed, input } from '@angular/core';
+import {
+  Component,
+  computed,
+  input,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import type { EChartsCoreOption } from 'echarts/core';
 import { NgxEchartsDirective } from 'ngx-echarts';
 import { NzIconModule } from 'ng-zorro-antd/icon';
@@ -10,13 +15,14 @@ import { CHART_COLORS } from '@shared/utils/colors';
   selector: 'app-movie-chart',
   imports: [NgxEchartsDirective, NzIconModule, TranslatePipe],
   templateUrl: './movie-chart.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MovieChartComponent {
   movies = input<TopMovie[]>([]);
   options = computed<EChartsCoreOption>(() => {
     const movies = this.movies();
-    const name = movies.map(m => m.movieName);
-    const data = movies.map(m => m.revenue);
+    const name = movies.map((m) => m.movieName);
+    const data = movies.map((m) => m.revenue);
     return {
       tooltip: {
         trigger: 'axis',
@@ -26,7 +32,9 @@ export class MovieChartComponent {
       xAxis: {
         type: 'value',
         boundaryGap: [0, 0.01],
-        splitLine: { lineStyle: { type: 'dashes', color: CHART_COLORS.border() } },
+        splitLine: {
+          lineStyle: { type: 'dashes', color: CHART_COLORS.border() },
+        },
       },
       yAxis: {
         type: 'category',

@@ -1,4 +1,11 @@
-import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  inject,
+  OnInit,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NzIconModule } from 'ng-zorro-antd/icon';
@@ -13,14 +20,10 @@ import { BarcodeComponent } from '@shared/components/barcode/barcode.component';
 
 @Component({
   selector: 'app-payment-result',
-  imports: [
-    NzButtonModule,
-    NzIconModule,
-    TranslatePipe,
-    BarcodeComponent,
-  ],
+  imports: [NzButtonModule, NzIconModule, TranslatePipe, BarcodeComponent],
   templateUrl: './payment-result.component.html',
   styleUrl: './payment-result.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PaymentResultComponent implements OnInit {
   private store = inject(Store);
@@ -46,7 +49,9 @@ export class PaymentResultComponent implements OnInit {
 
     if (!state || !query) {
       this.status.set('error');
-      this.errorMessage.set(`Không tìm thấy thông tin phiên giao dịch. Vui lòng đặt vé lại từ đầu.`);
+      this.errorMessage.set(
+        `Không tìm thấy thông tin phiên giao dịch. Vui lòng đặt vé lại từ đầu.`,
+      );
       this.startCountDown();
       return;
     }
@@ -62,7 +67,9 @@ export class PaymentResultComponent implements OnInit {
       this.storageService.removeItem('reservationState');
     } else {
       this.status.set('error');
-      this.errorMessage.set(`Thanh toán không thành công. Vui lòng thử lại hoặc chọn phương thức khác.`);
+      this.errorMessage.set(
+        `Thanh toán không thành công. Vui lòng thử lại hoặc chọn phương thức khác.`,
+      );
       this.reservationStore.cancel();
     }
     this.startCountDown();
@@ -71,7 +78,11 @@ export class PaymentResultComponent implements OnInit {
   retryPayment() {
     const state = this.storageService.getItem<any>('reservationState');
     if (state?.showtimeId) {
-      this.router.navigate(['/reservation', state.reservationId, state.showtimeId]);
+      this.router.navigate([
+        '/reservation',
+        state.reservationId,
+        state.showtimeId,
+      ]);
     } else {
       this.router.navigate(['/home']);
     }

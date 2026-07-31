@@ -1,4 +1,11 @@
-import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  inject,
+  OnInit,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import {
   ActivatedRoute,
   NavigationEnd,
@@ -48,6 +55,7 @@ export interface Breadcrumb {
   ],
   templateUrl: './admin-layout.component.html',
   styleUrl: './admin-layout.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AdminLayoutComponent implements OnInit {
   private router = inject(Router);

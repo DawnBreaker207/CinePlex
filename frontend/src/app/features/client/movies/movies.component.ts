@@ -1,4 +1,11 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import {
+  Component,
+  computed,
+  inject,
+  OnInit,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Store } from '@ngrx/store';
@@ -10,7 +17,10 @@ import { NzGridModule } from 'ng-zorro-antd/grid';
 import { NzEmptyModule } from 'ng-zorro-antd/empty';
 import { NzSkeletonModule } from 'ng-zorro-antd/skeleton';
 import { MovieItemComponent } from '@shared/components/movie-item/movie-item.component';
-import { selectAllMovies, selectMovieLoading } from '@domain/movie/data-access/movie.selectors';
+import {
+  selectAllMovies,
+  selectMovieLoading,
+} from '@domain/movie/data-access/movie.selectors';
 import { TranslatePipe } from '@ngx-translate/core';
 import dayjs from 'dayjs';
 import { Movie } from '@domain/movie/models/movie.model';
@@ -18,12 +28,20 @@ import { Movie } from '@domain/movie/models/movie.model';
 @Component({
   selector: 'app-movies',
   imports: [
-    FormsModule, RouterLink, TranslatePipe,
-    NzInputModule, NzButtonModule, NzIconModule,
-    NzTabsModule, NzGridModule, NzEmptyModule, NzSkeletonModule,
+    FormsModule,
+    RouterLink,
+    TranslatePipe,
+    NzInputModule,
+    NzButtonModule,
+    NzIconModule,
+    NzTabsModule,
+    NzGridModule,
+    NzEmptyModule,
+    NzSkeletonModule,
     MovieItemComponent,
   ],
   templateUrl: './movies.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MoviesComponent implements OnInit {
   private store = inject(Store);
@@ -38,7 +56,9 @@ export class MoviesComponent implements OnInit {
 
   readonly tabTitles = computed(() => {
     const total = this.allMovies().length;
-    const now = this.allMovies().filter((m) => !dayjs(m.releaseDate).isAfter(dayjs(), 'day')).length;
+    const now = this.allMovies().filter(
+      (m) => !dayjs(m.releaseDate).isAfter(dayjs(), 'day'),
+    ).length;
     const upcoming = total - now;
     return {
       all: 'Tất cả (' + total + ')',
@@ -53,8 +73,10 @@ export class MoviesComponent implements OnInit {
     const tab = this.tabIndex();
 
     return movies.filter((m) => {
-      if (tab === 1 && dayjs(m.releaseDate).isAfter(dayjs(), 'day')) return false;
-      if (tab === 2 && !dayjs(m.releaseDate).isAfter(dayjs(), 'day')) return false;
+      if (tab === 1 && dayjs(m.releaseDate).isAfter(dayjs(), 'day'))
+        return false;
+      if (tab === 2 && !dayjs(m.releaseDate).isAfter(dayjs(), 'day'))
+        return false;
       if (q && !m.title.toLowerCase().includes(q)) return false;
       return true;
     });
@@ -73,7 +95,9 @@ export class MoviesComponent implements OnInit {
     return !dayjs(movie.releaseDate).isAfter(dayjs(), 'day');
   }
 
-  trackById(_: number, m: Movie) { return m.id; }
+  trackById(_: number, m: Movie) {
+    return m.id;
+  }
 
   onSelectMovie(movieId: number) {
     this.router.navigate(['/movie/detail', movieId]);

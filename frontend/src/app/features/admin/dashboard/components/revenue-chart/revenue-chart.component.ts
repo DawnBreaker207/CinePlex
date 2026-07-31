@@ -1,4 +1,9 @@
-import { Component, computed, input } from '@angular/core';
+import {
+  Component,
+  computed,
+  input,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { NgxEchartsDirective } from 'ngx-echarts';
 import type { EChartsCoreOption } from 'echarts/core';
 import { NzIconModule } from 'ng-zorro-antd/icon';
@@ -10,13 +15,14 @@ import { CHART_COLORS } from '@shared/utils/colors';
   selector: 'app-revenue-chart',
   imports: [NgxEchartsDirective, NzIconModule, TranslatePipe],
   templateUrl: './revenue-chart.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RevenueChartComponent {
   revenues = input<RevenuePoint[]>([]);
   options = computed<EChartsCoreOption>(() => {
     const revenues = this.revenues();
-    const date = revenues.map(r => r.date.toString());
-    const revenue = revenues.map(r => r.revenue);
+    const date = revenues.map((r) => r.date.toString());
+    const revenue = revenues.map((r) => r.revenue);
     const primary = CHART_COLORS.primary();
     return {
       tooltip: {

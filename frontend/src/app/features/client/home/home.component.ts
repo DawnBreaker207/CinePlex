@@ -1,4 +1,11 @@
-import { Component, effect, inject, OnInit, untracked } from '@angular/core';
+import {
+  Component,
+  effect,
+  inject,
+  OnInit,
+  untracked,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { NzLayoutModule } from 'ng-zorro-antd/layout';
 import { NzGridModule } from 'ng-zorro-antd/grid';
@@ -32,6 +39,7 @@ import { MovieItemComponent } from '@shared/components/movie-item/movie-item.com
   ],
   providers: [NzImageService, HomeStore],
   templateUrl: './home.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HomeComponent implements OnInit {
   readonly homeStore = inject(HomeStore);

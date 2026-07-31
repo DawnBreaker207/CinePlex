@@ -1,4 +1,9 @@
-import { Component, inject, OnInit } from '@angular/core';
+import {
+  Component,
+  inject,
+  OnInit,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { StorageService } from '@core/services/storage/storage.service';
 import { ReservationStore } from '@features/client/reservation/reservation.store';
 
@@ -7,6 +12,7 @@ import { ReservationStore } from '@features/client/reservation/reservation.store
   imports: [],
   templateUrl: './countdown.component.html',
   styleUrl: './countdown.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CountdownComponent implements OnInit {
   readonly reservationStore = inject(ReservationStore);

@@ -18,6 +18,32 @@ import { pipe, switchMap, tap } from 'rxjs';
 import { tapResponse } from '@ngrx/operators';
 import { StorageService } from '@core/services/storage/storage.service';
 import { Router } from '@angular/router';
+import { Store } from '@ngrx/store';
+import { DOCUMENT } from '@angular/common';
+import { PaymentService } from '@domain/payment/data-access/payment.service';
+import { PaymentMethod } from '@core/constants/enum';
+import { SeatStore } from '@features/client/reservation/components/seat/seat.store';
+import { selectJwt } from '@core/auth/auth.selectors';
+import { selectSelectedShowtime } from '@domain/showtime/data-access/showtime.selectors';
+import { selectSelectedTheater } from '@domain/theater/data-access/theater.selectors';
+import { environment } from '@env/environment';
+
+function toPaymentMethod(value: string): PaymentMethod {
+  switch (value) {
+    case 'momo':
+      return 'MOMO';
+    case 'zalopay':
+      return 'ZALOPAY';
+    case 'cash':
+      return 'CASH';
+    case 'atm':
+    case 'visa':
+    case 'vnpay':
+      return 'VNPAY';
+    default:
+      return 'VNPAY';
+  }
+}
 
 export interface ReservationState {
   reservation: Reservation | null;
@@ -31,6 +57,9 @@ export interface ReservationState {
   } | null;
   saving: boolean;
   error: string | null;
+  holdingSeats: boolean;
+  submittingPayment: boolean;
+  paymentError: string | null;
 }
 
 export const initialState: ReservationState = {
@@ -41,6 +70,9 @@ export const initialState: ReservationState = {
   loading: false,
   saving: false,
   error: null,
+  holdingSeats: false,
+  submittingPayment: false,
+  paymentError: null,
 };
 
 export const ReservationStore = signalStore(
@@ -63,6 +95,10 @@ export const ReservationStore = signalStore(
       reservationService = inject(ReservationService),
       storageService = inject(StorageService),
       router = inject(Router),
+      storeNgrx = inject(Store),
+      document = inject(DOCUMENT),
+      seatStore = inject(SeatStore),
+      paymentService = inject(PaymentService),
     ) => {
       let timerIdx: any = null;
 
@@ -146,6 +182,75 @@ export const ReservationStore = signalStore(
           ),
         ),
         //
+        holdSeats: () => {
+          const selectedSeats = seatStore.selectedSeats();
+          const user = storeNgrx.selectSignal(selectJwt)();
+          const showtime = storeNgrx.selectSignal(selectSelectedShowtime)();
+          const theater = storeNgrx.selectSignal(selectSelectedTheater)();
+          const resId = store.reservationId();
+
+          if (
+            !selectedSeats.length ||
+            !user ||
+            !showtime ||
+            !resId ||
+            !theater
+          ) {
+            return;
+          }
+
+          const payload: ReservationRequest = {
+            reservationId: resId,
+            userId: user.userId,
+            showtimeId: showtime.id,
+            seatIds: selectedSeats.map((s) => s.id),
+          };
+
+          storageService.setItem('reservationState', {
+            ...payload,
+            theaterId: theater.id,
+          });
+          patchState(store, { holdingSeats: true });
+          (store as any).holdSeat({ reservation: payload });
+        },
+        //
+        pay: (radioValue: string) => {
+          const resId = store.reservationId();
+          const total = seatStore.totalPrice();
+          const count = seatStore.selectSeatsCount();
+          if (!resId || !total || !count) return;
+
+          patchState(store, { paymentError: null, submittingPayment: true });
+
+          const doPayment = (paymentUrl: string) => {
+            if (environment.useMock) {
+              (store as any).confirm(resId);
+              storageService.removeItem('reservationState');
+              patchState(store, { submittingPayment: false });
+              router.navigateByUrl(paymentUrl);
+            } else {
+              document.defaultView?.open(paymentUrl, '_self');
+            }
+          };
+
+          paymentService
+            .createPayment({
+              reservationId: resId,
+              amount: total,
+              paymentType: toPaymentMethod(radioValue),
+            })
+            .subscribe({
+              next: doPayment,
+              error: (err) => {
+                patchState(store, {
+                  submittingPayment: false,
+                  paymentError:
+                    err?.message || 'Thanh toán thất bại. Vui lòng thử lại.',
+                });
+              },
+            });
+        },
+        //
         holdSeat: rxMethod<{ reservation: ReservationRequest }>(
           pipe(
             tap(() =>
@@ -164,6 +269,7 @@ export const ReservationStore = signalStore(
                       error: err.message,
                       loading: false,
                       saving: false,
+                      holdingSeats: false,
                     }),
                 }),
               );
@@ -227,6 +333,8 @@ export const ReservationStore = signalStore(
           const current = store.currentTTL();
           if (current) patchState(store, { currentTTL: { ...current, ttl } });
         },
+        //
+        resetHolding: () => patchState(store, { holdingSeats: false }),
         //
         clearError: () => patchState(store, { error: null }),
       };

@@ -1,4 +1,9 @@
-import { Component, inject, signal } from '@angular/core';
+import {
+  Component,
+  inject,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
 import { NzModalModule, NzModalRef } from 'ng-zorro-antd/modal';
@@ -26,6 +31,7 @@ import { TranslatePipe } from '@ngx-translate/core';
     TranslatePipe,
   ],
   templateUrl: './api-form.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FormMovieAPIComponent {
   private fb = inject(NonNullableFormBuilder);

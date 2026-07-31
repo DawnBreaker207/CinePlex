@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzTableModule, NzTableQueryParams } from 'ng-zorro-antd/table';
@@ -34,6 +34,7 @@ import { LoadingComponent } from '@shared/components/loading/loading.component';
     LoadingComponent,
   ],
   templateUrl: './article.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ArticleComponent {
   readonly articleStore = inject(ArticleStore);

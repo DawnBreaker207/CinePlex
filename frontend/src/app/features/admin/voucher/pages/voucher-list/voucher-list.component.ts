@@ -1,4 +1,9 @@
-import { Component, inject, OnInit } from '@angular/core';
+import {
+  Component,
+  inject,
+  OnInit,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { HEADER_COLUMNS } from '@core/constants/column';
 import {
   NzTableModule,
@@ -20,6 +25,7 @@ import { NzModalService } from 'ng-zorro-antd/modal';
 import { FormVoucherComponent } from '@features/admin/voucher/components/voucher-form/voucher-form.component';
 import { NzProgressComponent } from 'ng-zorro-antd/progress';
 import { ICON_COLORS, CHART_COLORS } from '@shared/utils/colors';
+import { confirmDelete } from '@shared/utils/confirm-delete';
 import { CurrencyFormatPipe } from '@shared/pipes/currency-format.pipe';
 import { NzTagModule } from 'ng-zorro-antd/tag';
 import { Mode } from '@core/constants/enum';
@@ -45,6 +51,7 @@ import { Mode } from '@core/constants/enum';
     NzTagModule,
   ],
   templateUrl: './voucher-list.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [NzModalService],
 })
 export class VoucherListComponent implements OnInit {
@@ -99,13 +106,8 @@ export class VoucherListComponent implements OnInit {
     return new Date(endDate).getTime() < new Date().getTime();
   }
   onDelete(id: number) {
-    this.modalService.confirm({
-      nzTitle: 'Xóa voucher này?',
-      nzContent: 'Dữ liệu sẽ không thể khục phục sau khi xóa.',
-      nzOkText: 'Xóa',
-      nzOkDanger: true,
-      nzOnOk: () => this.voucherStore.deleteVoucher(id),
-      nzCancelText: 'Hủy',
-    });
+    confirmDelete(this.modalService, 'Xóa voucher này?', () =>
+      this.voucherStore.deleteVoucher(id),
+    );
   }
 }

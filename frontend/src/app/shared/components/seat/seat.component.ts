@@ -1,4 +1,4 @@
-import { Component, input } from '@angular/core';
+import { Component, input, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -6,6 +6,7 @@ import { CommonModule } from '@angular/common';
   imports: [CommonModule],
   templateUrl: './seat.component.html',
   styleUrl: './seat.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SeatIconComponent {
   size = input<number | string>(24);

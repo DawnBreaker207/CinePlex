@@ -1,4 +1,9 @@
-import { Component, inject, OnInit } from '@angular/core';
+import {
+  Component,
+  inject,
+  OnInit,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   FormControl,
@@ -40,6 +45,7 @@ import { ArticleStore } from '@domain/article/data-access/article.store';
   ],
   templateUrl: './article-form.component.html',
   styleUrl: './article-form.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ArticleFormComponent implements OnInit {
   protected readonly quillConfig = quillConfig;

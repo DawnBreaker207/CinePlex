@@ -1,10 +1,17 @@
-import { Component, computed, effect, inject, input, linkedSignal, numberAttribute, OnInit, signal } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import {
+  Component,
+  computed,
+  effect,
+  inject,
+  input,
+  linkedSignal,
+  numberAttribute,
+  OnInit,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { Store } from '@ngrx/store';
-import { DatePipe, DOCUMENT, NgClass, NgOptimizedImage } from '@angular/common';
-import { NzTagModule } from 'ng-zorro-antd/tag';
-import { NzButtonModule } from 'ng-zorro-antd/button';
-import { NzIconModule } from 'ng-zorro-antd/icon';
+import { DatePipe, NgClass, NgOptimizedImage } from '@angular/common';
 import { NzTabsModule } from 'ng-zorro-antd/tabs';
 import { NzAvatarModule } from 'ng-zorro-antd/avatar';
 import { NzRateModule } from 'ng-zorro-antd/rate';
@@ -20,10 +27,15 @@ import {
 } from '@domain/theater/data-access/theater.selectors';
 import { ShowtimeActions } from '@domain/showtime/data-access/showtime.actions';
 import { TheaterActions } from '@domain/theater/data-access/theater.actions';
-import { selectUserId, selectIsAuthenticated } from '@core/auth/auth.selectors';
-import { ReservationStore } from '@features/client/reservation/reservation.store';
-import dayjs from 'dayjs';
+import { NzIconModule } from 'ng-zorro-antd/icon';
+import { NzButtonModule } from 'ng-zorro-antd/button';
 import { TranslatePipe } from '@ngx-translate/core';
+import dayjs from 'dayjs';
+import {
+  CinemaGroup,
+  ShowtimeSectionComponent,
+} from '@features/client/detail/components/showtime-section/showtime-section.component';
+import { DetailHeaderComponent } from '@features/client/detail/components/detail-header/detail-header.component';
 
 interface Review {
   user: string;
@@ -37,27 +49,25 @@ interface Review {
   selector: 'app-detail',
   imports: [
     DatePipe,
-    NzTagModule,
-    NzButtonModule,
-    NzIconModule,
     NzTabsModule,
     NzAvatarModule,
     NzRateModule,
     FormsModule,
     LoadingComponent,
-    RouterLink,
     NzSkeletonModule,
     NgClass,
     NgOptimizedImage,
     TranslatePipe,
+    NzIconModule,
+    NzButtonModule,
+    DetailHeaderComponent,
+    ShowtimeSectionComponent,
   ],
   templateUrl: './detail.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DetailComponent implements OnInit {
   private store = inject(Store);
-  private router = inject(Router);
-  private reservationStore = inject(ReservationStore);
-  private document = inject(DOCUMENT);
 
   id = input(0, { transform: numberAttribute });
   selectedDate = linkedSignal({
@@ -65,9 +75,6 @@ export class DetailComponent implements OnInit {
     computation: () => dayjs().startOf('day').toDate(),
   });
   showtimesLoading = signal(true);
-
-  isAuthenticated = this.store.selectSignal(selectIsAuthenticated);
-  userId = this.store.selectSignal(selectUserId);
 
   movie = computed(() => {
     const id = this.id();
@@ -84,7 +91,7 @@ export class DetailComponent implements OnInit {
     );
   });
 
-  showtimes = computed(() => {
+  showtimes = computed<CinemaGroup[]>(() => {
     const movie = this.movie();
     const showtimes = this.allShowtimes();
     const theaters = this.allTheaters();
@@ -101,7 +108,7 @@ export class DetailComponent implements OnInit {
     );
     if (filtered.length === 0) return [];
 
-    const groupTheater = new Map<number, any>();
+    const groupTheater = new Map<number, CinemaGroup>();
 
     filtered.forEach((st) => {
       const theater = theaters.find((t) => t.id === st.theaterId);
@@ -113,7 +120,7 @@ export class DetailComponent implements OnInit {
             showtimes: [],
           });
         }
-        groupTheater.get(theater.id).showtimes.push({
+        groupTheater.get(theater.id)!.showtimes.push({
           id: st.id,
           time: st.showTime.toString().substring(0, 5),
           availableSeats: st.availableSeats,
@@ -154,26 +161,6 @@ export class DetailComponent implements OnInit {
 
   selectDate(date: Date) {
     this.selectedDate.set(date);
-  }
-
-  scrollToShowtimes() {
-    this.document.getElementById('showtime-section')?.scrollIntoView({ behavior: 'smooth' });
-  }
-
-  bookShowtime(showtimeId: number) {
-    if (!this.isAuthenticated()) {
-      this.router.navigate(['/login'], { queryParams: { returnUrl: this.router.url } });
-      return;
-    }
-    const theaterId = this.selectedTheaterId();
-    const uid = this.userId();
-    if (!theaterId || !uid) return;
-    this.reservationStore.initReservation({
-      reservationId: '',
-      userId: uid,
-      showtimeId: showtimeId,
-      theaterId: theaterId,
-    });
   }
 
   reviews: Review[] = [];

@@ -1,4 +1,10 @@
-import { Component, HostListener, inject, OnInit } from '@angular/core';
+import {
+  Component,
+  HostListener,
+  inject,
+  OnInit,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { CommonModule, DOCUMENT } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
 import { NzButtonModule } from 'ng-zorro-antd/button';
@@ -52,6 +58,7 @@ import { TranslatePipe } from '@ngx-translate/core';
   ],
   templateUrl: './profile.component.html',
   styleUrl: './profile.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProfileComponent implements OnInit {
   private store = inject(Store);
@@ -76,6 +83,7 @@ export class ProfileComponent implements OnInit {
   }
 
   checkScreenSize() {
-    this.tabPosition = (this.document.defaultView?.innerWidth ?? 768) < 768 ? 'top' : 'left';
+    this.tabPosition =
+      (this.document.defaultView?.innerWidth ?? 768) < 768 ? 'top' : 'left';
   }
 }

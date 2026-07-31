@@ -6,6 +6,7 @@ import {
   input,
   output,
 } from '@angular/core';
+import { ChangeDetectionStrategy } from '@angular/core';
 import { NzImageModule } from 'ng-zorro-antd/image';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzButtonComponent } from 'ng-zorro-antd/button';
@@ -34,6 +35,7 @@ import { SeatStore } from '@features/client/reservation/components/seat/seat.sto
   ],
   templateUrl: './detail-film.component.html',
   styleUrl: './detail-film.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DetailFilmComponent {
   private store = inject(Store);

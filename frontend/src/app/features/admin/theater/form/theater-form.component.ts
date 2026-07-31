@@ -1,4 +1,10 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import {
+  Component,
+  inject,
+  OnInit,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import {
   FormControl,
   FormGroup,
@@ -42,6 +48,7 @@ import { TranslatePipe } from '@ngx-translate/core';
   ],
   templateUrl: './theater-form.component.html',
   styleUrl: './theater-form.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FormTheaterComponent implements OnInit {
   readonly submitting = signal(false);
@@ -105,7 +112,10 @@ export class FormTheaterComponent implements OnInit {
       id: [''],
       name: ['', Validators.required],
       location: ['', Validators.required],
-      capacity: [null as number | null, [Validators.required, Validators.min(1)]],
+      capacity: [
+        null as number | null,
+        [Validators.required, Validators.min(1)],
+      ],
     });
   }
 
@@ -169,5 +179,4 @@ export class FormTheaterComponent implements OnInit {
         console.error('Save theater failed', error);
       });
   }
-
 }

@@ -1,4 +1,9 @@
-import { Component, input, output } from '@angular/core';
+import {
+  Component,
+  input,
+  output,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { NzBadgeComponent } from 'ng-zorro-antd/badge';
 import {
   NzBreadCrumbComponent,
@@ -31,6 +36,7 @@ import { TranslatePipe } from '@ngx-translate/core';
   ],
   templateUrl: './navbar.component.html',
   styleUrl: './navbar.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NavbarComponent {
   breadcrumbs = input<Breadcrumb[]>([]);

@@ -1,4 +1,9 @@
-import { Component, computed, inject } from '@angular/core';
+import {
+  Component,
+  computed,
+  inject,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { DatePipe } from '@angular/common';
@@ -22,6 +27,7 @@ import { LoadingComponent } from '@shared/components/loading/loading.component';
 import { TranslatePipe } from '@ngx-translate/core';
 import { HEADER_COLUMNS } from '@core/constants/column';
 import { ICON_COLORS } from '@shared/utils/colors';
+import { confirmDelete } from '@shared/utils/confirm-delete';
 
 @Component({
   selector: 'app-theater',
@@ -40,6 +46,7 @@ import { ICON_COLORS } from '@shared/utils/colors';
   ],
   providers: [NzModalService],
   templateUrl: './theater.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TheaterComponent {
   private modalService = inject(NzModalService);
@@ -61,7 +68,11 @@ export class TheaterComponent {
     const q = (this.searchCtrl.value || '').toLowerCase().trim();
     const sort = this.sortCtrl.value || 'newest';
     let result = q
-      ? list.filter(t => t.name.toLowerCase().includes(q) || t.location.toLowerCase().includes(q))
+      ? list.filter(
+          (t) =>
+            t.name.toLowerCase().includes(q) ||
+            t.location.toLowerCase().includes(q),
+        )
       : list;
     if (sort === 'oldest') result = [...result].reverse();
     return result;
@@ -105,13 +116,8 @@ export class TheaterComponent {
   }
 
   onDelete(id: number) {
-    this.modalService.confirm({
-      nzTitle: 'Xóa rạp chiếu này?',
-      nzContent: 'Dữ liệu sẽ không thể khôi phục sau khi xóa.',
-      nzOkText: 'Xóa',
-      nzOkDanger: true,
-      nzOnOk: () => this.store.dispatch(TheaterActions.deleteTheater({ id })),
-      nzCancelText: 'Hủy',
-    });
+    confirmDelete(this.modalService, 'Xóa rạp chiếu này?', () =>
+      this.store.dispatch(TheaterActions.deleteTheater({ id })),
+    );
   }
 }

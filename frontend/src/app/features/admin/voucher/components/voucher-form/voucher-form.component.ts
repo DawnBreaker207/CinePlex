@@ -1,4 +1,9 @@
-import { Component, inject, OnInit } from '@angular/core';
+import {
+  Component,
+  inject,
+  OnInit,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import {
   FormControl,
   FormGroup,
@@ -39,6 +44,7 @@ import { NzButtonModule } from 'ng-zorro-antd/button';
   ],
   templateUrl: './voucher-form.component.html',
   styleUrl: './voucher-form.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FormVoucherComponent implements OnInit {
   private fb = inject(NonNullableFormBuilder);

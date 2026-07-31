@@ -1,4 +1,10 @@
-import { Component, computed, inject, OnInit } from '@angular/core';
+import {
+  Component,
+  computed,
+  inject,
+  OnInit,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { Router } from '@angular/router';
 import { LucideAngularModule } from 'lucide-angular';
 import { NzDropDownModule } from 'ng-zorro-antd/dropdown';
@@ -29,6 +35,7 @@ interface MenuItem {
   ],
   templateUrl: './profile-menu.component.html',
   styleUrl: './profile-menu.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProfileMenuComponent implements OnInit {
   private store = inject(Store);

@@ -1,10 +1,5 @@
-import {
-  Component,
-  computed,
-  inject,
-  OnInit,
-  signal,
-} from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy } from '@angular/core';
 import { NzFormModule } from 'ng-zorro-antd/form';
 import {
   FormControl,
@@ -20,13 +15,7 @@ import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzModalRef } from 'ng-zorro-antd/modal';
 import { Store } from '@ngrx/store';
 import { Actions, ofType } from '@ngrx/effects';
-import {
-  debounceTime,
-  distinctUntilChanged,
-  filter,
-  map,
-  take,
-} from 'rxjs';
+import { debounceTime, distinctUntilChanged, filter, map, take } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NzSelectModule } from 'ng-zorro-antd/select';
 import { NzTimePickerModule } from 'ng-zorro-antd/time-picker';
@@ -37,7 +26,10 @@ import { TheaterActions } from '@domain/theater/data-access/theater.actions';
 import { ShowtimeActions } from '@domain/showtime/data-access/showtime.actions';
 import { selectSelectedShowtime } from '@domain/showtime/data-access/showtime.selectors';
 import { Movie } from '@domain/movie/models/movie.model';
-import { Showtime, ShowtimeRequest } from '@domain/showtime/models/showtime.model';
+import {
+  Showtime,
+  ShowtimeRequest,
+} from '@domain/showtime/models/showtime.model';
 import {
   formatDate,
   formatTime,
@@ -63,6 +55,7 @@ import { TranslatePipe } from '@ngx-translate/core';
   ],
   templateUrl: './showtime-form.component.html',
   styleUrl: './showtime-form.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FormShowtimeComponent implements OnInit {
   private fb = inject(NonNullableFormBuilder);
@@ -87,7 +80,7 @@ export class FormShowtimeComponent implements OnInit {
   theaters = this.store.selectSignal(selectAllTheaters);
   searchMovie = this.store.selectSignal(selectAllMovies);
   isSearching = signal(false);
-  selectedMovie = signal<any>(null);
+  selectedMovie = signal<Movie | null>(null);
   searchResults = computed(() => {
     return this.isSearching() && this.searchCtrl.value
       ? this.searchMovie()
@@ -131,6 +124,7 @@ export class FormShowtimeComponent implements OnInit {
         debounceTime(300),
         map((v) => v?.trim()),
         distinctUntilChanged(),
+        takeUntilDestroyed(),
       )
       .subscribe((search) => {
         if (search) {
@@ -149,7 +143,8 @@ export class FormShowtimeComponent implements OnInit {
   }
 
   selectMovie(movie: Movie) {
-    const movieResult = this.searchMovie().find((m) => m.id === movie?.id);
+    const movieResult =
+      this.searchMovie().find((m) => m.id === movie?.id) ?? null;
     this.form.patchValue({
       movieId: movie.id,
       moviePosterUrl: movie.poster,
@@ -158,7 +153,6 @@ export class FormShowtimeComponent implements OnInit {
     this.isSearching.set(false);
     this.searchCtrl.setValue('', { emitEvent: false });
   }
-
   initForm() {
     this.form = this.fb.group({
       movieId: [null as number | null, Validators.required],
@@ -169,7 +163,10 @@ export class FormShowtimeComponent implements OnInit {
       showTime: [null as Date | null, Validators.required],
 
       price: [null as number | null, [Validators.required, Validators.min(1)]],
-      totalSeats: [null as number | null, [Validators.required, Validators.min(1)]],
+      totalSeats: [
+        null as number | null,
+        [Validators.required, Validators.min(1)],
+      ],
     });
   }
 
@@ -202,7 +199,7 @@ export class FormShowtimeComponent implements OnInit {
     const showtimeData = {
       ...rest,
       showDate: showDate ? formatDate(showDate) : null,
-      showTime: showTime ? formatTime(showDate ?? undefined) : null,
+      showTime: showTime ? formatTime(showTime) : null,
     } as unknown as ShowtimeRequest;
 
     if (this.mode === 'edit') {
@@ -246,5 +243,4 @@ export class FormShowtimeComponent implements OnInit {
         console.error('Save showtime failed', error);
       });
   }
-
 }

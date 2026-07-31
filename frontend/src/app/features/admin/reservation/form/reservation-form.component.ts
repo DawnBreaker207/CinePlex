@@ -1,4 +1,9 @@
-import { Component, inject, OnInit } from '@angular/core';
+import {
+  Component,
+  inject,
+  OnInit,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { NzModalRef } from 'ng-zorro-antd/modal';
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { NzTagComponent } from 'ng-zorro-antd/tag';
@@ -18,6 +23,7 @@ import { TranslatePipe } from '@ngx-translate/core';
     TranslatePipe,
   ],
   templateUrl: './reservation-form.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FormReservationComponent implements OnInit {
   private modelRef = inject(NzModalRef);

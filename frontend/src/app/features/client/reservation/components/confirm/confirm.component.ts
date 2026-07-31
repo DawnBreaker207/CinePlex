@@ -1,4 +1,9 @@
-import { Component, computed, inject } from '@angular/core';
+import {
+  Component,
+  computed,
+  inject,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { Store } from '@ngrx/store';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzRadioModule } from 'ng-zorro-antd/radio';
@@ -37,6 +42,7 @@ interface PaymentOption {
   ],
   templateUrl: './confirm.component.html',
   styleUrl: './confirm.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ConfirmComponent {
   private store = inject(Store);
@@ -57,15 +63,45 @@ export class ConfirmComponent {
   ];
 
   readonly paymentOptions: PaymentOption[] = [
-    { value: 'vnpay', label: 'VNPAY QR', desc: 'Quét mã QR từ ứng dụng ngân hàng', icon: 'assets/payment/vnpay.svg', alt: 'VNPay' },
-    { value: 'momo', label: 'Ví Momo', icon: 'assets/payment/momo.ico', alt: 'Momo' },
-    { value: 'zalopay', label: 'Ví ZaloPay', icon: 'assets/payment/zalopay.png', alt: 'ZaloPay' },
-    { value: 'atm', label: 'Thẻ ATM nội địa', desc: 'Cần đăng ký Internet Banking', icon: 'assets/payment/ic-card-vn.png', alt: 'ATM' },
-    { value: 'visa', label: 'Thẻ Visa / Master / JCB', desc: 'Thanh toán quốc tế', icon: 'assets/payment/ic-card-gb.png', alt: 'VISA' },
+    {
+      value: 'vnpay',
+      label: 'VNPAY QR',
+      desc: 'Quét mã QR từ ứng dụng ngân hàng',
+      icon: 'assets/payment/vnpay.svg',
+      alt: 'VNPay',
+    },
+    {
+      value: 'momo',
+      label: 'Ví Momo',
+      icon: 'assets/payment/momo.ico',
+      alt: 'Momo',
+    },
+    {
+      value: 'zalopay',
+      label: 'Ví ZaloPay',
+      icon: 'assets/payment/zalopay.png',
+      alt: 'ZaloPay',
+    },
+    {
+      value: 'atm',
+      label: 'Thẻ ATM nội địa',
+      desc: 'Cần đăng ký Internet Banking',
+      icon: 'assets/payment/ic-card-vn.png',
+      alt: 'ATM',
+    },
+    {
+      value: 'visa',
+      label: 'Thẻ Visa / Master / JCB',
+      desc: 'Thanh toán quốc tế',
+      icon: 'assets/payment/ic-card-gb.png',
+      alt: 'VISA',
+    },
   ];
 
   readonly appliedVoucher = computed(() => this.voucherStore.calculateResult());
-  readonly isValidatingVoucher = computed(() => this.voucherStore.loadingDetails());
+  readonly isValidatingVoucher = computed(() =>
+    this.voucherStore.loadingDetails(),
+  );
   readonly voucherError = computed(() => this.voucherStore.error());
 
   selectSuggested(code: string) {
@@ -77,7 +113,10 @@ export class ConfirmComponent {
     const code = this.voucherCode.trim();
     if (!code) return;
     this.voucherStore.clearError();
-    this.voucherStore.calculateDiscount({ code, total: this.seatStore.totalPrice() });
+    this.voucherStore.calculateDiscount({
+      code,
+      total: this.seatStore.totalPrice(),
+    });
   }
 
   removeVoucher() {

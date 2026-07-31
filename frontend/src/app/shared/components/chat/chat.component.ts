@@ -7,6 +7,7 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
+import { ChangeDetectionStrategy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -40,6 +41,7 @@ interface Message {
   ],
   templateUrl: './chat.component.html',
   styleUrl: './chat.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ChatComponent {
   private chatboxService = inject(ChatboxService);
@@ -83,27 +85,30 @@ export class ChatComponent {
     this.inputValue.set('');
     this.isTyping.set(true);
 
-    this.chatboxService.sendMessage(text).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: (res) => {
-        this.messages.update((prev) => [
-          ...prev,
-          { content: res, sender: 'bot', time: new Date() },
-        ]);
-        this.isTyping.set(false);
-      },
-      error: (err) => {
-        console.error(err);
-        this.messages.update((prev) => [
-          ...prev,
-          {
-            content: 'Xin lỗi, hệ thống đang bận. Vui lòng thử lại sau.',
-            sender: 'bot',
-            time: new Date(),
-          },
-        ]);
-        this.isTyping.set(false);
-      },
-    });
+    this.chatboxService
+      .sendMessage(text)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          this.messages.update((prev) => [
+            ...prev,
+            { content: res, sender: 'bot', time: new Date() },
+          ]);
+          this.isTyping.set(false);
+        },
+        error: (err) => {
+          console.error(err);
+          this.messages.update((prev) => [
+            ...prev,
+            {
+              content: 'Xin lỗi, hệ thống đang bận. Vui lòng thử lại sau.',
+              sender: 'bot',
+              time: new Date(),
+            },
+          ]);
+          this.isTyping.set(false);
+        },
+      });
   }
 
   scrollToBottom() {

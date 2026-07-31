@@ -1,243 +1,107 @@
 @if (movie(); as movie) {
- <div class="min-h-screen bg-transparent pb-16 text-slate-900">
- <div class="relative h-[520px] w-full overflow-hidden">
- <div
- class="absolute inset-0 bg-cover bg-center"
- [style.backgroundImage]="
- 'url(' +
- (movie.backdrop ||
- 'https://placehold.co/1400x700/1A202C/F8FAFC?text=Dawn+Cinema') +
- ')'
- "
- ></div>
- <div
- class="absolute inset-0 bg-gradient-to-t from-[#111827] via-[#111827]/80 to-black/20"
- ></div>
- <div
- class="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-slate-50 to-transparent"
- ></div>
+  <div class="min-h-screen bg-transparent pb-16 text-slate-900">
+    <app-detail-header [movie]="movie" />
 
- <div
- class="relative mx-auto flex h-full max-w-5xl items-end gap-8 px-4 pb-10 md:px-6"
- >
- <div
- class="hidden w-56 shrink-0 translate-y-14 overflow-hidden rounded-xl border border-white/15 shadow-2xl md:block"
- >
- <img
- [src]="movie.poster || movie.backdrop"
- [alt]="movie.title"
- class="h-full w-full object-cover"
- />
- </div>
+    <div class="mx-auto mt-10 flex max-w-5xl flex-col gap-8 px-4 md:px-6">
+      <div class="w-full space-y-8">
+        <app-showtime-section
+          [dates]="dates()"
+          [selectedDate]="selectedDate()"
+          [cinemas]="showtimes()"
+          (dateChange)="selectDate($event)"
+        />
 
- <div class="mb-2 flex-1">
- <div
- class="mb-2 flex flex-wrap items-center gap-3 text-sm text-slate-200"
- >
- <span>{{ movie.releaseDate | date: "dd/MM/yyyy" }}</span>
- <span>• {{ movie.duration }} phút</span>
- </div>
-
- <h1
- class="mb-2 font-['Bricolage_Grotesque'] text-4xl font-extrabold leading-tight text-white md:text-5xl"
- >
- {{ movie.title }}
- </h1>
- <p class="mb-4 text-lg italic text-slate-200/90 md:text-xl">
- {{ movie.originalTitle }}
- </p>
-
- <div class="mb-6 flex flex-wrap items-center gap-2">
- @for (genre of movie.genres; track genre) {
- <nz-tag
- [nzColor]="'transparent'"
- class="rounded-full border border-white/30 px-3 text-xs text-white/95"
- >
- {{ genre }}
- </nz-tag>
- }
- </div>
-
- <div class="flex flex-wrap gap-3">
- <button
- nz-button
- nzType="primary"
- class="rounded-lg border-none bg-[#E53E3E] px-6 font-semibold text-white hover:bg-[#C53030]"
- >
- {{ "Đặt vé ngay" | translate }}
- </button>
-
- <button
- nz-button
- nzType="default"
- class="rounded-lg border border-white/50 bg-white/10 px-6 text-white hover:border-white hover:bg-white/20"
- >
- <nz-icon nzType="play-circle" nzTheme="fill" class="mr-2"/>
- {{ "Xem Trailer" | translate }}
- </button>
- </div>
- </div>
- </div>
- </div>
-
- <div class="mx-auto mt-10 flex max-w-5xl flex-col gap-8 px-4 md:px-6">
- <div class="w-full space-y-8">
- <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
- <h2
- class="mb-6 border-l-4 border-[#E53E3E] pl-3 font-['Bricolage_Grotesque'] text-2xl font-bold text-slate-900"
- >
- {{ "Lịch Chiếu" | translate }}
- </h2>
-
- <div class="mb-6 flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
- @for (date of dates(); track date) {
- <div
- (click)="selectDate(date)"
- (keyup)="selectDate(date)"
- tabindex="0"
- role="button"
- class="min-w-[84px] cursor-pointer rounded-xl border p-3 text-center transition-all duration-200"
- [ngClass]="
- (selectedDate() | date: 'ddMMyy') === (date | date: 'ddMMyy')
- ? 'border-[#E53E3E] bg-[#E53E3E] text-white'
- : 'border-slate-200 bg-slate-50 text-slate-500 hover:border-slate-300'
- "
- >
- <span class="text-2xl font-bold">{{ date | date: "dd" }}</span>
- /<span class="text-sm">{{ date | date: "MM" }}</span>
- </div>
- }
- </div>
-
- <div class="space-y-4">
- @for (cinema of showtimes(); track cinema.id) {
- <div
- class="rounded-xl border border-slate-200 bg-slate-50 p-4 transition hover:border-slate-300"
- >
- <p class="mb-3 text-sm font-semibold text-slate-800">
- {{ cinema.name }}
- </p>
- <div class="flex flex-wrap gap-3">
- @for (show of cinema.showtimes; track show.time) {
- <div
- class="group relative w-[112px] cursor-pointer overflow-hidden rounded-lg border border-slate-300 bg-white p-3 text-center transition-all hover:border-[#E53E3E]"
- >
- <div
- class="text-lg font-bold text-slate-900 group-hover:text-[#E53E3E]"
- >
- {{ show.time }}
- </div>
- <div class="flex items-center gap-1.5 mt-1">
- <div
- class="h-1.5 w-1.5 rounded-full bg-emerald-500"
- ></div>
- <span
- class="text-[10px] font-medium text-slate-500 group-hover:text-[#E53E3E]"
- >
- {{
- show.availableSeats > 0
- ? show.availableSeats + ("ghế trống" | translate)
- : ("Hết vé" | translate)
- }}
- </span>
- </div>
- </div>
- }
- </div>
- </div>
- } @empty {
- <div
- class="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 py-16"
- >
- <nz-icon
- nzType="calendar"
- class="mb-4 text-5xl text-slate-400"
- ></nz-icon>
- <p class="text-lg text-slate-500">
- {{
- "Hôm nay không có suất chiếu nào cho phim này" | translate
- }}
- </p>
- <button
- nz-button
- nzType="link"
- (click)="selectDate(dates()[0])"
- class="text-[#E53E3E]"
- >
- {{ "Xem lịch ngày khác" | translate }}
- </button>
- </div>
- }
- </div>
- </div>
-
- <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
- <nz-tabs [nzTabBarGutter]="20" nzType="line" class="custom-tabs">
- <nz-tab nzTitle="Nội dung phim">
- <p class="text-base leading-relaxed text-slate-600 md:text-lg">
- {{ movie.overview }}
- </p>
- <div
- class="mt-6 grid grid-cols-1 gap-4 text-sm text-slate-500 md:grid-cols-2"
- >
- <div>
- <strong>{{ "Khởi chiếu:" | translate }}</strong>
- <span class="ml-2 text-slate-900">
- {{ movie.releaseDate | date: "dd/MM/yyyy" }}
- </span>
- </div>
- <div>
- <strong>{{ "Quốc gia:" | translate }}</strong>
- <span class="ml-2 text-slate-900">
- {{ movie.country }}
- </span>
- </div>
- <div>
- <strong>{{ "Ngôn ngữ" | translate }}</strong>
- <span class="ml-2 text-slate-900">
- {{ movie.language }}
- </span>
- </div>
- </div>
- </nz-tab>
- <nz-tab
- [nzTitle]="('Đánh giá' | translate) +' (' + reviews.length + ')'"
- >
-  <div class="space-y-6">
-  @for (review of reviews; track review.user) {
-  <div class="flex gap-4 border-b border-slate-100 pb-4 last:border-0">
-  <nz-avatar [nzSrc]="review.avatar" nzSize="large"></nz-avatar>
-  <div>
-  <div class="flex items-center gap-2 mb-1">
-  <span class="font-bold text-slate-900">{{ review.user }}</span>
-  <nz-rate [ngModel]="review.rating" nzDisabled class="text-xs"></nz-rate>
+        <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <nz-tabs [nzTabBarGutter]="20" nzType="line" class="custom-tabs">
+            <nz-tab nzTitle="Nội dung phim">
+              <p class="text-base leading-relaxed text-slate-600 md:text-lg">
+                {{ movie.overview }}
+              </p>
+              <div
+                class="mt-6 grid grid-cols-1 gap-4 text-sm text-slate-500 md:grid-cols-2"
+              >
+                <div>
+                  <strong>{{ "Khởi chiếu:" | translate }}</strong>
+                  <span class="ml-2 text-slate-900">
+                    {{ movie.releaseDate | date: "dd/MM/yyyy" }}
+                  </span>
+                </div>
+                <div>
+                  <strong>{{ "Quốc gia:" | translate }}</strong>
+                  <span class="ml-2 text-slate-900">
+                    {{ movie.country }}
+                  </span>
+                </div>
+                <div>
+                  <strong>{{ "Ngôn ngữ" | translate }}</strong>
+                  <span class="ml-2 text-slate-900">
+                    {{ movie.language }}
+                  </span>
+                </div>
+              </div>
+            </nz-tab>
+            <nz-tab
+              [nzTitle]="('Đánh giá' | translate) + ' (' + reviews.length + ')'"
+            >
+              <div class="space-y-6">
+                @for (review of reviews; track review.user) {
+                  <div
+                    class="flex gap-4 border-b border-slate-100 pb-4 last:border-0"
+                  >
+                    <nz-avatar
+                      [nzSrc]="review.avatar"
+                      nzSize="large"
+                    ></nz-avatar>
+                    <div>
+                      <div class="flex items-center gap-2 mb-1">
+                        <span class="font-bold text-slate-900">
+                          {{ review.user }}
+                        </span>
+                        <nz-rate
+                          [ngModel]="review.rating"
+                          nzDisabled
+                          class="text-xs"
+                        ></nz-rate>
+                      </div>
+                      <p class="text-sm text-slate-600">{{ review.comment }}</p>
+                      <span class="mt-1 block text-xs text-slate-400">
+                        {{ review.date }}
+                      </span>
+                    </div>
+                  </div>
+                } @empty {
+                  <div
+                    class="flex flex-col items-center justify-center py-12 text-center"
+                  >
+                    <nz-icon
+                      nzType="star"
+                      class="text-4xl text-slate-300 mb-3"
+                    />
+                    <p class="text-slate-500 font-medium">
+                      {{ "Chưa có đánh giá nào" | translate }}
+                    </p>
+                    <p class="text-sm text-slate-400 mt-1">
+                      {{
+                        "Hãy là người đầu tiên đánh giá phim này!" | translate
+                      }}
+                    </p>
+                  </div>
+                }
+                <button
+                  nz-button
+                  nzBlock
+                  nzType="dashed"
+                  class="border-slate-300 text-slate-500 hover:border-[#E53E3E] hover:text-[#E53E3E]"
+                >
+                  {{ "Viết đánh giá của bạn" | translate }}
+                </button>
+              </div>
+            </nz-tab>
+          </nz-tabs>
+        </div>
+      </div>
+    </div>
   </div>
-  <p class="text-sm text-slate-600">{{ review.comment }}</p>
-  <span class="mt-1 block text-xs text-slate-400">{{ review.date }}</span>
-  </div>
-  </div>
-  } @empty {
-  <div class="flex flex-col items-center justify-center py-12 text-center">
-  <nz-icon nzType="star" class="text-4xl text-slate-300 mb-3"/>
-  <p class="text-slate-500 font-medium">{{ "Chưa có đánh giá nào" | translate }}</p>
-  <p class="text-sm text-slate-400 mt-1">{{ "Hãy là người đầu tiên đánh giá phim này!" | translate }}</p>
-  </div>
-  }
- <button
- nz-button
- nzBlock
- nzType="dashed"
- class="border-slate-300 text-slate-500 hover:border-[#E53E3E] hover:text-[#E53E3E]"
- >
- {{ "Viết đánh giá của bạn" | translate }}
- </button>
- </div>
- </nz-tab>
- </nz-tabs>
- </div>
- </div>
- </div>
- </div>
 } @else {
- <app-loading/>
+  <app-loading />
 }

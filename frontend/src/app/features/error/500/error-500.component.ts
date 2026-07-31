@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzResultModule } from 'ng-zorro-antd/result';
@@ -17,6 +17,7 @@ import { TranslatePipe } from '@ngx-translate/core';
   ],
   templateUrl: './error-500.component.html',
   styleUrl: './error-500.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Error500Component {
   private router = inject(Router);
