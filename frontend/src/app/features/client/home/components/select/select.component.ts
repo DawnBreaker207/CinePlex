@@ -9,7 +9,7 @@ import { Store } from '@ngrx/store';
 import { FormsModule } from '@angular/forms';
 import { NzIconDirective } from 'ng-zorro-antd/icon';
 import { NzDropDownModule } from 'ng-zorro-antd/dropdown';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import {
   selectAllTheaters,
   selectSelectedTheaterId,
@@ -28,6 +28,7 @@ import { Theater } from '@domain/theater/models/theater.model';
 export class SelectShowtimeComponent {
   private store = inject(Store);
   private storage = inject(StorageService);
+  private translate = inject(TranslateService);
 
   private theaters = toSignal(this.store.select(selectAllTheaters), {
     initialValue: [],
@@ -43,7 +44,7 @@ export class SelectShowtimeComponent {
     const found = this.theaters().find(
       (t: Theater) => t.id === this.selectedTheaterId(),
     );
-    return found ? found.name : 'Chọn rạp chiếu';
+    return found ? found.name : this.translate.instant('home.selectTheater');
   });
 
   onSelect(theaterId: number) {

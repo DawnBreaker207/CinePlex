@@ -9,6 +9,7 @@ import { canDeactivateReservation } from '@core/guards/can-deactivate-reservatio
 import { ReservationComponent } from '@features/client/reservation/reservation.component';
 import { PaymentResultComponent } from '@features/client/reservation/components/payment-result/payment-result.component';
 import { ProfileComponent } from '@features/client/profile/profile.component';
+import { FavoritesComponent } from '@features/client/favorites/favorites.component';
 import { RedirectGuard } from '@core/guards/redirect.guard';
 
 export const CLIENT_ROUTES: Routes = [
@@ -19,38 +20,43 @@ export const CLIENT_ROUTES: Routes = [
       { path: '', redirectTo: 'home', pathMatch: 'full' },
       {
         path: 'home',
-        title: 'Trang chủ',
+        title: 'client.home',
         component: HomeComponent,
       },
       {
         path: 'movies',
-        title: 'Danh sách phim',
+        title: 'client.movies',
         component: MoviesComponent,
       },
       {
         path: 'profile',
-        title: 'Hồ sơ',
+        title: 'client.profile',
         component: ProfileComponent,
       },
       {
+        path: 'favorites',
+        title: 'client.favorites',
+        component: FavoritesComponent,
+      },
+      {
         path: 'movie/detail/:id',
-        title: 'Chi tiết phim',
+        title: 'client.movieDetail',
         component: DetailComponent,
       },
       {
         path: 'login',
-        title: 'Đăng nhập',
+        title: 'client.login',
         component: AuthComponent,
         canMatch: [RedirectGuard],
       },
       {
         path: 'reservation/:reservationId/:showtimeId',
-        title: 'Đặt vé',
+        title: 'client.reservation',
         canMatch: [AuthGuard],
         canDeactivate: [canDeactivateReservation],
         component: ReservationComponent,
       },
-      { path: 'paymentResult', title: 'Kết quả thanh toán', component: PaymentResultComponent },
+      { path: 'paymentResult', title: 'client.paymentResult', component: PaymentResultComponent },
     ],
   },
 ];

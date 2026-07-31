@@ -1,7 +1,12 @@
-<nz-header nz-menu nzTheme="light" style="height: auto">
-  <div
-    class="w-full bg-[url('/assets/bg-header.png')] bg-repeat-x bg-bottom h-[7.5rem]"
-  >
+<nz-header
+  nz-menu
+  nzTheme="light"
+  style="height: auto"
+  class="sticky top-0 z-40 shadow-sm"
+>
+    <div
+      class="w-full bg-[url('/assets/bg-header.png')] bg-repeat-x bg-bottom h-[7.5rem] bg-[#f7f6f4] dark:bg-[#0f1114]"
+    >
     <div
       class="max-w-5xl mx-auto flex gap-6 items-center justify-between h-full"
     >
@@ -43,24 +48,7 @@
 
       <!-- RIGHT SIDE -->
       <div class="flex items-center gap-3 h-10 shrink-8">
-        <div>
-          <button (click)="useLanguage('vi')">VI</button>
-          /
-          <button (click)="useLanguage('en')">EN</button>
-        </div>
-
-        @if (authService.isAuthenticated()) {
-          <app-profile-menu />
-        } @else {
-          <a
-            routerLink="/login"
-            nz-button
-            nzType="primary"
-            class="rounded-full px-5 md:px-6 font-semibold! shadow-lg shadow-blue-200 hover:scale-105 transition-transform"
-          >
-            {{ "header.login" | translate }}
-          </a>
-        }
+        <app-auth-menu />
       </div>
     </div>
   </div>

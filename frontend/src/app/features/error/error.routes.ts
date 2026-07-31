@@ -9,8 +9,8 @@ export const ERROR_ROUTES: Routes = [
     component: ErrorLayoutComponent,
     children: [
       { path: '', redirectTo: '404', pathMatch: 'full' },
-      { path: '404', title: 'Không tìm thấy', component: Error404Component },
-      { path: '500', title: 'Lỗi máy chủ', component: Error500Component },
+      { path: '404', title: 'error.404', component: Error404Component },
+      { path: '500', title: 'error.500', component: Error500Component },
     ],
   },
   { path: '**', redirectTo: '404' },

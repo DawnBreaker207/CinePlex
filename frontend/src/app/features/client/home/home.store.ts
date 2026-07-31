@@ -20,6 +20,7 @@ import { MovieActions } from '@domain/movie/data-access/movie.actions';
 import { ShowtimeActions } from '@domain/showtime/data-access/showtime.actions';
 import { ShowtimeModalComponent } from '@features/client/home/components/showtime-modal/modal.component';
 import { ReservationStore } from '@features/client/reservation/reservation.store';
+import { TranslateService } from '@ngx-translate/core';
 
 export const HomeStore = signalStore(
   withMethods(
@@ -30,6 +31,7 @@ export const HomeStore = signalStore(
       modalService = inject(NzModalService),
       storageService = inject(StorageService),
       reservationStore = inject(ReservationStore),
+      translate = inject(TranslateService),
     ) => {
       const theaters = ngrxStore.selectSignal(selectAllTheaters);
       const showtimes = ngrxStore.selectSignal(selectAllShowtimes);
@@ -76,7 +78,7 @@ export const HomeStore = signalStore(
           const timer = setTimeout(() => {
             untracked(() => {
               loading.set(false);
-              error.set('Không thể tải dữ liệu. Vui lòng kiểm tra kết nối và thử lại.');
+              error.set(translate.instant('home.loadFailed'));
             });
           }, 15000);
           onCleanup(() => clearTimeout(timer));

@@ -18,6 +18,7 @@ import { DecimalPipe } from '@angular/common';
 import { NzDropDownModule } from 'ng-zorro-antd/dropdown';
 import { NzMenuModule } from 'ng-zorro-antd/menu';
 import { NzGridModule } from 'ng-zorro-antd/grid';
+import { NzTabsModule } from 'ng-zorro-antd/tabs';
 import { NzAlertModule } from 'ng-zorro-antd/alert';
 import { DashboardItemComponent } from '@features/admin/dashboard/components/dashboard-item/dashboard-item.component';
 import { CurrencyFormatPipe } from '@shared/pipes/currency-format.pipe';
@@ -28,8 +29,8 @@ import { TheaterChartComponent } from '@features/admin/dashboard/components/thea
 import { MovieChartComponent } from '@features/admin/dashboard/components/movie-chart/movie-chart.component';
 import { RevenueChartComponent } from '@features/admin/dashboard/components/revenue-chart/revenue-chart.component';
 import { LoadingComponent } from '@shared/components/loading/loading.component';
+import { TranslateService, TranslatePipe } from '@ngx-translate/core';
 import { ReportService } from '@core/services/report/report.service';
-import { TranslatePipe } from '@ngx-translate/core';
 import {
   DashboardState,
   DashboardStore,
@@ -62,6 +63,7 @@ import {
     LoadingComponent,
     TranslatePipe,
     NzAlertModule,
+    NzTabsModule,
   ],
   templateUrl: './dashboard.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -70,13 +72,12 @@ export class DashboardComponent {
   readonly dashboardStore = inject(DashboardStore);
   private reportService = inject(ReportService);
   private destroyRef = inject(DestroyRef);
+  private translate = inject(TranslateService);
 
-  quarters = [
-    { label: 'Quý 1 (Q1)', value: 1 },
-    { label: 'Quý 2 (Q2)', value: 2 },
-    { label: 'Quý 3 (Q3)', value: 3 },
-    { label: 'Quý 4 (Q4)', value: 4 },
-  ];
+  quarters = [1, 2, 3, 4].map((q) => ({
+    label: this.translate.instant(`dashboard.q${q}`),
+    value: q,
+  }));
 
   years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i);
 
@@ -100,7 +101,7 @@ export class DashboardComponent {
         },
         error: () => {
           this.dashboardStore.setError(
-            'Xuất báo cáo thất bại. Vui lòng thử lại.',
+            this.translate.instant('dashboard.exportFailed'),
           );
         },
       });

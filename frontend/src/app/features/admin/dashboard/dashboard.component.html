@@ -207,123 +207,127 @@
     <app-loading />
   } @else {
     <nz-content class="m-4">
-      <nz-row nzGutter="[8, 12]" aria-live="polite">
-        <nz-col nzXs="24" nzSm="12" nzMd="8" nzLg="6">
-          <app-dashboard-item
-            [title]="'admin.dashboard.revenue' | translate"
-            [value]="
-              (
-                dashboardStore.metrics()?.totalRevenue ?? 0 | currencyFormat
-              )?.toString() ?? ''
-            "
-            icon="DollarSign"
-          />
-        </nz-col>
-        <nz-col nzXs="24" nzSm="12" nzMd="8" nzLg="6">
-          <app-dashboard-item
-            [title]="'admin.dashboard.ticketsSold' | translate"
-            [value]="
-              (
-                dashboardStore.metrics()?.ticketsSold || 0 | number: '1.0-0'
-              )?.toString() ?? ''
-            "
-            icon="Tickets"
-          />
-        </nz-col>
-        <nz-col nzXs="24" nzSm="12" nzMd="8" nzLg="6">
-          <app-dashboard-item
-            [title]="'admin.dashboard.activeTheaters' | translate"
-            [value]="(dashboardStore.metrics()?.activeTheaters || 0).toString()"
-            icon="Theater"
-          />
-        </nz-col>
-        <nz-col nzXs="24" nzSm="12" nzMd="8" nzLg="6">
-          <app-dashboard-item
-            [title]="'admin.dashboard.seatUtilization' | translate"
-            [value]="(dashboardStore.metrics()?.seatUtilization || 0) + '%'"
-            icon="Armchair"
-          />
-        </nz-col>
-      </nz-row>
+      <nz-tabs class="dashboard-tabs">
+        <nz-tab [nzTitle]="'admin.dashboard.overview' | translate">
+          <nz-row nzGutter="[8, 12]" aria-live="polite">
+            <nz-col nzXs="24" nzSm="12" nzMd="8" nzLg="6">
+              <app-dashboard-item
+                [title]="'admin.dashboard.revenue' | translate"
+                [value]="
+                  (
+                    dashboardStore.metrics()?.totalRevenue ?? 0 | currencyFormat
+                  )?.toString() ?? ''
+                "
+                icon="DollarSign"
+              />
+            </nz-col>
+            <nz-col nzXs="24" nzSm="12" nzMd="8" nzLg="6">
+              <app-dashboard-item
+                [title]="'admin.dashboard.ticketsSold' | translate"
+                [value]="
+                  (
+                    dashboardStore.metrics()?.ticketsSold || 0 | number: '1.0-0'
+                  )?.toString() ?? ''
+                "
+                icon="Tickets"
+              />
+            </nz-col>
+            <nz-col nzXs="24" nzSm="12" nzMd="8" nzLg="6">
+              <app-dashboard-item
+                [title]="'admin.dashboard.activeTheaters' | translate"
+                [value]="(dashboardStore.metrics()?.activeTheaters || 0).toString()"
+                icon="Theater"
+              />
+            </nz-col>
+            <nz-col nzXs="24" nzSm="12" nzMd="8" nzLg="6">
+              <app-dashboard-item
+                [title]="'admin.dashboard.seatUtilization' | translate"
+                [value]="(dashboardStore.metrics()?.seatUtilization || 0) + '%'"
+                icon="Armchair"
+              />
+            </nz-col>
+          </nz-row>
 
-      <!-- Chart-->
-      <nz-row nzGutter="[16, 16]" class="mt-4">
-        <nz-col nzXs="24" nzMd="14">
-          @defer (on viewport) {
-            <app-revenue-chart [revenues]="dashboardStore.revenues()" />
-          } @placeholder {
-            <div
-              class="h-[250px] sm:h-[350px] bg-gray-50 dark:bg-gray-800 rounded-xl animate-pulse"
-            ></div>
-          }
-        </nz-col>
-        <nz-col nzXs="24" nzMd="10">
-          @defer (on viewport) {
-            <app-payment-chart [payments]="dashboardStore.payments()" />
-          } @placeholder {
-            <div
-              class="h-[250px] sm:h-[350px] bg-gray-50 dark:bg-gray-800 rounded-xl animate-pulse"
-            ></div>
-          }
-        </nz-col>
-      </nz-row>
-
-      <nz-row nzGutter="[16, 16]" class="mt-4">
-        <nz-col nzXs="24" nzMd="8">
-          @defer (on viewport) {
-            <app-theater-chart [theaters]="dashboardStore.theaters()" />
-          } @placeholder {
-            <div
-              class="h-[250px] bg-gray-50 dark:bg-gray-800 rounded-xl animate-pulse"
-            ></div>
-          }
-        </nz-col>
-        <nz-col nzXs="24" nzMd="16">
-          @defer (on viewport) {
-            <app-movie-chart [movies]="dashboardStore.movies()" />
-          } @placeholder {
-            <div
-              class="h-[250px] bg-gray-50 dark:bg-gray-800 rounded-xl animate-pulse"
-            ></div>
-          }
-        </nz-col>
-      </nz-row>
-
-      <!-- Tables-->
-      <nz-row nzGutter="[16, 16]" class="mt-4">
-        <nz-col nzXs="24" nzMd="12">
-          <nz-card>
-            <div class="font-bold text-xl">
-              {{ "admin.dashboard.theaterPerformance" | translate }}
-            </div>
-            <div class="min-h-[200px]">
+          <nz-row nzGutter="[16, 16]" class="mt-4">
+            <nz-col nzXs="24" nzMd="14">
               @defer (on viewport) {
-                <app-movie-table [data]="dashboardStore.theaters()" />
+                <app-revenue-chart [revenues]="dashboardStore.revenues()" />
               } @placeholder {
                 <div
-                  class="h-[200px] bg-gray-50 dark:bg-gray-800 rounded animate-pulse"
+                  class="h-[250px] sm:h-[350px] bg-gray-50 dark:bg-gray-800 rounded-xl animate-pulse"
                 ></div>
               }
-            </div>
-          </nz-card>
-        </nz-col>
-        <nz-col nzXs="24" nzMd="12">
-          <nz-card>
-            <div class="font-bold text-xl">
-              {{ "admin.dashboard.movieAnalytics" | translate }}
-            </div>
-            <div class="min-h-[200px]">
+            </nz-col>
+            <nz-col nzXs="24" nzMd="10">
               @defer (on viewport) {
-                <app-theater-table [data]="dashboardStore.movies()" />
+                <app-payment-chart [payments]="dashboardStore.payments()" />
               } @placeholder {
                 <div
-                  class="h-[200px] bg-gray-50 dark:bg-gray-800 rounded animate-pulse"
+                  class="h-[250px] sm:h-[350px] bg-gray-50 dark:bg-gray-800 rounded-xl animate-pulse"
                 ></div>
               }
-            </div>
-          </nz-card>
-        </nz-col>
-      </nz-row>
+            </nz-col>
+          </nz-row>
+        </nz-tab>
+
+        <nz-tab [nzTitle]="'admin.dashboard.analytics' | translate">
+          <nz-row nzGutter="[16, 16]">
+            <nz-col nzXs="24" nzMd="8">
+              @defer (on viewport) {
+                <app-theater-chart [theaters]="dashboardStore.theaters()" />
+              } @placeholder {
+                <div
+                  class="h-[250px] bg-gray-50 dark:bg-gray-800 rounded-xl animate-pulse"
+                ></div>
+              }
+            </nz-col>
+            <nz-col nzXs="24" nzMd="16">
+              @defer (on viewport) {
+                <app-movie-chart [movies]="dashboardStore.movies()" />
+              } @placeholder {
+                <div
+                  class="h-[250px] bg-gray-50 dark:bg-gray-800 rounded-xl animate-pulse"
+                ></div>
+              }
+            </nz-col>
+          </nz-row>
+
+          <nz-row nzGutter="[16, 16]" class="mt-4">
+            <nz-col nzXs="24" nzMd="12">
+              <nz-card>
+                <div class="font-bold text-xl">
+                  {{ "admin.dashboard.theaterPerformance" | translate }}
+                </div>
+                <div class="min-h-[200px]">
+                  @defer (on viewport) {
+                    <app-movie-table [data]="dashboardStore.theaters()" />
+                  } @placeholder {
+                    <div
+                      class="h-[200px] bg-gray-50 dark:bg-gray-800 rounded animate-pulse"
+                    ></div>
+                  }
+                </div>
+              </nz-card>
+            </nz-col>
+            <nz-col nzXs="24" nzMd="12">
+              <nz-card>
+                <div class="font-bold text-xl">
+                  {{ "admin.dashboard.movieAnalytics" | translate }}
+                </div>
+                <div class="min-h-[200px]">
+                  @defer (on viewport) {
+                    <app-theater-table [data]="dashboardStore.movies()" />
+                  } @placeholder {
+                    <div
+                      class="h-[200px] bg-gray-50 dark:bg-gray-800 rounded animate-pulse"
+                    ></div>
+                  }
+                </div>
+              </nz-card>
+            </nz-col>
+          </nz-row>
+        </nz-tab>
+      </nz-tabs>
     </nz-content>
   }
 </nz-layout>

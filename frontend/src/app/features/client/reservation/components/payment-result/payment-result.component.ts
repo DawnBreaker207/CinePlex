@@ -13,14 +13,22 @@ import { Store } from '@ngrx/store';
 import { StorageService } from '@core/services/storage/storage.service';
 import { ReservationRequest } from '@domain/reservation/models/reservation.model';
 import { ShowtimeActions } from '@domain/showtime/data-access/showtime.actions';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ReservationStore } from '@features/client/reservation/reservation.store';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { BarcodeComponent } from '@shared/components/barcode/barcode.component';
+import { TicketStubComponent } from '@shared/components/ticket-stub/ticket-stub.component';
+import { selectSelectedShowtime } from '@domain/showtime/data-access/showtime.selectors';
+import { DatePipe } from '@angular/common';
 
 @Component({
   selector: 'app-payment-result',
-  imports: [NzButtonModule, NzIconModule, TranslatePipe, BarcodeComponent],
+  imports: [
+    NzButtonModule,
+    NzIconModule,
+    TranslatePipe,
+    TicketStubComponent,
+    DatePipe,
+  ],
   templateUrl: './payment-result.component.html',
   styleUrl: './payment-result.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -31,9 +39,12 @@ export class PaymentResultComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private destroyRef = inject(DestroyRef);
+  private datePipe = inject(DatePipe);
+private translate = inject(TranslateService);
 
   readonly reservationStore = inject(ReservationStore);
   readonly params = toSignal(this.route.queryParams);
+  readonly showtime = toSignal(this.store.select(selectSelectedShowtime));
 
   status = signal<'success' | 'error' | 'info'>('info');
   errorMessage = signal<string>('');
@@ -50,7 +61,7 @@ export class PaymentResultComponent implements OnInit {
     if (!state || !query) {
       this.status.set('error');
       this.errorMessage.set(
-        `Không tìm thấy thông tin phiên giao dịch. Vui lòng đặt vé lại từ đầu.`,
+        this.translate.instant('reservation.sessionNotFound'),
       );
       this.startCountDown();
       return;
@@ -68,7 +79,7 @@ export class PaymentResultComponent implements OnInit {
     } else {
       this.status.set('error');
       this.errorMessage.set(
-        `Thanh toán không thành công. Vui lòng thử lại hoặc chọn phương thức khác.`,
+        this.translate.instant('reservation.paymentFailed'),
       );
       this.reservationStore.cancel();
     }
@@ -105,5 +116,20 @@ export class PaymentResultComponent implements OnInit {
       if (this.intervalId) clearInterval(this.intervalId);
       this.reservationStore.stopCountdown();
     });
+  }
+
+  reservationMeta() {
+    const st = this.showtime();
+    if (!st) return [];
+    const t = this.translate.instant.bind(this.translate);
+    return [
+      { label: t('checkin.movieTitle'), value: st.movieTitle },
+      {
+        label: t('booking.showDate'),
+        value: this.datePipe?.transform(st.showDate, 'dd/MM/yyyy') ?? '',
+      },
+      { label: t('booking.showtime'), value: st.showTime.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }), accent: true },
+      { label: t('checkin.theater'), value: st.theaterName },
+    ];
   }
 }

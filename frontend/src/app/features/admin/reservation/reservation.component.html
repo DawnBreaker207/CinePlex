@@ -193,7 +193,7 @@
                       nzShape="circle"
                       [attr.aria-label]="'common.view' | translate"
                       nz-tooltip
-                      nzTooltipTitle="Xem chi tiết"
+                      [nzTooltipTitle]="'common.viewDetail' | translate"
                       class="text-primary hover:bg-primary-light"
                       (click)="openModal(item.id)"
                     >

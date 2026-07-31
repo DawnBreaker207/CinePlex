@@ -1,6 +1,7 @@
 import {
   Component,
   input,
+  inject,
   output,
   signal,
   ChangeDetectionStrategy,
@@ -9,7 +10,7 @@ import { NzCarouselModule } from 'ng-zorro-antd/carousel';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { Movie } from '@domain/movie/models/movie.model';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs';
 
 @Component({
@@ -23,6 +24,7 @@ export class SliderComponent {
   movies = input<Movie[]>([]);
   selectMovie = output<number>();
   autoPlay = signal(true);
+  private translate = inject(TranslateService);
 
   private fallbackBanners = [
     {
@@ -48,7 +50,7 @@ export class SliderComponent {
     return list.slice(0, 5).map((movie) => ({
       id: movie.id,
       title: movie.title,
-      desc: movie.overview || 'Nội dung phim đang được cập nhật.',
+      desc: movie.overview || this.translate.instant('movie.genreUpdating'),
       image:
         movie.backdrop ||
         movie.poster ||

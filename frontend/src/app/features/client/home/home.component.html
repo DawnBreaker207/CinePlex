@@ -6,11 +6,11 @@
       class="mt-6 rounded-xl border border-slate-200 bg-white px-4 py-3 md:px-6"
     >
       <nz-tabs nzSize="large" class="movie-tabset">
-        <nz-tab nzTitle="Đang chiếu">
+        <nz-tab [nzTitle]="'home.nowShowing' | translate">
           @if (homeStore.nowShowing(); as nowShowing) {
             <div class="mb-4 mt-4">
               <h2
-                class="font-['Bricolage_Grotesque'] font-semibold text-slate-900"
+                class="font-display font-semibold text-slate-900"
               >
                 {{ "home.nowShowing" | translate }}
               </h2>
@@ -32,11 +32,11 @@
           }
         </nz-tab>
 
-        <nz-tab nzTitle="Sắp chiếu">
+        <nz-tab [nzTitle]="'home.comingSoon' | translate">
           @if (homeStore.comingSoon(); as comingSoon) {
             <div class="mb-4 mt-4">
               <h2
-                class="font-['Bricolage_Grotesque'] font-semibold text-slate-900"
+                class="font-display font-semibold text-slate-900"
               >
                 {{ "home.comingSoon" | translate }}
               </h2>

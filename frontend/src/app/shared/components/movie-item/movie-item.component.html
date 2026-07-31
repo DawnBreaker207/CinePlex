@@ -16,24 +16,45 @@
     />
   </a>
   <div class="space-y-2 p-3">
-    <a
-      [routerLink]="['/movie/detail', movie().id]"
-      class="block truncate font-['Bricolage_Grotesque'] text-[13px] font-semibold text-slate-900 hover:text-[#E53E3E]"
-      [title]="movie().title"
-    >
-      {{ movie().title }}
-    </a>
+    <div class="flex items-start justify-between gap-2">
+      <a
+        [routerLink]="['/movie/detail', movie().id]"
+        class="block truncate font-display text-[13px] font-semibold text-slate-900 hover:text-[var(--color-primary)]"
+        [title]="movie().title"
+      >
+        {{ movie().title }}
+      </a>
+      <button
+        nz-button
+        nzType="text"
+        nzShape="circle"
+        class="shrink-0 !p-1"
+        [attr.aria-label]="'favorites.toggle' | translate"
+        [attr.aria-pressed]="favorites.isFavorite(movie().id)"
+        (click)="toggleFavorite()"
+      >
+        <nz-icon
+          nzType="heart"
+          [nzTheme]="favorites.isFavorite(movie().id) ? 'fill' : 'outline'"
+          [class.text-primary]="favorites.isFavorite(movie().id)"
+          class="text-base"
+        />
+      </button>
+    </div>
     <p
       class="truncate text-[11px] text-slate-500"
       [title]="movie().genres.join(', ')"
     >
-      {{ movie().genres.join(", ") || "Đang cập nhật thể loại" }}
+      {{
+        movie().genres.join(", ") ||
+          ("movie.genreUpdating" | translate)
+      }}
     </p>
     <button
       nz-button
       nzBlock
       nzType="primary"
-      class="rounded-lg border-none bg-[#E53E3E] text-white hover:bg-[#C53030]"
+      class="rounded-lg border-none bg-[var(--color-primary)] text-white hover:bg-[#C53030]"
       (click)="onSelectMovie(movie().id)"
     >
       {{ "common.bookTicket" | translate }}

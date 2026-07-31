@@ -55,7 +55,7 @@
       <li
         class="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 px-3 pt-4 pb-1 pointer-events-none select-none"
       >
-        {{ "common.theaters" | translate }}
+        {{ "sidebar.cinema" | translate }}
       </li>
       <li
         nz-menu-item
@@ -98,6 +98,15 @@
       >
         <nz-icon nzType="ordered-list" nzTheme="outline" class="text-lg" />
         <span>{{ "sidebar.bookings" | translate }}</span>
+      </li>
+      <li
+        nz-menu-item
+        nzMatchRouterExact
+        [routerLink]="['/admin/checkin']"
+        class="rounded-xl font-medium text-slate-600 dark:text-gray-300 hover:text-primary hover:bg-primary-light/50 transition-colors"
+      >
+        <nz-icon nzType="scan" nzTheme="outline" class="text-lg" />
+        <span>{{ "sidebar.checkin" | translate }}</span>
       </li>
       <li
         nz-menu-item

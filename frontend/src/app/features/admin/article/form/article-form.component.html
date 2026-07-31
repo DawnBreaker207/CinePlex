@@ -135,7 +135,10 @@
       [disabled]="form.invalid"
       (click)="submit()"
     >
-      {{ (nzData.isEditMode ? "Cập nhật" : "Đăng bài") | translate }}
+      {{
+        (nzData.isEditMode ? "article.form.update" : "article.form.publish")
+          | translate
+      }}
     </button>
   </div>
 </form>

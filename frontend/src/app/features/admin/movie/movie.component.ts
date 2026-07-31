@@ -37,7 +37,7 @@ import { MovieActions } from '@domain/movie/data-access/movie.actions';
 import { FormMovieComponent } from '@features/admin/movie/form/movie/movie-form.component';
 import { LoadingComponent } from '@shared/components/loading/loading.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { HEADER_COLUMNS } from '@core/constants/column';
 import { ICON_COLORS } from '@shared/utils/colors';
 import { confirmDelete } from '@shared/utils/confirm-delete';
@@ -73,6 +73,7 @@ export class MovieComponent {
   private fb = inject(NonNullableFormBuilder);
   private store = inject(Store);
   private modalService = inject(NzModalService);
+  private translate = inject(TranslateService);
 
   // NgRx Selectors
   readonly movies = this.store.selectSignal(selectAllMovies);
@@ -141,7 +142,7 @@ export class MovieComponent {
       },
       nzWidth: 900,
       nzKeyboard: true,
-      nzFooter: mode === 'view' ? null : saveFooter(modal),
+      nzFooter: mode === 'view' ? null : saveFooter(modal, this.translate),
       nzOnCancel: (instance) => this.handleCancel(instance),
     });
   }
@@ -151,19 +152,19 @@ export class MovieComponent {
 
     return new Promise((resolve) => {
       this.modalService.confirm({
-        nzTitle: 'Bạn có thay đổi chưa lưu. Hủy thao tác?',
-        nzContent: 'Thông tin bạn đã nhập sẽ bị mất.',
-        nzOkText: 'Hủy thao tác',
+        nzTitle: this.translate.instant('movie.form.unsavedTitle'),
+        nzContent: this.translate.instant('movie.form.unsavedContent'),
+        nzOkText: this.translate.instant('movie.form.discard'),
         nzOkDanger: true,
         nzOnOk: () => resolve(true),
-        nzCancelText: 'Tiếp tục chỉnh sửa',
+        nzCancelText: this.translate.instant('movie.form.keepEditing'),
         nzOnCancel: () => resolve(false),
       });
     });
   }
 
   onDelete(id: number) {
-    confirmDelete(this.modalService, 'Xóa phim này?', () =>
+    confirmDelete(this.modalService, this.translate, 'movie.deleteTitle', () =>
       this.store.dispatch(MovieActions.deleteMovie({ id })),
     );
   }

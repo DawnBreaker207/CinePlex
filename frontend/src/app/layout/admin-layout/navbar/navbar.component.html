@@ -10,7 +10,7 @@
         (keydown.enter)="toggleCollapse()"
         tabindex="0"
         role="button"
-        aria-label="Thu gọn / Mở rộng sidebar"
+        [attr.aria-label]="'navbar.toggleSidebar' | translate"
       >
         <nz-icon
           [nzType]="isCollapsed() ? 'menu-unfold' : 'menu-fold'"
@@ -71,7 +71,7 @@
         [nzDropdownMenu]="notifyMenu"
         nzTrigger="click"
         nzPlacement="bottomRight"
-        aria-label="Thông báo"
+        [attr.aria-label]="'navbar.notifications' | translate"
         role="button"
         tabindex="0"
       >
@@ -123,7 +123,7 @@
       <!-- Divider -->
       <div class="h-8 w-px bg-slate-200 dark:bg-gray-700 hidden sm:block"></div>
 
-      <app-profile-menu />
+      <app-auth-menu />
     </div>
   </div>
 </nz-header>

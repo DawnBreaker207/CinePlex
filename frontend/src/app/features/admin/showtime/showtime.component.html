@@ -189,7 +189,8 @@
                       {{ item.availableSeats }}
                     </span>
                     <span class="text-gray-500 dark:text-gray-400 text-xs">
-                      / {{ item.totalSeats }} ghế</span
+                      / {{ item.totalSeats }}
+                      {{ "showtime.form.seats" | translate }}</span
                     >
                   </div>
 
@@ -216,7 +217,7 @@
                     nzShape="circle"
                     [attr.aria-label]="'common.view' | translate"
                     nz-tooltip
-                    nzTooltipTitle="Xem chi tiết"
+                    [nzTooltipTitle]="'common.viewDetail' | translate"
                     (click)="openModal('view', item.id)"
                   >
                     <nz-icon
@@ -231,7 +232,7 @@
                     nzShape="circle"
                     [attr.aria-label]="'common.edit' | translate"
                     nz-tooltip
-                    nzTooltipTitle="Xem chi tiết"
+                    [nzTooltipTitle]="'common.viewDetail' | translate"
                     (click)="openModal('edit', item.id)"
                   >
                     <nz-icon
@@ -246,7 +247,7 @@
                     nzShape="circle"
                     [attr.aria-label]="'common.delete' | translate"
                     nz-tooltip
-                    nzTooltipTitle="Xem chi tiết"
+                    [nzTooltipTitle]="'common.viewDetail' | translate"
                     (click)="onDelete(item.id)"
                   >
                     <nz-icon

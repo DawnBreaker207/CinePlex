@@ -28,6 +28,7 @@ import { ConfirmComponent } from '@features/client/reservation/components/confir
 import { SeatStore } from '@features/client/reservation/components/seat/seat.store';
 import { ReservationStore } from '@features/client/reservation/reservation.store';
 import { selectSelectedTheater } from '@domain/theater/data-access/theater.selectors';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-reservation',
@@ -40,6 +41,7 @@ import { selectSelectedTheater } from '@domain/theater/data-access/theater.selec
     SeatComponent,
     DetailFilmComponent,
     ConfirmComponent,
+    TranslateModule,
   ],
   templateUrl: './reservation.component.html',
   styleUrl: './reservation.component.css',
@@ -55,6 +57,7 @@ export class ReservationComponent implements OnInit {
   readonly seatStore = inject(SeatStore);
   readonly reservationStore = inject(ReservationStore);
   private storageService = inject(StorageService);
+  private translate = inject(TranslateService);
 
   reservationId = input<string>('');
   showtimeId = input<string>('');
@@ -119,10 +122,13 @@ export class ReservationComponent implements OnInit {
   onPay() {
     if (this.reservationStore.submittingPayment()) return;
     this.modalService.confirm({
-      nzTitle: 'Xác nhận thanh toán',
-      nzContent: `Bạn sắp thanh toán ${this.seatStore.totalPrice().toLocaleString('vi-VN')}₫ cho ${this.seatStore.selectSeatsCount()} vé.`,
-      nzOkText: 'Thanh toán ngay',
-      nzCancelText: 'Hủy',
+      nzTitle: this.translate.instant('reservation.payTitle'),
+      nzContent: this.translate.instant('reservation.payContent', {
+        amount: this.seatStore.totalPrice().toLocaleString('vi-VN'),
+        count: this.seatStore.selectSeatsCount(),
+      }),
+      nzOkText: this.translate.instant('reservation.payNow'),
+      nzCancelText: this.translate.instant('common.cancel'),
       nzOnOk: () => {
         this.reservationStore.pay(this.confirmComponent().radioValue);
       },

@@ -2,7 +2,7 @@
  class="relative w-full h-full min-h-[19rem] transition-all duration-300"
  [nzSpinning]="!!isLoading() || loadingService.isLoading()"
  [nzIndicator]="indicator"
- [nzTip]="tip()"
+  [nzTip]="tip() | translate"
 >
  <ng-content></ng-content>
 </nz-spin>
@@ -16,7 +16,7 @@
  <p
  class="mt-4 text-sm font-medium text-gray-500 animate-pulse text-center px-4"
  >
- {{ tip() }}
+  {{ tip() | translate }}
  </p>
  }
  </div>

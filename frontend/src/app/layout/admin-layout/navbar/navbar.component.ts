@@ -15,7 +15,7 @@ import {
 } from 'ng-zorro-antd/dropdown';
 import { NzHeaderComponent } from 'ng-zorro-antd/layout';
 import { NzIconDirective } from 'ng-zorro-antd/icon';
-import { ProfileMenuComponent } from '@shared/components/profile-menu/profile-menu.component';
+import { AuthMenuComponent } from '@shared/components/auth-menu/auth-menu.component';
 import { Breadcrumb } from '../admin-layout.component';
 import { RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
@@ -30,7 +30,7 @@ import { TranslatePipe } from '@ngx-translate/core';
     NzDropdownMenuComponent,
     NzHeaderComponent,
     NzIconDirective,
-    ProfileMenuComponent,
+    AuthMenuComponent,
     RouterLink,
     TranslatePipe,
   ],

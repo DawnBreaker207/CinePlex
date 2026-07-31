@@ -18,7 +18,7 @@ import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzFloatButtonModule } from 'ng-zorro-antd/float-button';
 import { ChatboxService } from '@core/services/report/chatbox.service';
 import { MarkdownComponent } from 'ngx-markdown';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 interface Message {
   content: string;
@@ -46,6 +46,7 @@ interface Message {
 export class ChatComponent {
   private chatboxService = inject(ChatboxService);
   private destroyRef = inject(DestroyRef);
+  private translate = inject(TranslateService);
   scrollBottom = viewChild<ElementRef>('scrollBottom');
 
   isOpen = signal<boolean>(false);
@@ -53,7 +54,7 @@ export class ChatComponent {
   inputValue = signal<string>('');
   messages = signal<Message[]>([
     {
-      content: 'Chào Admin! Tôi có thể giúp gì về số liệu CinePlex hôm nay?',
+      content: this.translate.instant('chat.welcome'),
       sender: 'bot',
       time: new Date(),
     },
@@ -101,7 +102,7 @@ export class ChatComponent {
           this.messages.update((prev) => [
             ...prev,
             {
-              content: 'Xin lỗi, hệ thống đang bận. Vui lòng thử lại sau.',
+              content: this.translate.instant('chat.busy'),
               sender: 'bot',
               time: new Date(),
             },

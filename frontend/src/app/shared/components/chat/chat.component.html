@@ -19,13 +19,15 @@
         </div>
         <div>
           <h3 class="text-sm font-bold text-white m-0">Support Bot</h3>
-          <p class="text-xs text-white/70 m-0">Luôn sẵn sàng</p>
+          <p class="text-xs text-white/70 m-0">
+            {{ "chat.alwaysAvailable" | translate }}
+          </p>
         </div>
       </div>
       <button
         (click)="toggleChat()"
         class="text-white/80 hover:text-white hover:bg-white/20 h-10 w-10 p-2 rounded-full transition-colors cursor-pointer"
-        aria-label="Đóng chat"
+        [attr.aria-label]="'chat.close' | translate"
       >
         <nz-icon nzType="close" nzTheme="outline" />
       </button>

@@ -24,7 +24,7 @@ import {
 import { TheaterActions } from '@domain/theater/data-access/theater.actions';
 import { FormTheaterComponent } from '@features/admin/theater/form/theater-form.component';
 import { LoadingComponent } from '@shared/components/loading/loading.component';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { HEADER_COLUMNS } from '@core/constants/column';
 import { ICON_COLORS } from '@shared/utils/colors';
 import { confirmDelete } from '@shared/utils/confirm-delete';
@@ -50,8 +50,9 @@ import { saveFooter } from '@shared/utils/form-utils';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TheaterComponent {
-  private modalService = inject(NzModalService);
-  private store = inject(Store);
+private modalService = inject(NzModalService);
+private store = inject(Store);
+private translate = inject(TranslateService);
   private fb = inject(NonNullableFormBuilder);
 
   readonly headerColumn = HEADER_COLUMNS.THEATER;
@@ -91,7 +92,7 @@ export class TheaterComponent {
       },
       nzWidth: 900,
       nzKeyboard: true,
-      nzFooter: mode !== 'view' ? saveFooter(modal) : null,
+      nzFooter: mode !== 'view' ? saveFooter(modal, this.translate) : null,
     });
   }
 
@@ -103,7 +104,7 @@ export class TheaterComponent {
   }
 
   onDelete(id: number) {
-    confirmDelete(this.modalService, 'Xóa rạp chiếu này?', () =>
+    confirmDelete(this.modalService, this.translate, 'theater.deleteTitle', () =>
       this.store.dispatch(TheaterActions.deleteTheater({ id })),
     );
   }

@@ -26,7 +26,7 @@
             >
               <div class="max-w-3xl">
                 <h1
-                  class="mb-3 font-['Bricolage_Grotesque'] text-3xl font-extrabold leading-tight text-white md:text-5xl"
+                  class="mb-3 font-display text-3xl font-extrabold leading-tight text-white md:text-5xl"
                 >
                   {{ banner.title }}
                 </h1>
@@ -41,7 +41,7 @@
                   <button
                     nz-button
                     nzType="primary"
-                    class="flex h-10 items-center gap-2 rounded-lg border-none bg-[#E53E3E] px-5 text-sm font-semibold text-white hover:bg-[#C53030]"
+                    class="flex h-10 items-center gap-2 rounded-lg border-none bg-[var(--color-primary)] px-5 text-sm font-semibold text-white hover:bg-[#C53030]"
                   >
                     <nz-icon nzType="barcode" />
                     {{ "detail.bookNow" | translate }}
@@ -49,7 +49,7 @@
                   <button
                     nz-button
                     nzType="default"
-                    class="flex h-10 items-center gap-2 rounded-lg border border-slate-200/70 bg-transparent px-5 text-sm font-semibold text-white hover:border-[#E53E3E] hover:text-[#E53E3E]"
+                    class="flex h-10 items-center gap-2 rounded-lg border border-slate-200/70 bg-transparent px-5 text-sm font-semibold text-white hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]"
                   >
                     <nz-icon nzType="play-circle" />
                     {{ "detail.watchTrailerLower" | translate }}

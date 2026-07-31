@@ -12,7 +12,7 @@ import { NzButtonComponent } from 'ng-zorro-antd/button';
 import { Showtime } from '@domain/showtime/models/showtime.model';
 import { formatDate } from '@shared/utils/date.helper';
 import { NzIconDirective } from 'ng-zorro-antd/icon';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs';
 
 @Component({
@@ -29,6 +29,7 @@ import dayjs from 'dayjs';
 })
 export class ShowtimeModalComponent implements OnInit {
   private modalRef = inject(NzModalRef);
+  private translate = inject(TranslateService);
 
   showtimes = signal<Showtime[]>([]);
   movieTitle = signal<string | null>(null);
@@ -77,8 +78,9 @@ export class ShowtimeModalComponent implements OnInit {
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    if (date.getTime() === today.getTime()) return 'Hôm nay';
-    if (date.getTime() === tomorrow.getTime()) return 'Ngày mai';
+    const t = this.translate.instant.bind(this.translate);
+    if (date.getTime() === today.getTime()) return t('home.today');
+    if (date.getTime() === tomorrow.getTime()) return t('home.tomorrow');
     return '';
   }
 

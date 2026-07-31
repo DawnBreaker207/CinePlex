@@ -27,6 +27,7 @@ import { selectJwt } from '@core/auth/auth.selectors';
 import { selectSelectedShowtime } from '@domain/showtime/data-access/showtime.selectors';
 import { selectSelectedTheater } from '@domain/theater/data-access/theater.selectors';
 import { environment } from '@env/environment';
+import { TranslateService } from '@ngx-translate/core';
 
 function toPaymentMethod(value: string): PaymentMethod {
   switch (value) {
@@ -99,6 +100,7 @@ export const ReservationStore = signalStore(
       document = inject(DOCUMENT),
       seatStore = inject(SeatStore),
       paymentService = inject(PaymentService),
+      translate = inject(TranslateService),
     ) => {
       let timerIdx: any = null;
 
@@ -126,7 +128,7 @@ export const ReservationStore = signalStore(
             patchState(store, {
               currentTTL: null,
               reservationId: null,
-              error: 'Phiên đặt vé đã hết hạn.',
+              error: translate.instant('reservation.expired'),
             });
             router.navigate(['/home']);
             return;
@@ -245,7 +247,7 @@ export const ReservationStore = signalStore(
                 patchState(store, {
                   submittingPayment: false,
                   paymentError:
-                    err?.message || 'Thanh toán thất bại. Vui lòng thử lại.',
+                    err?.message || translate.instant('reservation.paymentFailed'),
                 });
               },
             });

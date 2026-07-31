@@ -5,8 +5,8 @@
   >
     <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
       <nz-steps nzType="navigation" nzSize="small" [nzCurrent]="index()">
-        <nz-step nzTitle="Chọn ghế" nzIcon="table"></nz-step>
-        <nz-step nzTitle="Xác nhận & thanh toán" nzIcon="solution"></nz-step>
+        <nz-step [nzTitle]="'reservation.stepSeat' | translate" nzIcon="table"></nz-step>
+        <nz-step [nzTitle]="'reservation.stepConfirm' | translate" nzIcon="solution"></nz-step>
       </nz-steps>
     </div>
   </div>

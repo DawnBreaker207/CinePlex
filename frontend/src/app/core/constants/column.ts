@@ -74,6 +74,12 @@ export const PROFILE_MENU = [
     role: 'user',
   },
   {
+    title: marker('favorites.title'),
+    icon: 'Heart',
+    link: '/favorites',
+    role: 'both',
+  },
+  {
     title: marker('common.logout'),
     icon: 'LogOut',
     action: 'logout',

@@ -20,6 +20,7 @@ import { SocketService } from '@core/services/socket/socket.service';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { catchError, finalize, of, pipe, switchMap, tap } from 'rxjs';
 import { formatDate } from '@shared/utils/date.helper';
+import { TranslateService } from '@ngx-translate/core';
 
 export interface DashboardState {
   isLoading: boolean;
@@ -105,6 +106,7 @@ export const DashboardStore = signalStore(
       store,
       dashboardService = inject(DashboardService),
       socketService = inject(SocketService),
+      translate = inject(TranslateService),
     ) => {
       const loadSummary = rxMethod<void>(
         pipe(
@@ -121,7 +123,7 @@ export const DashboardStore = signalStore(
                 }),
               ),
               catchError((err) => {
-                patchState(store, { error: 'Không thể tải dữ liệu. Vui lòng thử lại.' });
+                patchState(store, { error: translate.instant('dashboard.loadFailed') });
                 return of(null);
               }),
               finalize(() => patchState(store, { isLoading: false })),

@@ -1,12 +1,14 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ToastService } from '@core/services/toast/toast.service';
+import { TranslateService } from '@ngx-translate/core';
 
 @Injectable({
   providedIn: 'root',
 })
 export class GlobalErrorService {
   private toast = inject(ToastService);
+  private translate = inject(TranslateService);
 
   readonly RETRY_CONFIG = {
     maxRetries: 3,
@@ -33,46 +35,47 @@ export class GlobalErrorService {
   }
 
   private parseError(error: HttpErrorResponse) {
+    const t = (key: string) => this.translate.instant(key);
     const status = error.status;
     let type = 'error';
-    let title = `Lỗi ${status}`;
+    let title = `${t('error.title')} ${status}`;
     const serverMessage = error.error?.message;
-    let message = serverMessage || error.message || 'Lỗi không xác định';
+    let message = serverMessage || error.message || t('error.unknown');
 
     switch (status) {
       case 400:
-        title = `${status}: Yêu cầu không hợp lệ`;
-        if (!serverMessage) message = 'Dữ liệu gửi lên không đúng. Vui lòng kiểm tra lại.';
+        title = `${status}: ${t('error.badRequest')}`;
+        if (!serverMessage) message = t('error.badRequestMsg');
         break;
       case 401:
-        title = `${status}: Chưa đăng nhập`;
-        if (!serverMessage) message = 'Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.';
+        title = `${status}: ${t('error.unauthorized')}`;
+        if (!serverMessage) message = t('error.unauthorizedMsg');
         break;
       case 403:
         type = 'warning';
-        title = `${status}: Không có quyền truy cập`;
-        if (!serverMessage) message = 'Bạn không có quyền thực hiện thao tác này.';
+        title = `${status}: ${t('error.forbidden')}`;
+        if (!serverMessage) message = t('error.forbiddenMsg');
         break;
       case 404:
-        title = `${status}: Không tìm thấy`;
-        if (!serverMessage) message = 'Dữ liệu yêu cầu không tồn tại.';
+        title = `${status}: ${t('error.notFound')}`;
+        if (!serverMessage) message = t('error.notFoundMsg');
         break;
       case 429:
         type = 'warning';
-        title = `${status}: Quá nhiều yêu cầu`;
-        if (!serverMessage) message = 'Bạn đã gửi quá nhiều yêu cầu. Vui lòng thử lại sau.';
+        title = `${status}: ${t('error.tooManyRequests')}`;
+        if (!serverMessage) message = t('error.tooManyRequestsMsg');
         break;
       case 500:
-        title = `${status}: Lỗi máy chủ`;
-        if (!serverMessage) message = 'Máy chủ gặp sự cố. Vui lòng thử lại sau.';
+        title = `${status}: ${t('error.serverError')}`;
+        if (!serverMessage) message = t('error.serverErrorMsg');
         break;
       case 503:
         type = 'warning';
-        title = `${status}: Dịch vụ tạm ngưng`;
-        if (!serverMessage) message = 'Dịch vụ đang bảo trì. Vui lòng thử lại sau.';
+        title = `${status}: ${t('error.serviceUnavailable')}`;
+        if (!serverMessage) message = t('error.serviceUnavailableMsg');
         break;
       default:
-        title = `Lỗi ${status}`;
+        title = `${t('error.title')} ${status}`;
         break;
     }
     return { type, title, message };

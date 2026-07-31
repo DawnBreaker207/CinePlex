@@ -142,7 +142,9 @@
         <nz-form-label nzRequired class="font-semibold"
           >{{ "common.theaters" | translate }}
         </nz-form-label>
-        <nz-form-control nzErrorTip="Vui lòng chọn rạp">
+        <nz-form-control
+          [nzErrorTip]="'showtime.form.requiredTheater' | translate"
+        >
           <nz-select
             formControlName="theaterId"
             [nzDisabled]="mode === 'view'"

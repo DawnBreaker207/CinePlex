@@ -6,7 +6,7 @@
   <nz-content id="main-content">
     <div class="relative">
       @if (loading()) {
-        <app-loading [tip]="'common.loading' | translate">
+        <app-loading>
           <router-outlet />
         </app-loading>
       } @else {

@@ -8,6 +8,7 @@ import { UserComponent } from '@features/admin/user/user.component';
 import { ArticleComponent } from '@features/admin/article/article.component';
 import { AdminLayoutComponent } from '../../layout/admin-layout/admin-layout.component';
 import { VoucherListComponent } from '@features/admin/voucher/pages/voucher-list/voucher-list.component';
+import { CheckInComponent } from '@features/admin/check-in/check-in.component';
 
 export const ADMIN_ROUTES: Routes = [
   {
@@ -21,42 +22,47 @@ export const ADMIN_ROUTES: Routes = [
       },
       {
         path: 'dashboard',
-        title: 'Thống kê',
+        title: 'admin.dashboard',
         component: DashboardComponent,
       },
       {
         path: 'movie',
-        title: 'Quản lý phim',
+        title: 'admin.movie',
         component: MovieComponent,
       },
       {
         path: 'theater',
-        title: 'Quản lý rạp',
+        title: 'admin.theater',
         component: TheaterComponent,
       },
       {
         path: 'showtime',
-        title: 'Quản lý suất chiếu',
+        title: 'admin.showtime',
         component: ShowtimeComponent,
       },
       {
         path: 'reservation',
-        title: 'Quản lý vé đặt',
+        title: 'admin.reservation',
         component: ReservationComponent,
       },
       {
+        path: 'checkin',
+        title: 'admin.checkin',
+        component: CheckInComponent,
+      },
+      {
         path: 'user',
-        title: 'Quản lý người dùng',
+        title: 'admin.user',
         component: UserComponent,
       },
       {
         path: 'article',
-        title: 'Quản lý bài viết',
+        title: 'admin.article',
         component: ArticleComponent,
       },
       {
         path: 'voucher',
-        title: 'Quản lý voucher',
+        title: 'admin.voucher',
         component: VoucherListComponent,
       },
     ],

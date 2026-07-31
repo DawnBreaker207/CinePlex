@@ -93,91 +93,18 @@
           <!-- Ticket Header-->
           <div class="text-center mb-6">
             <h3 class="text-xl font-bold text-gray-900 leading-tight mb-1">
-              {{ selectedTicket.movieTitle }}
+              {{ "booking.ticketDetail" | translate }}
             </h3>
             <p class="text-sm text-gray-500">{{ selectedTicket.theater }}</p>
           </div>
 
-          <!-- Ticket Body-->
-          <div
-            class="bg-gray-50 rounded-xl p-4 border border-dashed border-gray-300 relative"
-          >
-            <!-- Vết cắt-->
-            <div
-              class="absolute -left-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-white rounded-full border border-gray-200"
-            ></div>
-            <div
-              class="absolute -left-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-white rounded-full border border-gray-200"
-            ></div>
-
-            <div class="space-y-4">
-              <div class="flex justify-between">
-                <div>
-                  <p
-                    class="text-xs text-gray-400 uppercase font-bold tracking-wider"
-                  >
-                    {{ "booking.showDate" | translate }}
-                  </p>
-                  <p class="font-semibold text-gray-800">
-                    {{ selectedTicket.date | date: "dd/MM/yyyy" }}
-                  </p>
-                </div>
-                <div class="text-right">
-                  <p
-                    class="text-xs text-gray-400 uppercase font-bold tracking-wider"
-                  >
-                    {{ "booking.showtime" | translate }}
-                  </p>
-                  <p class="font-bold text-primary text-lg">
-                    {{ selectedTicket.time }}
-                  </p>
-                </div>
-              </div>
-
-              <div class="flex justify-between">
-                <div>
-                  <p
-                    class="text-xs text-gray-400 uppercase font-bold tracking-wider"
-                  >
-                    {{ "booking.room" | translate }}
-                  </p>
-                  <p class="font-semibold text-gray-800">
-                    {{ selectedTicket.room }}
-                  </p>
-                </div>
-                <div class="text-right">
-                  <p
-                    class="text-xs text-gray-400 uppercase font-bold tracking-wider"
-                  >
-                    {{ "booking.seat" | translate }}
-                  </p>
-                  <p class="font-bold text-lg">
-                    {{ selectedTicket.seats.join(",") }}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div class="border-t border-dashed border-gray-300 my-4"></div>
-
-            <!-- Barcode-->
-            <div class="flex flex-col items-center gap-2">
-              <app-barcode [value]="selectedTicket.reservationId" />
-              <p class="text-xs text-gray-400 font-mono tracking-widest mt-1">
-                ID: {{ selectedTicket.reservationId }}
-              </p>
-            </div>
-          </div>
-
-          <!-- Total Price-->
-          <div class="mt-6 flex justify-between items-center px-2">
-            <span class="text-gray-500 font-medium">{{
-              "common.total" | translate
-            }}</span>
-            <span class="text-xl font-bold text-primary">{{
-              selectedTicket.amount | currencyFormat
-            }}</span>
-          </div>
+          <app-ticket-stub
+            [title]="selectedTicket.movieTitle"
+            [subtitle]="selectedTicket.theater"
+            [code]="selectedTicket.reservationId"
+            [amount]="selectedTicket.amount | currencyFormat"
+            [meta]="ticketMeta(selectedTicket)"
+          />
 
           <div class="mt-6">
             <button

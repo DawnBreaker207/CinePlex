@@ -50,7 +50,7 @@ import { formatDate } from '@shared/utils/date.helper';
 import { FormShowtimeComponent } from '@features/admin/showtime/form/showtime-form.component';
 import { LoadingComponent } from '@shared/components/loading/loading.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { HEADER_COLUMNS } from '@core/constants/column';
 
 @Component({
@@ -83,9 +83,10 @@ import { HEADER_COLUMNS } from '@core/constants/column';
   providers: [NzModalService],
 })
 export class ShowtimeComponent implements OnInit {
-  private modalService = inject(NzModalService);
-  private store = inject(Store);
-  private fb = inject(NonNullableFormBuilder);
+private modalService = inject(NzModalService);
+private store = inject(Store);
+private fb = inject(NonNullableFormBuilder);
+private translate = inject(TranslateService);
 
   showtimes = this.store.selectSignal(selectAllShowtimes);
   theaters = this.store.selectSignal(selectAllTheaters);
@@ -160,12 +161,12 @@ export class ShowtimeComponent implements OnInit {
       },
       nzWidth: 900,
       nzKeyboard: true,
-      nzFooter: mode === 'view' ? null : saveFooter(modal),
+      nzFooter: mode === 'view' ? null : saveFooter(modal, this.translate),
     });
   }
 
   onDelete(id: number) {
-    confirmDelete(this.modalService, 'Xóa suất chiếu này?', () =>
+    confirmDelete(this.modalService, this.translate, 'showtime.deleteTitle', () =>
       this.store.dispatch(ShowtimeActions.deleteShowtime({ id })),
     );
   }

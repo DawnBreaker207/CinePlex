@@ -15,6 +15,7 @@ import { SeatStatus } from '@core/constants/enum';
 import { SseService } from '@core/services/sse/sse.service';
 import { Store } from '@ngrx/store';
 import { selectSelectedShowtime } from '@domain/showtime/data-access/showtime.selectors';
+import { TranslateService } from '@ngx-translate/core';
 
 export interface SeatState {
   seats: Seat[];
@@ -75,6 +76,7 @@ export const SeatStore = signalStore(
       store,
       seatService = inject(SeatService),
       sseService = inject(SseService),
+      translate = inject(TranslateService),
     ) => ({
       loadSeats: rxMethod<{ showtimeId: number }>(
         pipe(
@@ -189,7 +191,7 @@ export const SeatStore = signalStore(
                   }),
                   catchError((err) => {
                     console.error('SSE Error:', err);
-                    patchState(store, { error: 'Kết nối thời gian thực bị gián đoạn. Dữ liệu ghế có thể không còn chính xác.' });
+                    patchState(store, { error: translate.instant('reservation.sseDisconnected') });
                     return EMPTY;
                   }),
                 ),

@@ -21,7 +21,7 @@ import {
   selectAllMovies,
   selectMovieLoading,
 } from '@domain/movie/data-access/movie.selectors';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs';
 import { Movie } from '@domain/movie/models/movie.model';
 
@@ -47,6 +47,7 @@ export class MoviesComponent implements OnInit {
   private store = inject(Store);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
+  private translate = inject(TranslateService);
 
   readonly loading = this.store.selectSignal(selectMovieLoading);
   readonly allMovies = this.store.selectSignal(selectAllMovies);
@@ -60,10 +61,11 @@ export class MoviesComponent implements OnInit {
       (m) => !dayjs(m.releaseDate).isAfter(dayjs(), 'day'),
     ).length;
     const upcoming = total - now;
+    const t = this.translate.instant.bind(this.translate);
     return {
-      all: 'Tất cả (' + total + ')',
-      now: 'Đang chiếu (' + now + ')',
-      upcoming: 'Sắp chiếu (' + upcoming + ')',
+      all: t('movies.all') + ' (' + total + ')',
+      now: t('movies.now') + ' (' + now + ')',
+      upcoming: t('movies.upcoming') + ' (' + upcoming + ')',
     };
   });
 

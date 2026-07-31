@@ -16,6 +16,7 @@ import {
   VoucherRequest,
 } from '@domain/voucher/model/voucher.model';
 import { VoucherService } from '@domain/voucher/data-access/voucher.service';
+import { TranslateService } from '@ngx-translate/core';
 
 export interface VoucherState {
   vouchers: Voucher[];
@@ -48,7 +49,7 @@ export const VoucherStore = signalStore(
     ),
   })),
 
-  withMethods((store, voucherService = inject(VoucherService)) => ({
+  withMethods((store, voucherService = inject(VoucherService), translate = inject(TranslateService)) => ({
     setSelectedVoucher(voucher: Voucher | null) {
       patchState(store, { selectVoucher: voucher, error: null });
     },
@@ -199,7 +200,7 @@ export const VoucherStore = signalStore(
                 patchState(store, { calculateResult: result });
               },
               error: (error: any) => {
-                const msg = typeof error === 'string' ? error : error?.message || error?.error || 'Mã giảm giá không hợp lệ';
+                const msg = typeof error === 'string' ? error : error?.message || error?.error || translate.instant('voucher.invalidCode');
                 patchState(store, { error: msg });
               },
             }),

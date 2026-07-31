@@ -57,42 +57,42 @@ export class ConfirmComponent {
   }
 
   readonly suggestedVouchers: SuggestedVoucher[] = [
-    { code: 'WELCOME10', desc: 'Giảm 10.000₫' },
-    { code: 'CINEPLEX20', desc: 'Giảm 20.000₫' },
-    { code: 'NEWUSER', desc: 'Giảm 15%' },
+    { code: 'WELCOME10', desc: 'voucher.suggest.10k' },
+    { code: 'CINEPLEX20', desc: 'voucher.suggest.20k' },
+    { code: 'NEWUSER', desc: 'voucher.suggest.15pct' },
   ];
 
   readonly paymentOptions: PaymentOption[] = [
     {
       value: 'vnpay',
       label: 'VNPAY QR',
-      desc: 'Quét mã QR từ ứng dụng ngân hàng',
+      desc: 'confirm.pay.vnpayDesc',
       icon: 'assets/payment/vnpay.svg',
       alt: 'VNPay',
     },
     {
       value: 'momo',
-      label: 'Ví Momo',
+      label: 'confirm.pay.momo',
       icon: 'assets/payment/momo.ico',
       alt: 'Momo',
     },
     {
       value: 'zalopay',
-      label: 'Ví ZaloPay',
+      label: 'confirm.pay.zalopay',
       icon: 'assets/payment/zalopay.png',
       alt: 'ZaloPay',
     },
     {
       value: 'atm',
-      label: 'Thẻ ATM nội địa',
-      desc: 'Cần đăng ký Internet Banking',
+      label: 'confirm.pay.atm',
+      desc: 'confirm.pay.atmDesc',
       icon: 'assets/payment/ic-card-vn.png',
       alt: 'ATM',
     },
     {
       value: 'visa',
-      label: 'Thẻ Visa / Master / JCB',
-      desc: 'Thanh toán quốc tế',
+      label: 'confirm.pay.visa',
+      desc: 'confirm.pay.visaDesc',
       icon: 'assets/payment/ic-card-gb.png',
       alt: 'VISA',
     },

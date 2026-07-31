@@ -28,7 +28,7 @@ import { MovieTicket } from '@features/client/profile/booking-history/booking-hi
 import { lastValueFrom } from 'rxjs';
 import { UserStore } from '@domain/user/data-access/user.store';
 import { UploadService } from '@core/services/upload/upload.service';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-info',
@@ -57,6 +57,7 @@ export class InfoComponent implements OnInit {
   private msg = inject(NzMessageService);
   private cdr = inject(ChangeDetectorRef);
   private uploadService = inject(UploadService);
+  private translate = inject(TranslateService);
   selectedFile: File | null = null;
   isSaving: boolean = false;
   selectedTicket: MovieTicket | null = null;
@@ -95,12 +96,12 @@ export class InfoComponent implements OnInit {
 
       const isImg = file.type === 'image/png' || file.type === 'image/jpeg';
       if (!isImg) {
-        this.msg.error('Chỉ hỗ trợ file JPG/PNG');
+        this.msg.error(this.translate.instant('profile.imageTypeError'));
         return;
       }
       const isLt2M = file.size / 1024 / 1024 < 2;
       if (!isLt2M) {
-        this.msg.error('Dung lượng ảnh phải dưới 2MB!');
+        this.msg.error(this.translate.instant('profile.imageSizeError'));
         return;
       }
 
@@ -108,7 +109,7 @@ export class InfoComponent implements OnInit {
         this.avatarPreview = img;
         this.selectedFile = file;
 
-        this.msg.info('Đã chọn ảnh. Bấm "Lưu thay đổi" để hoàn tất.');
+        this.msg.info(this.translate.instant('profile.imageSelected'));
         this.cdr.markForCheck();
       });
     }
@@ -118,7 +119,7 @@ export class InfoComponent implements OnInit {
     this.avatarPreview = this.user().avatar;
     this.selectedFile = null;
     inputElement.value = '';
-    this.msg.info('Đã hủy thay đổi ảnh');
+    this.msg.info(this.translate.instant('profile.imageReset'));
   }
 
   async submitProfile() {
@@ -148,10 +149,10 @@ export class InfoComponent implements OnInit {
 
       this.userStore.updateUserProfile({ id: userId, user: updatedData });
 
-      this.msg.success('Lưu thành công');
+      this.msg.success(this.translate.instant('profile.saveSuccess'));
       this.selectedFile = null;
     } catch (error) {
-      this.msg.error('Error when uploading profile');
+      this.msg.error(this.translate.instant('profile.uploadError'));
     } finally {
       this.isSaving = false;
       this.cdr.markForCheck();

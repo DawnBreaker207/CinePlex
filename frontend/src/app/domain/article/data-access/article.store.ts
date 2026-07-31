@@ -13,6 +13,7 @@ import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { pipe, switchMap, tap } from 'rxjs';
 import { tapResponse } from '@ngrx/operators';
 import { NzMessageService } from 'ng-zorro-antd/message';
+import { TranslateService } from '@ngx-translate/core';
 
 export interface ArticleState {
   articles: Article[];
@@ -48,6 +49,7 @@ export const ArticleStore = signalStore(
       store,
       articleService = inject(ArticleService),
       msg = inject(NzMessageService),
+      translate = inject(TranslateService),
     ) => ({
       setSelectedArticle(article: Article | null) {
         patchState(store, { selectArticle: article, error: null });
@@ -124,11 +126,11 @@ export const ArticleStore = signalStore(
                     articles: [article, ...state.articles],
                     saving: false,
                   }));
-                  msg.success('Đăng bài viết mới thành công');
+                  msg.success(translate.instant('article.createSuccess'));
                 },
                 error: (error: any) => {
                   patchState(store, { error, loadingDetails: false });
-                  msg.error('Đăng bài thất bại');
+                  msg.error(translate.instant('article.createFailed'));
                 },
               }),
             ),
@@ -153,11 +155,11 @@ export const ArticleStore = signalStore(
                     selectArticle: article,
                     saving: false,
                   }));
-                  msg.success('Cập nhật bài viết thành công');
+                  msg.success(translate.instant('article.updateSuccess'));
                 },
                 error: (error: any) => {
                   patchState(store, { error, loadingDetails: false });
-                  msg.error('Cập nhật thất bại');
+                  msg.error(translate.instant('article.updateFailed'));
                 },
               }),
             ),
@@ -180,11 +182,11 @@ export const ArticleStore = signalStore(
                         : state.selectArticle,
                     saving: false,
                   }));
-                  msg.success('Đã xóa bài viết');
+                  msg.success(translate.instant('article.deleteSuccess'));
                 },
                 error: (error: any) => {
                   patchState(store, { error, loadingDetails: false });
-                  msg.error('Xóa thất bại');
+                  msg.error(translate.instant('article.deleteFailed'));
                 },
               }),
             ),
