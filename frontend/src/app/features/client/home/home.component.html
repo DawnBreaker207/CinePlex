@@ -9,9 +9,7 @@
         <nz-tab [nzTitle]="'home.nowShowing' | translate">
           @if (homeStore.nowShowing(); as nowShowing) {
             <div class="mb-4 mt-4">
-              <h2
-                class="font-display font-semibold text-slate-900"
-              >
+              <h2 class="text-xl font-bold text-slate-900">
                 {{ "home.nowShowing" | translate }}
               </h2>
             </div>
@@ -35,9 +33,7 @@
         <nz-tab [nzTitle]="'home.comingSoon' | translate">
           @if (homeStore.comingSoon(); as comingSoon) {
             <div class="mb-4 mt-4">
-              <h2
-                class="font-display font-semibold text-slate-900"
-              >
+              <h2 class="text-xl font-bold text-slate-900">
                 {{ "home.comingSoon" | translate }}
               </h2>
             </div>

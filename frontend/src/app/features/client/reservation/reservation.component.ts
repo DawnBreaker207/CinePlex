@@ -28,7 +28,7 @@ import { ConfirmComponent } from '@features/client/reservation/components/confir
 import { SeatStore } from '@features/client/reservation/components/seat/seat.store';
 import { ReservationStore } from '@features/client/reservation/reservation.store';
 import { selectSelectedTheater } from '@domain/theater/data-access/theater.selectors';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-reservation',
@@ -41,8 +41,8 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
     SeatComponent,
     DetailFilmComponent,
     ConfirmComponent,
-    TranslateModule,
-  ],
+    TranslatePipe,
+    ],
   templateUrl: './reservation.component.html',
   styleUrl: './reservation.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

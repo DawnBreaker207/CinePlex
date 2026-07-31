@@ -14,7 +14,7 @@
       <div class="flex items-center gap-6">
         <a
           routerLink="/"
-          class="flex items-center gap-2 group cursor-pointer text-decoration-none shrink-0"
+          class="flex items-center gap-2 group cursor-pointer shrink-0"
         >
           <nz-icon
             nzType="shop"
@@ -40,6 +40,7 @@
           <a
             class="font-bold hover:text-primary transition-colors py-2"
             [routerLink]="header.path"
+            routerLinkActive="text-primary"
           >
             {{ header.name | translate | uppercase }}
           </a>

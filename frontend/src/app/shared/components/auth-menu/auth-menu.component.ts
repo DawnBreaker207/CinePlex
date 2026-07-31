@@ -1,4 +1,4 @@
-import { Component, computed, inject, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, computed, effect, inject, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 import { LucideAngularModule } from 'lucide-angular';
 import { NzDropDownModule } from 'ng-zorro-antd/dropdown';
@@ -35,18 +35,21 @@ interface MenuItem {
   styleUrls: ['./auth-menu.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class AuthMenuComponent implements OnInit {
+export class AuthMenuComponent {
   private store = inject(Store);
   private router = inject(Router);
   readonly authService = inject(AuthService);
   readonly settings = inject(SettingsService);
   readonly userStore = inject(UserStore);
+  private readonly userIdSignal = this.store.selectSignal(selectUserId);
 
-  ngOnInit() {
-    const userId = this.store.selectSignal(selectUserId)();
-    if (userId) {
-      this.userStore.loadUser(userId);
-    }
+  constructor() {
+    effect(() => {
+      const userId = this.userIdSignal();
+      if (userId) {
+        this.userStore.loadUser(userId);
+      }
+    });
   }
 
   public readonly profileMenu: MenuItem[] = PROFILE_MENU.map((item) => ({
@@ -54,9 +57,13 @@ export class AuthMenuComponent implements OnInit {
     action: item.action === 'logout' ? () => this.logout() : undefined,
   })) as MenuItem[];
 
+  private roleOf(user: { role?: string | string[] } | null | undefined) {
+    const role = user?.role;
+    return (Array.isArray(role) ? role[0] : role)?.toLowerCase();
+  }
+
   filterMenu = computed(() => {
-    const user = this.userStore.selectedUser();
-    const role = user?.role[0]?.toLowerCase();
+    const role = this.roleOf(this.userStore.selectedUser());
 
     return this.profileMenu.filter((item) => {
       if (item.role === 'both') return true;
@@ -74,6 +81,14 @@ export class AuthMenuComponent implements OnInit {
 
   login() {
     this.router.navigate(['/login']);
+  }
+
+  readonly isAdmin = computed(
+    () => this.roleOf(this.userStore.selectedUser()) === 'admin',
+  );
+
+  goAdmin() {
+    this.router.navigate(['/admin']);
   }
 
   toggleLang(en: boolean) {

@@ -8,7 +8,7 @@ import { NzIconModule } from 'ng-zorro-antd/icon';
 import { AuthService } from '@core/auth/auth.service';
 import { AuthMenuComponent } from '@shared/components/auth-menu/auth-menu.component';
 import { SelectShowtimeComponent } from '@features/client/home/components/select/select.component';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { HEADERS } from '@core/constants/column';
 
 @Component({
@@ -22,8 +22,8 @@ import { HEADERS } from '@core/constants/column';
     AuthMenuComponent,
     SelectShowtimeComponent,
     NzIconModule,
-    TranslateModule,
-  ],
+    TranslatePipe,
+    ],
   templateUrl: './header.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

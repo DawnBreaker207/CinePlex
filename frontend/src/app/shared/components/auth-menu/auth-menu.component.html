@@ -110,6 +110,18 @@
             </app-switch>
           </div>
 
+          @if (isAdmin()) {
+            <button
+              type="button"
+              (click)="goAdmin()"
+              class="flex w-full items-center gap-2 border-b border-border px-4 py-3 text-left text-sm font-medium text-gray-700 transition-colors hover:text-primary dark:border-gray-700 dark:text-gray-300 dark:hover:text-primary"
+            >
+              <i-lucide name="gauge" class="h-4 w-4 opacity-80" />
+              <span>{{ 'profileMenu.admin' | translate }}</span>
+              <i-lucide name="arrow-right" class="ml-auto h-4 w-4 opacity-60" />
+            </button>
+          }
+
           <div
             class="flex items-center justify-between gap-3 border-b border-border px-4 py-3 dark:border-gray-700"
           >

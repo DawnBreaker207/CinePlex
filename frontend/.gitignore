@@ -43,3 +43,12 @@ Thumbs.db
 
 # Jetbrain IDE
 .idea/*
+
+# Local tooling artifacts
+.impeccable/
+.playwright-mcp/
+ng-*.log
+test-results/
+AGENTS.md
+DESIGN.md
+PRODUCT.md

@@ -51,7 +51,6 @@ export const HomeStore = signalStore(
         const showtimes = showtimesForTheater();
         const movies = allMovies();
         if (!showtimes.length || !movies.length) return [];
-
         const movieMap = new Map(movies.map((m) => [m.id, m]));
         const uniqueIds = [...new Set(showtimes.map((st) => st.movieId))];
         return uniqueIds
