@@ -14,9 +14,18 @@
       {{ "admin.dashboard.paymentDistribution" | translate }}
     </h4>
   </div>
-  <div
-    echarts
-    [options]="options()"
-    class="w-full h-[250px] sm:h-[350px]"
-  ></div>
+  @if (payments().length === 0) {
+    <div
+      class="h-[250px] sm:h-[350px] flex flex-col items-center justify-center gap-2 text-gray-400 dark:text-gray-500"
+    >
+      <nz-icon nzType="pie-chart" nzTheme="outline" class="text-4xl" aria-hidden="true" />
+      <span class="text-sm">{{ "common.noData" | translate }}</span>
+    </div>
+  } @else {
+    <div
+      echarts
+      [options]="options()"
+      class="w-full h-[250px] sm:h-[350px]"
+    ></div>
+  }
 </div>

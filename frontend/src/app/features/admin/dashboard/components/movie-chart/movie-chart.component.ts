@@ -28,7 +28,13 @@ export class MovieChartComponent {
         trigger: 'axis',
         axisPointer: { type: 'shadow' },
       },
-      grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+      grid: {
+        left: '3%',
+        right: '4%',
+        bottom: '3%',
+        containLabel: true,
+        top: '10%',
+      },
       xAxis: {
         type: 'value',
         boundaryGap: [0, 0.01],
@@ -42,6 +48,14 @@ export class MovieChartComponent {
         axisLine: { show: false },
         axisTick: { show: false },
       },
+      ...(name.length > 10
+        ? {
+            dataZoom: [
+              { type: 'inside', yAxisIndex: 0, startValue: 0, endValue: 9 },
+              { type: 'slider', yAxisIndex: 0, startValue: 0, endValue: 9 },
+            ],
+          }
+        : {}),
       series: [
         {
           name: 'Revenue',

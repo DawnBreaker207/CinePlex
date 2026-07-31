@@ -24,14 +24,14 @@
       style="content-visibility: auto"
     >
       <router-outlet />
-      @defer (on idle) {
-        <app-chat />
-      }
-
       <nz-footer class="text-center text-slate-400 bg-transparent py-6">
         {{ "adminLayout.title" | translate }} &copy;
         {{ date.getFullYear() }}
       </nz-footer>
     </nz-content>
+
+    @defer (on idle) {
+      <app-chat />
+    }
   </nz-layout>
 </nz-layout>

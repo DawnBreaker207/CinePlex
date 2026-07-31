@@ -1,0 +1,190 @@
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+  <button
+    type="button"
+    class="text-left bg-white dark:bg-[#1a202c] p-5 rounded-xl shadow-sm border transition-all"
+    [class]="
+      filter() === 'FAILED_PAYMENT'
+        ? 'border-danger/40 ring-2 ring-danger/20 dark:border-danger/40'
+        : 'border-gray-100 dark:border-gray-700'
+    "
+    (click)="setFilter(filter() === 'FAILED_PAYMENT' ? 'ALL' : 'FAILED_PAYMENT')"
+  >
+    <div class="flex items-center justify-between">
+      <div>
+        <p class="text-gray-600 dark:text-gray-400 text-sm font-medium">
+          {{ "admin.dashboard.operations.failedPayments" | translate }}
+        </p>
+        <p class="text-2xl font-bold mt-1 text-danger">
+          {{ counts().FAILED_PAYMENT }}
+        </p>
+      </div>
+      <div
+        class="p-2.5 rounded-full bg-danger/10 text-danger flex items-center justify-center"
+      >
+        <nz-icon nzType="close-circle" nzTheme="fill" class="text-xl" aria-hidden="true" />
+      </div>
+    </div>
+  </button>
+
+  <button
+    type="button"
+    class="text-left bg-white dark:bg-[#1a202c] p-5 rounded-xl shadow-sm border transition-all"
+    [class]="
+      filter() === 'REFUND_REQUEST'
+        ? 'border-warning/40 ring-2 ring-warning/20 dark:border-warning/40'
+        : 'border-gray-100 dark:border-gray-700'
+    "
+    (click)="setFilter(filter() === 'REFUND_REQUEST' ? 'ALL' : 'REFUND_REQUEST')"
+  >
+    <div class="flex items-center justify-between">
+      <div>
+        <p class="text-gray-600 dark:text-gray-400 text-sm font-medium">
+          {{ "admin.dashboard.operations.refundRequests" | translate }}
+        </p>
+        <p class="text-2xl font-bold mt-1 text-warning">
+          {{ counts().REFUND_REQUEST }}
+        </p>
+      </div>
+      <div
+        class="p-2.5 rounded-full bg-warning/10 text-warning flex items-center justify-center"
+      >
+        <nz-icon nzType="undo" class="text-xl" aria-hidden="true" />
+      </div>
+    </div>
+  </button>
+
+  <button
+    type="button"
+    class="text-left bg-white dark:bg-[#1a202c] p-5 rounded-xl shadow-sm border transition-all"
+    [class]="
+      filter() === 'LOW_OCCUPANCY'
+        ? 'border-warning/40 ring-2 ring-warning/20 dark:border-warning/40'
+        : 'border-gray-100 dark:border-gray-700'
+    "
+    (click)="setFilter(filter() === 'LOW_OCCUPANCY' ? 'ALL' : 'LOW_OCCUPANCY')"
+  >
+    <div class="flex items-center justify-between">
+      <div>
+        <p class="text-gray-600 dark:text-gray-400 text-sm font-medium">
+          {{ "admin.dashboard.operations.lowOccupancy" | translate }}
+        </p>
+        <p class="text-2xl font-bold mt-1 text-warning">
+          {{ counts().LOW_OCCUPANCY }}
+        </p>
+      </div>
+      <div
+        class="p-2.5 rounded-full bg-warning/10 text-warning flex items-center justify-center"
+      >
+        <nz-icon nzType="warning" nzTheme="fill" class="text-xl" aria-hidden="true" />
+      </div>
+    </div>
+  </button>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
+  <div
+    class="bg-white dark:bg-[#1a202c] p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700"
+  >
+    <h4
+      class="text-base font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2 mb-4"
+    >
+      <nz-icon nzType="dashboard" nzTheme="fill" class="text-primary" aria-hidden="true" />
+      {{ "admin.dashboard.operations.occupancyTitle" | translate }}
+    </h4>
+    <div echarts [options]="gaugeOptions()" class="w-full h-[220px]"></div>
+    <p class="mt-2 text-xs text-gray-500 dark:text-gray-400 text-center">
+      {{ "admin.dashboard.operations.occupancyHint" | translate }}
+    </p>
+  </div>
+
+  <div
+    class="bg-white dark:bg-[#1a202c] p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700"
+  >
+    <h4
+      class="text-base font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2 mb-4"
+    >
+      <nz-icon nzType="fund" nzTheme="fill" class="text-primary" aria-hidden="true" />
+      {{ "admin.dashboard.operations.conversionTitle" | translate }}
+    </h4>
+    <div echarts [options]="funnelOptions()" class="w-full h-[220px]"></div>
+  </div>
+</div>
+
+<div
+  class="bg-white dark:bg-[#1a202c] mt-4 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700"
+>
+  <div class="flex items-center justify-between mb-4">
+    <h4
+      class="text-base font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2"
+    >
+      <nz-icon nzType="alert" nzTheme="fill" class="text-primary" aria-hidden="true" />
+      {{ "admin.dashboard.operations.title" | translate }}
+    </h4>
+    @if (filter() !== 'ALL') {
+      <button nz-button nzSize="small" nzType="text" (click)="setFilter('ALL')">
+        {{ "admin.dashboard.operations.all" | translate }}
+      </button>
+    }
+  </div>
+
+  @if (filtered().length === 0) {
+    <div
+      class="py-10 text-center text-gray-400 dark:text-gray-500 flex flex-col items-center gap-2"
+    >
+      <nz-icon nzType="check-circle" nzTheme="outline" class="text-4xl" aria-hidden="true" />
+      <span>{{ "admin.dashboard.operations.empty" | translate }}</span>
+    </div>
+  } @else {
+    <div class="overflow-x-auto">
+      <nz-table nzTemplateMode class="w-full min-w-[560px]">
+        <thead>
+          <tr>
+            <th>{{ "common.no" | translate }}</th>
+            <th>{{ "admin.dashboard.operations.issue" | translate }}</th>
+            <th>{{ "admin.dashboard.operations.amount" | translate }}</th>
+            <th>{{ "admin.dashboard.operations.time" | translate }}</th>
+            <th class="text-right">{{ "common.action" | translate }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (op of filtered(); track op.id) {
+            <tr>
+              <td>{{ op.id }}</td>
+              <td>
+                <p class="font-medium">{{ op.title }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400">{{ op.detail }}</p>
+              </td>
+              <td>
+                @if (op.amount) {
+                  {{ op.amount | currencyFormat }}
+                } @else {
+                  <span class="text-gray-400">-</span>
+                }
+              </td>
+              <td>{{ op.time }}</td>
+              <td>
+                <div class="flex justify-end gap-2">
+                  @switch (op.type) {
+                    @case ("FAILED_PAYMENT") {
+                      <button nz-button nzSize="small" nzType="primary" (click)="resolve.emit(op.id)">
+                        {{ "admin.dashboard.operations.retry" | translate }}
+                      </button>
+                    }
+                    @case ("REFUND_REQUEST") {
+                      <button nz-button nzSize="small" nzType="primary" (click)="resolve.emit(op.id)">
+                        {{ "admin.dashboard.operations.approve" | translate }}
+                      </button>
+                      <button nz-button nzSize="small" nzDanger (click)="resolve.emit(op.id)">
+                        {{ "admin.dashboard.operations.reject" | translate }}
+                      </button>
+                    }
+                  }
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </nz-table>
+    </div>
+  }
+</div>

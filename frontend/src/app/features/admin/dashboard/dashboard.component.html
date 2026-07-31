@@ -7,18 +7,11 @@
     >
       <!--  Filter  -->
       <div class="flex flex-1 items-center gap-3 min-w-0 flex-wrap">
-        <span
-          class="font-bold mr-2 flex items-center gap-2 shrink-0 text-primary"
-        >
-          <nz-icon nzType="filter" nzTheme="outline" aria-hidden="true" />
-          {{ "admin.dashboard.filter" | translate }}
-        </span>
-
         <!-- Times  -->
         <nz-select
           [ngModel]="dashboardStore.filterType()"
           (ngModelChange)="onFilterChange('filterType', $event)"
-          [nzOptionHeightPx]="36"
+          [nzOptionHeightPx]="32"
           [attr.aria-label]="'admin.dashboard.timeType' | translate"
           class="w-full sm:w-[140px]"
         >
@@ -114,21 +107,32 @@
           >
           </nz-date-picker>
         }
+      </div>
 
-        <!--   Refresh Button   -->
+      <!-- RIGHT: SETTING OPTIONS   -->
+      <div class="flex items-center gap-2 shrink-0 ml-4">
         <button
           nz-button
+          nzSize="small"
           nzType="text"
           (click)="refreshData()"
           [title]="'admin.dashboard.refresh' | translate"
+          [attr.aria-label]="'admin.dashboard.refresh' | translate"
           class="hover:text-primary transition-colors"
         >
           <nz-icon nzType="reload" aria-hidden="true" />
         </button>
-      </div>
-
-      <!-- RIGHT: SETTING OPTIONS   -->
-      <div class="flex items-center gap-4 shrink-0 ml-4">
+        <button
+          nz-button
+          nzSize="small"
+          nzType="text"
+          (click)="resetFilters()"
+          [title]="'admin.dashboard.resetFilter' | translate"
+          [attr.aria-label]="'admin.dashboard.resetFilter' | translate"
+          class="hover:text-primary transition-colors"
+        >
+          <nz-icon nzType="undo" aria-hidden="true" />
+        </button>
         <div
           class="flex items-center gap-2 text-gray-600 dark:text-gray-400 px-3 h-[32px] rounded-full border whitespace-nowrap"
           [ngClass]="
@@ -152,6 +156,8 @@
           nz-button
           nz-dropdown
           [nzDropdownMenu]="exportMenu"
+          [disabled]="isExporting"
+          [nzLoading]="isExporting"
           class="flex items-center gap-2"
         >
           <nz-icon nzType="download" aria-hidden="true" />
@@ -203,10 +209,8 @@
     </nz-alert>
   }
 
-  @if (dashboardStore.isLoading()) {
-    <app-loading />
-  } @else {
-    <nz-content class="m-4">
+  <nz-spin [nzSpinning]="dashboardStore.isLoading()">
+    <nz-content class="m-4 sm:ml-6">
       <nz-tabs class="dashboard-tabs">
         <nz-tab [nzTitle]="'admin.dashboard.overview' | translate">
           <nz-row nzGutter="[8, 12]" aria-live="polite">
@@ -218,6 +222,7 @@
                     dashboardStore.metrics()?.totalRevenue ?? 0 | currencyFormat
                   )?.toString() ?? ''
                 "
+                [trend]="trendPercent('totalRevenue')"
                 icon="DollarSign"
               />
             </nz-col>
@@ -229,6 +234,7 @@
                     dashboardStore.metrics()?.ticketsSold || 0 | number: '1.0-0'
                   )?.toString() ?? ''
                 "
+                [trend]="trendPercent('ticketsSold')"
                 icon="Tickets"
               />
             </nz-col>
@@ -236,6 +242,7 @@
               <app-dashboard-item
                 [title]="'admin.dashboard.activeTheaters' | translate"
                 [value]="(dashboardStore.metrics()?.activeTheaters || 0).toString()"
+                [trend]="trendPercent('activeTheaters')"
                 icon="Theater"
               />
             </nz-col>
@@ -243,6 +250,7 @@
               <app-dashboard-item
                 [title]="'admin.dashboard.seatUtilization' | translate"
                 [value]="(dashboardStore.metrics()?.seatUtilization || 0) + '%'"
+                [trend]="trendPercent('seatUtilization')"
                 icon="Armchair"
               />
             </nz-col>
@@ -251,7 +259,10 @@
           <nz-row nzGutter="[16, 16]" class="mt-4">
             <nz-col nzXs="24" nzMd="14">
               @defer (on viewport) {
-                <app-revenue-chart [revenues]="dashboardStore.revenues()" />
+                <app-revenue-chart
+                  [revenues]="dashboardStore.revenues()"
+                  [granularity]="granularity()"
+                />
               } @placeholder {
                 <div
                   class="h-[250px] sm:h-[350px] bg-gray-50 dark:bg-gray-800 rounded-xl animate-pulse"
@@ -293,14 +304,16 @@
           </nz-row>
 
           <nz-row nzGutter="[16, 16]" class="mt-4">
-            <nz-col nzXs="24" nzMd="12">
-              <nz-card>
-                <div class="font-bold text-xl">
+            <nz-col nzXs="24" nzMd="12" class="h-full">
+              <nz-card class="h-full dark:bg-[#1a202c] dark:border-gray-700">
+                <div
+                  class="font-bold text-xl text-gray-900 dark:text-gray-100"
+                >
                   {{ "admin.dashboard.theaterPerformance" | translate }}
                 </div>
                 <div class="min-h-[200px]">
                   @defer (on viewport) {
-                    <app-movie-table [data]="dashboardStore.theaters()" />
+                    <app-movie-table [data]="dashboardStore.movies()" />
                   } @placeholder {
                     <div
                       class="h-[200px] bg-gray-50 dark:bg-gray-800 rounded animate-pulse"
@@ -309,14 +322,16 @@
                 </div>
               </nz-card>
             </nz-col>
-            <nz-col nzXs="24" nzMd="12">
-              <nz-card>
-                <div class="font-bold text-xl">
+            <nz-col nzXs="24" nzMd="12" class="h-full">
+              <nz-card class="h-full dark:bg-[#1a202c] dark:border-gray-700">
+                <div
+                  class="font-bold text-xl text-gray-900 dark:text-gray-100"
+                >
                   {{ "admin.dashboard.movieAnalytics" | translate }}
                 </div>
                 <div class="min-h-[200px]">
                   @defer (on viewport) {
-                    <app-theater-table [data]="dashboardStore.movies()" />
+                    <app-theater-table [data]="dashboardStore.theaters()" />
                   } @placeholder {
                     <div
                       class="h-[200px] bg-gray-50 dark:bg-gray-800 rounded animate-pulse"
@@ -327,7 +342,15 @@
             </nz-col>
           </nz-row>
         </nz-tab>
+
+        <nz-tab [nzTitle]="'admin.dashboard.operations' | translate">
+          <app-operations
+            [operations]="dashboardStore.operations()"
+            [occupancy]="dashboardStore.metrics()?.seatUtilization ?? 0"
+            (resolve)="resolveOperation($event)"
+          />
+        </nz-tab>
       </nz-tabs>
     </nz-content>
-  }
+  </nz-spin>
 </nz-layout>

@@ -39,7 +39,7 @@ export class TheaterChartComponent {
         data: name,
         axisLabel: {
           interval: 0,
-          rotate: 0,
+          rotate: theaters.length > 4 ? 30 : 0,
           color: CHART_COLORS.textSecondary(),
         },
         axisTick: {

@@ -1,16 +1,28 @@
 <div class="overflow-x-auto">
   <nz-table nzTemplateMode class="w-full min-w-[300px]">
     <thead>
-      <th>{{ "common.movies" | translate }}</th>
-      <th>{{ "admin.dashboard.ticketCount" | translate }}</th>
-      <th>{{ "admin.dashboard.revenue" | translate }}</th>
+      <tr>
+        <th>{{ "common.theater" | translate }}</th>
+        <th>{{ "common.ticket" | translate }}</th>
+        <th>{{ "admin.dashboard.revenue" | translate }}</th>
+      </tr>
     </thead>
     <tbody>
-      @for (item of data(); track item) {
+      @for (item of data(); track item; let i = $index) {
         <tr>
-          <td>{{ item.movieName }}</td>
-          <td>{{ item.ticketSold }}</td>
-          <td>{{ item.revenue | currencyFormat }}</td>
+          <td>
+            <div class="flex items-center gap-2">
+              <span
+                class="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold text-white shrink-0"
+                [class]="i < 3 ? 'bg-primary' : 'bg-gray-400 dark:bg-gray-600'"
+              >
+                {{ i + 1 }}
+              </span>
+              {{ item.theaterName }}
+            </div>
+          </td>
+          <td>{{ item.ticketsSold }}</td>
+          <td>{{ item.totalRevenue | currencyFormat }}</td>
         </tr>
       } @empty {
         <tr>

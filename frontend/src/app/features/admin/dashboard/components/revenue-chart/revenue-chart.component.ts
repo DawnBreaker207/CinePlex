@@ -10,6 +10,7 @@ import { NzIconModule } from 'ng-zorro-antd/icon';
 import { RevenuePoint } from '@domain/dashboard/models/dashboard.model';
 import { TranslatePipe } from '@ngx-translate/core';
 import { CHART_COLORS } from '@shared/utils/colors';
+import dayjs from 'dayjs';
 
 @Component({
   selector: 'app-revenue-chart',
@@ -19,10 +20,42 @@ import { CHART_COLORS } from '@shared/utils/colors';
 })
 export class RevenueChartComponent {
   revenues = input<RevenuePoint[]>([]);
-  options = computed<EChartsCoreOption>(() => {
+  granularity = input<'day' | 'week' | 'month'>('day');
+
+  private readonly grouped = computed(() => {
     const revenues = this.revenues();
-    const date = revenues.map((r) => r.date.toString());
-    const revenue = revenues.map((r) => r.revenue);
+    const granularity = this.granularity();
+    if (granularity === 'day') {
+      return revenues.map((r) => ({
+        label: dayjs(r.date).format('DD/MM'),
+        value: r.revenue,
+      }));
+    }
+    const key =
+      granularity === 'week'
+        ? (d: dayjs.Dayjs) => d.startOf('week')
+        : (d: dayjs.Dayjs) => d.startOf('month');
+    const map = new Map<string, { label: string; sum: number }>();
+    for (const r of revenues) {
+      const bucket = key(dayjs(r.date));
+      const id = bucket.toISOString();
+      const entry = map.get(id) ?? {
+        label:
+          granularity === 'week'
+            ? bucket.format('DD/MM')
+            : bucket.format('MM/yyyy'),
+        sum: 0,
+      };
+      entry.sum += r.revenue;
+      map.set(id, entry);
+    }
+    return [...map.values()].map((p) => ({ label: p.label, value: p.sum }));
+  });
+
+  options = computed<EChartsCoreOption>(() => {
+    const points = this.grouped();
+    const date = points.map((p) => p.label);
+    const revenue = points.map((p) => p.value);
     const primary = CHART_COLORS.primary();
     return {
       tooltip: {

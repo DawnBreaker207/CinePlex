@@ -38,8 +38,9 @@ export class PaymentChartComponent {
           center: ['50%', '45%'],
           color: [
             CHART_COLORS.primary(),
-            CHART_COLORS.info(),
-            CHART_COLORS.warning(),
+            '#009e73',
+            '#e69f00',
+            '#56b4e9',
           ],
           itemStyle: { borderRadius: 2, borderColor: '#fff', borderWidth: 2 },
           label: { show: false },

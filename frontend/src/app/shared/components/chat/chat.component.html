@@ -10,7 +10,7 @@
         <div class="relative">
           <nz-avatar
             nzIcon="user"
-            class="!bg-white dark:!bg-[#1a202c] !text-primary shadow-sm"
+            class="bg-white! dark:bg-[#1a202c]! text-primary! shadow-sm"
             [nzSize]="36"
           ></nz-avatar>
           <span
@@ -53,7 +53,7 @@
             @if (msg.sender === "bot") {
               <nz-avatar
                 nzIcon="robot"
-                class="!bg-warning mt-auto shrink-0 shadow-sm"
+                class="bg-primary! mt-auto shrink-0 shadow-sm"
                 [nzSize]="28"
               ></nz-avatar>
             }
@@ -92,15 +92,15 @@
           <div class="flex gap-2">
             <nz-avatar
               nzIcon="robot"
-              class="!bg-orange-500 mt-auto shrink-0 shadow-sm"
+              class="bg-primary! mt-auto shrink-0 shadow-sm"
               [nzSize]="28"
             ></nz-avatar>
             <div
               class="bg-white dark:bg-[#1a202c] border border-gray-200 dark:border-gray-600 rounded-2xl rounded-tl-none px-4 py-3 shadow-sm flex items-center gap-1 h-10"
             >
-              <div class="typing-dot bg-gray-400 dark:bg-gray-500"></div>
-              <div class="typing-dot bg-gray-400 dark:bg-gray-500"></div>
-              <div class="typing-dot bg-gray-400 dark:bg-gray-500"></div>
+              <div class="typing-dot bg-primary/50"></div>
+              <div class="typing-dot bg-primary/50"></div>
+              <div class="typing-dot bg-primary/50"></div>
             </div>
           </div>
         </div>
@@ -131,7 +131,7 @@
           (click)="sendMessage()"
           [disabled]="!inputValue().trim() || isTyping()"
           [attr.aria-label]="'chat.send' | translate"
-          class="!bg-primary !border-none hover:!bg-primary-dark shrink-0 shadow-md"
+          class="bg-primary! border-none! hover:bg-primary-dark! shrink-0 shadow-md"
         >
           <nz-icon nzType="send" />
         </button>

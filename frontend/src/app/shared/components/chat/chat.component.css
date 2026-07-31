@@ -2,6 +2,22 @@
   font-size: 14px;
 }
 
+:host ::ng-deep .ant-btn-primary.ant-btn-circle {
+  background: var(--color-primary);
+  border-color: transparent;
+  color: #fff;
+}
+:host ::ng-deep .ant-btn-primary.ant-btn-circle:hover {
+  background: var(--color-primary-dark);
+  border-color: transparent;
+  color: #fff;
+}
+:host ::ng-deep .ant-btn-primary.ant-btn-circle:disabled {
+  background: var(--color-primary);
+  border-color: transparent;
+  color: rgba(255, 255, 255, 0.55);
+}
+
 :host ::ng-deep .markdown-body p {
   margin-bottom: 0.5rem;
 }
