@@ -12,6 +12,8 @@
       nzType="primary"
       nzSize="large"
       nzShape="circle"
+      nz-tooltip
+      [nzTooltipTitle]="'common.add' | translate"
       (click)="openMovieModal('add')"
     >
       <nz-icon nzType="plus" nzTheme="outline" />
@@ -171,6 +173,8 @@
                       nzType="text"
                       nzShape="circle"
                       [attr.aria-label]="'common.view' | translate"
+                      nz-tooltip
+                      [nzTooltipTitle]="'common.viewDetail' | translate"
                       (click)="openMovieModal('view', item.id)"
                     >
                       <nz-icon nzType="eye" nzTheme="twotone" />
@@ -180,6 +184,8 @@
                       nzType="text"
                       nzShape="circle"
                       [attr.aria-label]="'common.edit' | translate"
+                      nz-tooltip
+                      [nzTooltipTitle]="'common.edit' | translate"
                       (click)="openMovieModal('edit', item.id)"
                     >
                       <nz-icon
@@ -193,6 +199,8 @@
                       nzType="text"
                       nzShape="circle"
                       [attr.aria-label]="'common.delete' | translate"
+                      nz-tooltip
+                      [nzTooltipTitle]="'common.delete' | translate"
                       (click)="onDelete(item.id)"
                     >
                       <nz-icon

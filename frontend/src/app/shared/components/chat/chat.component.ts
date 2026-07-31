@@ -16,6 +16,7 @@ import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzAvatarModule } from 'ng-zorro-antd/avatar';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzFloatButtonModule } from 'ng-zorro-antd/float-button';
+import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
 import { ChatboxService } from '@core/services/report/chatbox.service';
 import { MarkdownComponent } from 'ngx-markdown';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
@@ -35,8 +36,9 @@ interface Message {
     NzInputModule,
     NzAvatarModule,
     NzIconModule,
-    NzFloatButtonModule,
-    MarkdownComponent,
+NzFloatButtonModule,
+NzToolTipModule,
+MarkdownComponent,
     TranslatePipe,
   ],
   templateUrl: './chat.component.html',

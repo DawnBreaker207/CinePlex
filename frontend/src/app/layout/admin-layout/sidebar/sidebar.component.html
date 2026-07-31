@@ -158,6 +158,8 @@
   <nz-icon
     [nzType]="isCollapsed() ? 'double-right' : 'double-left'"
     class="text-lg"
+    nz-tooltip
+    [nzTooltipTitle]="'navbar.toggleSidebar' | translate"
     [@iconFade]="isCollapsed() ? 'closed' : 'open'"
   />
 </ng-template>

@@ -15,6 +15,8 @@
       nzType="primary"
       nzSize="large"
       nzShape="circle"
+      nz-tooltip
+      [nzTooltipTitle]="'common.add' | translate"
       (click)="openDrawer()"
     >
       <nz-icon nzType="plus" nzTheme="outline" aria-hidden="true" />

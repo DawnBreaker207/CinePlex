@@ -28,6 +28,7 @@ import { ICON_COLORS, CHART_COLORS } from '@shared/utils/colors';
 import { confirmDelete } from '@shared/utils/confirm-delete';
 import { CurrencyFormatPipe } from '@shared/pipes/currency-format.pipe';
 import { NzTagModule } from 'ng-zorro-antd/tag';
+import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
 import { Mode } from '@core/constants/enum';
 
 @Component({
@@ -48,8 +49,9 @@ import { Mode } from '@core/constants/enum';
     TranslatePipe,
     NzProgressComponent,
     CurrencyFormatPipe,
-    NzTagModule,
-  ],
+NzTagModule,
+NzToolTipModule,
+],
   templateUrl: './voucher-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [NzModalService],

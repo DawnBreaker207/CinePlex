@@ -257,6 +257,8 @@
                 <nz-icon
                   [nzType]="loginPasswordVisible ? 'eye-invisible' : 'eye'"
                   (click)="loginPasswordVisible = !loginPasswordVisible"
+                  nz-tooltip
+                  [nzTooltipTitle]="'auth.togglePassword' | translate"
                   class="cursor-pointer text-gray-400"
                 />
               </ng-template>

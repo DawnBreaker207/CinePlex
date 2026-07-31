@@ -8,6 +8,7 @@ import {
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzGridModule } from 'ng-zorro-antd/grid';
 import { NzIconModule } from 'ng-zorro-antd/icon';
+import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
 import { NzEmptyModule } from 'ng-zorro-antd/empty';
 import { TranslatePipe } from '@ngx-translate/core';
 import { MovieService } from '@domain/movie/data-access/movie.service';
@@ -17,7 +18,7 @@ import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-favorites',
-  imports: [NzButtonModule, NzGridModule, NzIconModule, NzEmptyModule, TranslatePipe, RouterLink],
+  imports: [NzButtonModule, NzGridModule, NzIconModule, NzEmptyModule, NzToolTipModule, TranslatePipe, RouterLink],
   templateUrl: './favorites.component.html',
   styleUrls: ['./favorites.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,

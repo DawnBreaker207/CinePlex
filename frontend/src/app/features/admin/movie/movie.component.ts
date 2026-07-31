@@ -16,6 +16,7 @@ import { DatePipe, NgClass } from '@angular/common';
 import { NzSpaceComponent } from 'ng-zorro-antd/space';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { NzAvatarComponent } from 'ng-zorro-antd/avatar';
+import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
 import {
   NzListComponent,
   NzListItemComponent,
@@ -60,8 +61,9 @@ import { confirmDelete } from '@shared/utils/confirm-delete';
     NgClass,
     ReactiveFormsModule,
     NzAlertComponent,
-    NzSpinModule,
-    IsDeletedPipe,
+NzSpinModule,
+NzToolTipModule,
+IsDeletedPipe,
     LoadingComponent,
     TranslatePipe,
   ],

@@ -12,6 +12,7 @@ import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzSelectModule } from 'ng-zorro-antd/select';
 import { NzSpaceComponent } from 'ng-zorro-antd/space';
+import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
 import { NzTableModule, NzTableQueryParams } from 'ng-zorro-antd/table';
 import { Store } from '@ngrx/store';
 import { NzAlertComponent } from 'ng-zorro-antd/alert';
@@ -39,8 +40,9 @@ import { saveFooter } from '@shared/utils/form-utils';
     NzButtonModule,
     NzIconModule,
     DatePipe,
-    NzSpaceComponent,
-    ReactiveFormsModule,
+NzSpaceComponent,
+NzToolTipModule,
+ReactiveFormsModule,
     NzAlertComponent,
     LoadingComponent,
     TranslatePipe,

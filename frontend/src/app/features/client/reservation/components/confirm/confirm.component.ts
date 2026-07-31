@@ -9,6 +9,7 @@ import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzRadioModule } from 'ng-zorro-antd/radio';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzInputModule } from 'ng-zorro-antd/input';
+import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
 import { FormsModule } from '@angular/forms';
 import { CurrencyPipe } from '@angular/common';
 import { selectJwt } from '@core/auth/auth.selectors';
@@ -37,6 +38,7 @@ interface PaymentOption {
     NzRadioModule,
     NzButtonModule,
     NzInputModule,
+    NzToolTipModule,
     CurrencyPipe,
     TranslatePipe,
   ],

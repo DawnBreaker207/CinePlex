@@ -28,6 +28,8 @@
         (click)="toggleChat()"
         class="text-white/80 hover:text-white hover:bg-white/20 h-10 w-10 p-2 rounded-full transition-colors cursor-pointer"
         [attr.aria-label]="'chat.close' | translate"
+        nz-tooltip
+        [nzTooltipTitle]="'chat.close' | translate"
       >
         <nz-icon nzType="close" nzTheme="outline" />
       </button>
@@ -131,6 +133,8 @@
           (click)="sendMessage()"
           [disabled]="!inputValue().trim() || isTyping()"
           [attr.aria-label]="'chat.send' | translate"
+          nz-tooltip
+          [nzTooltipTitle]="'chat.send' | translate"
           class="bg-primary! border-none! hover:bg-primary-dark! shrink-0 shadow-md"
         >
           <nz-icon nzType="send" />
@@ -145,6 +149,9 @@
   [nzIcon]="iconTemplate"
   (nzOnClick)="toggleChat()"
   [nzShape]="'circle'"
+  nz-tooltip
+  [nzTooltipTitle]="isOpen() ? ('chat.close' | translate) : ('chat.open' | translate)"
+  [nzTooltipPlacement]="'left'"
 >
 </nz-float-button>
 

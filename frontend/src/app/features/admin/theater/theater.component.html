@@ -11,6 +11,8 @@
       nz-button
       nzType="primary"
       nzShape="circle"
+      nz-tooltip
+      [nzTooltipTitle]="'common.add' | translate"
       (click)="openModal('add')"
     >
       <nz-icon nzType="plus" nzTheme="outline" aria-hidden="true" />
@@ -91,6 +93,8 @@
                       nzType="text"
                       nzShape="circle"
                       [attr.aria-label]="'common.view' | translate"
+                      nz-tooltip
+                      [nzTooltipTitle]="'common.viewDetail' | translate"
                       (click)="openModal('view', item.id)"
                     >
                       <nz-icon
@@ -104,6 +108,8 @@
                       nzType="text"
                       nzShape="circle"
                       [attr.aria-label]="'common.edit' | translate"
+                      nz-tooltip
+                      [nzTooltipTitle]="'common.edit' | translate"
                       (click)="openModal('edit', item.id)"
                     >
                       <nz-icon
@@ -117,6 +123,8 @@
                       nzType="text"
                       nzShape="circle"
                       [attr.aria-label]="'common.delete' | translate"
+                      nz-tooltip
+                      [nzTooltipTitle]="'common.delete' | translate"
                       (click)="onDelete(item.id)"
                     >
                       <nz-icon

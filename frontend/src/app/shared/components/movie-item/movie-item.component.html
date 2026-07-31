@@ -31,6 +31,12 @@
         class="shrink-0 !p-1"
         [attr.aria-label]="'favorites.toggle' | translate"
         [attr.aria-pressed]="favorites.isFavorite(movie().id)"
+        nz-tooltip
+        [nzTooltipTitle]="
+          favorites.isFavorite(movie().id)
+            ? ('favorites.remove' | translate)
+            : ('favorites.toggle' | translate)
+        "
         (click)="toggleFavorite()"
       >
         <nz-icon

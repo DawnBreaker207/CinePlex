@@ -10,6 +10,7 @@ import {
 import { NzIconDirective } from 'ng-zorro-antd/icon';
 import { NzMenuDirective, NzMenuItemComponent } from 'ng-zorro-antd/menu';
 import { NzSiderComponent } from 'ng-zorro-antd/layout';
+import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
 import { NavigationEnd, Router, RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -22,8 +23,9 @@ import { animate, style, transition, trigger } from '@angular/animations';
     NzIconDirective,
     NzMenuDirective,
     NzMenuItemComponent,
-    NzSiderComponent,
-    RouterLink,
+NzSiderComponent,
+NzToolTipModule,
+RouterLink,
     TranslatePipe,
   ],
   templateUrl: './sidebar.component.html',

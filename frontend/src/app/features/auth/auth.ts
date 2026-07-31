@@ -4,6 +4,7 @@ import { matchValidator } from '@shared/utils/validators';
 import { NzButtonComponent } from 'ng-zorro-antd/button';
 import { NzAlertComponent } from 'ng-zorro-antd/alert';
 import { NzIconDirective } from 'ng-zorro-antd/icon';
+import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
 import { NzInputDirective, NzInputGroupComponent } from 'ng-zorro-antd/input';
 import { NzFormControlComponent, NzFormDirective, NzFormItemComponent, NzFormLabelComponent } from 'ng-zorro-antd/form';
 import { Store } from '@ngrx/store';
@@ -22,6 +23,7 @@ import { selectAuthError } from '@core/auth/auth.selectors';
   imports: [
     FormsModule, ReactiveFormsModule, RouterLink, TranslatePipe,
     NzButtonComponent, NzAlertComponent, NzIconDirective,
+    NzToolTipModule,
     NzInputDirective, NzInputGroupComponent,
     NzFormControlComponent, NzFormDirective, NzFormItemComponent, NzFormLabelComponent,
     NzCheckboxComponent, NzStringTemplateOutletDirective,

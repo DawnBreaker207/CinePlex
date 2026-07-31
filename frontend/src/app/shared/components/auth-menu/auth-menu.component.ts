@@ -4,6 +4,7 @@ import { LucideAngularModule } from 'lucide-angular';
 import { NzDropDownModule } from 'ng-zorro-antd/dropdown';
 import { Store } from '@ngrx/store';
 import { NzAvatarModule } from 'ng-zorro-antd/avatar';
+import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
 import { selectUserId } from '@core/auth/auth.selectors';
 import { AuthActions } from '@core/auth/auth.actions';
 import { AuthService } from '@core/auth/auth.service';
@@ -27,8 +28,9 @@ interface MenuItem {
   imports: [
     LucideAngularModule,
     NzDropDownModule,
-    NzAvatarModule,
-    AppSwitchComponent,
+NzAvatarModule,
+NzToolTipModule,
+AppSwitchComponent,
     TranslatePipe,
   ],
   templateUrl: './auth-menu.component.html',

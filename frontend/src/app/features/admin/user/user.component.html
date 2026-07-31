@@ -66,6 +66,8 @@
                 <nz-switch
                   [ngModel]="!item.isDeleted"
                   (ngModelChange)="updateStatus(item.userId, !$event)"
+                  nz-tooltip
+                  [nzTooltipTitle]="'admin.user.toggleStatus' | translate"
                 >
                 </nz-switch>
               </td>

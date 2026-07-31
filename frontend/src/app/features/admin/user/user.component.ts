@@ -11,6 +11,7 @@ import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzSpinModule } from 'ng-zorro-antd/spin';
 import { DatePipe } from '@angular/common';
 import { NzTagComponent } from 'ng-zorro-antd/tag';
+import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
 import { FormsModule } from '@angular/forms';
 import { NzAlertModule } from 'ng-zorro-antd/alert';
 import { IsDeletedPipe } from '@shared/pipes/is-deleted.pipe';
@@ -27,8 +28,9 @@ import { HEADER_COLUMNS } from '@core/constants/column';
     NzSwitchModule,
     NzIconModule,
     NzSpinModule,
-    NzAlertModule,
-    DatePipe,
+NzAlertModule,
+NzToolTipModule,
+DatePipe,
     IsDeletedPipe,
     NzTagComponent,
     FormsModule,
