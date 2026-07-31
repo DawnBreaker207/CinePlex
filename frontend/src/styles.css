@@ -1,23 +1,27 @@
 @import "tailwindcss" important;
 @import "quill/dist/quill.snow.css";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
-  --color-primary: #e53e3e;
-  --color-primary-dark: #c53030;
-  --color-primary-light: #fff5f5;
-  --color-surface: #1a202c;
-  --color-surface-card: #1e293b;
-  --color-muted: #718096;
-  --color-border: #e2e8f0;
-  --color-bg: #f7fafc;
+  --color-primary: #e4002b;
+  --color-primary-dark: #b4001f;
+  --color-primary-light: #feecf0;
+  --color-gold: #d9a441;
+  --color-surface: #1a1a1a;
+  --color-surface-card: #ffffff;
+  --color-muted: #6b6b6b;
+  --color-border: #e9e6e1;
+  --color-bg: #f7f6f4;
   --color-success: #2d7d46;
   --color-warning: #d97706;
   --color-info: #2563eb;
   --color-danger: #dc2626;
-  --color-text-secondary: #475569;
+  --color-text-secondary: #6b6b6b;
 
-  --font-display: "Bricolage Grotesque", sans-serif;
-  --font-sans: "Plus Jakarta Sans", sans-serif;
+  --font-display: "Anton", sans-serif;
+  --font-sans: "Manrope", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
 
   --radius-card: 12px;
   --radius-btn: 8px;
@@ -35,70 +39,125 @@
   }
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-primary: #e53e3e;
-    --color-primary-dark: #c53030;
-    --color-primary-light: #2d1515;
-    --color-muted: #a0aec0;
-    --color-border: #2d3748;
-    --color-bg: #0f1114;
-    --color-surface: #edf2f7;
-    --color-surface-card: #1a202c;
-    --color-text-secondary: #a0aec0;
-    --color-success: #48bb78;
-    --color-warning: #ecc94b;
-    --color-info: #63b3ed;
-    --color-danger: #fc8181;
-  }
-  body {
-    background-color: #0f1114;
-    color: #edf2f7;
-  }
-  .ant-input,
-  .ant-input-affix-wrapper,
-  .ant-select-selector,
-  .ant-picker {
-    background-color: #1a202c !important;
-    color: #edf2f7 !important;
-    border-color: #2d3748 !important;
-  }
-  .ant-layout {
-    background-color: #0f1114 !important;
-  }
-  ::-webkit-scrollbar-track {
-    background: #1a202c;
-  }
-  ::-webkit-scrollbar-thumb {
-    background: #4a5568;
-  }
-  ::-webkit-scrollbar-thumb:hover {
-    background: #718096;
-  }
+.dark {
+  --color-primary: #ff4d5e;
+  --color-primary-dark: #ff6b7a;
+  --color-primary-light: #2d1515;
+  --color-gold: #e8bf64;
+  --color-muted: #a0aec0;
+  --color-border: #2d3748;
+  --color-bg: #0f1114;
+  --color-surface: #edf2f7;
+  --color-surface-card: #1a202c;
+  --color-text-secondary: #a0aec0;
+  --color-success: #48bb78;
+  --color-warning: #ecc94b;
+  --color-info: #63b3ed;
+  --color-danger: #fc8181;
+}
+.dark body {
+  background-color: #0f1114;
+  color: #edf2f7;
+}
+.dark .ant-input,
+.dark .ant-input-affix-wrapper,
+.dark .ant-select-selector,
+.dark .ant-picker {
+  background-color: #1a202c !important;
+  color: #edf2f7 !important;
+  border-color: #2d3748 !important;
+}
+.dark .ant-layout {
+  background-color: #0f1114 !important;
+}
+.dark ::-webkit-scrollbar-track {
+  background: #1a202c;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: #4a5568;
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #718096;
 }
 
-/* Client theme — always-light content on dark cinema shell */
-[nz-layout][data-theme="client"],
-[data-theme="client"] {
-  --color-primary-light: #fff5f5;
-  --color-muted: #718096;
-  --color-border: #e2e8f0;
-  --color-bg: #f7fafc;
-  --color-surface-card: #ffffff;
-  --color-text-secondary: #475569;
-  --color-success: #2d7d46;
-  --color-warning: #d97706;
-  --color-info: #2563eb;
-  --color-danger: #dc2626;
-  background-color: #0f1114;
+/* Client theme — light-first, dark mode supported via .dark overrides above */
+[nz-layout][data-theme="client"] {
+  background-color: var(--color-bg);
 }
-[data-theme="client"] .ant-input,
-[data-theme="client"] .ant-input-affix-wrapper,
-[data-theme="client"] .ant-select-selector,
-[data-theme="client"] .ant-picker {
-  background-color: #ffffff !important;
-  color: #1a202c !important;
-  border-color: #e2e8f0 !important;
+
+/* Client dark fallbacks for utility classes that predate dark: variants */
+.dark [data-theme="client"] .bg-white,
+.dark [data-theme="client"] .bg-gray-50 {
+  background-color: #1a202c;
+}
+.dark [data-theme="client"] .bg-gray-100 {
+  background-color: #232b36;
+}
+.dark [data-theme="client"] .text-slate-900,
+.dark [data-theme="client"] .text-gray-900,
+.dark [data-theme="client"] .text-gray-800 {
+  color: #edf2f7;
+}
+.dark [data-theme="client"] .text-slate-600,
+.dark [data-theme="client"] .text-slate-700,
+.dark [data-theme="client"] .text-gray-700,
+.dark [data-theme="client"] .text-gray-600 {
+  color: #cbd5e1;
+}
+.dark [data-theme="client"] .text-slate-500,
+.dark [data-theme="client"] .text-slate-400,
+.dark [data-theme="client"] .text-slate-300,
+.dark [data-theme="client"] .text-gray-500,
+.dark [data-theme="client"] .text-gray-400,
+.dark [data-theme="client"] .text-gray-300 {
+  color: #a0aec0;
+}
+.dark [data-theme="client"] .border-slate-200,
+.dark [data-theme="client"] .border-slate-100,
+.dark [data-theme="client"] .border-slate-300,
+.dark [data-theme="client"] .border-gray-200,
+.dark [data-theme="client"] .border-gray-100,
+.dark [data-theme="client"] .border-gray-300,
+.dark [data-theme="client"] .border-gray-50 {
+  border-color: #2d3748;
+}
+.dark [data-theme="client"] .bg-slate-100,
+.dark [data-theme="client"] .bg-slate-50 {
+  background-color: #232b36;
+}
+
+/* Dark fallbacks for ng-zorro modals (mount in body, outside client scope) */
+.dark .ant-modal-content {
+  background-color: #1a202c;
+}
+.dark .ant-modal-mask {
+  background-color: rgba(0, 0, 0, 0.6);
+}
+.dark .ant-modal .text-gray-900,
+.dark .ant-modal .text-gray-800 {
+  color: #edf2f7;
+}
+.dark .ant-modal .text-gray-600,
+.dark .ant-modal .text-gray-700 {
+  color: #cbd5e1;
+}
+.dark .ant-modal .text-gray-400,
+.dark .ant-modal .text-gray-500,
+.dark .ant-modal .text-gray-300 {
+  color: #a0aec0;
+}
+.dark .ant-modal .bg-gray-50,
+.dark .ant-modal .bg-gray-100 {
+  background-color: #232b36;
+}
+.dark .ant-modal .border-gray-200,
+.dark .ant-modal .border-gray-100,
+.dark .ant-modal .border-gray-300,
+.dark .ant-modal .border-dashed {
+  border-color: #2d3748;
+}
+.dark .ant-modal-content .ant-modal-close {
+  color: #a0aec0;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -145,7 +204,8 @@ body {
 .ant-select-focused .ant-select-selector,
 .ant-picker-focused {
   border-color: var(--color-primary) !important;
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 10%, transparent) !important;
+  box-shadow: 0 0 0 3px
+    color-mix(in srgb, var(--color-primary) 10%, transparent) !important;
 }
 
 ::-webkit-scrollbar {
