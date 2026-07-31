@@ -2,6 +2,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { CountdownComponent } from './countdown.component';
 
+import { testProviders } from '@shared/testing/test-providers';
+
 describe('CountdownComponent', () => {
   let component: CountdownComponent;
   let fixture: ComponentFixture<CountdownComponent>;
@@ -9,6 +11,7 @@ describe('CountdownComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [CountdownComponent],
+      providers: [testProviders],
     }).compileComponents();
 
     fixture = TestBed.createComponent(CountdownComponent);

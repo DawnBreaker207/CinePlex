@@ -2,11 +2,15 @@ import { TestBed } from '@angular/core/testing';
 
 import { MovieService } from './movie.service';
 
+import { testProviders } from '@shared/testing/test-providers';
+
 describe('Movie', () => {
   let service: MovieService;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({});
+    TestBed.configureTestingModule({
+      providers: [testProviders],
+    });
     service = TestBed.inject(MovieService);
   });
 

@@ -4,6 +4,8 @@ import { of } from 'rxjs';
 
 import { MovieTableComponent } from './movie-table.component';
 
+import { testProviders } from '@shared/testing/test-providers';
+
 describe('MovieTableComponent', () => {
   let component: MovieTableComponent;
   let fixture: ComponentFixture<MovieTableComponent>;
@@ -12,6 +14,7 @@ describe('MovieTableComponent', () => {
     await TestBed.configureTestingModule({
       imports: [MovieTableComponent],
       providers: [
+        ...testProviders,
         {
           provide: TranslateService,
           useValue: {

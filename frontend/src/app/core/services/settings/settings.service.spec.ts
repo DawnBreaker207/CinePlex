@@ -48,6 +48,13 @@ describe('SettingsService', () => {
   it('should restore stored preferences', () => {
     localStorage.setItem('cineplex.theme', 'dark');
     localStorage.setItem('cineplex.lang', 'en');
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: TranslateService, useValue: { use: jasmine.createSpy('use') } },
+        { provide: NzI18nService, useValue: { setLocale: jasmine.createSpy('setLocale') } },
+      ],
+    });
     const restored = TestBed.inject(SettingsService);
     expect(restored.theme()).toBe(true);
     expect(restored.lang()).toBe('en');

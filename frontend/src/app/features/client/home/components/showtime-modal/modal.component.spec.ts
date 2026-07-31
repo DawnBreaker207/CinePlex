@@ -2,6 +2,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { ShowtimeModalComponent } from './modal.component';
 
+import { testProviders } from '@shared/testing/test-providers';
+
 describe('ShowtimeModalComponent', () => {
   let component: ShowtimeModalComponent;
   let fixture: ComponentFixture<ShowtimeModalComponent>;
@@ -9,6 +11,7 @@ describe('ShowtimeModalComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [ShowtimeModalComponent],
+      providers: [testProviders],
     }).compileComponents();
 
     fixture = TestBed.createComponent(ShowtimeModalComponent);

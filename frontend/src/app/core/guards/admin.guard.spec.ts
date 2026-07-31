@@ -3,12 +3,16 @@ import { CanMatchFn } from '@angular/router';
 
 import { AdminGuard } from './admin.guard';
 
+import { testProviders } from '@shared/testing/test-providers';
+
 describe('AdminGuard', () => {
   const executeGuard: CanMatchFn = (...guardParameters) =>
     TestBed.runInInjectionContext(() => AdminGuard(...guardParameters));
 
   beforeEach(() => {
-    TestBed.configureTestingModule({});
+    TestBed.configureTestingModule({
+      providers: [testProviders],
+    });
   });
 
   it('should be created', () => {
