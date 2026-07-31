@@ -7,6 +7,7 @@ import {
 } from '@ngrx/effects';
 import { catchError, map, of, switchMap, tap } from 'rxjs';
 import { Router } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
 import { AuthService } from '@core/auth/auth.service';
 import { StorageService } from '@core/services/storage/storage.service';
 import { ToastService } from '@core/services/toast/toast.service';
@@ -18,7 +19,16 @@ export class AuthEffects {
   private authService = inject(AuthService);
   private storageService = inject(StorageService);
   private toastService = inject(ToastService);
+  private translate = inject(TranslateService);
   private router = inject(Router);
+
+  private toast(key: string, type: 'success' | 'error' = 'success') {
+    this.toastService.createNotification({
+      title: this.translate.instant('auth.toast.success'),
+      message: this.translate.instant(key),
+      type,
+    });
+  }
 
   initAuth$ = createEffect(() => {
     return this.actions$.pipe(
@@ -45,11 +55,7 @@ export class AuthEffects {
       switchMap(({ user }) =>
         this.authService.register(user).pipe(
           tap(() => {
-            this.toastService.createNotification({
-              message: 'Đăng ký thành công',
-              title: 'Thành công',
-              type: 'success',
-            });
+            this.toast('auth.toast.registerSuccess');
           }),
           map((token) => AuthActions.loadRegisterSuccess({ token })),
           catchError((err) =>
@@ -68,11 +74,7 @@ export class AuthEffects {
           tap((jwt) => {
             console.log('[login$] jwt received:', jwt);
             this.storageService.setJWT(jwt);
-            this.toastService.createNotification({
-              message: 'Đăng nhập thành công',
-              title: 'Thành công',
-              type: 'success',
-            });
+            this.toast('auth.toast.loginSuccess');
             this.router.navigate(['/home']);
           }),
           map((jwt) => {
@@ -94,11 +96,7 @@ export class AuthEffects {
       switchMap(() =>
         this.authService.logout().pipe(
           tap(() => {
-            this.toastService.createNotification({
-              type: 'success',
-              title: 'Thành công',
-              message: 'Tài khoản của bạn đã đăng xuất thành công',
-            });
+            this.toast('auth.toast.logoutSuccess');
             this.storageService.clearAuth();
             this.router.navigate(['/home']);
           }),

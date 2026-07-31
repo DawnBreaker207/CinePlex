@@ -1,203 +1,501 @@
-import { HttpEvent, HttpHandlerFn, HttpRequest, HttpResponse } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
 import {
-  MOCK_THEATERS, MOCK_MOVIES, getShowtimes,
-  MOCK_SEATS, MOCK_USERS, getJwtPayload, MOCK_JWT_TOKEN, MOCK_RESERVATION_INIT, MOCK_RESERVATION,
+  HttpErrorResponse,
+  HttpEvent,
+  HttpHandlerFn,
+  HttpRequest,
+  HttpResponse,
+} from '@angular/common/http';
+import { Observable, of, throwError } from 'rxjs';
+import {
+  MOCK_ARTICLES,
+  MOCK_DASHBOARD_SUMMARY,
+  MOCK_MOVIES,
+  MOCK_RESERVATIONS,
+  MOCK_THEATERS,
+  MOCK_USERS,
+  MOCK_VOUCHERS,
+  addUser,
+  findByCredential,
+  getSeats,
+  getShowtimes,
+  publicUsers,
+  toReservationProfile,
+  type MockUser,
+  VOUCHER_CALCULATIONS,
 } from './mock-data';
 
-function ok(data: unknown) {
-  return of(new HttpResponse({ status: 200, body: { code: 'OK', message: 'success', data } }));
+const delay = (ms = 300) =>
+  new Promise((resolve) => setTimeout(resolve, ms));
+
+function b64url(input: string): string {
+  return btoa(unescape(encodeURIComponent(input)))
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
 }
 
-function paginated(data: unknown) {
-  return ok({ content: data, pagination: { page: 0, size: 100, totalElements: Array.isArray(data) ? data.length : 0, totalPages: 1 } });
+function mockJwt(user: MockUser): string {
+  const payload = {
+    sub: user.userId,
+    username: user.username,
+    email: user.email,
+    roles: [user.role],
+    exp: Math.floor(Date.now() / 1000) + 7 * 86400,
+  };
+  const header = { alg: 'none', typ: 'JWT' };
+  return `${b64url(JSON.stringify(header))}.${b64url(JSON.stringify(payload))}.mock-sig`;
 }
 
-export function mockInterceptor(req: HttpRequest<unknown>, next: HttpHandlerFn): Observable<HttpEvent<unknown>> {
+function ok<T>(data: T) {
+  return of(
+    new HttpResponse({
+      status: 200,
+      body: { code: 'OK', message: 'success', data },
+    }),
+  );
+}
+
+function fail(message: string, status = 400) {
+  return throwError(
+    () =>
+      new HttpErrorResponse({
+        status,
+        statusText: message,
+        error: { code: 'ERROR', message },
+      }),
+  );
+}
+
+function paginate(data: unknown[], page = 0, size = 100) {
+  const totalElements = data.length;
+  const start = page * size;
+  const content = size > 0 ? data.slice(start, start + size) : data;
+  return ok({
+    content,
+    pagination: {
+      pageNumber: page,
+      pageSize: size,
+      totalElements,
+    },
+  });
+}
+
+const num = (v: string | null | undefined, fallback = 0) => {
+  const n = Number(v);
+  return Number.isNaN(n) ? fallback : n;
+};
+
+export function mockInterceptor(
+  req: HttpRequest<unknown>,
+  next: HttpHandlerFn,
+): Observable<HttpEvent<unknown>> {
   const { method, url } = req;
+  const params = req.params;
+  const page = num(params.get('page'), 0);
+  const size = num(params.get('size'), 100);
 
-  if (url.includes('/api/v1/auth/login') && method === 'POST') {
-    const body = req.body as any;
-    console.log('[mock] login request body:', body);
-    const { identifier, password } = body;
-    const user = MOCK_USERS.find(u => u.email === identifier && u.password === password);
-    console.log('[mock] found user:', user);
-    if (!user) return of(new HttpResponse({ status: 401, body: { code: 'ERROR', message: 'Sai email hoặc mật khẩu' } }));
-    const jwtData = { userId: user.id, username: user.name, email: user.email, accessToken: MOCK_JWT_TOKEN };
-    console.log('[mock] returning jwt:', jwtData);
-    return ok(jwtData);
+  if (!url.includes('/api/v1') && !url.includes('api.themoviedb.org')) {
+    return next(req);
   }
 
-  if (url.includes('/api/v1/auth/register') && method === 'POST') {
+  /* ---------------------------- AUTH ---------------------------- */
+  if (url.includes('/auth/login') && method === 'POST') {
+    const { identifier, password } = req.body as any;
+    const user = findByCredential(identifier, password);
+    if (!user) return fail('Sai email hoặc mật khẩu', 401);
+    const jwt = {
+      userId: user.userId,
+      username: user.username,
+      email: user.email,
+      accessToken: mockJwt(user),
+    };
+    return ok(jwt);
+  }
+
+  if (url.includes('/auth/register') && method === 'POST') {
+    const { username, email, password } = req.body as any;
+    addUser(username, email, password);
     return ok('Tài khoản đã được tạo thành công');
   }
 
-  if (url.includes('/api/v1/auth/logout') && method === 'POST') {
+  if (url.includes('/auth/logout') && method === 'POST') {
     return ok(null);
   }
 
-  if (url.includes('/api/v1/auth/refresh-token') && method === 'POST') {
-    return ok({ accessToken: MOCK_JWT_TOKEN });
+  if (url.includes('/auth/refresh-token') && method === 'POST') {
+    const user = MOCK_USERS[0];
+    return ok({ accessToken: mockJwt(user) });
   }
 
-  if (url.includes('/api/v1/theater/search') && method === 'GET') {
-    const location = req.params?.get('location')?.toLowerCase() || '';
-    return paginated(MOCK_THEATERS.filter(t => t.name.toLowerCase().includes(location) || t.location.toLowerCase().includes(location)));
+  /* ---------------------------- MOVIE ---------------------------- */
+  if (url.match(/\/movie\/\d+$/) && method === 'GET') {
+    const id = num(url.split('/').pop());
+    return ok(MOCK_MOVIES.find((m) => m.id === id) || null);
   }
 
-  if (url.match(/\/api\/v1\/theater\/\d+$/) && method === 'GET') {
-    const id = parseInt(url.split('/').pop()!);
-    return ok(MOCK_THEATERS.find(t => t.id === id) || null);
+  if (url.includes('/movie') && method === 'POST') {
+    const movie = { id: MOCK_MOVIES.length + 1, ...(req.body as any) };
+    (MOCK_MOVIES as any[]).push(movie);
+    return ok(movie);
   }
 
-  if (url.includes('/api/v1/theater') && method === 'GET') {
-    return paginated(MOCK_THEATERS);
+  if (url.match(/\/movie\/\d+$/) && method === 'PUT') {
+    const id = num(url.split('/').pop());
+    const idx = MOCK_MOVIES.findIndex((m) => m.id === id);
+    if (idx === -1) return fail('Không tìm thấy phim', 404);
+    MOCK_MOVIES[idx] = { ...MOCK_MOVIES[idx], ...(req.body as any), id };
+    return ok(MOCK_MOVIES[idx]);
   }
 
-  if (url.match(/\/api\/v1\/movie\/\d+$/) && method === 'GET') {
-    const id = parseInt(url.split('/').pop()!);
-    return ok(MOCK_MOVIES.find(m => m.id === id) || null);
+  if (url.match(/\/movie\/\d+$/) && method === 'DELETE') {
+    const id = num(url.split('/').pop());
+    const idx = MOCK_MOVIES.findIndex((m) => m.id === id);
+    if (idx !== -1) MOCK_MOVIES.splice(idx, 1);
+    return ok(null);
   }
 
-  if (url.includes('/api/v1/movie') && method === 'GET') {
-    return paginated(MOCK_MOVIES);
+  if (url.includes('/movie') && method === 'GET') {
+    const query = (params.get('query') || '').toLowerCase();
+    let data = MOCK_MOVIES.filter(
+      (m) =>
+        !query ||
+        m.title.toLowerCase().includes(query) ||
+        m.originalTitle.toLowerCase().includes(query),
+    );
+    return paginate(data, page, size);
   }
 
-  if (url.includes('/api/v1/showtime/available/movies/') && method === 'GET') {
-    const movieId = parseInt(url.split('/').pop()!);
-    const all = getShowtimes(1).concat(getShowtimes(2)).concat(getShowtimes(3));
+  /* ---------------------------- THEATER ---------------------------- */
+  if (url.includes('/theater/search') && method === 'GET') {
+    const location = (params.get('location') || '').toLowerCase();
+    const data = MOCK_THEATERS.filter(
+      (t) =>
+        !location ||
+        t.name.toLowerCase().includes(location) ||
+        t.location.toLowerCase().includes(location),
+    );
+    return paginate(data);
+  }
+
+  if (url.match(/\/theater\/\d+$/) && method === 'GET') {
+    const id = num(url.split('/').pop());
+    return ok(MOCK_THEATERS.find((t) => t.id === id) || null);
+  }
+
+  if (url.includes('/theater') && method === 'POST') {
+    const theater = { id: MOCK_THEATERS.length + 1, ...(req.body as any) };
+    (MOCK_THEATERS as any[]).push(theater);
+    return ok(theater);
+  }
+
+  if (url.match(/\/theater\/\d+$/) && method === 'PUT') {
+    const id = num(url.split('/').pop());
+    const idx = MOCK_THEATERS.findIndex((t) => t.id === id);
+    if (idx === -1) return fail('Không tìm thấy rạp', 404);
+    MOCK_THEATERS[idx] = { ...MOCK_THEATERS[idx], ...(req.body as any), id };
+    return ok(MOCK_THEATERS[idx]);
+  }
+
+  if (url.match(/\/theater\/\d+$/) && method === 'DELETE') {
+    const id = num(url.split('/').pop());
+    const idx = MOCK_THEATERS.findIndex((t) => t.id === id);
+    if (idx !== -1) MOCK_THEATERS.splice(idx, 1);
+    return ok(null);
+  }
+
+  if (url.includes('/theater') && method === 'GET') {
+    return paginate(MOCK_THEATERS, page, size);
+  }
+
+  /* ---------------------------- SHOWTIME ---------------------------- */
+  if (url.match(/\/showtime\/available\/movies\/\d+$/) && method === 'GET') {
+    const movieId = num(url.split('/').pop());
+    const all = [1, 2, 3, 4].flatMap((tid) => getShowtimes(tid));
     return ok(all.filter((st: any) => st.movieId === movieId));
   }
 
-  if (url.includes('/api/v1/showtime/theaters/') && method === 'GET') {
-    const theaterId = parseInt(url.match(/theaters\/(\d+)/)?.[1] || '1');
-    return paginated(getShowtimes(theaterId));
+  if (url.match(/\/showtime\/theaters\/\d+$/) && method === 'GET') {
+    const theaterId = num(url.match(/theaters\/(\d+)/)?.[1]);
+    return paginate(getShowtimes(theaterId), page, size);
   }
 
-  if (url.includes('/api/v1/showtime/available') && method === 'GET') {
+  if (url.includes('/showtime/available') && method === 'GET') {
     return ok(getShowtimes(1));
   }
 
-  if (url.match(/\/api\/v1\/showtime\/\d+$/) && method === 'GET') {
-    const id = parseInt(url.split('/').pop()!);
-    return ok(getShowtimes(1).find((st: any) => st.id === id) || null);
+  if (url.match(/\/showtime\/movies\/\d+$/) && method === 'GET') {
+    const movieId = num(url.match(/movies\/(\d+)/)?.[1]);
+    const all = [1, 2, 3, 4].flatMap((tid) => getShowtimes(tid));
+    return paginate(all.filter((st: any) => st.movieId === movieId), page, size);
   }
 
-  if (url.includes('/api/v1/showtime') && method === 'GET') {
-    return ok(getShowtimes(1));
+  if (url.match(/\/showtime\/\d+$/) && method === 'GET') {
+    const id = num(url.split('/').pop());
+    const all = [1, 2, 3, 4].flatMap((tid) => getShowtimes(tid));
+    return ok(all.find((st: any) => st.id === id) || null);
   }
 
-  if (url.includes('/api/v1/seats/showtime/') && method === 'GET') {
-    return ok(MOCK_SEATS);
+  if (url.includes('/showtime') && method === 'POST') {
+    const all = [1, 2, 3, 4].flatMap((tid) => getShowtimes(tid));
+    const showtime = {
+      id: Math.max(...all.map((s: any) => s.id)) + 1,
+      ...(req.body as any),
+    };
+    return ok(showtime);
   }
 
-  if (url.includes('/api/v1/reservation/init') && method === 'POST') {
-    return ok(MOCK_RESERVATION_INIT);
+  if (url.match(/\/showtime\/\d+$/) && method === 'PUT') {
+    const id = num(url.split('/').pop());
+    return ok({ id, ...(req.body as any) });
   }
 
-  if (url.includes('/api/v1/reservation/seatHold') && method === 'POST') {
+  if (url.match(/\/showtime\/\d+$/) && method === 'DELETE') {
     return ok(null);
   }
 
-  if (url.includes('/api/v1/reservation/me') && method === 'GET') {
-    return paginated([{
-      id: 'mock-res-1', movieTitle: 'Kẻ Trộm Mặt Trăng 4',
-      moviePoster: 'https://image.tmdb.org/t/p/w500/l3zC6FSDz2TBcZ3FUlOqmlCT6Oc.jpg',
-      theaterName: 'CGV Vincom Center', showDate: new Date(), showTime: '19:00',
-      seats: ['D4', 'D5'], totalPrice: 130000, status: 'CONFIRMED',
-      ticketCode: 'TICKET-MOCK-001', createdAt: new Date(),
-    }]);
+  if (url.includes('/showtime') && method === 'GET') {
+    return ok(getShowtimes(1));
   }
 
-  if (url.match(/\/api\/v1\/reservation\/.+?\/restore/) && method === 'GET') {
-    return ok(MOCK_RESERVATION_INIT);
+  /* ---------------------------- SEAT ---------------------------- */
+  if (url.match(/\/seats\/showtime\/\d+\/available$/) && method === 'GET') {
+    const showtimeId = num(url.match(/showtime\/(\d+)/)?.[1]);
+    return ok(getSeats(showtimeId));
   }
 
-  if (url.match(/\/api\/v1\/reservation\/\d+$/) && method === 'GET') {
-    return ok(MOCK_RESERVATION);
+  if (url.match(/\/seats\/showtime\/\d+$/) && method === 'GET') {
+    const showtimeId = num(url.match(/showtime\/(\d+)/)?.[1]);
+    return ok(getSeats(showtimeId));
   }
 
-  if (url.includes('/api/v1/reservation') && method === 'GET') {
-    return paginated([MOCK_RESERVATION]);
+  /* ---------------------------- RESERVATION ---------------------------- */
+  if (url.includes('/reservation/init') && method === 'POST') {
+    const body = req.body as any;
+    const reservationId = `res-${Math.floor(1000 + Math.random() * 9000)}`;
+    return ok({
+      reservationId,
+      showtimeId: body.showtimeId,
+      ttl: 600,
+      expiredAt: new Date(Date.now() + 600000),
+    });
   }
 
-  if (url.includes('/api/v1/payment/create') && method === 'GET') {
-    const reservationId = req.params?.get('reservationId') || 'mock-res-1';
-    const success = Math.random() > 0.3;
-    return ok({ paymentUrl: `/paymentResult?status=${success ? 'success' : 'error'}&reservationId=${reservationId}` });
+  if (url.includes('/reservation/seatHold') && method === 'POST') {
+    return ok(null);
   }
 
-  if (url.includes('/api/v1/user/email/') && method === 'GET') {
-    return ok({ id: 1, email: 'admin@cineplex.vn', name: 'Admin', role: 'ADMIN', status: 'ACTIVE' });
+  if (url.includes('/reservation/me') && method === 'GET') {
+    const userId = num(params.get('userId'));
+    const data = MOCK_RESERVATIONS.filter(
+      (r) => r.user.userId === userId || userId === 0,
+    ).map(toReservationProfile);
+    return paginate(data);
   }
 
-  if (url.match(/\/api\/v1\/user\/\d+$/) && method === 'GET') {
-    return ok({ id: 1, email: 'admin@cineplex.vn', name: 'Admin', role: 'ADMIN', status: 'ACTIVE' });
+  if (url.match(/\/reservation\/.+?\/restore/) && method === 'GET') {
+    return ok({
+      reservationId: 'res-002',
+      showtimeId: 101,
+      ttl: 600,
+      expiredAt: new Date(Date.now() + 600000),
+    });
   }
 
-  if (url.includes('/api/v1/user') && method === 'GET') {
-    return paginated([{ id: 1, email: 'admin@cineplex.vn', name: 'Admin', role: 'ADMIN', status: 'ACTIVE' }]);
+  if (url.match(/\/reservation\/[^/]+$/) && method === 'GET') {
+    const id = url.split('/').pop()!;
+    const reservation =
+      MOCK_RESERVATIONS.find((r) => r.id === id) || MOCK_RESERVATIONS[0];
+    return ok(reservation);
   }
 
-  if (url.includes('/api/v1/user/update') && method === 'PUT') {
-    return ok({ id: 1, email: 'admin@cineplex.vn', name: 'Admin', role: 'ADMIN', status: 'ACTIVE' });
+  if (url.includes('/reservation') && method === 'GET') {
+    const status = params.get('reservationStatus');
+    const userId = num(params.get('userId'));
+    let data = MOCK_RESERVATIONS.filter(
+      (r) =>
+        (!status || r.reservationStatus === status) &&
+        (userId === 0 || r.user.userId === userId),
+    );
+    return paginate(data, page, size);
   }
 
-  if (url.includes('/api/v1/ai/chat') && method === 'POST') {
-    return ok('Xin chào! Tôi là trợ lý ảo của CinePlex. Tôi có thể giúp gì cho bạn?');
+  /* ---------------------------- PAYMENT ---------------------------- */
+  if (url.includes('/payment/create') && method === 'GET') {
+    const reservationId = params.get('reservationId') || 'res-001';
+    const success = Math.random() > 0.25;
+    return ok({
+      code: 'OK',
+      message: 'success',
+      paymentUrl: `/paymentResult?status=${success ? 'success' : 'error'}&reservationId=${reservationId}`,
+    });
   }
 
-  if (url.includes('/api/v1/cloudinary/upload') && method === 'POST') {
-    return ok({ secure_url: 'https://placehold.co/300x400/DBEAFE/1F2937?text=Uploaded' });
+  /* ---------------------------- USER ---------------------------- */
+  if (url.match(/\/user\/update\/\d+\/profile$/) && method === 'PUT') {
+    const id = num(url.match(/update\/(\d+)/)?.[1]);
+    const user = publicUsers().find((u) => u.userId === id);
+    return ok({ ...user, ...(req.body as any), userId: id });
   }
 
-  if (url.includes('/api/v1/voucher/calculate') && method === 'GET') {
-    const code = req.params?.get('code') || '';
-    const discounts: Record<string, any> = {
-      WELCOME10: { code: 'WELCOME10', discountValue: 10000, discountType: 'FIXED', maxDiscountAmount: 10000, minOrderValue: 0 },
-      CINEPLEX20: { code: 'CINEPLEX20', discountValue: 20000, discountType: 'FIXED', maxDiscountAmount: 20000, minOrderValue: 50000 },
-      NEWUSER: { code: 'NEWUSER', discountValue: 15, discountType: 'PERCENTAGE', maxDiscountAmount: 30000, minOrderValue: 0 },
-    };
-    const result = discounts[code];
-    if (!result) return of(new HttpResponse({ status: 400, body: { code: 'ERROR', message: 'Mã giảm giá không hợp lệ' } }));
+  if (url.match(/\/user\/update\/\d+\/status$/) && method === 'PUT') {
+    const id = num(url.match(/update\/(\d+)/)?.[1]);
+    const user = publicUsers().find((u) => u.userId === id);
+    return ok({ ...user, isDeleted: (req.body as any)?.isDeleted });
+  }
+
+  if (url.includes('/user/email/') && method === 'GET') {
+    const email = decodeURIComponent(url.split('/email/')[1]);
+    const user = publicUsers().find((u) => u.email === email);
+    return ok(user || null);
+  }
+
+  if (url.match(/\/user\/\d+$/) && method === 'GET') {
+    const id = num(url.split('/').pop());
+    return ok(publicUsers().find((u) => u.userId === id) || null);
+  }
+
+  if (url.includes('/user') && method === 'GET') {
+    return paginate(publicUsers(), page, size);
+  }
+
+  /* ---------------------------- ARTICLE ---------------------------- */
+  if (url.match(/\/article\/\d+$/) && method === 'GET') {
+    const id = num(url.split('/').pop());
+    return ok(MOCK_ARTICLES.find((a) => a.id === id) || null);
+  }
+
+  if (url.includes('/article') && method === 'POST') {
+    const article = { id: MOCK_ARTICLES.length + 1, ...(req.body as any) };
+    (MOCK_ARTICLES as any[]).push(article);
+    return ok(article);
+  }
+
+  if (url.match(/\/article\/\d+$/) && method === 'PUT') {
+    const id = num(url.split('/').pop());
+    const idx = MOCK_ARTICLES.findIndex((a) => a.id === id);
+    if (idx === -1) return fail('Không tìm thấy bài viết', 404);
+    MOCK_ARTICLES[idx] = { ...MOCK_ARTICLES[idx], ...(req.body as any), id };
+    return ok(MOCK_ARTICLES[idx]);
+  }
+
+  if (url.match(/\/article\/\d+$/) && method === 'DELETE') {
+    const id = num(url.split('/').pop());
+    const idx = MOCK_ARTICLES.findIndex((a) => a.id === id);
+    if (idx !== -1) MOCK_ARTICLES.splice(idx, 1);
+    return ok(null);
+  }
+
+  if (url.includes('/article') && method === 'GET') {
+    const query = (params.get('query') || '').toLowerCase();
+    let data = MOCK_ARTICLES.filter(
+      (a) => !query || a.title.toLowerCase().includes(query),
+    );
+    return paginate(data, page, size);
+  }
+
+  /* ---------------------------- VOUCHER ---------------------------- */
+  if (url.includes('/voucher/calculate') && method === 'GET') {
+    const code = params.get('code') || '';
+    const result = VOUCHER_CALCULATIONS[code];
+    if (!result) return fail('Mã giảm giá không hợp lệ', 400);
     return ok(result);
   }
 
-  if (url.includes('/api/v1/voucher') && method === 'GET') {
-    return paginated([]);
+  if (url.match(/\/voucher\/\d+$/) && method === 'GET') {
+    const id = num(url.split('/').pop());
+    return ok(MOCK_VOUCHERS.find((v) => v.id === id) || null);
   }
 
-  if (url.includes('/api/v1/dashboard/summary') && method === 'GET') {
-    return ok({ totalRevenue: 150000000, totalTickets: 2340, totalMovies: 5, totalTheaters: 3, totalUsers: 128 });
+  if (url.includes('/voucher') && method === 'POST') {
+    const voucher = { id: MOCK_VOUCHERS.length + 1, ...(req.body as any) };
+    (MOCK_VOUCHERS as any[]).push(voucher);
+    return ok(voucher);
   }
 
-  if (url.includes('/api/v1/dashboard/metrics') && method === 'GET') {
-    return ok({ revenueGrowth: 12.5, ticketGrowth: 8.3, avgOccupancy: 67 });
+  if (url.match(/\/voucher\/\d+$/) && method === 'PUT') {
+    const id = num(url.split('/').pop());
+    const idx = MOCK_VOUCHERS.findIndex((v) => v.id === id);
+    if (idx === -1) return fail('Không tìm thấy voucher', 404);
+    MOCK_VOUCHERS[idx] = { ...MOCK_VOUCHERS[idx], ...(req.body as any), id };
+    return ok(MOCK_VOUCHERS[idx]);
   }
 
-  if (url.includes('/api/v1/dashboard/revenue') && method === 'GET') {
-    return ok(Array.from({ length: 12 }, (_, i) => ({ date: `2026-${String(i + 1).padStart(2, '0')}`, revenue: 80000000 + Math.random() * 50000000 })));
+  if (url.match(/\/voucher\/\d+$/) && method === 'DELETE') {
+    const id = num(url.split('/').pop());
+    const idx = MOCK_VOUCHERS.findIndex((v) => v.id === id);
+    if (idx !== -1) MOCK_VOUCHERS.splice(idx, 1);
+    return ok(null);
   }
 
-  if (url.includes('/api/v1/dashboard/top-movies') && method === 'GET') {
-    return ok(MOCK_MOVIES.slice(0, 3).map((m, i) => ({ movieTitle: m.title, ticketCount: 500 - i * 100, revenue: 30000000 - i * 5000000 })));
+  if (url.includes('/voucher') && method === 'GET') {
+    const query = (params.get('query') || '').toLowerCase();
+    let data = MOCK_VOUCHERS.filter(
+      (v) => !query || v.name.toLowerCase().includes(query),
+    );
+    return paginate(data, page, size);
   }
 
-  if (url.includes('/api/v1/dashboard/top-theaters') && method === 'GET') {
-    return ok(MOCK_THEATERS.map(t => ({ theaterName: t.name, ticketCount: 300 + Math.floor(Math.random() * 200), revenue: 20000000 + Math.random() * 15000000 })));
+  /* ---------------------------- DASHBOARD ---------------------------- */
+  if (url.includes('/dashboard/summary') && method === 'GET') {
+    return ok(MOCK_DASHBOARD_SUMMARY);
   }
 
-  if (url.includes('/api/v1/dashboard/payment-distribution') && method === 'GET') {
-    return ok([{ paymentMethod: 'MOMO', count: 45 }, { paymentMethod: 'VNPAY', count: 30 }, { paymentMethod: 'ATM', count: 25 }]);
+  /* ---------------------------- AI / CLOUDINARY ---------------------------- */
+  if (url.includes('/ai/chat') && method === 'POST') {
+    return ok('Xin chào! Tôi là trợ lý ảo của CinePlex. Tôi có thể giúp gì cho bạn?');
   }
 
-  if (url.includes('/api/v1/article') && method === 'GET') {
-    return paginated([]);
+  if (url.includes('/cloudinary/upload') && method === 'POST') {
+    return ok({ secure_url: 'https://placehold.co/300x400/e4002b/fff?text=CinePlex' });
   }
 
-  if (url.includes('/api/v1/report/export/') && method === 'GET') {
-    return of(new HttpResponse({ status: 200, body: new Blob(['mock,csv,data'], { type: 'text/csv' }) }));
+  if (url.includes('/report/export/') && method === 'GET') {
+    return of(
+      new HttpResponse({
+        status: 200,
+        body: new Blob(['mock,csv,data'], { type: 'text/csv' }),
+      }),
+    );
+  }
+
+  /* ---------------------------- TMDB ---------------------------- */
+  if (url.includes('/search/movie') && method === 'GET') {
+    const query = url.split('query=')[1]?.split('&')[0] || '';
+    const results = MOCK_MOVIES.filter(
+      (m) =>
+        m.title.toLowerCase().includes(query.toLowerCase()) ||
+        m.originalTitle.toLowerCase().includes(query.toLowerCase()),
+    ).map((m) => ({
+      id: m.id,
+      title: m.title,
+      original_title: m.originalTitle,
+      overview: m.overview,
+      release_date: m.releaseDate,
+      poster_path: m.poster.replace('https://image.tmdb.org/t/p/w500', ''),
+      backdrop_path: m.backdrop.replace('https://image.tmdb.org/t/p/w1280', ''),
+    }));
+    return ok({ results });
+  }
+
+  if (url.includes('/movie/') && url.includes('themoviedb.org') && method === 'GET') {
+    const id = num(url.split('/movie/')[1]?.split('?')[0]);
+    const m = MOCK_MOVIES.find((x) => x.id === id);
+    if (!m) return fail('Not found', 404);
+    return ok({
+      id: m.id,
+      title: m.title,
+      original_title: m.originalTitle,
+      overview: m.overview,
+      release_date: m.releaseDate,
+      runtime: m.duration,
+      genres: m.genres.map((g) => ({ id: g.length, name: g })),
+      poster_path: m.poster.replace('https://image.tmdb.org/t/p/w500', ''),
+      backdrop_path: m.backdrop.replace('https://image.tmdb.org/t/p/w1280', ''),
+    });
   }
 
   return next(req);
 }
+
+void delay;
+void MOCK_USERS;

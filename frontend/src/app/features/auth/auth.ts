@@ -14,7 +14,7 @@ import { filter, take } from 'rxjs';
 import { NzCheckboxComponent } from 'ng-zorro-antd/checkbox';
 import { NzStringTemplateOutletDirective } from 'ng-zorro-antd/core/outlet';
 import { AuthActions } from '@core/auth/auth.actions';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { selectAuthError } from '@core/auth/auth.selectors';
 
 @Component({
@@ -41,6 +41,7 @@ export class AuthComponent implements OnInit {
   private store = inject(Store);
   private router = inject(Router);
   private actions$ = inject(Actions);
+  private translate = inject(TranslateService);
 
   formLogin!: FormGroup<{
     identifier: FormControl<string>;
@@ -68,7 +69,7 @@ export class AuthComponent implements OnInit {
       filter(Boolean),
       takeUntilDestroyed(),
     ).subscribe((err: any) => {
-      const msg = err?.error?.message || err?.message || 'Có lỗi xảy ra. Vui lòng thử lại.';
+      const msg = err?.error?.message || err?.message || this.translate.instant('auth.genericError');
       if (this.activeTab() === 'login') this.loginError.set(msg);
       else this.registerError.set(msg);
     });

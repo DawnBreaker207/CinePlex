@@ -10,6 +10,9 @@ export class SseService {
   private zone = inject(NgZone);
 
   connect(id: string | number, userId: number) {
+    if (environment.useMock) {
+      return this.mockConnect(id, userId);
+    }
     return new Observable((observer) => {
       // Seat channel
       const clientId = `${userId}_${Math.random().toString(36).substring(3, 9)}`;
@@ -65,6 +68,40 @@ export class SseService {
       return () => {
         source?.close();
       };
+    });
+  }
+
+  /** Mock: phát sự kiện giả lập — một người dùng khác giữ 1 ghế, rồi nhả ra. */
+  private mockConnect(id: string | number, _userId: number): Observable<any> {
+    return new Observable((observer) => {
+      const timers: ReturnType<typeof setTimeout>[] = [];
+
+      const emit = (event: string, data: unknown, delayMs: number) => {
+        timers.push(
+          setTimeout(() => {
+            this.zone.run(() => observer.next({ event, data }));
+          }, delayMs),
+        );
+      };
+
+      const seatIds = Array.from({ length: 80 }, (_, i) => i + 1 + Number(id) * 1000);
+      const randomSeat = () =>
+        seatIds[Math.floor(Math.random() * seatIds.length)];
+
+      // Simulated other-user holds a seat at ~5s, releases at ~20s
+      const heldSeat = randomSeat();
+      emit(
+        'SEAT_HOLD',
+        { seatIds: [{ seatId: heldSeat, reservationId: 'other-user-res' }] },
+        5000,
+      );
+      emit(
+        'SEAT_RELEASE',
+        { seatIds: [heldSeat] },
+        20000,
+      );
+
+      return () => timers.forEach((t) => clearTimeout(t));
     });
   }
 }

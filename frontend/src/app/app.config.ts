@@ -8,7 +8,15 @@ import {
   provideBrowserGlobalErrorListeners,
   provideZonelessChangeDetection,
 } from '@angular/core';
-import { PreloadAllModules, provideRouter, TitleStrategy, withComponentInputBinding, withInMemoryScrolling, withPreloading, withViewTransitions } from '@angular/router';
+import {
+  PreloadAllModules,
+  provideRouter,
+  TitleStrategy,
+  withComponentInputBinding,
+  withInMemoryScrolling,
+  withPreloading,
+  withViewTransitions,
+} from '@angular/router';
 import { routes } from './app.routes';
 import { Store } from '@ngrx/store';
 import { MovieActions } from '@domain/movie/data-access/movie.actions';
@@ -17,7 +25,7 @@ import { environment } from '../environments/environment';
 import { provideStore } from '@ngrx/store';
 import { nzIcons } from './icons-provider';
 import { provideNzIcons } from 'ng-zorro-antd/icon';
-import { en_US, provideNzI18n } from 'ng-zorro-antd/i18n';
+import { vi_VN, provideNzI18n } from 'ng-zorro-antd/i18n';
 import {
   CommonModule,
   CurrencyPipe,
@@ -57,6 +65,7 @@ import { ShowtimeEffects } from '@domain/showtime/data-access/showtime.effects';
 import { provideTranslateHttpLoader } from '@ngx-translate/http-loader';
 import { provideTranslateService } from '@ngx-translate/core';
 import { provideAppSecurity } from '@core/config/app.security';
+import { SettingsService } from '@core/services/settings/settings.service';
 import { AppTitleStrategy } from '@core/config/title-strategy';
 import { provideMarkdown } from 'ngx-markdown';
 
@@ -67,13 +76,26 @@ export const appConfig: ApplicationConfig = {
     CurrencyPipe,
     CurrencyFormatPipe,
     provideZonelessChangeDetection(),
-    provideHttpClient(withInterceptors([
-      ...(environment.useMock ? [mockInterceptor] : []),
-      AuthInterceptor, CacheInterceptor, ErrorInterceptor,
-    ])),
-    provideRouter(routes, withInMemoryScrolling({ anchorScrolling: 'enabled', scrollPositionRestoration: 'enabled' }), withComponentInputBinding(), withViewTransitions(), withPreloading(PreloadAllModules)),
+    provideHttpClient(
+      withInterceptors([
+        ...(environment.useMock ? [mockInterceptor] : []),
+        AuthInterceptor,
+        CacheInterceptor,
+        ErrorInterceptor,
+      ]),
+    ),
+    provideRouter(
+      routes,
+      withInMemoryScrolling({
+        anchorScrolling: 'enabled',
+        scrollPositionRestoration: 'enabled',
+      }),
+      withComponentInputBinding(),
+      withViewTransitions(),
+      withPreloading(PreloadAllModules),
+    ),
     provideNzIcons(nzIcons),
-    provideNzI18n(en_US),
+    provideNzI18n(vi_VN),
     importProvidersFrom(NzModalModule),
     provideStore({
       [authFeatureKey]: authReducer,
@@ -89,6 +111,7 @@ export const appConfig: ApplicationConfig = {
     ]),
     provideAppInitializer(() => {
       const store = inject(Store);
+      inject(SettingsService);
       store.dispatch(MovieActions.loadMovies({ page: 0, size: 100 }));
       store.dispatch(TheaterActions.loadTheaters({ page: 0, size: 10 }));
     }),
