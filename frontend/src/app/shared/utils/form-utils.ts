@@ -1,6 +1,7 @@
 import { AbstractControl, FormGroup } from '@angular/forms';
 import { Actions, ofType } from '@ngrx/effects';
 import { ActionCreator } from '@ngrx/store';
+import { TranslateService } from '@ngx-translate/core';
 import { NzModalRef } from 'ng-zorro-antd/modal';
 import { debounceTime, distinctUntilChanged, map, Observable } from 'rxjs';
 import { take } from 'rxjs';
@@ -49,9 +50,10 @@ interface ModalFormComponent {
 
 export const saveFooter = (
   modal: NzModalRef,
+  translate: TranslateService,
 ): { label: string; type: 'primary'; onClick: () => void }[] => [
   {
-    label: 'Lưu',
+    label: translate.instant('common.save'),
     type: 'primary',
     onClick: () => {
       const form = modal.getContentComponent() as ModalFormComponent;

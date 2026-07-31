@@ -1,16 +1,18 @@
+import { TranslateService } from '@ngx-translate/core';
 import { NzModalService } from 'ng-zorro-antd/modal';
 
 export function confirmDelete(
   modalService: NzModalService,
-  title: string,
+  translate: TranslateService,
+  titleKey: string,
   onOk: () => void,
 ) {
   modalService.confirm({
-    nzTitle: title,
-    nzContent: 'Dữ liệu sẽ không thể khôi phục sau khi xóa.',
-    nzOkText: 'Xóa',
+    nzTitle: translate.instant(titleKey),
+    nzContent: translate.instant('common.deleteConfirm'),
+    nzOkText: translate.instant('common.delete'),
     nzOkDanger: true,
     nzOnOk: () => onOk(),
-    nzCancelText: 'Hủy',
+    nzCancelText: translate.instant('common.cancel'),
   });
 }
