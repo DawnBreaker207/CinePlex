@@ -20,7 +20,7 @@ import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzOptionComponent, NzSelectModule } from 'ng-zorro-antd/select';
 import { NzSpaceComponent } from 'ng-zorro-antd/space';
 import { NzWaveDirective } from 'ng-zorro-antd/core/wave';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { FormVoucherComponent } from '@features/admin/voucher/components/voucher-form/voucher-form.component';
 import { NzProgressComponent } from 'ng-zorro-antd/progress';
@@ -57,6 +57,7 @@ import { Mode } from '@core/constants/enum';
 export class VoucherListComponent implements OnInit {
   readonly voucherStore = inject(VoucherStore);
   private modalService = inject(NzModalService);
+private translate = inject(TranslateService);
   headerColumn = HEADER_COLUMNS.VOUCHER;
   readonly ICON_COLORS = ICON_COLORS;
   readonly chartColors = CHART_COLORS;
@@ -106,7 +107,7 @@ export class VoucherListComponent implements OnInit {
     return new Date(endDate).getTime() < new Date().getTime();
   }
   onDelete(id: number) {
-    confirmDelete(this.modalService, 'Xóa voucher này?', () =>
+    confirmDelete(this.modalService, this.translate, 'voucher.deleteTitle', () =>
       this.voucherStore.deleteVoucher(id),
     );
   }

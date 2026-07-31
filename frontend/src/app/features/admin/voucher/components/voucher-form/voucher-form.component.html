@@ -11,11 +11,13 @@
         <nz-form-label nzRequired>{{
           "voucher.name" | translate
         }}</nz-form-label>
-        <nz-form-control [nzErrorTip]="'Vui lòng nhập tên'">
+        <nz-form-control
+          [nzErrorTip]="'voucher.form.requiredName' | translate"
+        >
           <input
             nz-input
             formControlName="name"
-            [placeholder]="'Ví dụ: khuyến mại Tết'"
+            [placeholder]="'voucher.form.namePlaceholder' | translate"
             maxlength="200"
           />
         </nz-form-control>
@@ -25,7 +27,9 @@
         <nz-form-label nzRequired>{{
           "voucher.code" | translate
         }}</nz-form-label>
-        <nz-form-control [nzErrorTip]="'Mã bắt buộc (Ký tự in hoa, số)'">
+        <nz-form-control
+          [nzErrorTip]="'voucher.form.requiredCode' | translate"
+        >
           <input
             nz-input
             formControlName="code"
@@ -40,7 +44,9 @@
         <nz-form-label nzRequired>{{
           "voucher.validPeriod" | translate
         }}</nz-form-label>
-        <nz-form-control [nzErrorTip]="'Vui lòng chọn thời gian'">
+        <nz-form-control
+          [nzErrorTip]="'voucher.form.requiredPeriod' | translate"
+        >
           <nz-range-picker
             formControlName="rangeDate"
             class="w-full"
@@ -57,11 +63,11 @@
             <nz-select formControlName="category">
               <nz-option
                 [nzValue]="VoucherCategory.CAMPAIGN"
-                nzLabel="Chiến dịch"
+                [nzLabel]="'voucher.category.campaign' | translate"
               ></nz-option>
               <nz-option
                 [nzValue]="VoucherCategory.SYSTEM"
-                nzLabel="Hệ thống"
+                [nzLabel]="'voucher.category.system' | translate"
               ></nz-option>
             </nz-select>
           </nz-form-control>
@@ -92,7 +98,9 @@
           <nz-form-label nzRequired>{{
             "voucher.quantity" | translate
           }}</nz-form-label>
-          <nz-form-control [nzErrorTip]="'Số lượng phải lớn hơn 0'">
+          <nz-form-control
+            [nzErrorTip]="'voucher.form.quantityPositive' | translate"
+          >
             <nz-input-number
               formControlName="quantityTotal"
               [nzMin]="1"
@@ -111,11 +119,11 @@
             <nz-select formControlName="discountType">
               <nz-option
                 [nzValue]="DiscountType.FIXED"
-                nzLabel="Số tiền (VNĐ)"
+                [nzLabel]="'voucher.form.amountLabel' | translate"
               ></nz-option>
               <nz-option
                 [nzValue]="DiscountType.PERCENT"
-                nzLabel="Phần trăm (%)"
+                [nzLabel]="'voucher.form.percentLabel' | translate"
               ></nz-option>
             </nz-select>
           </nz-form-control>
@@ -148,7 +156,9 @@
           <nz-form-label nzRequired>{{
             "voucher.minOrderValue" | translate
           }}</nz-form-label>
-          <nz-form-control [nzExtra]="'Số lượng phải lớn hơn 0'">
+          <nz-form-control
+            [nzExtra]="'voucher.form.quantityPositive' | translate"
+          >
             <nz-input-number
               formControlName="minOrderValue"
               [nzMin]="0"
@@ -156,7 +166,7 @@
               class="w-full"
               [nzFormatter]="parserMoney"
               [nzParser]="parserNumber"
-              [nzPlaceHolder]="'Ví dụ: 100.000đ'"
+              [nzPlaceHolder]="'voucher.form.amountExample' | translate"
             >
             </nz-input-number>
           </nz-form-control>

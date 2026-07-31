@@ -133,7 +133,9 @@
                     <div
                       class="text-xs text-gray-500 dark:text-gray-400 font-normal"
                     >
-                      ( Tối đa :{{ item.maxDiscountAmount | currencyFormat }})
+                      ({{ "voucher.max" | translate }} :{{
+                        item.maxDiscountAmount | currencyFormat
+                      }})
                     </div>
                   } @else {
                     {{ item.discountValue | currencyFormat }}
@@ -145,7 +147,7 @@
                 <div class="w-full px-2">
                   <div class="flex justify-between text-xs mb-1">
                     <span class="text-gray-500 dark:text-gray-400"
-                      >Đã dùng</span
+                      >{{ "voucher.used" | translate }}</span
                     >
                     <span class="font-medium text-gray-700 dark:text-gray-300"
                       >{{ item.quantityUsed }}/{{ item.quantityTotal }}</span
@@ -169,17 +171,27 @@
                 <nz-tag
                   [nzColor]="item.category === 'SYSTEM' ? 'purple' : 'cyan'"
                 >
-                  {{ item.category === "SYSTEM" ? "Hệ thống" : "Chiến dịch" }}
+                  {{
+                    item.category === "SYSTEM"
+                      ? ("voucher.category.system" | translate)
+                      : ("voucher.category.campaign" | translate)
+                  }}
                 </nz-tag>
               </td>
               <!--     Status  -->
               <td class="text-center">
                 @if (!item.isActive) {
-                  <nz-tag nzColor="default">Tạm khóa</nz-tag>
+                  <nz-tag nzColor="default">{{
+                    "voucher.status.paused" | translate
+                  }}</nz-tag>
                 } @else if (isExpired(item.endAt)) {
-                  <nz-tag nzColor="error">Hết hạn</nz-tag>
+                  <nz-tag nzColor="error">{{
+                    "voucher.status.expired" | translate
+                  }}</nz-tag>
                 } @else {
-                  <nz-tag nzColor="success">Hoạt động</nz-tag>
+                  <nz-tag nzColor="success">{{
+                    "voucher.status.active" | translate
+                  }}</nz-tag>
                 }
               </td>
               <!--     Action  -->
