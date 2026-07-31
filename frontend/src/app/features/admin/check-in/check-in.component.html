@@ -1,0 +1,76 @@
+
+    <div class="min-h-screen bg-[var(--color-bg-admin)] px-4 py-10 sm:px-6 lg:px-8">
+      <div class="mx-auto max-w-2xl">
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">
+          {{ 'checkin.title' | translate }}
+        </h1>
+        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          {{ 'checkin.subtitle' | translate }}
+        </p>
+
+        <div class="mt-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-[#1a202c]">
+          <div class="flex gap-2">
+            <nz-input-group nzPrefixIcon="scan" class="flex-1">
+              <input
+                nz-input
+                [(ngModel)]="code"
+                (keyup.enter)="search()"
+                [placeholder]="'checkin.codePlaceholder' | translate"
+                class="font-mono"
+              />
+            </nz-input-group>
+            <button
+              nz-button
+              nzType="primary"
+              [nzLoading]="loading()"
+              (click)="search()"
+            >
+              {{ 'common.search' | translate }}
+            </button>
+          </div>
+          <p class="mt-2 text-xs text-gray-400">
+            {{ 'checkin.hint' | translate }}
+          </p>
+        </div>
+
+        @if (error(); as msg) {
+          <div class="mt-4 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-[#1a202c]">
+            <nz-result nzStatus="warning" [nzSubTitle]="msg">
+            </nz-result>
+          </div>
+        }
+
+        @if (reservation(); as res) {
+          <div class="mt-4 space-y-4">
+            <app-ticket-stub
+              [title]="res.showtime.movieTitle"
+              [subtitle]="res.showtime.theaterName"
+              [code]="res.id"
+              [amount]="res.totalAmount.toLocaleString('vi-VN') + ' đ'"
+              [meta]="ticketMeta(res)"
+            />
+
+            @if (isCheckedIn()) {
+              <nz-result
+                nzStatus="success"
+                [nzTitle]="'checkin.done' | translate"
+                [nzSubTitle]="'checkin.doneSub' | translate"
+              ></nz-result>
+            } @else {
+              <button
+                nz-button
+                nzType="primary"
+                nzBlock
+                nzSize="large"
+                class="h-12 rounded-xl"
+                (click)="confirm()"
+              >
+                <nz-icon nzType="check-circle" class="mr-2" />
+                {{ 'checkin.confirm' | translate }}
+              </button>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  
