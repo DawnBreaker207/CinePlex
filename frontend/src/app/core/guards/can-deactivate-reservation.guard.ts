@@ -3,8 +3,9 @@ import { inject } from '@angular/core';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { TranslateService } from '@ngx-translate/core';
 import { SeatStore } from '@features/client/reservation/components/seat/seat.store';
+import { ReservationComponent } from '@features/client/reservation/reservation.component';
 
-export const canDeactivateReservation: CanDeactivateFn<any> = () => {
+export const canDeactivateReservation: CanDeactivateFn<ReservationComponent> = () => {
   const seatStore = inject(SeatStore);
   if (seatStore.selectedSeats().length === 0) return true;
 

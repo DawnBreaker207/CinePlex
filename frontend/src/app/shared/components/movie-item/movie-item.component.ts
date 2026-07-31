@@ -5,7 +5,6 @@ import {
   output,
   ChangeDetectionStrategy,
 } from '@angular/core';
-import { NgOptimizedImage } from '@angular/common';
 import { NzButtonComponent } from 'ng-zorro-antd/button';
 import { RouterLink } from '@angular/router';
 import { NzTypographyModule } from 'ng-zorro-antd/typography';
@@ -23,7 +22,6 @@ import { FavoritesService } from '@features/client/favorites/favorites.service';
     NzButtonComponent,
 NzTypographyModule,
 NzToolTipModule,
-NgOptimizedImage,
     TranslatePipe,
   ],
   templateUrl: './movie-item.component.html',

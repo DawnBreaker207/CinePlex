@@ -11,9 +11,11 @@ import {
 import {
   PreloadAllModules,
   provideRouter,
+  Router,
   TitleStrategy,
   withComponentInputBinding,
   withInMemoryScrolling,
+  withNavigationErrorHandler,
   withPreloading,
   withViewTransitions,
 } from '@angular/router';
@@ -93,6 +95,10 @@ export const appConfig: ApplicationConfig = {
       withComponentInputBinding(),
       withViewTransitions(),
       withPreloading(PreloadAllModules),
+      withNavigationErrorHandler((error) => {
+        console.error('Navigation error:', error);
+        inject(Router).navigate(['/errors/500']);
+      }),
     ),
     provideNzIcons(nzIcons),
     provideNzI18n(vi_VN),

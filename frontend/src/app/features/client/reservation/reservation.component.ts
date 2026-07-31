@@ -27,6 +27,7 @@ import { DetailFilmComponent } from '@features/client/reservation/components/det
 import { ConfirmComponent } from '@features/client/reservation/components/confirm/confirm.component';
 import { SeatStore } from '@features/client/reservation/components/seat/seat.store';
 import { ReservationStore } from '@features/client/reservation/reservation.store';
+import { ReservationRequest } from '@domain/reservation/models/reservation.model';
 import { selectSelectedTheater } from '@domain/theater/data-access/theater.selectors';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
@@ -90,7 +91,7 @@ export class ReservationComponent implements OnInit {
   }
 
   ngOnInit() {
-    const state = this.storageService.getItem<any>('reservationState');
+    const state = this.storageService.getItem<ReservationRequest & { theaterId: number }>('reservationState');
     const routeId = this.reservationId();
     if (!state || (!state.reservationId && !routeId)) {
       this.router.navigate(['/home']);

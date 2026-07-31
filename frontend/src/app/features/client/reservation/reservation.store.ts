@@ -28,6 +28,7 @@ import { selectSelectedShowtime } from '@domain/showtime/data-access/showtime.se
 import { selectSelectedTheater } from '@domain/theater/data-access/theater.selectors';
 import { environment } from '@env/environment';
 import { TranslateService } from '@ngx-translate/core';
+import { errorMessage } from '@shared/utils/error.helper';
 
 function toPaymentMethod(value: string): PaymentMethod {
   switch (value) {
@@ -102,7 +103,7 @@ export const ReservationStore = signalStore(
       paymentService = inject(PaymentService),
       translate = inject(TranslateService),
     ) => {
-      let timerIdx: any = null;
+      let timerIdx: ReturnType<typeof setInterval> | null = null;
 
       const stopCountdown = () => {
         if (timerIdx) {
@@ -176,8 +177,8 @@ export const ReservationStore = signalStore(
                       `/reservation/${reservationId}/${req.showtimeId}`,
                     ]);
                   },
-                  error: (err: any) =>
-                    patchState(store, { error: err.message, loading: false }),
+                  error: (err) =>
+                    patchState(store, { error: errorMessage(err), loading: false }),
                 }),
               ),
             ),
@@ -212,8 +213,11 @@ export const ReservationStore = signalStore(
             ...payload,
             theaterId: theater.id,
           });
+          const api = store as unknown as {
+            holdSeat: (args: { reservation: ReservationRequest }) => void;
+          };
           patchState(store, { holdingSeats: true });
-          (store as any).holdSeat({ reservation: payload });
+          api.holdSeat({ reservation: payload });
         },
         //
         pay: (radioValue: string) => {
@@ -224,9 +228,10 @@ export const ReservationStore = signalStore(
 
           patchState(store, { paymentError: null, submittingPayment: true });
 
+          const api = store as unknown as { confirm: (reservationId: string) => void };
           const doPayment = (paymentUrl: string) => {
             if (environment.useMock) {
-              (store as any).confirm(resId);
+              api.confirm(resId);
               storageService.removeItem('reservationState');
               patchState(store, { submittingPayment: false });
               router.navigateByUrl(paymentUrl);
@@ -266,9 +271,9 @@ export const ReservationStore = signalStore(
                       loading: false,
                       saving: false,
                     }),
-                  error: (err: any) =>
+                  error: (err) =>
                     patchState(store, {
-                      error: err.message,
+                      error: errorMessage(err),
                       loading: false,
                       saving: false,
                       holdingSeats: false,
@@ -314,9 +319,9 @@ export const ReservationStore = signalStore(
                     });
                     startCountdown(ttl);
                   },
-                  error: (err: any) => {
+                  error: (err) => {
                     storageService.removeItem('reservationState');
-                    patchState(store, { error: err.message, saving: false });
+                    patchState(store, { error: errorMessage(err), saving: false });
                     router.navigate(['/home']);
                   },
                 }),

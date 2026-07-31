@@ -93,7 +93,7 @@ private translate = inject(TranslateService);
       },
       nzWidth: 900,
       nzKeyboard: true,
-      nzFooter: mode !== 'view' ? saveFooter(this.translate) : null,
+      nzFooter: mode !== 'view' ? saveFooter<FormTheaterComponent>(this.translate) : null,
     });
   }
 

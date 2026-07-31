@@ -27,7 +27,6 @@ import { DatePipe } from '@angular/common';
     NzIconModule,
     TranslatePipe,
     TicketStubComponent,
-    DatePipe,
   ],
   templateUrl: './payment-result.component.html',
   styleUrl: './payment-result.component.css',
@@ -51,7 +50,7 @@ private translate = inject(TranslateService);
   countdown = signal(10);
   reservationCode = signal<string>('');
 
-  private intervalId: any;
+  private intervalId: ReturnType<typeof setInterval> | null = null;
 
   ngOnInit() {
     const state =
@@ -87,7 +86,7 @@ private translate = inject(TranslateService);
   }
 
   retryPayment() {
-    const state = this.storageService.getItem<any>('reservationState');
+    const state = this.storageService.getItem<ReservationRequest>('reservationState');
     if (state?.showtimeId) {
       this.router.navigate([
         '/reservation',

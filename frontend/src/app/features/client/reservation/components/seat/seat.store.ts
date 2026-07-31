@@ -12,7 +12,8 @@ import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { EMPTY, pipe, switchMap, tap, catchError } from 'rxjs';
 import { tapResponse } from '@ngrx/operators';
 import { SeatStatus } from '@core/constants/enum';
-import { SseService } from '@core/services/sse/sse.service';
+import { SseEvent, SseService } from '@core/services/sse/sse.service';
+import { errorMessage } from '@shared/utils/error.helper';
 import { Store } from '@ngrx/store';
 import { selectSelectedShowtime } from '@domain/showtime/data-access/showtime.selectors';
 import { TranslateService } from '@ngx-translate/core';
@@ -88,7 +89,7 @@ export const SeatStore = signalStore(
               tapResponse({
                 next: (seats) =>
                   patchState(store, { seats, loading: false, error: null }),
-                error: (error: any) => patchState(store, { error }),
+                error: (error) => patchState(store, { error: errorMessage(error) }),
               }),
             ),
           ),
@@ -140,20 +141,22 @@ export const SeatStore = signalStore(
               switchMap(() =>
                 sseService.connect(showtimeId, userId).pipe(
                   tap({
-                    next: (res: any) => {
+                    next: (res: SseEvent) => {
                       if (
                         res.event === 'SEAT_STATE_INIT' ||
                         res.event === 'SEAT_HOLD'
                       ) {
-                        const holdData = res.data.seatIds || [];
-
+                        const data = res.data as {
+                          seatIds?: { seatId: number; reservationId: string }[];
+                        };
+                        const holdData = data.seatIds ?? [];
                         const isMyUpdate =
                           holdData.length > 0 &&
                           holdData[0].reservationId === reservationId;
                         patchState(store, (state) => ({
                           seats: state.seats.map((s) => {
                             const match = holdData.find(
-                              (h: any) => Number(h.seatId) === s.id,
+                              (h) => Number(h.seatId) === s.id,
                             );
                             if (match) {
                               return {
@@ -178,7 +181,9 @@ export const SeatStore = signalStore(
                           }),
                         }));
                       } else if (res.event === 'SEAT_RELEASE') {
-                        const releaseIds = res.data.seatIds;
+                        const releaseIds = (
+                          res.data as { seatIds?: number[] }
+                        ).seatIds ?? [];
                         patchState(store, (state) => ({
                           seats: state.seats.map((s) =>
                             releaseIds.includes(s.id) && s.status !== 'BOOKED'

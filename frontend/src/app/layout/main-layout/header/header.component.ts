@@ -1,7 +1,6 @@
 import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { UpperCasePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { NzButtonComponent } from 'ng-zorro-antd/button';
 import { NzHeaderComponent } from 'ng-zorro-antd/layout';
 import { NzMenuDirective } from 'ng-zorro-antd/menu';
 import { NzIconModule } from 'ng-zorro-antd/icon';
@@ -16,7 +15,6 @@ import { HEADERS } from '@core/constants/column';
   imports: [
     UpperCasePipe,
     RouterLink,
-    NzButtonComponent,
     NzHeaderComponent,
     NzMenuDirective,
     AuthMenuComponent,

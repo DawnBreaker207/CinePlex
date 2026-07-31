@@ -162,7 +162,7 @@ export const DashboardStore = signalStore(
       return {
         setError: (message: string) => patchState(store, { error: message }),
         clearError: () => patchState(store, { error: null }),
-        updateFilter: (key: keyof DashboardState, value: any) => {
+        updateFilter: <K extends keyof DashboardState>(key: K, value: DashboardState[K]) => {
           patchState(store, { [key]: value });
           loadSummary();
         },
@@ -189,9 +189,9 @@ export const DashboardStore = signalStore(
         listenRealtime: rxMethod<void>(
           pipe(
             switchMap(() =>
-              socketService.watchEvent<any>('/topic/dashboard/update'),
+              socketService.watchEvent<{ action: string }>('/topic/dashboard/update'),
             ),
-            tap((data: any) => {
+            tap((data: { action: string }) => {
               if (store.isAutoUpdate() && data.action === 'REFRESH') {
                 loadSummary();
               }

@@ -111,7 +111,7 @@ export class DashboardComponent {
     return ((current - previous) / previous) * 100;
   }
 
-  onFilterChange(key: keyof DashboardState, value: any) {
+  onFilterChange(key: keyof DashboardState, value: DashboardState[keyof DashboardState]) {
     this.dashboardStore.updateFilter(key, value);
   }
 

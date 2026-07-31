@@ -143,7 +143,7 @@ export class MovieComponent {
       },
       nzWidth: 900,
       nzKeyboard: true,
-      nzFooter: mode === 'view' ? null : saveFooter(this.translate),
+      nzFooter: mode === 'view' ? null : saveFooter<FormMovieComponent>(this.translate),
       nzOnCancel: (instance) => this.handleCancel(instance),
     });
     modal.afterClose.subscribe((result) => {

@@ -13,7 +13,7 @@ import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzSpinComponent } from 'ng-zorro-antd/spin';
-import { MovieService } from '@domain/movie/data-access/movie.service';
+import { MovieService, TMDBMovie } from '@domain/movie/data-access/movie.service';
 import { TranslatePipe } from '@ngx-translate/core';
 
 @Component({
@@ -39,7 +39,7 @@ export class FormMovieAPIComponent {
   private modalRef = inject(NzModalRef);
 
   searchCtrl = this.fb.control('');
-  searchResults = signal<any[]>([]);
+  searchResults = signal<TMDBMovie[]>([]);
   isLoading = signal<boolean>(false);
 
   onSearch() {
@@ -60,7 +60,7 @@ export class FormMovieAPIComponent {
     });
   }
 
-  selectMovie(movie: any) {
+  selectMovie(movie: TMDBMovie) {
     this.modalRef.destroy(movie);
   }
 }

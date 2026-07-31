@@ -1,4 +1,8 @@
 {
+  "guard.authRequired.title": "Authentication Required",
+  "guard.authRequired.message": "Please login to access this page",
+  "guard.accessDenied.title": "Access Denied",
+  "guard.accessDenied.message": "You do not have permission to go to this page",
   "admin.article": "Article management",
   "admin.article.category.draft": "Draft",
   "admin.article.category.news": "News",
@@ -417,7 +421,23 @@
   "reservation.leave": "Leave",
   "reservation.leaveContent": "Selected seats will be released. Please complete your booking before leaving.",
   "reservation.leaveTitle": "Are you sure you want to leave?",
-  "reservation.payContent": "You are about to pay {{amount}}₫ for {{count}} ticket(s).",
+  "reservation.payContent": "You are about to pay {
+  "guard.authRequired.title": "Authentication Required",
+  "guard.authRequired.message": "Please login to access this page",
+  "guard.accessDenied.title": "Access Denied",
+  "guard.accessDenied.message": "You do not have permission to go to this page",{
+  "guard.authRequired.title": "Authentication Required",
+  "guard.authRequired.message": "Please login to access this page",
+  "guard.accessDenied.title": "Access Denied",
+  "guard.accessDenied.message": "You do not have permission to go to this page",amount}}₫ for {
+  "guard.authRequired.title": "Authentication Required",
+  "guard.authRequired.message": "Please login to access this page",
+  "guard.accessDenied.title": "Access Denied",
+  "guard.accessDenied.message": "You do not have permission to go to this page",{
+  "guard.authRequired.title": "Authentication Required",
+  "guard.authRequired.message": "Please login to access this page",
+  "guard.accessDenied.title": "Access Denied",
+  "guard.accessDenied.message": "You do not have permission to go to this page",count}} ticket(s).",
   "reservation.paymentFailed": "Payment failed",
   "reservation.payNow": "Pay Now",
   "reservation.payTitle": "Confirm payment",
@@ -503,7 +523,23 @@
   "common.action": "Action",
   "common.add": "Add new",
   "admin.dashboard.vsPrevious": "vs previous period",
-  "admin.dashboard.periodFromTo": "{{start}} - {{end}}",
+  "admin.dashboard.periodFromTo": "{
+  "guard.authRequired.title": "Authentication Required",
+  "guard.authRequired.message": "Please login to access this page",
+  "guard.accessDenied.title": "Access Denied",
+  "guard.accessDenied.message": "You do not have permission to go to this page",{
+  "guard.authRequired.title": "Authentication Required",
+  "guard.authRequired.message": "Please login to access this page",
+  "guard.accessDenied.title": "Access Denied",
+  "guard.accessDenied.message": "You do not have permission to go to this page",start}} - {
+  "guard.authRequired.title": "Authentication Required",
+  "guard.authRequired.message": "Please login to access this page",
+  "guard.accessDenied.title": "Access Denied",
+  "guard.accessDenied.message": "You do not have permission to go to this page",{
+  "guard.authRequired.title": "Authentication Required",
+  "guard.authRequired.message": "Please login to access this page",
+  "guard.accessDenied.title": "Access Denied",
+  "guard.accessDenied.message": "You do not have permission to go to this page",end}}",
   "admin.dashboard.resetFilter": "Reset",
   "admin.dashboard.operations": "Operations",
   "admin.dashboard.operations.title": "Action required",

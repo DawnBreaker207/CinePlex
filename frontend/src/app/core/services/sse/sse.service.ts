@@ -2,6 +2,11 @@ import { inject, Injectable, NgZone } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '@env/environment';
 
+export interface SseEvent {
+  event: string;
+  data: unknown;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -9,7 +14,7 @@ export class SseService {
   URL = `${environment.apiUrl}/notification/subscribe/showtime`;
   private zone = inject(NgZone);
 
-  connect(id: string | number, userId: number) {
+  connect(id: string | number, userId: number): Observable<SseEvent> {
     if (environment.useMock) {
       return this.mockConnect(id, userId);
     }
@@ -72,7 +77,7 @@ export class SseService {
   }
 
   /** Mock: phát sự kiện giả lập — một người dùng khác giữ 1 ghế, rồi nhả ra. */
-  private mockConnect(id: string | number, _userId: number): Observable<any> {
+  private mockConnect(id: string | number, _userId: number): Observable<SseEvent> {
     return new Observable((observer) => {
       const timers: ReturnType<typeof setTimeout>[] = [];
 

@@ -13,5 +13,4 @@ export const ERROR_ROUTES: Routes = [
       { path: '500', title: 'error.500', component: Error500Component },
     ],
   },
-  { path: '**', redirectTo: '404' },
 ];

@@ -16,6 +16,7 @@ import { NzCheckboxComponent } from 'ng-zorro-antd/checkbox';
 import { NzStringTemplateOutletDirective } from 'ng-zorro-antd/core/outlet';
 import { AuthActions } from '@core/auth/auth.actions';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { errorMessage } from '@shared/utils/error.helper';
 import { selectAuthError } from '@core/auth/auth.selectors';
 
 @Component({
@@ -71,8 +72,8 @@ export class AuthComponent implements OnInit {
     this.store.select(selectAuthError).pipe(
       filter(Boolean),
       takeUntilDestroyed(this.destroyRef),
-    ).subscribe((err: any) => {
-      const msg = err?.error?.message || err?.message || this.translate.instant('auth.genericError');
+    ).subscribe((err: unknown) => {
+      const msg = errorMessage(err) || this.translate.instant('auth.genericError');
       if (this.activeTab() === 'login') this.loginError.set(msg);
       else this.registerError.set(msg);
     });

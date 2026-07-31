@@ -29,7 +29,7 @@ export class SocketService extends RxStomp {
     );
   }
 
-  send(destination: string, body: any) {
+  send(destination: string, body: unknown) {
     this.publish({ destination, body: JSON.stringify(body) });
   }
 

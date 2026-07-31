@@ -134,7 +134,7 @@ export class DashboardService {
   }
 
   private handleError<T>(operation = 'operation') {
-    return (error: any): Observable<T> => {
+    return (error: unknown): Observable<T> => {
       console.error(`${operation} failed: ${error}`);
       return throwError(() => error);
     };

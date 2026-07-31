@@ -72,7 +72,7 @@ export class FormTheaterComponent implements OnInit {
   private actions$ = inject(Actions);
   private destroyRef = inject(DestroyRef);
 
-  private initialForm: any = null;
+  private initialForm: unknown = null;
 
   ngOnInit() {
     this.initForm();

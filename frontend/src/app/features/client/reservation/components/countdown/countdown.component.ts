@@ -23,7 +23,7 @@ export class CountdownComponent implements OnInit {
   ngOnInit() {
     const ttl = this.reservationStore.currentTTL()?.ttl;
     if (!ttl) {
-      const state = this.storageService.getItem<any>('reservationState');
+      const state = this.storageService.getItem<{ ttl: number }>('reservationState');
       if (state && state.ttl > 0) {
         this.reservationStore.startCountdown(state.ttl);
       }

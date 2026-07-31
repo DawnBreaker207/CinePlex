@@ -16,14 +16,14 @@ export class AuthService {
   private storageService = inject(StorageService);
   URL = `${environment.apiUrl}/auth`;
 
-  register(request: RegisterRequest): Observable<any> {
+  register(request: RegisterRequest) {
     return this.http.post<ApiRes<string>>(`${this.URL}/register`, request).pipe(
       map((res) => res.data),
       catchError(this.handleError<string>('register')),
     );
   }
 
-  login(request: LoginRequest): Observable<any> {
+  login(request: LoginRequest) {
     return this.http.post<ApiRes<Jwt>>(`${this.URL}/login`, request).pipe(
       tap((res) => console.log('[auth.service] login response:', res)),
       map((res) => {
@@ -97,7 +97,7 @@ export class AuthService {
   }
 
   private handleError<T>(operation = 'operation', result?: T) {
-    return (error: any): Observable<T> => {
+    return (error: unknown): Observable<T> => {
       console.error(`${operation} failed: ${error}`);
       return throwError(() => error);
     };

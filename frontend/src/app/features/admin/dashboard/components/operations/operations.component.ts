@@ -102,8 +102,10 @@ export class OperationsComponent {
   readonly funnelOptions = computed<EChartsCoreOption>(() => ({
     tooltip: {
       trigger: 'item',
-      formatter: (p: any) =>
-        `${this.translate.instant(p.name)}: ${p.value}%`,
+      formatter: (p: unknown) => {
+        const d = p as { name?: string; value?: number };
+        return `${this.translate.instant(d.name ?? '')}: ${d.value ?? 0}%`;
+      },
     },
     series: [
       {
@@ -115,8 +117,10 @@ export class OperationsComponent {
         label: {
           show: true,
           position: 'inside',
-          formatter: (p: any) =>
-            `${this.translate.instant(p.name)}: ${p.value}%`,
+          formatter: (p: unknown) => {
+            const d = p as { name?: string; value?: number };
+            return `${this.translate.instant(d.name ?? '')}: ${d.value ?? 0}%`;
+          },
         },
         color: [
           CHART_COLORS.primary(),

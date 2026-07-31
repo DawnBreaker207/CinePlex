@@ -17,6 +17,7 @@ import {
 } from '@domain/voucher/model/voucher.model';
 import { VoucherService } from '@domain/voucher/data-access/voucher.service';
 import { TranslateService } from '@ngx-translate/core';
+import { errorMessage } from '@shared/utils/error.helper';
 
 export interface VoucherState {
   vouchers: Voucher[];
@@ -78,8 +79,8 @@ export const VoucherStore = signalStore(
                   pagination: pagination,
                   loading: false,
                 }),
-              error: (error: any) =>
-                patchState(store, { error, loading: false }),
+              error: (error) =>
+                patchState(store, { error: errorMessage(error), loading: false }),
             }),
           ),
         ),
@@ -110,8 +111,8 @@ export const VoucherStore = signalStore(
                   };
                 });
               },
-              error: (error: any) =>
-                patchState(store, { error, loadingDetails: false }),
+              error: (error) =>
+                patchState(store, { error: errorMessage(error), loadingDetails: false }),
             }),
           ),
         ),
@@ -131,8 +132,8 @@ export const VoucherStore = signalStore(
                   saving: false,
                 }));
               },
-              error: (error: any) =>
-                patchState(store, { error, saving: false }),
+              error: (error) =>
+                patchState(store, { error: errorMessage(error), saving: false }),
             }),
           ),
         ),
@@ -154,8 +155,8 @@ export const VoucherStore = signalStore(
                   saving: false,
                 }));
               },
-              error: (error: any) =>
-                patchState(store, { error, saving: false }),
+              error: (error) =>
+                patchState(store, { error: errorMessage(error), saving: false }),
             }),
           ),
         ),
@@ -175,8 +176,8 @@ export const VoucherStore = signalStore(
                   saving: false,
                 }));
               },
-              error: (error: any) =>
-                patchState(store, { error, saving: false }),
+              error: (error) =>
+                patchState(store, { error: errorMessage(error), saving: false }),
             }),
           ),
         ),
@@ -199,8 +200,8 @@ export const VoucherStore = signalStore(
               next: (result) => {
                 patchState(store, { calculateResult: result });
               },
-              error: (error: any) => {
-                const msg = typeof error === 'string' ? error : error?.message || error?.error || translate.instant('voucher.invalidCode');
+              error: (error) => {
+                const msg = typeof error === 'string' ? error : errorMessage(error) || translate.instant('voucher.invalidCode');
                 patchState(store, { error: msg });
               },
             }),

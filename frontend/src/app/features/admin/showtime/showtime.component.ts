@@ -160,7 +160,7 @@ private translate = inject(TranslateService);
       },
       nzWidth: 900,
       nzKeyboard: true,
-      nzFooter: mode === 'view' ? null : saveFooter(this.translate),
+      nzFooter: mode === 'view' ? null : saveFooter<FormShowtimeComponent>(this.translate),
     });
   }
 

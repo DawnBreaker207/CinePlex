@@ -21,12 +21,12 @@ export class PaymentService {
       .get<ApiRes<Payment>>(`${this.URL}/create`, { params })
       .pipe(
         map((res) => res.data.paymentUrl),
-        catchError(this.handleError<any>('Payment')),
+        catchError(this.handleError<string>('Payment')),
       );
   }
 
   private handleError<T>(operation = 'operation') {
-    return (error: any): Observable<T> => {
+    return (error: unknown): Observable<T> => {
       console.error(`${operation} failed: ${error}`);
       return throwError(() => error);
     };

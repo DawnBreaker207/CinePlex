@@ -9,7 +9,7 @@ export const MovieActions = createActionGroup({
     // Load all
     'Load Movies': props<{ page: number; size: number }>(),
     'Load Movies Success': props<{ movies: Movie[]; pagination: Pagination }>(),
-    'Load Movies Failed': props<{ error: any }>(),
+    'Load Movies Failed': props<{ error: unknown }>(),
 
     // Search
     'Search Movies': props<{ search: string }>(),
@@ -17,27 +17,27 @@ export const MovieActions = createActionGroup({
       movies: Movie[];
       pagination: Pagination;
     }>(),
-    'Search Movies Failed': props<{ error: any }>(),
+    'Search Movies Failed': props<{ error: unknown }>(),
 
     // Load simple
     'Load Movie': props<{ id: number }>(),
     'Load Movie Success': props<{ movie: Movie }>(),
-    'Load Movie Failed': props<{ error: any }>(),
+    'Load Movie Failed': props<{ error: unknown }>(),
 
     // Create
     'Create Movie': props<{ movie: MovieRequest }>(),
     'Create Movie Success': props<{ movie: Movie }>(),
-    'Create Movie Failed': props<{ error: any }>(),
+    'Create Movie Failed': props<{ error: unknown }>(),
 
     // Update
     'Update Movie': props<{ id: number; movie: MovieRequest }>(),
     'Update Movie Success': props<{ movie: Movie }>(),
-    'Update Movie Failed': props<{ error: any }>(),
+    'Update Movie Failed': props<{ error: unknown }>(),
 
     // Delete
     'Delete Movie': props<{ id: number }>(),
     'Delete Movie Success': props<{ id: number }>(),
-    'Delete Movie Failed': props<{ error: any }>(),
+    'Delete Movie Failed': props<{ error: unknown }>(),
 
     //   UI Actions
     'Selected Movie': props<{ movie: Movie | null }>(),

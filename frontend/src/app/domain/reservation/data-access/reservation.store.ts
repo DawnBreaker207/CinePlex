@@ -4,6 +4,7 @@ import {
   ReservationProfile,
 } from '@domain/reservation/models/reservation.model';
 import { Pagination } from '@core/models/common.model';
+import { errorMessage } from '@shared/utils/error.helper';
 import { patchState, signalStore, withMethods, withState } from '@ngrx/signals';
 import { inject } from '@angular/core';
 import { ReservationService } from '@domain/reservation/data-access/reservation.service';
@@ -46,8 +47,8 @@ export const ReservationStore = signalStore(
                     pagination: pagination,
                     loading: false,
                   }),
-                error: (err: any) =>
-                  patchState(store, { error: err.message, loading: false }),
+                error: (err) =>
+                  patchState(store, { error: errorMessage(err), loading: false }),
               }),
             ),
           ),
@@ -65,8 +66,8 @@ export const ReservationStore = signalStore(
                     reservation: reservation,
                     loading: false,
                   }),
-                error: (err: any) =>
-                  patchState(store, { error: err.message, loading: false }),
+                error: (err) =>
+                  patchState(store, { error: errorMessage(err), loading: false }),
               }),
             ),
           ),
@@ -83,8 +84,8 @@ export const ReservationStore = signalStore(
                     reservationProfile: content,
                     loading: false,
                   }),
-                error: (err: any) =>
-                  patchState(store, { error: err.message, loading: false }),
+                error: (err) =>
+                  patchState(store, { error: errorMessage(err), loading: false }),
               }),
             ),
           ),

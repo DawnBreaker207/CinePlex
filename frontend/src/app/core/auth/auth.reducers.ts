@@ -1,4 +1,5 @@
 import { createReducer, on } from '@ngrx/store';
+import { errorMessage } from '@shared/utils/error.helper';
 import { Jwt, RefreshToken } from '@core/models/jwt.model';
 import { AuthActions } from '@core/auth/auth.actions';
 
@@ -10,7 +11,7 @@ export interface AuthState {
   userId: number | null;
   email: string | null;
   loading: boolean;
-  error: any;
+  error: string | null;
 }
 
 export const initialState: AuthState = {
@@ -38,7 +39,7 @@ export const authReducer = createReducer(
   })),
   on(AuthActions.loadRegisterFailure, (state, { error }) => ({
     ...state,
-    error: error,
+    error: errorMessage(error),
     loading: false,
   })),
 
@@ -59,7 +60,7 @@ export const authReducer = createReducer(
   }),
   on(AuthActions.loadLoginFailure, (state, { error }) => ({
     ...state,
-    error: error,
+    error: errorMessage(error),
     loading: false,
   })),
 
@@ -74,7 +75,7 @@ export const authReducer = createReducer(
   on(AuthActions.loadLogoutFailure, (state, { error }) => {
     return {
       ...state,
-      error: error,
+      error: errorMessage(error),
       loading: false,
     };
   }),
@@ -100,6 +101,6 @@ export const authReducer = createReducer(
   on(AuthActions.loadRefreshTokenFailure, (state, { error }) => ({
     ...state,
     loading: false,
-    error: error,
+    error: errorMessage(error),
   })),
 );

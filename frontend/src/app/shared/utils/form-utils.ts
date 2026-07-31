@@ -34,14 +34,14 @@ export function watchSaveResult(
   successTypes: ActionCreator[],
   failTypes: ActionCreator[],
   onSuccess: () => void,
-  onError: (error: any) => void,
+  onError: (error: unknown) => void,
 ): void {
   actions$
     .pipe(ofType(...successTypes), take(1), takeUntilDestroyed(destroyRef))
     .subscribe(onSuccess);
   actions$
     .pipe(ofType(...failTypes), take(1), takeUntilDestroyed(destroyRef))
-    .subscribe((action) => onError((action as { error: any }).error));
+    .subscribe((action) => onError((action as { error: unknown }).error));
 }
 
 interface ModalFormComponent {
@@ -50,9 +50,9 @@ interface ModalFormComponent {
   submit: () => void;
 }
 
-export const saveFooter = (
+export const saveFooter = <T,>(
   translate: TranslateService,
-): ModalButtonOptions<any>[] => [
+): ModalButtonOptions<T>[] => [
   {
     label: translate.instant('common.save'),
     type: 'primary',

@@ -1,7 +1,8 @@
 import { inject, Injectable } from '@angular/core';
 import { environment } from '@env/environment';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { ApiRes, ResponsePage } from '@core/models/common.model';
+import { ApiRes, FilterQuery, FilterSort, ResponsePage } from '@core/models/common.model';
+import { errorMessage } from '@shared/utils/error.helper';
 import { catchError, map, Observable, throwError } from 'rxjs';
 import {
   Voucher,
@@ -16,7 +17,7 @@ export class VoucherService {
   URL = `${environment.apiUrl}/voucher`;
   private http = inject(HttpClient);
 
-  getAll(query?: any) {
+  getAll(query?: FilterSort & FilterQuery) {
     let params = new HttpParams();
     if (query) {
       Object.entries(query).forEach(([key, value]) => {
@@ -72,9 +73,9 @@ export class VoucherService {
       );
   }
   private handleError<T>(operation = 'operation') {
-    return (error: any): Observable<T> => {
+    return (error: unknown): Observable<T> => {
       console.error(`${operation} failed:`, error);
-      const message = error?.error?.message || error?.message || error?.error || `Lỗi ${operation}`;
+      const message = errorMessage(error) || `L?i ${operation}`;
       return throwError(() => ({ message }));
     };
   }

@@ -14,6 +14,7 @@ import {
 } from '@angular/forms';
 import { NZ_MODAL_DATA, NzModalModule, NzModalRef } from 'ng-zorro-antd/modal';
 import { VoucherStore } from '@domain/voucher/data-access/voucher.store';
+import { Voucher } from '@domain/voucher/model/voucher.model';
 import {
   DiscountType,
   VoucherCategory,
@@ -117,7 +118,7 @@ export class FormVoucherComponent implements OnInit {
     }
   }
 
-  private patchFormValue(voucher: any) {
+  private patchFormValue(voucher: Voucher) {
     this.form.patchValue({
       name: voucher.name,
       code: voucher.code,

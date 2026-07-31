@@ -31,7 +31,13 @@ import { Store } from '@ngrx/store';
 import { Actions } from '@ngrx/effects';
 import { NzAlertComponent } from 'ng-zorro-antd/alert';
 import { NzIconModule } from 'ng-zorro-antd/icon';
-import { MovieService } from '@domain/movie/data-access/movie.service';
+import { MovieService, TMDBMovie, TMDBMovieDetail } from '@domain/movie/data-access/movie.service';
+
+type TMDBFormMovie = Omit<TMDBMovieDetail, 'genres' | 'poster_path' | 'backdrop_path'> & {
+  poster_path: string;
+  backdrop_path: string;
+  genres: string[];
+};
 import { environment } from '@env/environment';
 import {
   selectMovieById,
@@ -234,13 +240,13 @@ export class FormMovieComponent implements OnInit {
       nzFooter: null,
     });
 
-    modal.afterClose.subscribe((selectMovie: any) => {
+    modal.afterClose.subscribe((selectMovie: TMDBMovie | undefined) => {
       if (!selectMovie) return;
 
       this.movieService
         .getMovieDetails(selectMovie.id)
         .pipe(
-          map((movie: any) => ({
+          map((movie: TMDBMovieDetail) => ({
             ...movie,
             poster_path: movie.poster_path
               ? `${this.imageBase}/${movie.poster_path}`
@@ -249,14 +255,14 @@ export class FormMovieComponent implements OnInit {
               ? `${this.imageBase}/${movie.backdrop_path}`
               : '',
             genres: movie.genres
-              ? movie.genres.map((g: any) => g.name.replace(/^Phim\s/i, ''))
+              ? movie.genres.map((g) => g.name.replace(/^Phim\s/i, ''))
               : [],
           })),
           take(1),
           takeUntilDestroyed(this.destroyRef),
         )
         .subscribe({
-          next: (result: any) => {
+          next: (result: TMDBFormMovie) => {
             this.form.patchValue({
               title: result.title,
               originalTitle: result.original_title,
@@ -267,7 +273,7 @@ export class FormMovieComponent implements OnInit {
               language: result.original_language,
               country: result.origin_country[0],
               genres: result.genres,
-              releaseDate: result.release_date,
+              releaseDate: new Date(result.release_date),
               imdbId: result.imdb_id,
               filmId: String(result.id),
             });

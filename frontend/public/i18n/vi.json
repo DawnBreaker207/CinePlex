@@ -1,4 +1,8 @@
 {
+  "guard.authRequired.title": "Yêu cầu đăng nhập",
+  "guard.authRequired.message": "Vui lòng đăng nhập để truy cập trang này",
+  "guard.accessDenied.title": "Từ chối truy cập",
+  "guard.accessDenied.message": "Bạn không có quyền truy cập trang này",
   "admin.article": "Quản lý bài viết",
   "admin.article.category.draft": "Bản nháp (Draft)",
   "admin.article.category.news": "Tin tức",
@@ -417,7 +421,23 @@
   "reservation.leave": "Rời khỏi",
   "reservation.leaveContent": "Ghế đã chọn sẽ được giải phóng. Vui lòng hoàn tất đặt vé trước khi rời đi.",
   "reservation.leaveTitle": "Bạn có chắc muốn rời khỏi trang?",
-  "reservation.payContent": "Bạn sắp thanh toán {{amount}}₫ cho {{count}} vé.",
+  "reservation.payContent": "Bạn sắp thanh toán {
+  "guard.authRequired.title": "Yêu cầu đăng nhập",
+  "guard.authRequired.message": "Vui lòng đăng nhập để truy cập trang này",
+  "guard.accessDenied.title": "Từ chối truy cập",
+  "guard.accessDenied.message": "Bạn không có quyền truy cập trang này",{
+  "guard.authRequired.title": "Yêu cầu đăng nhập",
+  "guard.authRequired.message": "Vui lòng đăng nhập để truy cập trang này",
+  "guard.accessDenied.title": "Từ chối truy cập",
+  "guard.accessDenied.message": "Bạn không có quyền truy cập trang này",amount}}₫ cho {
+  "guard.authRequired.title": "Yêu cầu đăng nhập",
+  "guard.authRequired.message": "Vui lòng đăng nhập để truy cập trang này",
+  "guard.accessDenied.title": "Từ chối truy cập",
+  "guard.accessDenied.message": "Bạn không có quyền truy cập trang này",{
+  "guard.authRequired.title": "Yêu cầu đăng nhập",
+  "guard.authRequired.message": "Vui lòng đăng nhập để truy cập trang này",
+  "guard.accessDenied.title": "Từ chối truy cập",
+  "guard.accessDenied.message": "Bạn không có quyền truy cập trang này",count}} vé.",
   "reservation.paymentFailed": "Thanh toán thất bại",
   "reservation.payNow": "Thanh toán ngay",
   "reservation.payTitle": "Xác nhận thanh toán",
@@ -503,7 +523,23 @@
   "common.action": "Thao tác",
   "common.add": "Thêm mới",
   "admin.dashboard.vsPrevious": "so với kỳ trước",
-  "admin.dashboard.periodFromTo": "{{start}} - {{end}}",
+  "admin.dashboard.periodFromTo": "{
+  "guard.authRequired.title": "Yêu cầu đăng nhập",
+  "guard.authRequired.message": "Vui lòng đăng nhập để truy cập trang này",
+  "guard.accessDenied.title": "Từ chối truy cập",
+  "guard.accessDenied.message": "Bạn không có quyền truy cập trang này",{
+  "guard.authRequired.title": "Yêu cầu đăng nhập",
+  "guard.authRequired.message": "Vui lòng đăng nhập để truy cập trang này",
+  "guard.accessDenied.title": "Từ chối truy cập",
+  "guard.accessDenied.message": "Bạn không có quyền truy cập trang này",start}} - {
+  "guard.authRequired.title": "Yêu cầu đăng nhập",
+  "guard.authRequired.message": "Vui lòng đăng nhập để truy cập trang này",
+  "guard.accessDenied.title": "Từ chối truy cập",
+  "guard.accessDenied.message": "Bạn không có quyền truy cập trang này",{
+  "guard.authRequired.title": "Yêu cầu đăng nhập",
+  "guard.authRequired.message": "Vui lòng đăng nhập để truy cập trang này",
+  "guard.accessDenied.title": "Từ chối truy cập",
+  "guard.accessDenied.message": "Bạn không có quyền truy cập trang này",end}}",
   "admin.dashboard.resetFilter": "Mặc định",
   "admin.dashboard.operations": "Vận hành",
   "admin.dashboard.operations.title": "Vấn đề cần xử lý",
