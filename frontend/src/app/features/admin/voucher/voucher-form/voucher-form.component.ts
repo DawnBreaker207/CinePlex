@@ -1,8 +1,9 @@
 import { Component, inject, OnInit } from '@angular/core';
 import {
-  FormBuilder,
+  FormControl,
   FormGroup,
   FormsModule,
+  NonNullableFormBuilder,
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
@@ -40,12 +41,24 @@ import { NzButtonModule } from 'ng-zorro-antd/button';
   styleUrl: './voucher-form.component.css',
 })
 export class FormVoucherComponent implements OnInit {
-  private fb = inject(FormBuilder);
+  private fb = inject(NonNullableFormBuilder);
   private modalRef = inject(NzModalRef);
   readonly voucherStore = inject(VoucherStore);
   readonly nzModalData = inject(NZ_MODAL_DATA, { optional: true });
 
-  form!: FormGroup;
+  form!: FormGroup<{
+    name: FormControl<string>;
+    code: FormControl<string>;
+    rangeDate: FormControl<Date[]>;
+    category: FormControl<VoucherCategory>;
+    quantityTotal: FormControl<number>;
+    discountType: FormControl<DiscountType>;
+    discountValue: FormControl<number>;
+    maxDiscountAmount: FormControl<number>;
+    minOrderValue: FormControl<number>;
+    conditions: FormControl<string>;
+    groupRef: FormControl<string>;
+  }>;
   mode: Mode = 'view';
   voucherId?: number;
 
@@ -75,7 +88,7 @@ export class FormVoucherComponent implements OnInit {
     this.form = this.fb.group({
       name: ['', [Validators.required]],
       code: ['', [Validators.required, Validators.pattern(/^[A-Z0-9_-]+$/)]],
-      rangeDate: [[], [Validators.required]],
+      rangeDate: [[] as Date[], [Validators.required]],
       category: [VoucherCategory.CAMPAIGN, [Validators.required]],
       quantityTotal: [100, [Validators.required, Validators.min(1)]],
       discountType: [DiscountType.FIXED, [Validators.required]],
@@ -124,7 +137,7 @@ export class FormVoucherComponent implements OnInit {
       });
       return;
     }
-    const formValue = this.form.value;
+    const formValue = this.form.getRawValue();
     const request: VoucherRequest = {
       name: formValue.name,
       code: formValue.code,

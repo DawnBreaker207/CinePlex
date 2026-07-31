@@ -1,5 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
 import { NzModalModule, NzModalRef } from 'ng-zorro-antd/modal';
 import { NzListModule } from 'ng-zorro-antd/list';
@@ -28,7 +28,7 @@ import { TranslatePipe } from '@ngx-translate/core';
   templateUrl: './api-form.component.html',
 })
 export class FormMovieAPIComponent {
-  private fb = inject(FormBuilder);
+  private fb = inject(NonNullableFormBuilder);
   private movieService = inject(MovieService);
   private modalRef = inject(NzModalRef);
 

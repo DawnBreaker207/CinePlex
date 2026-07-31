@@ -1,8 +1,9 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import {
-  FormBuilder,
+  FormControl,
   FormGroup,
   FormsModule,
+  NonNullableFormBuilder,
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
@@ -21,7 +22,7 @@ import { Actions, ofType } from '@ngrx/effects';
 import { NzOptionComponent, NzSelectComponent } from 'ng-zorro-antd/select';
 import { TheaterActions } from '@domain/theater/data-access/theater.actions';
 import { selectTheaterById } from '@domain/theater/data-access/theater.selectors';
-import { Theater } from '@domain/theater/models/theater.model';
+import { Theater, TheaterRequest } from '@domain/theater/models/theater.model';
 import { TranslatePipe } from '@ngx-translate/core';
 
 @Component({
@@ -46,8 +47,13 @@ export class FormTheaterComponent implements OnInit {
   readonly submitting = signal(false);
   mode: 'add' | 'edit' | 'view' = 'add';
   theaterId!: number;
-  form!: FormGroup;
-  private fb = inject(FormBuilder);
+  form!: FormGroup<{
+    id: FormControl<string>;
+    name: FormControl<string>;
+    location: FormControl<string>;
+    capacity: FormControl<number | null>;
+  }>;
+  private fb = inject(NonNullableFormBuilder);
   private modelRef = inject(NzModalRef);
   private store = inject(Store);
   private actions$ = inject(Actions);
@@ -99,7 +105,7 @@ export class FormTheaterComponent implements OnInit {
       id: [''],
       name: ['', Validators.required],
       location: ['', Validators.required],
-      capacity: [null, [Validators.required, Validators.min(1)]],
+      capacity: [null as number | null, [Validators.required, Validators.min(1)]],
     });
   }
 
@@ -121,12 +127,12 @@ export class FormTheaterComponent implements OnInit {
     if (!this.form.valid || this.submitting()) return;
 
     this.submitting.set(true);
-    const theaterData = this.form.value;
+    const theaterData = this.form.getRawValue() as TheaterRequest;
     if (this.mode === 'edit') {
       this.store.dispatch(
         TheaterActions.updateTheater({
           id: this.theaterId as number,
-          theater: theaterData,
+          theater: theaterData as Theater,
         }),
       );
     } else if (this.mode === 'add') {

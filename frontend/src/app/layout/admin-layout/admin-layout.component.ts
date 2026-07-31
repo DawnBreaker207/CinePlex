@@ -1,4 +1,4 @@
-import { Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import {
   ActivatedRoute,
   NavigationEnd,
@@ -56,7 +56,7 @@ export class AdminLayoutComponent implements OnInit {
 
   ngOnInit() {
     // Tạo breadcrumb lần đầu
-    this.breadcrumbs = this.createBreadcrumbs(this.activatedRoute.root);
+    this.breadcrumbs.set(this.createBreadcrumbs(this.activatedRoute.root));
 
     // Lắng nghe sự kiện đổi route để cập nhật lại breadcrumb
     this.router.events
@@ -65,11 +65,11 @@ export class AdminLayoutComponent implements OnInit {
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe(() => {
-        this.breadcrumbs = this.createBreadcrumbs(this.activatedRoute.root);
+        this.breadcrumbs.set(this.createBreadcrumbs(this.activatedRoute.root));
       });
   }
 
-  breadcrumbs: Breadcrumb[] = [];
+  breadcrumbs = signal<Breadcrumb[]>([]);
   isCollapsed = false;
   protected readonly date = new Date();
 

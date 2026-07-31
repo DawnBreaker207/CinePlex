@@ -6,9 +6,10 @@ import {
   OnInit,
 } from '@angular/core';
 import {
-  FormBuilder,
+  FormControl,
   FormGroup,
   FormsModule,
+  NonNullableFormBuilder,
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
@@ -49,7 +50,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 export class InfoComponent implements OnInit {
   user = input.required<UserProfile>();
 
-  private fb = inject(FormBuilder);
+  private fb = inject(NonNullableFormBuilder);
   readonly userStore = inject(UserStore);
   private msg = inject(NzMessageService);
   private cdr = inject(ChangeDetectorRef);
@@ -57,7 +58,13 @@ export class InfoComponent implements OnInit {
   selectedFile: File | null = null;
   isSaving: boolean = false;
   selectedTicket: MovieTicket | null = null;
-  profileForm!: FormGroup;
+  profileForm!: FormGroup<{
+    username: FormControl<string>;
+    email: FormControl<string>;
+    avatar: FormControl<string>;
+    phone: FormControl<string>;
+    address: FormControl<string>;
+  }>;
   avatarPreview: string = '';
 
   ngOnInit() {
@@ -129,9 +136,9 @@ export class InfoComponent implements OnInit {
 
       const updatedData: UserProfile = {
         ...this.user(),
-        username: this.profileForm.get('username')?.value,
-        phone: this.profileForm.get('phone')?.value,
-        address: this.profileForm.get('address')?.value,
+        username: this.profileForm.getRawValue().username,
+        phone: this.profileForm.getRawValue().phone,
+        address: this.profileForm.getRawValue().address,
         avatar: finalAvatarUrl,
       };
 

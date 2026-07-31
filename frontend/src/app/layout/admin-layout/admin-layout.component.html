@@ -12,7 +12,7 @@
     <!-- NAVBAR -->
     <nz-header class="shrink-0 z-40">
       <app-navbar
-        [breadcrumbs]="breadcrumbs"
+        [breadcrumbs]="breadcrumbs()"
         [isCollapsed]="isCollapsed"
         (toggleCollapsed)="toggleCollapse($event)"
       />

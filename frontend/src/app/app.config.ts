@@ -6,7 +6,7 @@ import {
   LOCALE_ID,
   provideAppInitializer,
   provideBrowserGlobalErrorListeners,
-  provideZoneChangeDetection,
+  provideZonelessChangeDetection,
 } from '@angular/core';
 import { PreloadAllModules, provideRouter, TitleStrategy, withComponentInputBinding, withInMemoryScrolling, withPreloading, withViewTransitions } from '@angular/router';
 import { routes } from './app.routes';
@@ -66,7 +66,7 @@ export const appConfig: ApplicationConfig = {
     provideBrowserGlobalErrorListeners(),
     CurrencyPipe,
     CurrencyFormatPipe,
-    provideZoneChangeDetection({ eventCoalescing: true }),
+    provideZonelessChangeDetection(),
     provideHttpClient(withInterceptors([
       ...(environment.useMock ? [mockInterceptor] : []),
       AuthInterceptor, CacheInterceptor, ErrorInterceptor,

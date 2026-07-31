@@ -1,4 +1,4 @@
-import { Component, effect, input } from '@angular/core';
+import { Component, computed, input } from '@angular/core';
 import { NgxEchartsDirective } from 'ngx-echarts';
 import type { EChartsCoreOption } from 'echarts/core';
 import { NzIconModule } from 'ng-zorro-antd/icon';
@@ -13,20 +13,12 @@ import { CHART_COLORS } from '@shared/utils/colors';
 })
 export class RevenueChartComponent {
   revenues = input<RevenuePoint[]>([]);
-  options!: EChartsCoreOption;
-
-  constructor() {
-    effect(() => {
-      const revenues = this.revenues();
-      const date = revenues.map(r => r.date.toString());
-      const revenue = revenues.map(r => r.revenue);
-      this.loadChartData(date, revenue);
-    });
-  }
-
-  loadChartData(name: string[], data: number[]) {
+  options = computed<EChartsCoreOption>(() => {
+    const revenues = this.revenues();
+    const date = revenues.map(r => r.date.toString());
+    const revenue = revenues.map(r => r.revenue);
     const primary = CHART_COLORS.primary();
-    this.options = {
+    return {
       tooltip: {
         trigger: 'axis',
       },
@@ -39,7 +31,7 @@ export class RevenueChartComponent {
       },
       xAxis: {
         type: 'category',
-        data: name,
+        data: date,
         axisLine: {
           lineStyle: {
             color: CHART_COLORS.border(),
@@ -65,7 +57,7 @@ export class RevenueChartComponent {
         {
           name: 'Revenue',
           type: 'line',
-          data: data,
+          data: revenue,
           smooth: true,
           showSymbol: false,
           areaStyle: {
@@ -96,5 +88,5 @@ export class RevenueChartComponent {
         },
       ],
     };
-  }
+  });
 }

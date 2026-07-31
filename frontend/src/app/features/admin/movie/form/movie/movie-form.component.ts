@@ -1,6 +1,6 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { toSignal, takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { NonNullableFormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { NzModalModule, NzModalRef, NzModalService } from 'ng-zorro-antd/modal';
 import { filter, map, take } from 'rxjs';
 import { NzAutosizeDirective, NzInputDirective } from 'ng-zorro-antd/input';
@@ -27,7 +27,7 @@ import {
   selectMoviesSaving,
 } from '@domain/movie/data-access/movie.selectors';
 import { MovieActions } from '@domain/movie/data-access/movie.actions';
-import { Movie } from '@domain/movie/models/movie.model';
+import { Movie, MovieRequest } from '@domain/movie/models/movie.model';
 import { FormMovieAPIComponent } from '@features/admin/movie/form/api/api-form.component';
 import { NzSpinModule } from 'ng-zorro-antd/spin';
 import { TranslatePipe } from '@ngx-translate/core';
@@ -56,7 +56,7 @@ import { TranslatePipe } from '@ngx-translate/core';
   templateUrl: './movie-form.component.html',
 })
 export class FormMovieComponent implements OnInit {
-  private fb = inject(FormBuilder);
+  private fb = inject(NonNullableFormBuilder);
   private store = inject(Store);
   private actions$ = inject(Actions);
   private modelRef = inject(NzModalRef);
@@ -66,7 +66,21 @@ export class FormMovieComponent implements OnInit {
   // Props
   mode: 'add' | 'edit' | 'view' = 'add';
   movieId!: number;
-  form!: FormGroup;
+  form!: FormGroup<{
+    id: FormControl<string>;
+    title: FormControl<string>;
+    originalTitle: FormControl<string>;
+    poster: FormControl<string>;
+    backdrop: FormControl<string>;
+    overview: FormControl<string>;
+    duration: FormControl<number | null>;
+    language: FormControl<string>;
+    country: FormControl<string>;
+    genres: FormControl<string[]>;
+    releaseDate: FormControl<Date | null>;
+    imdbId: FormControl<string>;
+    filmId: FormControl<string | null>;
+  }>;
   imageBase = environment.tmbd.imageUrl;
 
   // NgRx State
@@ -127,13 +141,13 @@ export class FormMovieComponent implements OnInit {
       poster: ['', Validators.required],
       backdrop: [''],
       overview: ['', Validators.required],
-      duration: [null, [Validators.required, Validators.min(1)]],
+      duration: [null as number | null, [Validators.required, Validators.min(1)]],
       language: ['', Validators.required],
       country: ['', Validators.required],
-      genres: [[], Validators.required],
-      releaseDate: [null, Validators.required],
+      genres: [[] as string[], Validators.required],
+      releaseDate: [null as Date | null, Validators.required],
       imdbId: [''],
-      filmId: [null],
+      filmId: [null as string | null],
     });
   }
 
@@ -169,7 +183,7 @@ export class FormMovieComponent implements OnInit {
     }
 
     this.submitting.set(true);
-    const movieData = this.form.value;
+    const movieData = this.form.getRawValue() as MovieRequest;
 
     if (this.mode === 'edit') {
       this.store.dispatch(
@@ -250,7 +264,7 @@ export class FormMovieComponent implements OnInit {
               genres: result.genres,
               releaseDate: result.release_date,
               imdbId: result.imdb_id,
-              filmId: result.id,
+              filmId: String(result.id),
             });
             this.form.markAsDirty();
           },

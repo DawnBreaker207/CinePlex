@@ -7,9 +7,10 @@ import {
 } from '@angular/core';
 import { NzFormModule } from 'ng-zorro-antd/form';
 import {
-  FormBuilder,
+  FormControl,
   FormGroup,
   FormsModule,
+  NonNullableFormBuilder,
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
@@ -36,7 +37,7 @@ import { TheaterActions } from '@domain/theater/data-access/theater.actions';
 import { ShowtimeActions } from '@domain/showtime/data-access/showtime.actions';
 import { selectSelectedShowtime } from '@domain/showtime/data-access/showtime.selectors';
 import { Movie } from '@domain/movie/models/movie.model';
-import { Showtime } from '@domain/showtime/models/showtime.model';
+import { Showtime, ShowtimeRequest } from '@domain/showtime/models/showtime.model';
 import {
   formatDate,
   formatTime,
@@ -64,7 +65,7 @@ import { TranslatePipe } from '@ngx-translate/core';
   styleUrl: './showtime-form.component.css',
 })
 export class FormShowtimeComponent implements OnInit {
-  private fb = inject(FormBuilder);
+  private fb = inject(NonNullableFormBuilder);
   private modelRef = inject(NzModalRef);
   private store = inject(Store);
   private actions$ = inject(Actions);
@@ -72,7 +73,15 @@ export class FormShowtimeComponent implements OnInit {
   mode: 'add' | 'edit' | 'view' = 'add';
   readonly submitting = signal(false);
   showtimeId!: number;
-  form!: FormGroup;
+  form!: FormGroup<{
+    movieId: FormControl<number | null>;
+    moviePosterUrl: FormControl<string>;
+    theaterId: FormControl<number | null>;
+    showDate: FormControl<Date | null>;
+    showTime: FormControl<Date | null>;
+    price: FormControl<number | null>;
+    totalSeats: FormControl<number | null>;
+  }>;
   searchCtrl = this.fb.control('');
 
   theaters = this.store.selectSignal(selectAllTheaters);
@@ -152,15 +161,15 @@ export class FormShowtimeComponent implements OnInit {
 
   initForm() {
     this.form = this.fb.group({
-      movieId: ['', Validators.required],
+      movieId: [null as number | null, Validators.required],
       moviePosterUrl: [''],
-      theaterId: ['', Validators.required],
+      theaterId: [null as number | null, Validators.required],
 
-      showDate: [null, Validators.required],
-      showTime: [null, Validators.required],
+      showDate: [null as Date | null, Validators.required],
+      showTime: [null as Date | null, Validators.required],
 
-      price: [null, [Validators.required, Validators.min(1)]],
-      totalSeats: [null, [Validators.required, Validators.min(1)]],
+      price: [null as number | null, [Validators.required, Validators.min(1)]],
+      totalSeats: [null as number | null, [Validators.required, Validators.min(1)]],
     });
   }
 
@@ -176,7 +185,7 @@ export class FormShowtimeComponent implements OnInit {
       totalSeats: showtime.totalSeats,
       // Showtime Date
       showDate: showtime.showDate,
-      showTime: timeFormatDay(showtime.showTime),
+      showTime: timeFormatDay(showtime.showTime) as unknown as Date,
     });
   }
 
@@ -189,15 +198,12 @@ export class FormShowtimeComponent implements OnInit {
     }
 
     this.submitting.set(true);
+    const { showDate, showTime, ...rest } = this.form.getRawValue();
     const showtimeData = {
-      ...this.form.value,
-      showDate: this.form.value.showDate
-        ? formatDate(this.form.value.showDate)
-        : null,
-      showTime: this.form.value.showTime
-        ? formatTime(this.form.value.showDate)
-        : null,
-    };
+      ...rest,
+      showDate: showDate ? formatDate(showDate) : null,
+      showTime: showTime ? formatTime(showDate ?? undefined) : null,
+    } as unknown as ShowtimeRequest;
 
     if (this.mode === 'edit') {
       this.store.dispatch(

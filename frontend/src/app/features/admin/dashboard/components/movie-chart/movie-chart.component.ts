@@ -1,4 +1,4 @@
-import { Component, effect, input } from '@angular/core';
+import { Component, computed, input } from '@angular/core';
 import type { EChartsCoreOption } from 'echarts/core';
 import { NgxEchartsDirective } from 'ngx-echarts';
 import { NzIconModule } from 'ng-zorro-antd/icon';
@@ -13,19 +13,11 @@ import { CHART_COLORS } from '@shared/utils/colors';
 })
 export class MovieChartComponent {
   movies = input<TopMovie[]>([]);
-  options!: EChartsCoreOption;
-
-  constructor() {
-    effect(() => {
-      const movies = this.movies();
-      const name = movies.map(m => m.movieName);
-      const data = movies.map(m => m.revenue);
-      this.loadChartData(name, data);
-    });
-  }
-
-  loadChartData(name: string[], data: number[]) {
-    this.options = {
+  options = computed<EChartsCoreOption>(() => {
+    const movies = this.movies();
+    const name = movies.map(m => m.movieName);
+    const data = movies.map(m => m.revenue);
+    return {
       tooltip: {
         trigger: 'axis',
         axisPointer: { type: 'shadow' },
@@ -55,5 +47,5 @@ export class MovieChartComponent {
         },
       ],
     };
-  }
+  });
 }

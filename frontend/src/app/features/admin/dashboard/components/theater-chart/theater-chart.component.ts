@@ -1,4 +1,4 @@
-import { Component, effect, input } from '@angular/core';
+import { Component, computed, input } from '@angular/core';
 import type { EChartsCoreOption } from 'echarts/core';
 import { NgxEchartsDirective } from 'ngx-echarts';
 import { NzIconModule } from 'ng-zorro-antd/icon';
@@ -13,19 +13,11 @@ import { CHART_COLORS } from '@shared/utils/colors';
 })
 export class TheaterChartComponent {
   theaters = input<TopTheater[]>([]);
-  options!: EChartsCoreOption;
-
-  constructor() {
-    effect(() => {
-      const theaters = this.theaters();
-      const name = theaters.map(t => t.theaterName);
-      const data = theaters.map(t => t.totalRevenue);
-      this.loadChartData(name, data);
-    });
-  }
-
-  loadChartData(name: string[], data: number[]) {
-    this.options = {
+  options = computed<EChartsCoreOption>(() => {
+    const theaters = this.theaters();
+    const name = theaters.map(t => t.theaterName);
+    const data = theaters.map(t => t.totalRevenue);
+    return {
       tooltip: {
         trigger: 'item',
       },
@@ -85,5 +77,5 @@ export class TheaterChartComponent {
         },
       ],
     };
-  }
+  });
 }

@@ -1,5 +1,5 @@
 import { Component, computed, inject } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { DatePipe } from '@angular/common';
 import { NzButtonModule } from 'ng-zorro-antd/button';
@@ -44,7 +44,7 @@ import { ICON_COLORS } from '@shared/utils/colors';
 export class TheaterComponent {
   private modalService = inject(NzModalService);
   private store = inject(Store);
-  private fb = inject(FormBuilder);
+  private fb = inject(NonNullableFormBuilder);
 
   readonly headerColumn = HEADER_COLUMNS.THEATER;
   readonly ICON_COLORS = ICON_COLORS;

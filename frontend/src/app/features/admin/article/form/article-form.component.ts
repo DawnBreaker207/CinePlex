@@ -1,8 +1,9 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
-  FormBuilder,
+  FormControl,
   FormGroup,
+  NonNullableFormBuilder,
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
@@ -50,8 +51,15 @@ export class ArticleFormComponent implements OnInit {
   protected readonly ArticleType = ArticleType;
   protected readonly ArticleStatus = ArticleStatus;
   isLoading = this.articleStore.saving;
-  form!: FormGroup;
-  private fb = inject(FormBuilder);
+  form!: FormGroup<{
+    title: FormControl<string>;
+    thumbnail: FormControl<string>;
+    summary: FormControl<string>;
+    content: FormControl<string>;
+    type: FormControl<ArticleType>;
+    status: FormControl<ArticleStatus>;
+  }>;
+  private fb = inject(NonNullableFormBuilder);
 
   ngOnInit() {
     this.initForm(this.nzData.article);
@@ -63,8 +71,8 @@ export class ArticleFormComponent implements OnInit {
       thumbnail: [data?.thumbnail || '', [Validators.required]],
       summary: [data?.summary || '', [Validators.required]],
       content: [data?.content || '', [Validators.required]],
-      type: [data?.type || 'UNKNOWN'],
-      status: [data?.status || 'DRAFT'],
+      type: [data?.type ?? ArticleType.UNKNOWN],
+      status: [data?.status ?? ArticleStatus.DRAFT],
     });
   }
   close() {
@@ -82,7 +90,7 @@ export class ArticleFormComponent implements OnInit {
       return;
     }
 
-    const formData = this.form.value;
+    const formData = this.form.getRawValue();
     if (this.nzData.isEditMode && this.nzData.article) {
       this.articleStore.updateArticle({
         id: this.nzData.article.id,

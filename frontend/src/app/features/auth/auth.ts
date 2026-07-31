@@ -1,5 +1,5 @@
 import { Component, ElementRef, inject, OnInit, signal, viewChild } from '@angular/core';
-import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormControl, FormGroup, FormsModule, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { matchValidator } from '@shared/utils/validators';
 import { NzButtonComponent } from 'ng-zorro-antd/button';
 import { NzAlertComponent } from 'ng-zorro-antd/alert';
@@ -34,16 +34,25 @@ export class AuthComponent implements OnInit {
   registerError = signal<string | null>(null);
   loginPasswordVisible = false;
   registerPasswordVisible = false;
-  isLoginLoading = false;
-  isRegisterLoading = false;
+  isLoginLoading = signal(false);
+  isRegisterLoading = signal(false);
 
-  private fb = inject(FormBuilder);
+  private fb = inject(NonNullableFormBuilder);
   private store = inject(Store);
   private router = inject(Router);
   private actions$ = inject(Actions);
 
-  formLogin!: FormGroup;
-  formRegister!: FormGroup;
+  formLogin!: FormGroup<{
+    identifier: FormControl<string>;
+    password: FormControl<string>;
+    remember: FormControl<boolean>;
+  }>;
+  formRegister!: FormGroup<{
+    email: FormControl<string>;
+    username: FormControl<string>;
+    password: FormControl<string>;
+    confirmPassword: FormControl<string>;
+  }>;
   private firstInput = viewChild<ElementRef<HTMLInputElement>>('firstInput');
 
   ngOnInit() {
@@ -97,12 +106,12 @@ export class AuthComponent implements OnInit {
 
   submitLogin() {
     if (this.formLogin.valid) {
-      this.isLoginLoading = true;
+      this.isLoginLoading.set(true);
       this.loginError.set(null);
-      const { identifier, password } = this.formLogin.value;
+      const { identifier, password } = this.formLogin.getRawValue();
       this.store.dispatch(AuthActions.loadLogin({ user: { identifier, password } }));
       this.actions$.pipe(ofType(AuthActions.loadLoginSuccess, AuthActions.loadLoginFailure), take(1), takeUntilDestroyed()).subscribe(() => {
-        this.isLoginLoading = false;
+        this.isLoginLoading.set(false);
       });
     } else {
       this.markInvalid(this.formLogin);
@@ -111,16 +120,16 @@ export class AuthComponent implements OnInit {
 
   submitRegister() {
     if (this.formRegister.valid) {
-      this.isRegisterLoading = true;
+      this.isRegisterLoading.set(true);
       this.registerError.set(null);
-      const { username, email, password } = this.formRegister.value;
+      const { username, email, password } = this.formRegister.getRawValue();
       this.store.dispatch(AuthActions.loadRegister({ user: { username, email, password } }));
 
       this.actions$.pipe(
         ofType(AuthActions.loadRegisterSuccess, AuthActions.loadRegisterFailure),
         take(1), takeUntilDestroyed(),
       ).subscribe((action) => {
-        this.isRegisterLoading = false;
+        this.isRegisterLoading.set(false);
         if (action.type === AuthActions.loadRegisterSuccess.type) {
           this.activeTab.set('login');
           this.formLogin.patchValue({ identifier: email });

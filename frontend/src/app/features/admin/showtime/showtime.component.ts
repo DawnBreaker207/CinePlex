@@ -17,9 +17,10 @@ import { NzSpinModule } from 'ng-zorro-antd/spin';
 import { NzAlertModule } from 'ng-zorro-antd/alert';
 import { filter, take } from 'rxjs';
 import {
-  FormBuilder,
+  FormControl,
   FormGroup,
   FormsModule,
+  NonNullableFormBuilder,
   ReactiveFormsModule,
 } from '@angular/forms';
 import { NzFormModule } from 'ng-zorro-antd/form';
@@ -76,7 +77,7 @@ import { HEADER_COLUMNS } from '@core/constants/column';
 export class ShowtimeComponent implements OnInit {
   private modalService = inject(NzModalService);
   private store = inject(Store);
-  private fb = inject(FormBuilder);
+  private fb = inject(NonNullableFormBuilder);
 
   showtimes = this.store.selectSignal(selectAllShowtimes);
   theaters = this.store.selectSignal(selectAllTheaters);
@@ -87,7 +88,10 @@ export class ShowtimeComponent implements OnInit {
   headerColumn = HEADER_COLUMNS.SHOWTIME;
   readonly ICON_COLORS = ICON_COLORS;
   readonly progressStrokeColor = { '0%': CHART_COLORS.success(), '100%': CHART_COLORS.primary() };
-  form!: FormGroup;
+  form!: FormGroup<{
+    theaterId: FormControl<number | null>;
+    dateRange: FormControl<Date[] | null>;
+  }>;
 
   constructor() {
     this.initForm();
@@ -112,7 +116,7 @@ export class ShowtimeComponent implements OnInit {
   }
 
   loadData(pageIndex: number, pageSize?: number) {
-    const { theaterId, dateRange } = this.form.value;
+    const { theaterId, dateRange } = this.form.getRawValue();
     if (!theaterId) return;
     const size = pageSize ?? this.pagination()?.pageSize ?? 10;
     this.store.dispatch(
@@ -184,8 +188,8 @@ export class ShowtimeComponent implements OnInit {
 
   private initForm() {
     this.form = this.fb.group({
-      theaterId: [null],
-      dateRange: [null],
+      theaterId: this.fb.control<number | null>(null),
+      dateRange: this.fb.control<Date[] | null>(null),
     });
   }
 }

@@ -183,7 +183,7 @@
  nzType="primary"
  nzBlock
  nzSize="large"
- [nzLoading]="isRegisterLoading"
+ [nzLoading]="isRegisterLoading()"
  class="font-bold h-12 text-base rounded-lg mb-6"
  >
  {{ "Đăng ký tài khoản" | translate }}
@@ -289,7 +289,7 @@
  nzType="primary"
  nzBlock
  nzSize="large"
- [nzLoading]="isLoginLoading"
+ [nzLoading]="isLoginLoading()"
  class="font-bold h-12 text-base rounded-lg mb-6"
  >
  {{ "Đăng nhập vào tài khoản" | translate }}

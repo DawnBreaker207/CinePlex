@@ -8,7 +8,7 @@ import { NzModalService } from 'ng-zorro-antd/modal';
 import { NzTagComponent } from 'ng-zorro-antd/tag';
 import { DatePipe, NgClass } from '@angular/common';
 import { NzSpaceComponent } from 'ng-zorro-antd/space';
-import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { NzAvatarComponent } from 'ng-zorro-antd/avatar';
 import {
   NzListComponent,
@@ -61,7 +61,7 @@ import { ICON_COLORS } from '@shared/utils/colors';
   providers: [NzModalService],
 })
 export class MovieComponent {
-  private fb = inject(FormBuilder);
+  private fb = inject(NonNullableFormBuilder);
   private store = inject(Store);
   private modalService = inject(NzModalService);
 
