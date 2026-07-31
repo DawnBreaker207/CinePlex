@@ -116,7 +116,6 @@ export const appConfig: ApplicationConfig = {
       store.dispatch(TheaterActions.loadTheaters({ page: 0, size: 10 }));
     }),
     provideTranslateService({
-      lang: 'vi',
       fallbackLang: 'vi',
       loader: provideTranslateHttpLoader({
         prefix: '/i18n/',

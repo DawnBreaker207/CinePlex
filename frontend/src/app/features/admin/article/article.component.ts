@@ -11,7 +11,7 @@ import { NzPopconfirmModule } from 'ng-zorro-antd/popconfirm';
 import { FormsModule } from '@angular/forms';
 import { Article } from '@domain/article/models/article.model';
 import { ArticleFormComponent } from '@features/admin/article/form/article-form.component';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { HEADER_COLUMNS } from '@core/constants/column';
 import { NzAlertModule } from 'ng-zorro-antd/alert';
 import { ArticleStore } from '@domain/article/data-access/article.store';
@@ -29,9 +29,9 @@ import { LoadingComponent } from '@shared/components/loading/loading.component';
     NzDrawerModule,
     FormsModule,
     NzPopconfirmModule,
-    TranslateModule,
     NzAlertModule,
     LoadingComponent,
+    TranslatePipe,
   ],
   templateUrl: './article.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -5,7 +5,7 @@ import {
   HttpRequest,
   HttpResponse,
 } from '@angular/common/http';
-import { Observable, of, throwError } from 'rxjs';
+import { Observable, delay, of, throwError } from 'rxjs';
 import {
   MOCK_ARTICLES,
   MOCK_DASHBOARD_SUMMARY,
@@ -23,9 +23,6 @@ import {
   type MockUser,
   VOUCHER_CALCULATIONS,
 } from './mock-data';
-
-const delay = (ms = 300) =>
-  new Promise((resolve) => setTimeout(resolve, ms));
 
 function b64url(input: string): string {
   return btoa(unescape(encodeURIComponent(input)))
@@ -52,7 +49,7 @@ function ok<T>(data: T) {
       status: 200,
       body: { code: 'OK', message: 'success', data },
     }),
-  );
+  ).pipe(delay(150));
 }
 
 function fail(message: string, status = 400) {
@@ -134,7 +131,7 @@ export function mockInterceptor(
   }
 
   if (url.includes('/movie') && method === 'POST') {
-    const movie = { id: MOCK_MOVIES.length + 1, ...(req.body as any) };
+    const movie = { ...(req.body as any), id: MOCK_MOVIES.length + 1 };
     (MOCK_MOVIES as any[]).push(movie);
     return ok(movie);
   }
@@ -183,7 +180,14 @@ export function mockInterceptor(
   }
 
   if (url.includes('/theater') && method === 'POST') {
-    const theater = { id: MOCK_THEATERS.length + 1, ...(req.body as any) };
+    const theater = {
+      showtime: [],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      isDeleted: false,
+      ...(req.body as any),
+      id: MOCK_THEATERS.length + 1,
+    };
     (MOCK_THEATERS as any[]).push(theater);
     return ok(theater);
   }
@@ -203,7 +207,7 @@ export function mockInterceptor(
     return ok(null);
   }
 
-  if (url.includes('/theater') && method === 'GET') {
+  if (url.match(/\/theater(\?|$)/) && method === 'GET') {
     return paginate(MOCK_THEATERS, page, size);
   }
 
@@ -237,16 +241,36 @@ export function mockInterceptor(
 
   if (url.includes('/showtime') && method === 'POST') {
     const all = [1, 2, 3, 4].flatMap((tid) => getShowtimes(tid));
+    const body = req.body as any;
     const showtime = {
       id: Math.max(...all.map((s: any) => s.id)) + 1,
-      ...(req.body as any),
+      ...body,
+      showDate: body.showDate
+        ? new Date(String(body.showDate).split('/').reverse().join('-'))
+        : body.showDate,
+      showTime: body.showTime
+        ? new Date(`1970-01-01T${body.showTime}`)
+        : body.showTime,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      isDeleted: false,
     };
     return ok(showtime);
   }
 
   if (url.match(/\/showtime\/\d+$/) && method === 'PUT') {
     const id = num(url.split('/').pop());
-    return ok({ id, ...(req.body as any) });
+    const body = req.body as any;
+    return ok({
+      id,
+      ...body,
+      showDate: body.showDate
+        ? new Date(String(body.showDate).split('/').reverse().join('-'))
+        : body.showDate,
+      showTime: body.showTime
+        ? new Date(`1970-01-01T${body.showTime}`)
+        : body.showTime,
+    });
   }
 
   if (url.match(/\/showtime\/\d+$/) && method === 'DELETE') {
@@ -365,7 +389,7 @@ export function mockInterceptor(
   }
 
   if (url.includes('/article') && method === 'POST') {
-    const article = { id: MOCK_ARTICLES.length + 1, ...(req.body as any) };
+    const article = { ...(req.body as any), id: MOCK_ARTICLES.length + 1 };
     (MOCK_ARTICLES as any[]).push(article);
     return ok(article);
   }

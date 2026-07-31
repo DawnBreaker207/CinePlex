@@ -126,7 +126,7 @@ export class ReservationComponent implements OnInit {
       },
       nzWidth: 900,
       nzKeyboard: true,
-      nzFooter: null,
+      nzFooter: undefined,
     });
   }
 

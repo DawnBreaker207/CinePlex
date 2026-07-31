@@ -86,7 +86,7 @@ private translate = inject(TranslateService);
         mode: mode,
         id: id,
       },
-      nzFooter: null,
+      nzFooter: undefined,
     });
 
     modal.afterClose.subscribe((result) => {

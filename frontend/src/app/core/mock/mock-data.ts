@@ -22,13 +22,13 @@ export interface MockUser {
 export const MOCK_USERS: MockUser[] = [
   {
     userId: 1,
-    username: 'Admin',
-    avatar: avatar('Admin'),
+    username: 'admin',
+    avatar: avatar('admin'),
     email: 'admin@cineplex.vn',
     phone: '0901234567',
     address: '72 Lê Thánh Tôn, Quận 1, TP.HCM',
     role: 'ADMIN',
-    password: '123456',
+    password: 'admin',
   },
   {
     userId: 2,
@@ -256,7 +256,6 @@ export function getShowtimes(theaterId: number) {
   const theater = MOCK_THEATERS.find((t) => t.id === theaterId) ?? MOCK_THEATERS[0];
   const showtimes = [];
   let id = theaterId * 100;
-
   for (const movie of MOCK_MOVIES) {
     for (let day = 0; day < 3; day++) {
       const date = ahead(day);
@@ -288,6 +287,10 @@ export function getShowtimes(theaterId: number) {
   }
   return showtimes;
 }
+
+MOCK_THEATERS.forEach((t) => {
+  (t as any).showtime = getShowtimes(t.id);
+});
 
 export const MOCK_SEATS = generateSeats(101);
 
@@ -558,7 +561,7 @@ export const MOCK_DASHBOARD_SUMMARY = {
 };
 
 export const MOCK_JWT_TOKEN =
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiYWRtaW5AY2luZXBsZXgudm4iLCJ1c2VybmFtZSI6IkFkbWluIiwicm9sZXMiOlsiQURNSU4iXSwiZXhwIjo5OTk5OTk5OTk5fQ.mocksig';
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsImVtYWlsIjoiYWRtaW5AY2luZXBsZXgudm4iLCJ1c2VybmFtZSI6ImFkbWluIiwicm9sZXMiOlsiQURNSU4iXSwiZXhwIjo5OTk5OTk5OTk5fQ.mocksig';
 
 export const MOCK_RESERVATION_INIT = {
   reservationId: 'res-002',

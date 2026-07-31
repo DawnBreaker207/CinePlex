@@ -1,5 +1,6 @@
 import {
   Component,
+  DestroyRef,
   inject,
   OnInit,
   signal,
@@ -69,6 +70,7 @@ export class FormTheaterComponent implements OnInit {
   private modelRef = inject(NzModalRef);
   private store = inject(Store);
   private actions$ = inject(Actions);
+  private destroyRef = inject(DestroyRef);
 
   private initialForm: any = null;
 
@@ -90,7 +92,7 @@ export class FormTheaterComponent implements OnInit {
             (theater) => theater !== null && theater.id === this.theaterId,
           ),
           take(1),
-          takeUntilDestroyed(),
+          takeUntilDestroyed(this.destroyRef),
         )
         .subscribe((theater) => {
           if (theater) {
@@ -155,6 +157,7 @@ export class FormTheaterComponent implements OnInit {
 
     watchSaveResult(
       this.actions$,
+      this.destroyRef,
       [
         TheaterActions.createTheaterSuccess,
         TheaterActions.updateTheaterSuccess,

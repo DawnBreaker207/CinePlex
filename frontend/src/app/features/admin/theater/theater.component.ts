@@ -81,8 +81,7 @@ private translate = inject(TranslateService);
   });
 
   openModal(mode: 'add' | 'edit' | 'view', id?: number) {
-    let modal!: ReturnType<NzModalService['create']>;
-    modal = this.modalService.create({
+    this.modalService.create({
       nzContent: FormTheaterComponent,
       nzTitle: undefined,
       nzClosable: true,
@@ -92,7 +91,7 @@ private translate = inject(TranslateService);
       },
       nzWidth: 900,
       nzKeyboard: true,
-      nzFooter: mode !== 'view' ? saveFooter(modal, this.translate) : null,
+      nzFooter: mode !== 'view' ? saveFooter(this.translate) : null,
     });
   }
 

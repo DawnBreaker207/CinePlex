@@ -1,4 +1,4 @@
-import { inject, Injectable } from '@angular/core';
+import { inject, Injectable, Injector } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ToastService } from '@core/services/toast/toast.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -8,7 +8,7 @@ import { TranslateService } from '@ngx-translate/core';
 })
 export class GlobalErrorService {
   private toast = inject(ToastService);
-  private translate = inject(TranslateService);
+  private injector = inject(Injector);
 
   readonly RETRY_CONFIG = {
     maxRetries: 3,
@@ -35,7 +35,8 @@ export class GlobalErrorService {
   }
 
   private parseError(error: HttpErrorResponse) {
-    const t = (key: string) => this.translate.instant(key);
+    const translate = this.injector.get(TranslateService);
+    const t = (key: string) => translate.instant(key);
     const status = error.status;
     let type = 'error';
     let title = `${t('error.title')} ${status}`;

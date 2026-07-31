@@ -62,12 +62,6 @@ export const HEADERS = [{ name: marker('common.movies'), path: '/movies' }];
 
 export const PROFILE_MENU = [
   {
-    title: marker('profileMenu.admin'),
-    icon: 'Gauge',
-    link: '/admin',
-    role: 'admin',
-  },
-  {
     title: marker('profile.title'),
     icon: 'CircleUserRound',
     link: '/profile',

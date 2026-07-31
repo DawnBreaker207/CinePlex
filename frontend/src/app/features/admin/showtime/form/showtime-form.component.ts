@@ -1,4 +1,4 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { ChangeDetectionStrategy } from '@angular/core';
 import { NzFormModule } from 'ng-zorro-antd/form';
 import {
@@ -68,6 +68,7 @@ export class FormShowtimeComponent implements OnInit {
   private modelRef = inject(NzModalRef);
   private store = inject(Store);
   private actions$ = inject(Actions);
+  private destroyRef = inject(DestroyRef);
 
   mode: 'add' | 'edit' | 'view' = 'add';
   readonly submitting = signal(false);
@@ -110,7 +111,7 @@ export class FormShowtimeComponent implements OnInit {
             (showtime) => showtime !== null && showtime.id === this.showtimeId,
           ),
           take(1),
-          takeUntilDestroyed(),
+          takeUntilDestroyed(this.destroyRef),
         )
         .subscribe((theater) => {
           if (theater) {
@@ -126,7 +127,7 @@ export class FormShowtimeComponent implements OnInit {
 
   search() {
     debouncedSearch(this.searchCtrl, 300)
-      .pipe(takeUntilDestroyed())
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((search) => {
         if (search) {
           this.isSearching.set(true);
@@ -210,6 +211,7 @@ export class FormShowtimeComponent implements OnInit {
 
     watchSaveResult(
       this.actions$,
+      this.destroyRef,
       [
         ShowtimeActions.createShowtimeSuccess,
         ShowtimeActions.updateShowtimeSuccess,

@@ -1,4 +1,4 @@
-import { Component, ElementRef, inject, OnInit, signal, viewChild } from '@angular/core';
+import { Component, DestroyRef, ElementRef, inject, OnInit, signal, viewChild } from '@angular/core';
 import { FormControl, FormGroup, FormsModule, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { matchValidator } from '@shared/utils/validators';
 import { NzButtonComponent } from 'ng-zorro-antd/button';
@@ -42,6 +42,7 @@ export class AuthComponent implements OnInit {
   private router = inject(Router);
   private actions$ = inject(Actions);
   private translate = inject(TranslateService);
+  private destroyRef = inject(DestroyRef);
 
   formLogin!: FormGroup<{
     identifier: FormControl<string>;
@@ -61,13 +62,13 @@ export class AuthComponent implements OnInit {
     this.initializeRegisterForm();
     this.activeTab.set(this.router.url.includes('register') ? 'register' : 'login');
 
-    this.formRegister.get('password')?.valueChanges.pipe(takeUntilDestroyed()).subscribe(() => {
+    this.formRegister.get('password')?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       this.formRegister.get('confirmPassword')?.updateValueAndValidity();
     });
 
     this.store.select(selectAuthError).pipe(
       filter(Boolean),
-      takeUntilDestroyed(),
+      takeUntilDestroyed(this.destroyRef),
     ).subscribe((err: any) => {
       const msg = err?.error?.message || err?.message || this.translate.instant('auth.genericError');
       if (this.activeTab() === 'login') this.loginError.set(msg);
@@ -111,7 +112,7 @@ export class AuthComponent implements OnInit {
       this.loginError.set(null);
       const { identifier, password } = this.formLogin.getRawValue();
       this.store.dispatch(AuthActions.loadLogin({ user: { identifier, password } }));
-      this.actions$.pipe(ofType(AuthActions.loadLoginSuccess, AuthActions.loadLoginFailure), take(1), takeUntilDestroyed()).subscribe(() => {
+      this.actions$.pipe(ofType(AuthActions.loadLoginSuccess, AuthActions.loadLoginFailure), take(1), takeUntilDestroyed(this.destroyRef)).subscribe(() => {
         this.isLoginLoading.set(false);
       });
     } else {
@@ -128,7 +129,7 @@ export class AuthComponent implements OnInit {
 
       this.actions$.pipe(
         ofType(AuthActions.loadRegisterSuccess, AuthActions.loadRegisterFailure),
-        take(1), takeUntilDestroyed(),
+        take(1), takeUntilDestroyed(this.destroyRef),
       ).subscribe((action) => {
         this.isRegisterLoading.set(false);
         if (action.type === AuthActions.loadRegisterSuccess.type) {

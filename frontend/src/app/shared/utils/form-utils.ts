@@ -1,8 +1,9 @@
 import { AbstractControl, FormGroup } from '@angular/forms';
+import { DestroyRef } from '@angular/core';
 import { Actions, ofType } from '@ngrx/effects';
 import { ActionCreator } from '@ngrx/store';
 import { TranslateService } from '@ngx-translate/core';
-import { NzModalRef } from 'ng-zorro-antd/modal';
+import { NzModalRef, ModalButtonOptions } from 'ng-zorro-antd/modal';
 import { debounceTime, distinctUntilChanged, map, Observable } from 'rxjs';
 import { take } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -29,16 +30,17 @@ export const debouncedSearch = (
 
 export function watchSaveResult(
   actions$: Actions,
+  destroyRef: DestroyRef,
   successTypes: ActionCreator[],
   failTypes: ActionCreator[],
   onSuccess: () => void,
   onError: (error: any) => void,
 ): void {
   actions$
-    .pipe(ofType(...successTypes), take(1), takeUntilDestroyed())
+    .pipe(ofType(...successTypes), take(1), takeUntilDestroyed(destroyRef))
     .subscribe(onSuccess);
   actions$
-    .pipe(ofType(...failTypes), take(1), takeUntilDestroyed())
+    .pipe(ofType(...failTypes), take(1), takeUntilDestroyed(destroyRef))
     .subscribe((action) => onError((action as { error: any }).error));
 }
 
@@ -49,16 +51,15 @@ interface ModalFormComponent {
 }
 
 export const saveFooter = (
-  modal: NzModalRef,
   translate: TranslateService,
-): { label: string; type: 'primary'; onClick: () => void }[] => [
+): ModalButtonOptions<any>[] => [
   {
     label: translate.instant('common.save'),
     type: 'primary',
-    onClick: () => {
-      const form = modal.getContentComponent() as ModalFormComponent;
-      if (form.form.valid && !form.submitting()) {
-        form.submit();
+    onClick: (form) => {
+      const f = form as ModalFormComponent | undefined;
+      if (f?.form.valid && !f.submitting()) {
+        f.submit();
       }
     },
   },

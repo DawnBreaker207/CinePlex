@@ -131,8 +131,7 @@ export class MovieComponent {
   }
 
   openMovieModal(mode: 'add' | 'edit' | 'view', id?: string | number) {
-    let modal!: ReturnType<NzModalService['create']>;
-    modal = this.modalService.create({
+    const modal = this.modalService.create({
       nzContent: FormMovieComponent,
       nzTitle: mode,
       nzClosable: true,
@@ -142,8 +141,13 @@ export class MovieComponent {
       },
       nzWidth: 900,
       nzKeyboard: true,
-      nzFooter: mode === 'view' ? null : saveFooter(modal, this.translate),
+      nzFooter: mode === 'view' ? null : saveFooter(this.translate),
       nzOnCancel: (instance) => this.handleCancel(instance),
+    });
+    modal.afterClose.subscribe((result) => {
+      if (result) {
+        this.store.dispatch(MovieActions.loadMovies({ page: 0, size: 10 }));
+      }
     });
   }
 

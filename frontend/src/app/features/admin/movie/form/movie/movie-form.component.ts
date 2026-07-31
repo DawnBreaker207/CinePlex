@@ -1,5 +1,6 @@
 import {
   Component,
+  DestroyRef,
   inject,
   OnInit,
   signal,
@@ -80,6 +81,7 @@ export class FormMovieComponent implements OnInit {
   private modelRef = inject(NzModalRef);
   private movieService = inject(MovieService);
   private modalService = inject(NzModalService);
+  private destroyRef = inject(DestroyRef);
 
   // Props
   mode: 'add' | 'edit' | 'view' = 'add';
@@ -125,7 +127,7 @@ export class FormMovieComponent implements OnInit {
         .pipe(
           filter((movie) => movie !== null && movie.id === this.movieId),
           take(1),
-          takeUntilDestroyed(),
+          takeUntilDestroyed(this.destroyRef),
         )
         .subscribe((movie) => {
           if (movie) {
@@ -208,6 +210,7 @@ export class FormMovieComponent implements OnInit {
 
     watchSaveResult(
       this.actions$,
+      this.destroyRef,
       [MovieActions.createMovieSuccess, MovieActions.updateMovieSuccess],
       [MovieActions.createMovieFailed, MovieActions.updateMovieFailed],
       () => {
@@ -250,7 +253,7 @@ export class FormMovieComponent implements OnInit {
               : [],
           })),
           take(1),
-          takeUntilDestroyed(),
+          takeUntilDestroyed(this.destroyRef),
         )
         .subscribe({
           next: (result: any) => {
