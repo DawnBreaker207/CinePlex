@@ -2,7 +2,7 @@ import { Component, input, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({
-  selector: 'seat-icon',
+  selector: 'app-seat-icon',
   imports: [CommonModule],
   templateUrl: './seat.component.html',
   styleUrl: './seat.component.css',

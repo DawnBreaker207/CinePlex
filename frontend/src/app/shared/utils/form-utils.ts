@@ -3,7 +3,7 @@ import { DestroyRef } from '@angular/core';
 import { Actions, ofType } from '@ngrx/effects';
 import { ActionCreator } from '@ngrx/store';
 import { TranslateService } from '@ngx-translate/core';
-import { NzModalRef, ModalButtonOptions } from 'ng-zorro-antd/modal';
+import { ModalButtonOptions } from 'ng-zorro-antd/modal';
 import { debounceTime, distinctUntilChanged, map, Observable } from 'rxjs';
 import { take } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';

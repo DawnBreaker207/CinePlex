@@ -1,4 +1,4 @@
-import { CanMatchFn, Router, UrlSegment } from '@angular/router';
+import { CanMatchFn, Router } from '@angular/router';
 import { inject } from '@angular/core';
 import { ToastService } from '@core/services/toast/toast.service';
 import { AuthService } from '@core/auth/auth.service';

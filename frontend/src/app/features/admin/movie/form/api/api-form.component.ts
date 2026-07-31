@@ -17,7 +17,7 @@ import { MovieService } from '@domain/movie/data-access/movie.service';
 import { TranslatePipe } from '@ngx-translate/core';
 
 @Component({
-  selector: 'movie-form-api',
+  selector: 'app-movie-form-api',
   imports: [
     ReactiveFormsModule,
     DatePipe,

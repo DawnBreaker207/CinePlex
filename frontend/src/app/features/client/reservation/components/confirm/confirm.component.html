@@ -181,6 +181,7 @@
     <div class="p-6">
       <nz-radio-group id="payment-group" [(ngModel)]="radioValue">
         @for (opt of paymentOptions; track opt.value) {
+          <!-- eslint-disable-next-line @angular-eslint/template/label-has-associated-control -- nz-radio injects the input into the label at runtime -->
           <label nz-radio [nzValue]="opt.value" class="radio-card">
             <div
               class="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-100 bg-white p-1 shrink-0"
@@ -199,7 +200,7 @@
                   </div>
                 }
               </div>
-          </label>
+            </label>
         }
       </nz-radio-group>
     </div>

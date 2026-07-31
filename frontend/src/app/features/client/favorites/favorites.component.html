@@ -4,7 +4,7 @@
         {{ 'favorites.title' | translate }}
       </h1>
 
-      @if (favorites(); as movies) {
+      @if (favorites.value(); as movies) {
         @if (movies.length) {
           <div nz-row [nzGutter]="[16, 16]">
             @for (movie of movies; track movie.id) {

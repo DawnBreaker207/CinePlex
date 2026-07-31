@@ -153,7 +153,7 @@ export function mockInterceptor(
 
   if (url.includes('/movie') && method === 'GET') {
     const query = (params.get('query') || '').toLowerCase();
-    let data = MOCK_MOVIES.filter(
+    const data = MOCK_MOVIES.filter(
       (m) =>
         !query ||
         m.title.toLowerCase().includes(query) ||
@@ -335,7 +335,7 @@ export function mockInterceptor(
   if (url.includes('/reservation') && method === 'GET') {
     const status = params.get('reservationStatus');
     const userId = num(params.get('userId'));
-    let data = MOCK_RESERVATIONS.filter(
+    const data = MOCK_RESERVATIONS.filter(
       (r) =>
         (!status || r.reservationStatus === status) &&
         (userId === 0 || r.user.userId === userId),
@@ -411,7 +411,7 @@ export function mockInterceptor(
 
   if (url.includes('/article') && method === 'GET') {
     const query = (params.get('query') || '').toLowerCase();
-    let data = MOCK_ARTICLES.filter(
+    const data = MOCK_ARTICLES.filter(
       (a) => !query || a.title.toLowerCase().includes(query),
     );
     return paginate(data, page, size);
@@ -453,7 +453,7 @@ export function mockInterceptor(
 
   if (url.includes('/voucher') && method === 'GET') {
     const query = (params.get('query') || '').toLowerCase();
-    let data = MOCK_VOUCHERS.filter(
+    const data = MOCK_VOUCHERS.filter(
       (v) => !query || v.name.toLowerCase().includes(query),
     );
     return paginate(data, page, size);

@@ -1,7 +1,7 @@
 import { Directive, output, ElementRef, inject, Renderer2, DestroyRef } from '@angular/core';
 
 @Directive({
-  selector: '[appClickOutside]',
+  selector: '[dawnClickOutside]',
 })
 export class ClickOutsideDirective {
   private elementRef = inject<ElementRef<HTMLElement>>(ElementRef);

@@ -34,7 +34,9 @@ export class BarcodeComponent implements OnInit {
           fontSize: 14,
           margin: 0,
         });
-      } catch (_) {}
+      } catch {
+        // ignore invalid barcode input
+      }
     }
   }
 }

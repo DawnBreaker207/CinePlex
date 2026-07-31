@@ -1,4 +1,3 @@
-import { Theater } from '@domain/theater/models/theater.model';
 import { Movie } from '@domain/movie/models/movie.model';
 import { signalStore, withMethods } from '@ngrx/signals';
 import { computed, inject, signal, effect, untracked, DestroyRef } from '@angular/core';
