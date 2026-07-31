@@ -2,21 +2,8 @@
   class="bg-white/80 dark:bg-[#1a202c]/80 backdrop-blur-md border-b border-slate-200 dark:border-gray-700 shadow-sm transition-[background-color,backdrop-filter] duration-300 w-full"
 >
   <div class="h-20 flex items-center justify-between px-6 lg:px-8 gap-6 w-full">
-    <!-- LEFT SIDE: Trigger + Breadcrumb -->
+    <!-- LEFT SIDE: Breadcrumb -->
     <div class="flex items-center gap-6 flex-1">
-      <div
-        class="w-10 h-10 rounded-xl bg-slate-50 dark:bg-gray-800 border border-slate-100 dark:border-gray-700 flex items-center justify-center text-slate-500 dark:text-gray-400 hover:text-primary hover:bg-primary-light cursor-pointer transition-colors shadow-sm"
-        (click)="toggleCollapse()"
-        (keydown.enter)="toggleCollapse()"
-        tabindex="0"
-        role="button"
-        [attr.aria-label]="'navbar.toggleSidebar' | translate"
-      >
-        <nz-icon
-          [nzType]="isCollapsed() ? 'menu-unfold' : 'menu-fold'"
-          class="text-lg"
-        />
-      </div>
       <div class="hidden md:block">
         <nz-breadcrumb [nzSeparator]="iconTemplate">
           <ng-template #iconTemplate>
@@ -25,7 +12,11 @@
               class="text-xs text-gray-500 dark:text-gray-400"
             />
           </ng-template>
-          <nz-breadcrumb-item>Admin</nz-breadcrumb-item>
+          <nz-breadcrumb-item>
+            <span class="text-gray-500 dark:text-gray-400">{{
+              "adminLayout.title" | translate
+            }}</span>
+          </nz-breadcrumb-item>
           @for (crum of breadcrumbs(); track crum.url; let last = $last) {
             <nz-breadcrumb-item>
               @if (last) {
@@ -80,7 +71,7 @@
           [nzStyle]="{ backgroundColor: 'var(--color-primary, #e53e3e)' }"
           nzSize="small"
         >
-          <nz-icon nzType="bell" class="text-xl" />
+          <nz-icon nzType="bell" class="text-xl text-slate-500 dark:text-gray-400" />
         </nz-badge>
       </div>
 

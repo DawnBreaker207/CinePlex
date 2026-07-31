@@ -1,7 +1,6 @@
 import {
   Component,
   input,
-  output,
   ChangeDetectionStrategy,
 } from '@angular/core';
 import { NzBadgeComponent } from 'ng-zorro-antd/badge';
@@ -40,9 +39,4 @@ import { TranslatePipe } from '@ngx-translate/core';
 })
 export class NavbarComponent {
   breadcrumbs = input<Breadcrumb[]>([]);
-  isCollapsed = input<boolean>(true);
-  toggleCollapsed = output<boolean>();
-  toggleCollapse() {
-    this.toggleCollapsed.emit(!this.isCollapsed());
-  }
 }

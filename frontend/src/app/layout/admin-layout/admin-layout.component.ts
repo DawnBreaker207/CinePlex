@@ -18,12 +18,6 @@ import {
   NzFooterComponent,
   NzLayoutModule,
 } from 'ng-zorro-antd/layout';
-import { NzIconModule } from 'ng-zorro-antd/icon';
-import { NzMenuModule } from 'ng-zorro-antd/menu';
-import { NzAvatarModule } from 'ng-zorro-antd/avatar';
-import { NzDropDownModule } from 'ng-zorro-antd/dropdown';
-import { NzBadgeModule } from 'ng-zorro-antd/badge';
-import { NzBreadCrumbModule } from 'ng-zorro-antd/breadcrumb';
 import { SidebarComponent } from './sidebar/sidebar.component';
 import { NavbarComponent } from './navbar/navbar.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -39,15 +33,9 @@ export interface Breadcrumb {
   selector: 'app-admin-layout',
   imports: [
     NzContentComponent,
-    NzIconModule,
     NzLayoutModule,
-    NzMenuModule,
     RouterOutlet,
     NzFooterComponent,
-    NzAvatarModule,
-    NzDropDownModule,
-    NzBadgeModule,
-    NzBreadCrumbModule,
     SidebarComponent,
     NavbarComponent,
     TranslatePipe,

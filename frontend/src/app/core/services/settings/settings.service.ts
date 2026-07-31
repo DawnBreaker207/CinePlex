@@ -13,11 +13,11 @@ export class SettingsService {
   private nzI18n = inject(NzI18nService);
 
   readonly lang = signal<AppLang>('vi');
-  readonly dark = signal(false);
+  readonly theme = signal(false);
 
   constructor() {
     this.lang.set(this.readLang());
-    this.dark.set(this.readDark());
+    this.theme.set(this.readTheme());
     this.apply();
   }
 
@@ -27,9 +27,9 @@ export class SettingsService {
     this.apply();
   }
 
-  toggleDark(): void {
-    this.dark.update((d) => !d);
-    localStorage.setItem(THEME_KEY, this.dark() ? 'dark' : 'light');
+  toggleTheme(): void {
+    this.theme.update((t) => !t);
+    localStorage.setItem(THEME_KEY, this.theme() ? 'dark' : 'light');
     this.apply();
   }
 
@@ -37,7 +37,7 @@ export class SettingsService {
     this.translate.use(this.lang());
     this.nzI18n.setLocale(this.lang() === 'vi' ? vi_VN : en_US);
     document.documentElement.lang = this.lang();
-    document.documentElement.classList.toggle('dark', this.dark());
+    document.documentElement.classList.toggle('dark', this.theme());
   }
 
   private readLang(): AppLang {
@@ -45,10 +45,11 @@ export class SettingsService {
     return saved === 'en' ? 'en' : 'vi';
   }
 
-  private readDark(): boolean {
+  private readTheme(): boolean {
     const saved = localStorage.getItem(THEME_KEY);
     if (saved === 'dark') return true;
     if (saved === 'light') return false;
     return window.matchMedia('(prefers-color-scheme: dark)').matches;
   }
 }
+

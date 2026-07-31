@@ -24,17 +24,17 @@ describe('SettingsService', () => {
 
   it('should default to vi + light when nothing stored', () => {
     expect(service.lang()).toBe('vi');
-    expect(service.dark()).toBe(false);
+    expect(service.theme()).toBe(false);
     expect(translate.use).toHaveBeenCalledWith('vi');
     expect(nzI18n.setLocale).toHaveBeenCalled();
   });
 
   it('should toggle dark mode and persist', () => {
-    service.toggleDark();
-    expect(service.dark()).toBe(true);
+    service.toggleTheme();
+    expect(service.theme()).toBe(true);
     expect(localStorage.getItem('cineplex.theme')).toBe('dark');
-    service.toggleDark();
-    expect(service.dark()).toBe(false);
+    service.toggleTheme();
+    expect(service.theme()).toBe(false);
     expect(localStorage.getItem('cineplex.theme')).toBe('light');
   });
 
@@ -49,7 +49,9 @@ describe('SettingsService', () => {
     localStorage.setItem('cineplex.theme', 'dark');
     localStorage.setItem('cineplex.lang', 'en');
     const restored = TestBed.inject(SettingsService);
-    expect(restored.dark()).toBe(true);
+    expect(restored.theme()).toBe(true);
     expect(restored.lang()).toBe('en');
   });
 });
+
+
