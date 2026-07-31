@@ -27,7 +27,7 @@ import { NzDatePickerComponent } from 'ng-zorro-antd/date-picker';
 import { NzButtonComponent } from 'ng-zorro-antd/button';
 import { NzSpaceModule } from 'ng-zorro-antd/space';
 import { Store } from '@ngrx/store';
-import { Actions, ofType } from '@ngrx/effects';
+import { Actions } from '@ngrx/effects';
 import { NzAlertComponent } from 'ng-zorro-antd/alert';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { MovieService } from '@domain/movie/data-access/movie.service';
@@ -43,6 +43,11 @@ import { Movie, MovieRequest } from '@domain/movie/models/movie.model';
 import { FormMovieAPIComponent } from '@features/admin/movie/form/api/api-form.component';
 import { NzSpinModule } from 'ng-zorro-antd/spin';
 import { TranslatePipe } from '@ngx-translate/core';
+import {
+  disableForm,
+  markFormTouched,
+  watchSaveResult,
+} from '@shared/utils/form-utils';
 
 @Component({
   selector: 'app-movie-form',
@@ -127,7 +132,7 @@ export class FormMovieComponent implements OnInit {
             this.patchFormValue(movie);
             this.initialFormValue = this.form.getRawValue() as MovieRequest;
             if (this.mode === 'view') {
-              this.disableForm();
+              disableForm(this.form);
             }
           } else {
             this.initialFormValue = this.form.getRawValue() as MovieRequest;
@@ -167,12 +172,6 @@ export class FormMovieComponent implements OnInit {
     });
   }
 
-  private disableForm() {
-    Object.keys(this.form.controls).forEach((key) => {
-      this.form.get(key)?.disable();
-    });
-  }
-
   private patchFormValue(movie: Movie) {
     this.form.patchValue({
       title: movie.title,
@@ -192,9 +191,7 @@ export class FormMovieComponent implements OnInit {
 
   submit() {
     if (!this.form.valid || this.submitting()) {
-      Object.keys(this.form.controls).forEach((key) => {
-        this.form.get(key)?.markAllAsTouched();
-      });
+      markFormTouched(this.form);
       return;
     }
 
@@ -209,30 +206,19 @@ export class FormMovieComponent implements OnInit {
       this.store.dispatch(MovieActions.createMovie({ movie: movieData }));
     }
 
-    this.actions$
-      .pipe(
-        ofType(
-          MovieActions.createMovieSuccess,
-          MovieActions.updateMovieSuccess,
-        ),
-        take(1),
-        takeUntilDestroyed(),
-      )
-      .subscribe(() => {
+    watchSaveResult(
+      this.actions$,
+      [MovieActions.createMovieSuccess, MovieActions.updateMovieSuccess],
+      [MovieActions.createMovieFailed, MovieActions.updateMovieFailed],
+      () => {
         this.submitting.set(false);
         this.modelRef.close();
-      });
-
-    this.actions$
-      .pipe(
-        ofType(MovieActions.createMovieFailed, MovieActions.updateMovieFailed),
-        take(1),
-        takeUntilDestroyed(),
-      )
-      .subscribe(({ error }) => {
+      },
+      (error) => {
         this.submitting.set(false);
         console.error('Save movie failed: ', error);
-      });
+      },
+    );
   }
 
   openMovieModal() {

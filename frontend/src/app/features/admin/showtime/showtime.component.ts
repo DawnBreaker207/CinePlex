@@ -36,6 +36,7 @@ import { NzProgressModule } from 'ng-zorro-antd/progress';
 import { NzDropDownModule } from 'ng-zorro-antd/dropdown';
 import { ICON_COLORS, CHART_COLORS } from '@shared/utils/colors';
 import { confirmDelete } from '@shared/utils/confirm-delete';
+import { saveFooter } from '@shared/utils/form-utils';
 import {
   selectAllShowtimes,
   selectPaginationShowtime,
@@ -148,7 +149,8 @@ export class ShowtimeComponent implements OnInit {
   }
 
   openModal(mode: 'add' | 'edit' | 'view', id?: number) {
-    const modal = this.modalService.create({
+    let modal!: ReturnType<NzModalService['create']>;
+    modal = this.modalService.create({
       nzContent: FormShowtimeComponent,
       nzTitle: undefined,
       nzClosable: true,
@@ -158,22 +160,7 @@ export class ShowtimeComponent implements OnInit {
       },
       nzWidth: 900,
       nzKeyboard: true,
-      nzFooter:
-        mode === 'view'
-          ? null
-          : [
-              {
-                label: 'Lưu',
-                type: 'primary',
-                onClick: () => {
-                  const form =
-                    modal.getContentComponent() as FormShowtimeComponent;
-                  if (form.form.valid && !form.submitting()) {
-                    form.submit();
-                  }
-                },
-              },
-            ],
+      nzFooter: mode === 'view' ? null : saveFooter(modal),
     });
   }
 

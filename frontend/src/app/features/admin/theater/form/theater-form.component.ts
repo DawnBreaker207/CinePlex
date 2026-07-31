@@ -24,12 +24,17 @@ import {
   NzFormLabelComponent,
 } from 'ng-zorro-antd/form';
 import { Store } from '@ngrx/store';
-import { Actions, ofType } from '@ngrx/effects';
+import { Actions } from '@ngrx/effects';
 import { NzOptionComponent, NzSelectComponent } from 'ng-zorro-antd/select';
 import { TheaterActions } from '@domain/theater/data-access/theater.actions';
 import { selectTheaterById } from '@domain/theater/data-access/theater.selectors';
 import { Theater, TheaterRequest } from '@domain/theater/models/theater.model';
 import { TranslatePipe } from '@ngx-translate/core';
+import {
+  disableForm,
+  markFormTouched,
+  watchSaveResult,
+} from '@shared/utils/form-utils';
 
 @Component({
   selector: 'app-theater-form',
@@ -92,19 +97,13 @@ export class FormTheaterComponent implements OnInit {
             this.patchFormValue(theater);
             this.initialForm = this.form.value;
             if (this.mode === 'view') {
-              this.disableForm();
+              disableForm(this.form);
             }
           } else {
             this.initialForm = this.form.value;
           }
         });
     }
-  }
-
-  private disableForm() {
-    Object.keys(this.form.controls).forEach((key) => {
-      this.form.get(key)?.disable();
-    });
   }
 
   initForm() {
@@ -134,7 +133,10 @@ export class FormTheaterComponent implements OnInit {
   }
 
   submit() {
-    if (!this.form.valid || this.submitting()) return;
+    if (!this.form.valid || this.submitting()) {
+      markFormTouched(this.form);
+      return;
+    }
 
     this.submitting.set(true);
     const theaterData = this.form.getRawValue() as TheaterRequest;
@@ -151,32 +153,21 @@ export class FormTheaterComponent implements OnInit {
       );
     }
 
-    this.actions$
-      .pipe(
-        ofType(
-          TheaterActions.createTheaterSuccess,
-          TheaterActions.updateTheaterSuccess,
-        ),
-        take(1),
-        takeUntilDestroyed(),
-      )
-      .subscribe(() => {
+    watchSaveResult(
+      this.actions$,
+      [
+        TheaterActions.createTheaterSuccess,
+        TheaterActions.updateTheaterSuccess,
+      ],
+      [TheaterActions.createTheaterFailed, TheaterActions.updateTheaterFailed],
+      () => {
         this.submitting.set(false);
         this.modelRef.close();
-      });
-
-    this.actions$
-      .pipe(
-        ofType(
-          TheaterActions.createTheaterFailed,
-          TheaterActions.updateTheaterFailed,
-        ),
-        take(1),
-        takeUntilDestroyed(),
-      )
-      .subscribe(({ error }) => {
+      },
+      (error) => {
         this.submitting.set(false);
         console.error('Save theater failed', error);
-      });
+      },
+    );
   }
 }

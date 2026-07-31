@@ -21,7 +21,7 @@ import {
   NzListItemComponent,
   NzListItemMetaComponent,
 } from 'ng-zorro-antd/list';
-import { debounceTime, distinctUntilChanged, map } from 'rxjs';
+import { debouncedSearch, saveFooter } from '@shared/utils/form-utils';
 import { Store } from '@ngrx/store';
 import { NzAlertComponent } from 'ng-zorro-antd/alert';
 import { NzSpinModule } from 'ng-zorro-antd/spin';
@@ -99,13 +99,8 @@ export class MovieComponent {
   });
 
   constructor() {
-    this.searchCtrl.valueChanges
-      .pipe(
-        debounceTime(500),
-        map((v) => v?.trim() || ''),
-        distinctUntilChanged(),
-        takeUntilDestroyed(),
-      )
+    debouncedSearch(this.searchCtrl, 500)
+      .pipe(takeUntilDestroyed())
       .subscribe((search) => {
         if (search) {
           this.isSearching.set(true);
@@ -135,7 +130,8 @@ export class MovieComponent {
   }
 
   openMovieModal(mode: 'add' | 'edit' | 'view', id?: string | number) {
-    const modal = this.modalService.create({
+    let modal!: ReturnType<NzModalService['create']>;
+    modal = this.modalService.create({
       nzContent: FormMovieComponent,
       nzTitle: mode,
       nzClosable: true,
@@ -145,22 +141,7 @@ export class MovieComponent {
       },
       nzWidth: 900,
       nzKeyboard: true,
-      nzFooter:
-        mode === 'view'
-          ? null
-          : [
-              {
-                label: 'Lưu',
-                type: 'primary',
-                onClick: () => {
-                  const form =
-                    modal.getContentComponent() as FormMovieComponent;
-                  if (form.form.valid && !form.submitting()) {
-                    form.submit();
-                  }
-                },
-              },
-            ],
+      nzFooter: mode === 'view' ? null : saveFooter(modal),
       nzOnCancel: (instance) => this.handleCancel(instance),
     });
   }

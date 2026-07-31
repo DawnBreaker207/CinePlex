@@ -14,8 +14,8 @@ import { NzDatePickerModule } from 'ng-zorro-antd/date-picker';
 import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzModalRef } from 'ng-zorro-antd/modal';
 import { Store } from '@ngrx/store';
-import { Actions, ofType } from '@ngrx/effects';
-import { debounceTime, distinctUntilChanged, filter, map, take } from 'rxjs';
+import { Actions } from '@ngrx/effects';
+import { filter, take } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NzSelectModule } from 'ng-zorro-antd/select';
 import { NzTimePickerModule } from 'ng-zorro-antd/time-picker';
@@ -37,6 +37,12 @@ import {
 } from '@shared/utils/date.helper';
 import { MovieActions } from '@domain/movie/data-access/movie.actions';
 import { TranslatePipe } from '@ngx-translate/core';
+import {
+  debouncedSearch,
+  disableForm,
+  markFormTouched,
+  watchSaveResult,
+} from '@shared/utils/form-utils';
 
 @Component({
   selector: 'app-form',
@@ -110,7 +116,7 @@ export class FormShowtimeComponent implements OnInit {
           if (theater) {
             this.patchFormValue(theater);
             if (this.mode === 'view') {
-              this.disableForm();
+              disableForm(this.form);
             }
           }
         });
@@ -119,13 +125,8 @@ export class FormShowtimeComponent implements OnInit {
   }
 
   search() {
-    this.searchCtrl.valueChanges
-      .pipe(
-        debounceTime(300),
-        map((v) => v?.trim()),
-        distinctUntilChanged(),
-        takeUntilDestroyed(),
-      )
+    debouncedSearch(this.searchCtrl, 300)
+      .pipe(takeUntilDestroyed())
       .subscribe((search) => {
         if (search) {
           this.isSearching.set(true);
@@ -134,12 +135,6 @@ export class FormShowtimeComponent implements OnInit {
           this.isSearching.set(false);
         }
       });
-  }
-
-  private disableForm() {
-    Object.keys(this.form.controls).forEach((key) => {
-      this.form.get(key)?.disable();
-    });
   }
 
   selectMovie(movie: Movie) {
@@ -188,9 +183,7 @@ export class FormShowtimeComponent implements OnInit {
 
   submit() {
     if (this.form.invalid || this.submitting()) {
-      Object.keys(this.form.controls).forEach((key) => {
-        this.form.get(key)?.markAllAsTouched();
-      });
+      markFormTouched(this.form);
       return;
     }
 
@@ -215,32 +208,24 @@ export class FormShowtimeComponent implements OnInit {
       );
     }
 
-    this.actions$
-      .pipe(
-        ofType(
-          ShowtimeActions.createShowtimeSuccess,
-          ShowtimeActions.updateShowtimeSuccess,
-        ),
-        take(1),
-        takeUntilDestroyed(),
-      )
-      .subscribe(() => {
+    watchSaveResult(
+      this.actions$,
+      [
+        ShowtimeActions.createShowtimeSuccess,
+        ShowtimeActions.updateShowtimeSuccess,
+      ],
+      [
+        ShowtimeActions.createShowtimeFailed,
+        ShowtimeActions.updateShowtimeFailed,
+      ],
+      () => {
         this.submitting.set(false);
         this.modelRef.close();
-      });
-
-    this.actions$
-      .pipe(
-        ofType(
-          ShowtimeActions.createShowtimeFailed,
-          ShowtimeActions.updateShowtimeFailed,
-        ),
-        take(1),
-        takeUntilDestroyed(),
-      )
-      .subscribe(({ error }) => {
+      },
+      (error) => {
         this.submitting.set(false);
         console.error('Save showtime failed', error);
-      });
+      },
+    );
   }
 }

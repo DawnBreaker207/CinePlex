@@ -28,6 +28,7 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { HEADER_COLUMNS } from '@core/constants/column';
 import { ICON_COLORS } from '@shared/utils/colors';
 import { confirmDelete } from '@shared/utils/confirm-delete';
+import { saveFooter } from '@shared/utils/form-utils';
 
 @Component({
   selector: 'app-theater',
@@ -79,7 +80,8 @@ export class TheaterComponent {
   });
 
   openModal(mode: 'add' | 'edit' | 'view', id?: number) {
-    const modal = this.modalService.create({
+    let modal!: ReturnType<NzModalService['create']>;
+    modal = this.modalService.create({
       nzContent: FormTheaterComponent,
       nzTitle: undefined,
       nzClosable: true,
@@ -89,22 +91,7 @@ export class TheaterComponent {
       },
       nzWidth: 900,
       nzKeyboard: true,
-      nzFooter:
-        mode !== 'view'
-          ? [
-              {
-                label: 'Lưu',
-                type: 'primary',
-                onClick: () => {
-                  const form =
-                    modal.getContentComponent() as FormTheaterComponent;
-                  if (form.form.valid && !form.submitting()) {
-                    form.submit();
-                  }
-                },
-              },
-            ]
-          : null,
+      nzFooter: mode !== 'view' ? saveFooter(modal) : null,
     });
   }
 
