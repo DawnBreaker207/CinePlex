@@ -3,12 +3,19 @@
     class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8"
   >
     <div class="text-3xl font-bold text-gray-900 dark:text-gray-100">
-      {{ "Quản lý người dùng" | translate }}
+      {{ "admin.user.manage" | translate }}
     </div>
   </div>
 
   @if (userStore.error(); as error) {
-    <nz-alert nzType="error" [nzMessage]="error" nzShowIcon nzCloseable class="mb-4" (nzOnClose)="userStore.clearError()"></nz-alert>
+    <nz-alert
+      nzType="error"
+      [nzMessage]="error"
+      nzShowIcon
+      nzCloseable
+      class="mb-4"
+      (nzOnClose)="userStore.clearError()"
+    ></nz-alert>
   }
 
   <app-loading [isLoading]="userStore.loading()">
@@ -24,7 +31,7 @@
         [nzPageSize]="pageSize"
         (nzQueryParams)="onQueryParamsChange($event)"
         [nzShowSizeChanger]="true"
-        [nzNoResult]="'Không tìm thấy người dùng. Hãy thử thay đổi bộ lọc.' | translate"
+        [nzNoResult]="'admin.user.empty' | translate"
       >
         <thead>
           <tr>
@@ -39,7 +46,9 @@
               class="group hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors border-b border-gray-100 dark:border-gray-700"
             >
               <td class="px-6 py-4">
-                <div class="font-bold text-gray-900 dark:text-gray-100 text-base">
+                <div
+                  class="font-bold text-gray-900 dark:text-gray-100 text-base"
+                >
                   {{ item.username }}
                 </div>
                 <div class="text-sm text-gray-500 dark:text-gray-400">

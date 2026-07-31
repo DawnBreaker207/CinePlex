@@ -21,19 +21,19 @@
                 class="mt-6 grid grid-cols-1 gap-4 text-sm text-slate-500 md:grid-cols-2"
               >
                 <div>
-                  <strong>{{ "Khởi chiếu:" | translate }}</strong>
+                  <strong>{{ "detail.premiere" | translate }}</strong>
                   <span class="ml-2 text-slate-900">
                     {{ movie.releaseDate | date: "dd/MM/yyyy" }}
                   </span>
                 </div>
                 <div>
-                  <strong>{{ "Quốc gia:" | translate }}</strong>
+                  <strong>{{ "detail.country" | translate }}</strong>
                   <span class="ml-2 text-slate-900">
                     {{ movie.country }}
                   </span>
                 </div>
                 <div>
-                  <strong>{{ "Ngôn ngữ" | translate }}</strong>
+                  <strong>{{ "common.language" | translate }}</strong>
                   <span class="ml-2 text-slate-900">
                     {{ movie.language }}
                   </span>
@@ -41,7 +41,9 @@
               </div>
             </nz-tab>
             <nz-tab
-              [nzTitle]="('Đánh giá' | translate) + ' (' + reviews.length + ')'"
+              [nzTitle]="
+                ('common.rating' | translate) + ' (' + reviews.length + ')'
+              "
             >
               <div class="space-y-6">
                 @for (review of reviews; track review.user) {
@@ -78,12 +80,10 @@
                       class="text-4xl text-slate-300 mb-3"
                     />
                     <p class="text-slate-500 font-medium">
-                      {{ "Chưa có đánh giá nào" | translate }}
+                      {{ "detail.noReviews" | translate }}
                     </p>
                     <p class="text-sm text-slate-400 mt-1">
-                      {{
-                        "Hãy là người đầu tiên đánh giá phim này!" | translate
-                      }}
+                      {{ "detail.firstReview" | translate }}
                     </p>
                   </div>
                 }
@@ -93,7 +93,7 @@
                   nzType="dashed"
                   class="border-slate-300 text-slate-500 hover:border-[#E53E3E] hover:text-[#E53E3E]"
                 >
-                  {{ "Viết đánh giá của bạn" | translate }}
+                  {{ "detail.writeReview" | translate }}
                 </button>
               </div>
             </nz-tab>

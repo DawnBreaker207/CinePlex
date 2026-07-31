@@ -11,7 +11,7 @@
           class="font-bold mr-2 flex items-center gap-2 shrink-0 text-primary"
         >
           <nz-icon nzType="filter" nzTheme="outline" aria-hidden="true" />
-          {{ "Bộ lọc:" | translate }}
+          {{ "admin.dashboard.filter" | translate }}
         </span>
 
         <!-- Times  -->
@@ -19,24 +19,24 @@
           [ngModel]="dashboardStore.filterType()"
           (ngModelChange)="onFilterChange('filterType', $event)"
           [nzOptionHeightPx]="36"
-          [attr.aria-label]="'Loại thời gian' | translate"
+          [attr.aria-label]="'admin.dashboard.timeType' | translate"
           class="w-full sm:w-[140px]"
         >
           <nz-option
             nzValue="week"
-            [nzLabel]="'Theo Tuần' | translate"
+            [nzLabel]="'admin.dashboard.periodWeek' | translate"
           ></nz-option>
           <nz-option
             nzValue="month"
-            [nzLabel]="'Theo Tháng' | translate"
+            [nzLabel]="'admin.dashboard.periodMonth' | translate"
           ></nz-option>
           <nz-option
             nzValue="quarter"
-            [nzLabel]="'Theo Quý' | translate"
+            [nzLabel]="'admin.dashboard.periodQuarter' | translate"
           ></nz-option>
           <nz-option
             nzValue="year"
-            [nzLabel]="'Theo Năm' | translate"
+            [nzLabel]="'admin.dashboard.periodYear' | translate"
           ></nz-option>
         </nz-select>
 
@@ -50,7 +50,7 @@
             (ngModelChange)="onFilterChange('selectedDate', $event)"
             [nzAllowClear]="false"
             nzFormat="dd/MM/yyyy"
-            [attr.aria-label]="'Chọn tuần' | translate"
+            [attr.aria-label]="'admin.dashboard.selectWeek' | translate"
             class="w-full sm:w-[200px]"
           >
           </nz-date-picker>
@@ -64,7 +64,7 @@
             (ngModelChange)="onFilterChange('selectedDate', $event)"
             [nzAllowClear]="false"
             nzFormat="MM/yyyy"
-            [attr.aria-label]="'Chọn tháng' | translate"
+            [attr.aria-label]="'admin.dashboard.selectMonth' | translate"
             class="w-full sm:w-[200px]"
           >
           </nz-date-picker>
@@ -80,8 +80,8 @@
               [ngModel]="dashboardStore.selectedQuarter()"
               (ngModelChange)="onFilterChange('selectedQuarter', $event)"
               class="w-full sm:w-[120px] bg-transparent"
-              [nzPlaceHolder]="'Quý' | translate"
-              [attr.aria-label]="'Chọn quý' | translate"
+              [nzPlaceHolder]="'admin.dashboard.quarter' | translate"
+              [attr.aria-label]="'admin.dashboard.selectQuarter' | translate"
             >
               @for (q of quarters; track q.value) {
                 <nz-option [nzLabel]="q.label" [nzValue]="q.value"></nz-option>
@@ -92,7 +92,7 @@
               [ngModel]="dashboardStore.selectedQuarterYear()"
               (ngModelChange)="onFilterChange('selectedQuarterYear', $event)"
               class="w-full sm:w-[90px]"
-              [attr.aria-label]="'Chọn năm' | translate"
+              [attr.aria-label]="'admin.dashboard.selectYear' | translate"
             >
               @for (y of years; track y) {
                 <nz-option [nzValue]="y" [nzLabel]="y"></nz-option>
@@ -109,7 +109,7 @@
             (ngModelChange)="onFilterChange('selectedDate', $event)"
             [nzAllowClear]="false"
             nzFormat="yyyy"
-            [attr.aria-label]="'Chọn năm' | translate"
+            [attr.aria-label]="'admin.dashboard.selectYear' | translate"
             class="w-full sm:w-[120px]"
           >
           </nz-date-picker>
@@ -120,7 +120,7 @@
           nz-button
           nzType="text"
           (click)="refreshData()"
-          [title]="'Làm mới dữ liệu' | translate"
+          [title]="'admin.dashboard.refresh' | translate"
           class="hover:text-primary transition-colors"
         >
           <nz-icon nzType="reload" aria-hidden="true" />
@@ -131,10 +131,14 @@
       <div class="flex items-center gap-4 shrink-0 ml-4">
         <div
           class="flex items-center gap-2 text-gray-600 dark:text-gray-400 px-3 h-[32px] rounded-full border whitespace-nowrap"
-          [ngClass]="dashboardStore.isAutoUpdate() ? 'bg-primary-light border-primary/30' : 'bg-gray-50 dark:bg-gray-800 border-gray-100 dark:border-gray-700'"
+          [ngClass]="
+            dashboardStore.isAutoUpdate()
+              ? 'bg-primary-light border-primary/30'
+              : 'bg-gray-50 dark:bg-gray-800 border-gray-100 dark:border-gray-700'
+          "
         >
           <span class="text-sm font-medium">{{
-            "Cập nhật thời gian thực" | translate
+            "admin.dashboard.realTime" | translate
           }}</span>
           <nz-switch
             nzSize="small"
@@ -151,7 +155,7 @@
           class="flex items-center gap-2"
         >
           <nz-icon nzType="download" aria-hidden="true" />
-          {{ "Xuất báo cáo" | translate }}
+          {{ "admin.dashboard.exportReport" | translate }}
         </button>
         <nz-dropdown-menu #exportMenu="nzDropdownMenu">
           <ul nz-menu>
@@ -161,7 +165,11 @@
               (click)="exportReport('pdf')"
               (keyup.enter)="exportReport('pdf')"
             >
-              <nz-icon nzType="file-pdf" class="mr-2 text-danger" aria-hidden="true" />
+              <nz-icon
+                nzType="file-pdf"
+                class="mr-2 text-danger"
+                aria-hidden="true"
+              />
               PDF
             </li>
             <li
@@ -170,7 +178,11 @@
               (click)="exportReport('excel')"
               (keyup.enter)="exportReport('excel')"
             >
-              <nz-icon nzType="file-excel" class="mr-2 text-success" aria-hidden="true" />
+              <nz-icon
+                nzType="file-excel"
+                class="mr-2 text-success"
+                aria-hidden="true"
+              />
               Excel
             </li>
           </ul>
@@ -198,7 +210,7 @@
       <nz-row nzGutter="[8, 12]" aria-live="polite">
         <nz-col nzXs="24" nzSm="12" nzMd="8" nzLg="6">
           <app-dashboard-item
-            [title]="'Doanh thu' | translate"
+            [title]="'admin.dashboard.revenue' | translate"
             [value]="
               (
                 dashboardStore.metrics()?.totalRevenue ?? 0 | currencyFormat
@@ -209,7 +221,7 @@
         </nz-col>
         <nz-col nzXs="24" nzSm="12" nzMd="8" nzLg="6">
           <app-dashboard-item
-            [title]="'Vé đã bán' | translate"
+            [title]="'admin.dashboard.ticketsSold' | translate"
             [value]="
               (
                 dashboardStore.metrics()?.ticketsSold || 0 | number: '1.0-0'
@@ -220,14 +232,14 @@
         </nz-col>
         <nz-col nzXs="24" nzSm="12" nzMd="8" nzLg="6">
           <app-dashboard-item
-            [title]="'Rạp hoạt động' | translate"
+            [title]="'admin.dashboard.activeTheaters' | translate"
             [value]="(dashboardStore.metrics()?.activeTheaters || 0).toString()"
             icon="Theater"
           />
         </nz-col>
         <nz-col nzXs="24" nzSm="12" nzMd="8" nzLg="6">
           <app-dashboard-item
-            [title]="'Hiệu suất ghế' | translate"
+            [title]="'admin.dashboard.seatUtilization' | translate"
             [value]="(dashboardStore.metrics()?.seatUtilization || 0) + '%'"
             icon="Armchair"
           />
@@ -240,14 +252,18 @@
           @defer (on viewport) {
             <app-revenue-chart [revenues]="dashboardStore.revenues()" />
           } @placeholder {
-            <div class="h-[250px] sm:h-[350px] bg-gray-50 dark:bg-gray-800 rounded-xl animate-pulse"></div>
+            <div
+              class="h-[250px] sm:h-[350px] bg-gray-50 dark:bg-gray-800 rounded-xl animate-pulse"
+            ></div>
           }
         </nz-col>
         <nz-col nzXs="24" nzMd="10">
           @defer (on viewport) {
             <app-payment-chart [payments]="dashboardStore.payments()" />
           } @placeholder {
-            <div class="h-[250px] sm:h-[350px] bg-gray-50 dark:bg-gray-800 rounded-xl animate-pulse"></div>
+            <div
+              class="h-[250px] sm:h-[350px] bg-gray-50 dark:bg-gray-800 rounded-xl animate-pulse"
+            ></div>
           }
         </nz-col>
       </nz-row>
@@ -257,14 +273,18 @@
           @defer (on viewport) {
             <app-theater-chart [theaters]="dashboardStore.theaters()" />
           } @placeholder {
-            <div class="h-[250px] bg-gray-50 dark:bg-gray-800 rounded-xl animate-pulse"></div>
+            <div
+              class="h-[250px] bg-gray-50 dark:bg-gray-800 rounded-xl animate-pulse"
+            ></div>
           }
         </nz-col>
         <nz-col nzXs="24" nzMd="16">
           @defer (on viewport) {
             <app-movie-chart [movies]="dashboardStore.movies()" />
           } @placeholder {
-            <div class="h-[250px] bg-gray-50 dark:bg-gray-800 rounded-xl animate-pulse"></div>
+            <div
+              class="h-[250px] bg-gray-50 dark:bg-gray-800 rounded-xl animate-pulse"
+            ></div>
           }
         </nz-col>
       </nz-row>
@@ -274,13 +294,15 @@
         <nz-col nzXs="24" nzMd="12">
           <nz-card>
             <div class="font-bold text-xl">
-              {{ "Hiệu suất rạp" | translate }}
+              {{ "admin.dashboard.theaterPerformance" | translate }}
             </div>
             <div class="min-h-[200px]">
               @defer (on viewport) {
                 <app-movie-table [data]="dashboardStore.theaters()" />
               } @placeholder {
-                <div class="h-[200px] bg-gray-50 dark:bg-gray-800 rounded animate-pulse"></div>
+                <div
+                  class="h-[200px] bg-gray-50 dark:bg-gray-800 rounded animate-pulse"
+                ></div>
               }
             </div>
           </nz-card>
@@ -288,13 +310,15 @@
         <nz-col nzXs="24" nzMd="12">
           <nz-card>
             <div class="font-bold text-xl">
-              {{ "Phân tích phim" | translate }}
+              {{ "admin.dashboard.movieAnalytics" | translate }}
             </div>
             <div class="min-h-[200px]">
               @defer (on viewport) {
                 <app-theater-table [data]="dashboardStore.movies()" />
               } @placeholder {
-                <div class="h-[200px] bg-gray-50 dark:bg-gray-800 rounded animate-pulse"></div>
+                <div
+                  class="h-[200px] bg-gray-50 dark:bg-gray-800 rounded animate-pulse"
+                ></div>
               }
             </div>
           </nz-card>

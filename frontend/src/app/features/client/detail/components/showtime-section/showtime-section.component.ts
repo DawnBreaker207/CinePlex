@@ -30,7 +30,7 @@ export interface CinemaGroup {
       <h2
         class="mb-6 border-l-4 border-[#E53E3E] pl-3 font-['Bricolage_Grotesque'] text-2xl font-bold text-slate-900"
       >
-        {{ 'Lịch Chiếu' | translate }}
+        {{ 'detail.showtimes' | translate }}
       </h2>
 
       <div class="mb-6 flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
@@ -78,8 +78,9 @@ export interface CinemaGroup {
                     >
                       {{
                         show.availableSeats > 0
-                          ? show.availableSeats + ('ghế trống' | translate)
-                          : ('Hết vé' | translate)
+                          ? show.availableSeats +
+                            ('detail.seatsAvailable' | translate)
+                          : ('detail.soldOut' | translate)
                       }}
                     </span>
                   </div>
@@ -96,7 +97,7 @@ export interface CinemaGroup {
               class="mb-4 text-5xl text-slate-400"
             ></nz-icon>
             <p class="text-lg text-slate-500">
-              {{ 'Hôm nay không có suất chiếu nào cho phim này' | translate }}
+              {{ 'detail.noShowtimeToday' | translate }}
             </p>
             <button
               nz-button
@@ -104,7 +105,7 @@ export interface CinemaGroup {
               (click)="selectDate(dates()[0])"
               class="text-[#E53E3E]"
             >
-              {{ 'Xem lịch ngày khác' | translate }}
+              {{ 'detail.otherDates' | translate }}
             </button>
           </div>
         }

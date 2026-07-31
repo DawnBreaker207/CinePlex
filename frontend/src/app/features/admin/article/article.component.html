@@ -4,10 +4,10 @@
   >
     <div>
       <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">
-        {{ "Quản lý bài viết" | translate }}
+        {{ "admin.article.manage" | translate }}
       </h1>
       <p class="text-gray-600 dark:text-gray-400">
-        {{ "Tạo nội dung tin tức, khuyến mãi và review phim." | translate }}
+        {{ "admin.article.subtitle" | translate }}
       </p>
     </div>
     <button
@@ -22,7 +22,14 @@
   </div>
 
   @if (articleStore.error(); as error) {
-    <nz-alert nzType="error" [nzMessage]="error" nzShowIcon nzCloseable class="mb-4" (nzOnClose)="articleStore.clearError()"></nz-alert>
+    <nz-alert
+      nzType="error"
+      [nzMessage]="error"
+      nzShowIcon
+      nzCloseable
+      class="mb-4"
+      (nzOnClose)="articleStore.clearError()"
+    ></nz-alert>
   }
 
   <app-loading [isLoading]="articleStore.loading()">
@@ -37,7 +44,7 @@
         [nzPageSize]="pageSize"
         nzShowPagination
         [nzShowSizeChanger]="true"
-        [nzNoResult]="'Chưa có bài viết nào.' | translate"
+        [nzNoResult]="'admin.article.empty' | translate"
         (nzQueryParams)="onQueryParamsChange($event)"
       >
         <thead>
@@ -83,12 +90,17 @@
               <td>
                 @if (item.status === "PUBLISHED") {
                   <nz-tag [nzColor]="'success'" class="border-none">
-                    <span nz-icon nzType="check-circle" aria-hidden="true"></span>
-                    {{ "Đã đăng" | translate }}
+                    <span
+                      nz-icon
+                      nzType="check-circle"
+                      aria-hidden="true"
+                    ></span>
+                    {{ "status.published" | translate }}
                   </nz-tag>
                 } @else {
                   <nz-tag [nzColor]="'default'" class="border-none">
-                    <span nz-icon nzType="edit" aria-hidden="true"></span> {{ "Nháp" | translate }}
+                    <span nz-icon nzType="edit" aria-hidden="true"></span>
+                    {{ "status.draft" | translate }}
                   </nz-tag>
                 }
               </td>
@@ -101,26 +113,32 @@
                     nz-button
                     nzType="default"
                     nzShape="circle"
-                    [attr.aria-label]="'Sửa' | translate"
+                    [attr.aria-label]="'common.edit' | translate"
                     (click)="openDrawer(item)"
                     nz-tooltip
-                    [nzTooltipTitle]="'Chỉnh sửa' | translate"
+                    [nzTooltipTitle]="'common.edit' | translate"
                   >
-                    <span nz-icon nzType="edit" class="text-primary" aria-hidden="true"> </span>
+                    <span
+                      nz-icon
+                      nzType="edit"
+                      class="text-primary"
+                      aria-hidden="true"
+                    >
+                    </span>
                   </button>
                   <button
                     nz-button
                     nzType="default"
                     nzDanger
                     nzShape="circle"
-                    [attr.aria-label]="'Xóa' | translate"
+                    [attr.aria-label]="'common.delete' | translate"
                     nz-popconfirm
                     [nzPopconfirmTitle]="
-                      'Bạn có chắc chắn muốn xóa bài này?' | translate
+                      'admin.article.deleteConfirm' | translate
                     "
                     (nzOnConfirm)="deleteArticle(item.id)"
                     nz-tooltip
-                    [nzTooltipTitle]="'Xóa' | translate"
+                    [nzTooltipTitle]="'common.delete' | translate"
                   >
                     <span nz-icon nzType="delete" aria-hidden="true"> </span>
                   </button>

@@ -1,13 +1,15 @@
 <form nz-form [formGroup]="form" class="w-full h-full">
   <nz-row [nzGutter]="24">
     <nz-col [nzSpan]="12">
-      <h3 class="text-base font-semibold text-gray-700 dark:text-gray-300 mb-4 border-b pb-2">
-        {{ "Thông tin cơ bản" | translate }}
+      <h3
+        class="text-base font-semibold text-gray-700 dark:text-gray-300 mb-4 border-b pb-2"
+      >
+        {{ "profile.basicInfo" | translate }}
       </h3>
 
       <nz-form-item>
         <nz-form-label nzRequired>{{
-          "Tên chương trình" | translate
+          "voucher.name" | translate
         }}</nz-form-label>
         <nz-form-control [nzErrorTip]="'Vui lòng nhập tên'">
           <input
@@ -21,7 +23,7 @@
 
       <nz-form-item>
         <nz-form-label nzRequired>{{
-          "Mã Voucher (Code)" | translate
+          "voucher.code" | translate
         }}</nz-form-label>
         <nz-form-control [nzErrorTip]="'Mã bắt buộc (Ký tự in hoa, số)'">
           <input
@@ -36,7 +38,7 @@
 
       <nz-form-item>
         <nz-form-label nzRequired>{{
-          "Thời gian áp dụng" | translate
+          "voucher.validPeriod" | translate
         }}</nz-form-label>
         <nz-form-control [nzErrorTip]="'Vui lòng chọn thời gian'">
           <nz-range-picker
@@ -48,7 +50,9 @@
 
       <div class="flex gap-4">
         <nz-form-item class="flex-1">
-          <nz-form-label nzRequired>{{ "Phạm vi" | translate }}</nz-form-label>
+          <nz-form-label nzRequired>{{
+            "voucher.scope" | translate
+          }}</nz-form-label>
           <nz-form-control>
             <nz-select formControlName="category">
               <nz-option
@@ -64,12 +68,12 @@
         </nz-form-item>
 
         <nz-form-item class="flex-1">
-          <nz-form-label>{{ "Nhóm tham chiếu" | translate }}</nz-form-label>
+          <nz-form-label>{{ "voucher.groupRef" | translate }}</nz-form-label>
           <nz-form-control>
             <input
               nz-input
               formControlName="groupRef"
-              [placeholder]="'Group Ref' | translate"
+              [placeholder]="'voucher.groupRefExample' | translate"
               maxlength="100"
             />
           </nz-form-control>
@@ -78,13 +82,15 @@
     </nz-col>
 
     <nz-col [nzSpan]="12">
-      <h3 class="text-base font-semibold text-gray-700 dark:text-gray-300 mb-4 border-b pb-2">
-        {{ "Thiết lập giảm giá" | translate }}
+      <h3
+        class="text-base font-semibold text-gray-700 dark:text-gray-300 mb-4 border-b pb-2"
+      >
+        {{ "voucher.discountSetup" | translate }}
       </h3>
       <div class="flex gap-4">
         <nz-form-item>
           <nz-form-label nzRequired>{{
-            "Số lượng phát hành" | translate
+            "voucher.quantity" | translate
           }}</nz-form-label>
           <nz-form-control [nzErrorTip]="'Số lượng phải lớn hơn 0'">
             <nz-input-number
@@ -99,7 +105,7 @@
 
         <nz-form-item class="flex-1">
           <nz-form-label nzRequired>{{
-            "Loại giảm giá" | translate
+            "voucher.discountType" | translate
           }}</nz-form-label>
           <nz-form-control>
             <nz-select formControlName="discountType">
@@ -119,7 +125,7 @@
       <div class="flex gap-4">
         <nz-form-item class="flex-1">
           <nz-form-label nzRequired>{{
-            "Giá trị giảm" | translate
+            "voucher.discountValue" | translate
           }}</nz-form-label>
           <nz-form-control>
             <nz-input-number
@@ -140,7 +146,7 @@
 
         <nz-form-item>
           <nz-form-label nzRequired>{{
-            "Giá tri tối thiểu" | translate
+            "voucher.minOrderValue" | translate
           }}</nz-form-label>
           <nz-form-control [nzExtra]="'Số lượng phải lớn hơn 0'">
             <nz-input-number
@@ -159,7 +165,7 @@
 
       @if (form.get("discountType")?.value === "PERCENT") {
         <nz-form-item>
-          <nz-form-label>{{ "Giảm tối đa (VNĐ)" | translate }}</nz-form-label>
+          <nz-form-label>{{ "voucher.maxDiscount" | translate }}</nz-form-label>
           <nz-form-control>
             <nz-input-number
               formControlName="maxDiscountAmount"
@@ -175,13 +181,13 @@
       }
 
       <nz-form-item>
-        <nz-form-label>{{ "Điều kiện áp dụng" | translate }}</nz-form-label>
+        <nz-form-label>{{ "voucher.conditions" | translate }}</nz-form-label>
         <nz-form-control>
           <textarea
             nz-input
             formControlName="conditions"
             rows="3"
-            [placeholder]="'Mô tả điều kiện....' | translate"
+            [placeholder]="'voucher.conditionPlaceholder' | translate"
             maxlength="1000"
           ></textarea>
         </nz-form-control>
@@ -192,7 +198,7 @@
   @if (mode !== "view") {
     <div *nzModalFooter>
       <button nz-button nzType="default" (close)="close()">
-        {{ "Hủy bỏ" | translate }}
+        {{ "common.cancel" | translate }}
       </button>
       <button
         nz-button
@@ -201,7 +207,7 @@
         [nzLoading]="voucherStore.loading()"
         [disabled]="form.invalid"
       >
-        {{ "Lưu thay đổi" | translate }}
+        {{ "profile.saveChanges" | translate }}
       </button>
     </div>
   }

@@ -32,25 +32,34 @@
 
   <div class="px-5 py-5 space-y-5">
     <div class="flex items-center gap-3 bg-gray-50 rounded-xl p-4">
-      <div class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
-        <nz-icon nzType="environment" aria-hidden="true"/>
+      <div
+        class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0"
+      >
+        <nz-icon nzType="environment" aria-hidden="true" />
       </div>
       <div class="flex-1 min-w-0">
-        <p class="text-sm font-bold text-gray-800 truncate">{{ theater()?.name }}</p>
+        <p class="text-sm font-bold text-gray-800 truncate">
+          {{ theater()?.name }}
+        </p>
         <p class="text-xs text-gray-500">
-          {{ timeFormat(showtime()?.showTime) }} &middot; {{ showtime()?.showDate | date: "dd/MM/yyyy" }}
+          {{ timeFormat(showtime()?.showTime) }} &middot;
+          {{ showtime()?.showDate | date: "dd/MM/yyyy" }}
         </p>
       </div>
     </div>
 
     <div class="bg-primary-light/50 rounded-xl p-4 border border-primary/10">
       <div class="flex items-center justify-between mb-3">
-        <span class="text-sm font-semibold text-gray-700 flex items-center gap-1.5">
-          <nz-icon nzType="appstore" aria-hidden="true"/>
-          {{ "Ghế ngồi" | translate }}
+        <span
+          class="text-sm font-semibold text-gray-700 flex items-center gap-1.5"
+        >
+          <nz-icon nzType="appstore" aria-hidden="true" />
+          {{ "reservation.seats" | translate }}
         </span>
         @if (seatStore.selectSeatsCount()) {
-          <span class="text-xs bg-white px-2 py-0.5 rounded-full border border-primary/20 text-primary font-bold">
+          <span
+            class="text-xs bg-white px-2 py-0.5 rounded-full border border-primary/20 text-primary font-bold"
+          >
             {{ seatStore.selectSeatsCount() }} vé
           </span>
         }
@@ -58,30 +67,40 @@
       @if (seatStore.selectSeatsCount()) {
         <div class="flex flex-wrap gap-1.5">
           @for (seat of selectedSeatNumbers(); track seat) {
-            <span class="inline-flex items-center gap-1 bg-white text-primary border border-primary/20 px-2.5 py-1 rounded-lg text-xs font-bold">
-              <nz-icon nzType="table" nzTheme="fill" class="text-[10px]"/>
+            <span
+              class="inline-flex items-center gap-1 bg-white text-primary border border-primary/20 px-2.5 py-1 rounded-lg text-xs font-bold"
+            >
+              <nz-icon nzType="table" nzTheme="fill" class="text-[10px]" />
               {{ seat }}
             </span>
           }
         </div>
       } @else {
         <p class="text-xs text-gray-500 text-center py-2">
-          {{ "Vui lòng chọn ghế trên sơ đồ" | translate }}
+          {{ "reservation.selectSeatsPrompt" | translate }}
         </p>
       }
     </div>
 
-    <div class="bg-gradient-to-r from-primary/5 to-transparent rounded-xl p-4 border border-primary/10">
+    <div
+      class="bg-gradient-to-r from-primary/5 to-transparent rounded-xl p-4 border border-primary/10"
+    >
       <div class="flex items-center justify-between mb-3">
-        <span class="text-sm text-gray-600 font-medium">{{ "Tổng cộng" | translate }}</span>
+        <span class="text-sm text-gray-600 font-medium">{{
+          "reservation.total" | translate
+        }}</span>
         <span class="text-2xl font-black text-primary tracking-tight">
           {{ seatStore.totalPrice() | currency: "VND" }}
         </span>
       </div>
-      <div class="flex items-center justify-between bg-warning/10 rounded-lg px-4 py-3 border border-warning/20">
+      <div
+        class="flex items-center justify-between bg-warning/10 rounded-lg px-4 py-3 border border-warning/20"
+      >
         <div class="flex items-center gap-2 text-warning">
-          <nz-icon nzType="clock-circle" nzTheme="fill" class="text-base"/>
-          <span class="text-xs font-semibold">{{ "Giữ vé" | translate }}</span>
+          <nz-icon nzType="clock-circle" nzTheme="fill" class="text-base" />
+          <span class="text-xs font-semibold">{{
+            "reservation.holdTicket" | translate
+          }}</span>
         </div>
         <app-countdown />
       </div>
@@ -97,7 +116,7 @@
         (click)="prevStep()"
       >
         <nz-icon nzType="arrow-left" />
-        {{ "Quay lại chọn ghế" | translate }}
+        {{ "reservation.backToSeats" | translate }}
       </button>
     }
     <button
@@ -105,13 +124,16 @@
       class="w-full h-12 rounded-lg font-bold text-base shadow-sm transition-colors duration-200 !bg-primary !border-primary !text-white hover:!bg-primary-dark"
       nzType="primary"
       (click)="index() === steps().length - 1 ? emitPay() : emitConfirm()"
-      [disabled]="(index() === 0 && seatStore.selectSeatsCount() === 0) || (index() === steps().length - 1 && paymentLoading())"
+      [disabled]="
+        (index() === 0 && seatStore.selectSeatsCount() === 0) ||
+        (index() === steps().length - 1 && paymentLoading())
+      "
       [nzLoading]="holdingSeats() || paymentLoading()"
     >
       @if (index() === steps().length - 1) {
-        {{ "Thanh toán ngay" | translate }}
+        {{ "reservation.payNow" | translate }}
       } @else {
-        {{ "Giữ ghế" | translate }}
+        {{ "reservation.holdSeat" | translate }}
         <nz-icon nzType="arrow-right" />
       }
     </button>

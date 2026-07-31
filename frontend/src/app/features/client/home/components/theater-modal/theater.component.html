@@ -1,16 +1,18 @@
 <div>
- <div class="mb-4">
- <div class="block font-semibold mb-2">{{ "Chọn rạp" | translate }}</div>
- <select
- class="w-full p-2 border border-gray-300 rounded"
- (change)="onSelect($event)"
- [value]="selectedTheaterId() ?? ''"
- >
- @for (theater of theaters(); track theater.id) {
- <option [value]="theater.id">
- {{ theater.name }}
- </option>
- }
- </select>
- </div>
+  <div class="mb-4">
+    <div class="block font-semibold mb-2">
+      {{ "home.selectTheater" | translate }}
+    </div>
+    <select
+      class="w-full p-2 border border-gray-300 rounded"
+      (change)="onSelect($event)"
+      [value]="selectedTheaterId() ?? ''"
+    >
+      @for (theater of theaters(); track theater.id) {
+        <option [value]="theater.id">
+          {{ theater.name }}
+        </option>
+      }
+    </select>
+  </div>
 </div>

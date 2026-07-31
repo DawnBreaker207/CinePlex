@@ -5,41 +5,45 @@
   >
     <div>
       <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">
-        {{ "Quản lý đơn đặt" | translate }}
+        {{ "admin.reservation.manage" | translate }}
       </h1>
       <p class="text-gray-500 dark:text-gray-400 text-sm mt-1">
-        {{ "Theo dõi và xử lý các đơn đặt vé" | translate }}
+        {{ "admin.reservation.subtitle" | translate }}
       </p>
     </div>
   </div>
 
   <!--  FILTER -->
-  <div class="bg-white dark:bg-[#1a202c] rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-5 mb-6">
+  <div
+    class="bg-white dark:bg-[#1a202c] rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-5 mb-6"
+  >
     <form [formGroup]="form" (submit)="onSubmit()">
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
         <!--  Search  -->
         <div class="lg:col-span-1">
-          <nz-form-label class="font-semibold text-sm text-gray-700 dark:text-gray-300"
-            >{{ "Tìm kiếm" | translate }}
+          <nz-form-label
+            class="font-semibold text-sm text-gray-700 dark:text-gray-300"
+            >{{ "common.search" | translate }}
           </nz-form-label>
           <nz-input-group nzPrefixIcon="search" class="w-full rounded-lg">
             <input
               formControlName="query"
               nz-input
-              [placeholder]="'Mã đơn' | translate"
+              [placeholder]="'common.orderCode' | translate"
             />
           </nz-input-group>
         </div>
 
         <!--  Status  -->
         <div class="">
-          <nz-form-label class="font-semibold text-sm text-gray-700 dark:text-gray-300"
-            >{{ "Trạng thái đơn" | translate }}
+          <nz-form-label
+            class="font-semibold text-sm text-gray-700 dark:text-gray-300"
+            >{{ "admin.reservation.orderStatus" | translate }}
           </nz-form-label>
           <nz-select
             formControlName="reservationStatus"
             class="w-full"
-            [nzPlaceHolder]="'Trạng thái' | translate"
+            [nzPlaceHolder]="'common.status' | translate"
             nzAllowClear
           >
             @for (s of reservationStatus; track s) {
@@ -50,8 +54,9 @@
 
         <!--  Day filter -->
         <div>
-          <nz-form-label class="font-semibold text-sm text-gray-700 dark:text-gray-300"
-            >{{ "Ngày tạo đơn" | translate }}
+          <nz-form-label
+            class="font-semibold text-sm text-gray-700 dark:text-gray-300"
+            >{{ "common.orderDate" | translate }}
           </nz-form-label>
           <nz-range-picker
             formControlName="dateRange"
@@ -61,14 +66,15 @@
 
         <!--  Total Amount -->
         <div>
-          <nz-form-label class="font-semibold text-sm text-gray-700 dark:text-gray-300"
-            >{{ "Tổng tiền" | translate }}
+          <nz-form-label
+            class="font-semibold text-sm text-gray-700 dark:text-gray-300"
+            >{{ "common.total" | translate }}
           </nz-form-label>
           <nz-input-group nzPrefixIcon="dollar" class="w-full rounded-lg">
             <input
               formControlName="totalAmount"
               nz-input
-              [placeholder]="'Giá' | translate"
+              [placeholder]="'common.price' | translate"
               type="number"
               class="w-full sm:w-[100px]"
             />
@@ -77,16 +83,17 @@
 
         <!--  Sort  -->
         <div>
-          <nz-form-label class="font-semibold text-sm text-gray-700 dark:text-gray-300"
-            >{{ "Sắp xếp theo" | translate }}
+          <nz-form-label
+            class="font-semibold text-sm text-gray-700 dark:text-gray-300"
+            >{{ "common.sortBy" | translate }}
           </nz-form-label>
           <nz-select formControlName="sortBy" class="w-full">
             <nz-option
-              [nzLabel]="'Mới nhất' | translate"
+              [nzLabel]="'admin.movie.sortNewest' | translate"
               nzValue="newest"
             ></nz-option>
             <nz-option
-              [nzLabel]="'Cũ nhất' | translate"
+              [nzLabel]="'admin.movie.sortOldest' | translate"
               nzValue="oldest"
             ></nz-option>
           </nz-select>
@@ -102,7 +109,7 @@
             [disabled]="reservationStore.loading()"
           >
             <nz-icon nzType="filter" aria-hidden="true" />
-            {{ "Áp dụng" | translate }}
+            {{ "common.apply" | translate }}
           </button>
           <button
             nz-button
@@ -110,7 +117,7 @@
             (click)="clearFilter()"
             class="flex-1"
           >
-            {{ "Xóa lọc" | translate }}
+            {{ "admin.reservation.clearFilters" | translate }}
           </button>
         </div>
       </div>
@@ -133,7 +140,7 @@
           [nzPageSize]="pag?.pageSize ?? 10"
           [nzShowSizeChanger]="true"
           nzShowPagination
-          [nzNoResult]="'Không tìm thấy đơn đặt. Hãy thử thay đổi bộ lọc.' | translate"
+          [nzNoResult]="'admin.reservation.empty' | translate"
           (nzQueryParams)="onQueryParamsChange($event)"
         >
           <thead class="bg-gray-50 dark:bg-gray-800">
@@ -150,7 +157,9 @@
               <tr
                 class="group hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors border-b border-gray-100 dark:border-gray-700"
               >
-                <td class="font-mono text-center text-gray-700 dark:text-gray-300">
+                <td
+                  class="font-mono text-center text-gray-700 dark:text-gray-300"
+                >
                   {{ item.id }}
                 </td>
 
@@ -163,7 +172,9 @@
                   </nz-tag>
                 </td>
 
-                <td class="text-center font-bold text-gray-800 dark:text-gray-100">
+                <td
+                  class="text-center font-bold text-gray-800 dark:text-gray-100"
+                >
                   {{ item.totalAmount | currency: "VND" }}
                 </td>
 
@@ -180,16 +191,18 @@
                       nz-button
                       nzType="text"
                       nzShape="circle"
-                      [attr.aria-label]="'Xem' | translate"
+                      [attr.aria-label]="'common.view' | translate"
                       nz-tooltip
                       nzTooltipTitle="Xem chi tiết"
                       class="text-primary hover:bg-primary-light"
                       (click)="openModal(item.id)"
                     >
-                      <nz-icon nzType="eye" nzTheme="twotone" aria-hidden="true" />
+                      <nz-icon
+                        nzType="eye"
+                        nzTheme="twotone"
+                        aria-hidden="true"
+                      />
                     </button>
-
-
                   </div>
                 </td>
               </tr>

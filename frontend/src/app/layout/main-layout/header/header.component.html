@@ -1,67 +1,67 @@
 <nz-header nz-menu nzTheme="light" style="height: auto">
- <div
- class="w-full bg-[url('/assets/bg-header.png')] bg-repeat-x bg-bottom h-[7.5rem]"
- >
- <div
- class="max-w-5xl mx-auto flex gap-6 items-center justify-between h-full"
- >
- <!-- LEFT SIDE-->
- <div class="flex items-center gap-6">
- <a
- routerLink="/"
- class="flex items-center gap-2 group cursor-pointer text-decoration-none shrink-0"
- >
- <nz-icon
- nzType="shop"
- nzTheme="fill"
- class="text-3xl text-primary group-hover:scale-110 transition-transform"
- />
- <span
- class="text-2xl font-bold tracking-tighter text-gray-900 hidden sm:block"
- >CINE<span class="text-primary">PLEX</span></span
- >
- </a>
+  <div
+    class="w-full bg-[url('/assets/bg-header.png')] bg-repeat-x bg-bottom h-[7.5rem]"
+  >
+    <div
+      class="max-w-5xl mx-auto flex gap-6 items-center justify-between h-full"
+    >
+      <!-- LEFT SIDE-->
+      <div class="flex items-center gap-6">
+        <a
+          routerLink="/"
+          class="flex items-center gap-2 group cursor-pointer text-decoration-none shrink-0"
+        >
+          <nz-icon
+            nzType="shop"
+            nzTheme="fill"
+            class="text-3xl text-primary group-hover:scale-110 transition-transform"
+          />
+          <span
+            class="text-2xl font-bold tracking-tighter text-gray-900 hidden sm:block"
+            >CINE<span class="text-primary">PLEX</span></span
+          >
+        </a>
 
- <div class="hidden md:block h-8 w-px bg-gray-300"></div>
+        <div class="hidden md:block h-8 w-px bg-gray-300"></div>
 
- <app-theater-select />
- </div>
+        <app-theater-select />
+      </div>
 
- <!-- MIDDLE: Navigation-->
- <div
- class="hidden lg:flex items-center gap-8 font-medium text-gray-600 text-sm xl:text-base"
- >
- @for (header of headers; track header) {
- <a
- class="font-bold hover:text-primary transition-colors py-2"
- [routerLink]="header.path"
- >
- {{ header.name | translate | uppercase }}
- </a>
- }
- </div>
+      <!-- MIDDLE: Navigation-->
+      <div
+        class="hidden lg:flex items-center gap-8 font-medium text-gray-600 text-sm xl:text-base"
+      >
+        @for (header of headers; track header) {
+          <a
+            class="font-bold hover:text-primary transition-colors py-2"
+            [routerLink]="header.path"
+          >
+            {{ header.name | translate | uppercase }}
+          </a>
+        }
+      </div>
 
- <!-- RIGHT SIDE -->
- <div class="flex items-center gap-3 h-10 shrink-8">
- <div>
- <button (click)="useLanguage('vi')">VI</button>
- /
- <button (click)="useLanguage('en')">EN</button>
- </div>
+      <!-- RIGHT SIDE -->
+      <div class="flex items-center gap-3 h-10 shrink-8">
+        <div>
+          <button (click)="useLanguage('vi')">VI</button>
+          /
+          <button (click)="useLanguage('en')">EN</button>
+        </div>
 
- @if (authService.isAuthenticated()) {
- <app-profile-menu />
- } @else {
- <a
- routerLink="/login"
- nz-button
- nzType="primary"
- class="rounded-full px-5 md:px-6 font-semibold! shadow-lg shadow-blue-200 hover:scale-105 transition-transform"
- >
- {{ "Đăng Nhập" | translate }}
- </a>
- }
- </div>
- </div>
- </div>
+        @if (authService.isAuthenticated()) {
+          <app-profile-menu />
+        } @else {
+          <a
+            routerLink="/login"
+            nz-button
+            nzType="primary"
+            class="rounded-full px-5 md:px-6 font-semibold! shadow-lg shadow-blue-200 hover:scale-105 transition-transform"
+          >
+            {{ "header.login" | translate }}
+          </a>
+        }
+      </div>
+    </div>
+  </div>
 </nz-header>

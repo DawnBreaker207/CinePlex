@@ -1,42 +1,42 @@
 <article
- class="h-full overflow-hidden rounded-xl border border-slate-200 bg-white"
+  class="h-full overflow-hidden rounded-xl border border-slate-200 bg-white"
 >
- <a
- [routerLink]="['/movie/detail', movie().id]"
- class="block h-40 bg-slate-100"
- >
- <img
- [src]="
- movie().backdrop ||
- movie().poster ||
- 'https://placehold.co/300x400/DBEAFE/1F2937?text=Soon'
- "
- [alt]="movie().title"
- class="h-full w-full object-cover"
- />
- </a>
- <div class="space-y-2 p-3">
- <a
- [routerLink]="['/movie/detail', movie().id]"
- class="block truncate font-['Bricolage_Grotesque'] text-[13px] font-semibold text-slate-900 hover:text-[#E53E3E]"
- [title]="movie().title"
- >
- {{ movie().title }}
- </a>
- <p
- class="truncate text-[11px] text-slate-500"
- [title]="movie().genres.join(', ')"
- >
- {{ movie().genres.join(", ") || "Đang cập nhật thể loại" }}
- </p>
- <button
- nz-button
- nzBlock
- nzType="primary"
- class="rounded-lg border-none bg-[#E53E3E] text-white hover:bg-[#C53030]"
- (click)="onSelectMovie(movie().id)"
- >
- {{ 'Đặt vé' | translate }}
- </button>
- </div>
+  <a
+    [routerLink]="['/movie/detail', movie().id]"
+    class="block h-40 bg-slate-100"
+  >
+    <img
+      [src]="
+        movie().backdrop ||
+        movie().poster ||
+        'https://placehold.co/300x400/DBEAFE/1F2937?text=Soon'
+      "
+      [alt]="movie().title"
+      class="h-full w-full object-cover"
+    />
+  </a>
+  <div class="space-y-2 p-3">
+    <a
+      [routerLink]="['/movie/detail', movie().id]"
+      class="block truncate font-['Bricolage_Grotesque'] text-[13px] font-semibold text-slate-900 hover:text-[#E53E3E]"
+      [title]="movie().title"
+    >
+      {{ movie().title }}
+    </a>
+    <p
+      class="truncate text-[11px] text-slate-500"
+      [title]="movie().genres.join(', ')"
+    >
+      {{ movie().genres.join(", ") || "Đang cập nhật thể loại" }}
+    </p>
+    <button
+      nz-button
+      nzBlock
+      nzType="primary"
+      class="rounded-lg border-none bg-[#E53E3E] text-white hover:bg-[#C53030]"
+      (click)="onSelectMovie(movie().id)"
+    >
+      {{ "common.bookTicket" | translate }}
+    </button>
+  </div>
 </article>

@@ -1,9 +1,9 @@
 <div class="overflow-x-auto">
   <nz-table nzTemplateMode class="w-full min-w-[300px]">
     <thead>
-      <th>{{ "Phim" | translate }}</th>
-      <th>{{ "Số vé" | translate }}</th>
-      <th>{{ "Doanh thu" | translate }}</th>
+      <th>{{ "common.movies" | translate }}</th>
+      <th>{{ "admin.dashboard.ticketCount" | translate }}</th>
+      <th>{{ "admin.dashboard.revenue" | translate }}</th>
     </thead>
     <tbody>
       @for (item of data(); track item) {
@@ -14,8 +14,11 @@
         </tr>
       } @empty {
         <tr>
-          <td colspan="3" class="text-center text-gray-500 dark:text-gray-400 py-8">
-            {{ "Chưa có dữ liệu" | translate }}
+          <td
+            colspan="3"
+            class="text-center text-gray-500 dark:text-gray-400 py-8"
+          >
+            {{ "common.noData" | translate }}
           </td>
         </tr>
       }

@@ -4,7 +4,7 @@
   >
     <div>
       <h1 class="text-3xl font-bold text-gray-900">
-        {{ "Quản Lý Voucher" | translate }}
+        {{ "voucher.manage" | translate }}
       </h1>
     </div>
     <button
@@ -24,7 +24,7 @@
       <nz-input-group nzPrefixIcon="search" class="w-full">
         <input
           nz-input
-          [placeholder]="'Tìm kiếm' | translate"
+          [placeholder]="'common.search' | translate"
           class="w-full"
           type="text"
         />
@@ -35,29 +35,29 @@
       <!---->
       <nz-select
         class="w-full md:w-[180px]"
-        [nzPlaceHolder]="'Trạng thái' | translate"
+        [nzPlaceHolder]="'common.status' | translate"
       >
         <nz-option
-          [nzLabel]="'Tất cả' | translate"
+          [nzLabel]="'voucher.all' | translate"
           [nzValue]="null"
         ></nz-option>
         <nz-option
-          [nzLabel]="'Đang hoạt động' | translate"
+          [nzLabel]="'voucher.active' | translate"
           [nzValue]="true"
         ></nz-option>
         <nz-option
-          [nzLabel]="'Tạm ngưng' | translate"
+          [nzLabel]="'voucher.paused' | translate"
           [nzValue]="false"
         ></nz-option>
       </nz-select>
       <!-- -->
-      <nz-select class="w-[150px]" [nzPlaceHolder]="'Sắp xếp' | translate">
+      <nz-select class="w-[150px]" [nzPlaceHolder]="'common.sort' | translate">
         <nz-option
-          [nzLabel]="'Mới nhất' | translate"
+          [nzLabel]="'admin.movie.sortNewest' | translate"
           nzValue="newest"
         ></nz-option>
         <nz-option
-          [nzLabel]="'Cũ nhất' | translate"
+          [nzLabel]="'admin.movie.sortOldest' | translate"
           nzValue="oldest"
         ></nz-option>
       </nz-select>

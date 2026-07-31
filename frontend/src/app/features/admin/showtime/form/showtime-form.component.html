@@ -22,9 +22,10 @@
                 class="flex flex-col items-center justify-center text-gray-500 dark:text-gray-400"
               >
                 <nz-icon nzType="picture" class="text-4xl mb-2 opacity-50" />
-                <span class="text-sm font-medium text-gray-500 dark:text-gray-400">{{
-                  "Không có ảnh" | translate
-                }}</span>
+                <span
+                  class="text-sm font-medium text-gray-500 dark:text-gray-400"
+                  >{{ "common.noImage" | translate }}</span
+                >
               </div>
             }
           </div>
@@ -37,8 +38,10 @@
       @if (mode !== "view") {
         <div class="relative">
           <nz-form-item class="mb-0">
-            <nz-form-label nzRequired class="font-bold text-gray-700 dark:text-gray-300"
-              >{{ "Chọn phim" | translate }}
+            <nz-form-label
+              nzRequired
+              class="font-bold text-gray-700 dark:text-gray-300"
+              >{{ "admin.showtime.selectMovie" | translate }}
             </nz-form-label>
             <nz-form-control>
               <nz-input-group
@@ -47,7 +50,7 @@
               >
                 <input
                   nz-input
-                  [placeholder]="'Tìm kiếm' | translate"
+                  [placeholder]="'common.search' | translate"
                   class="h-full border-none focus:shadow-none w-full"
                   [formControl]="searchCtrl"
                   maxlength="255"
@@ -80,7 +83,9 @@
                     />
                     <!--  Info   -->
                     <div class="">
-                      <p class="font-bold text-gray-800 dark:text-gray-100 text-sm mb-0.5">
+                      <p
+                        class="font-bold text-gray-800 dark:text-gray-100 text-sm mb-0.5"
+                      >
                         {{ movie.title }}
                       </p>
                       <p class="text-xs text-gray-500 dark:text-gray-400">
@@ -99,9 +104,11 @@
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <nz-form-item class="mb-0">
           <nz-form-label nzRequired class="font-semibold"
-            >{{ "Ngày chiếu" | translate }}
+            >{{ "booking.showDate" | translate }}
           </nz-form-label>
-          <nz-form-control [nzErrorTip]="'Vui lòng chọn ngày' | translate">
+          <nz-form-control
+            [nzErrorTip]="'admin.showtime.requiredDate' | translate"
+          >
             <nz-date-picker
               nzSize="default"
               class="w-full rounded-lg h-10"
@@ -114,9 +121,11 @@
 
         <nz-form-item class="mb-0">
           <nz-form-label nzRequired class="font-semibold"
-            >{{ "Giờ chiếu" | translate }}
+            >{{ "booking.showtime" | translate }}
           </nz-form-label>
-          <nz-form-control [nzErrorTip]="'Vui lòng chọn giờ' | translate">
+          <nz-form-control
+            [nzErrorTip]="'admin.showtime.requiredTime' | translate"
+          >
             <nz-time-picker
               nzSize="default"
               class="w-full rounded-lg h-10"
@@ -131,13 +140,13 @@
 
       <nz-form-item>
         <nz-form-label nzRequired class="font-semibold"
-          >{{ "Rạp chiếu" | translate }}
+          >{{ "common.theaters" | translate }}
         </nz-form-label>
         <nz-form-control nzErrorTip="Vui lòng chọn rạp">
           <nz-select
             formControlName="theaterId"
             [nzDisabled]="mode === 'view'"
-            [nzPlaceHolder]="'Chọn rạp chiếu' | translate"
+            [nzPlaceHolder]="'admin.reservation.selectTheater' | translate"
             class="rounded-lg h-10 w-full"
           >
             @for (theater of theaters(); track theater.id) {
@@ -152,13 +161,15 @@
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <nz-form-item class="mb-0">
           <nz-form-label nzRequired class="font-semibold">{{
-            "Giá vé" | translate
+            "common.ticketPrice" | translate
           }}</nz-form-label>
-          <nz-form-control [nzErrorTip]="'Chọn giá vé' | translate">
+          <nz-form-control
+            [nzErrorTip]="'admin.showtime.selectPrice' | translate"
+          >
             <nz-select
               formControlName="price"
               [nzDisabled]="mode === 'view'"
-              [nzPlaceHolder]="'Chọn mệnh giá' | translate"
+              [nzPlaceHolder]="'admin.reservation.selectValue' | translate"
               class="rounded-lg"
             >
               <nz-option [nzLabel]="'50,000đ'" [nzValue]="50000"></nz-option>
@@ -170,25 +181,27 @@
 
         <nz-form-item class="mb-0">
           <nz-form-label nzRequired class="font-semibold"
-            >{{ "Tổng số ghế" | translate }}
+            >{{ "admin.showtime.totalSeats" | translate }}
           </nz-form-label>
-          <nz-form-control [nzErrorTip]="'Chọn số ghế' | translate">
+          <nz-form-control
+            [nzErrorTip]="'admin.showtime.selectSeats' | translate"
+          >
             <nz-select
               formControlName="totalSeats"
               [nzDisabled]="mode === 'view'"
-              [nzPlaceHolder]="'Chọn số lượng' | translate"
+              [nzPlaceHolder]="'admin.reservation.selectQuantity' | translate"
               class="rounded-lg"
             >
               <nz-option
-                [nzLabel]="'40 ghế' | translate"
+                [nzLabel]="'admin.reservation.seats40' | translate"
                 [nzValue]="40"
               ></nz-option>
               <nz-option
-                [nzLabel]="'50 ghế' | translate"
+                [nzLabel]="'admin.reservation.seats50' | translate"
                 [nzValue]="50"
               ></nz-option>
               <nz-option
-                [nzLabel]="'60 ghế' | translate"
+                [nzLabel]="'admin.reservation.seats60' | translate"
                 [nzValue]="60"
               ></nz-option>
             </nz-select>

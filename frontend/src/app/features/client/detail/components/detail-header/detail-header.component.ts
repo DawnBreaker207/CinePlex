@@ -74,7 +74,7 @@ import { Movie } from '@domain/movie/models/movie.model';
               nzType="primary"
               class="rounded-lg border-none bg-[#E53E3E] px-6 font-semibold text-white hover:bg-[#C53030]"
             >
-              {{ 'Đặt vé ngay' | translate }}
+              {{ 'detail.bookNow' | translate }}
             </button>
 
             <button
@@ -83,7 +83,7 @@ import { Movie } from '@domain/movie/models/movie.model';
               class="rounded-lg border border-white/50 bg-white/10 px-6 text-white hover:border-white hover:bg-white/20"
             >
               <nz-icon nzType="play-circle" nzTheme="fill" class="mr-2" />
-              {{ 'Xem Trailer' | translate }}
+              {{ 'detail.watchTrailer' | translate }}
             </button>
           </div>
         </div>

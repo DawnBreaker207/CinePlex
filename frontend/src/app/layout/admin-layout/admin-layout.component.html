@@ -1,5 +1,5 @@
 <a href="#main-content" class="skip-link">
-  {{ "Chuyển đến nội dung chính" | translate }}
+  {{ "common.skipToContent" | translate }}
 </a>
 <nz-layout
   class="ant-layout-has-sider h-screen w-full overflow-hidden font-sans text-slate-800"
@@ -19,14 +19,18 @@
     </nz-header>
 
     <!-- CONTENT AREA -->
-    <nz-content id="main-content" class="flex-1 overflow-y-auto overflow-x-hidden bg-slate-50" style="content-visibility: auto">
+    <nz-content
+      id="main-content"
+      class="flex-1 overflow-y-auto overflow-x-hidden bg-slate-50"
+      style="content-visibility: auto"
+    >
       <router-outlet />
       @defer (on idle) {
         <app-chat />
       }
 
       <nz-footer class="text-center text-slate-400 bg-transparent py-6">
-        {{ "Hệ thống đặt vé CinePlex" | translate }} &copy;
+        {{ "adminLayout.title" | translate }} &copy;
         {{ date.getFullYear() }}
       </nz-footer>
     </nz-content>

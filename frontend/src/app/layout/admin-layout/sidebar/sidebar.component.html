@@ -22,105 +22,116 @@
         />
       </div>
       @if (!isCollapsed()) {
-        <h1 class="text-2xl font-black tracking-tight text-slate-800 dark:text-gray-100 m-0">
+        <h1
+          class="text-2xl font-black tracking-tight text-slate-800 dark:text-gray-100 m-0"
+        >
           CINE<span class="text-primary">ADMIN</span>
         </h1>
       }
     </a>
   </div>
 
-  <div class="p-4 h-[calc(100%-5rem)] overflow-y-auto custom-scrollbar" style="content-visibility: auto; contain: layout style paint">
-      <ul
-        class="border-r-0 bg-transparent space-y-1"
-        nz-menu
-        nzTheme="light"
-        nzMode="inline"
-        [nzInlineCollapsed]="isCollapsed()"
+  <div
+    class="p-4 h-[calc(100%-5rem)] overflow-y-auto custom-scrollbar"
+    style="content-visibility: auto; contain: layout style paint"
+  >
+    <ul
+      class="border-r-0 bg-transparent space-y-1"
+      nz-menu
+      nzTheme="light"
+      nzMode="inline"
+      [nzInlineCollapsed]="isCollapsed()"
+    >
+      <li
+        nz-menu-item
+        nzMatchRouterExact
+        [routerLink]="['/admin/dashboard']"
+        class="rounded-xl font-medium text-slate-600 dark:text-gray-300 hover:text-primary hover:bg-primary-light/50 transition-colors"
       >
-        <li
-          nz-menu-item
-          nzMatchRouterExact
-          [routerLink]="['/admin/dashboard']"
-          class="rounded-xl font-medium text-slate-600 dark:text-gray-300 hover:text-primary hover:bg-primary-light/50 transition-colors"
-        >
-          <nz-icon nzType="appstore" nzTheme="outline" class="text-lg" />
-          <span>{{ "Thống Kê" | translate }}</span>
-        </li>
+        <nz-icon nzType="appstore" nzTheme="outline" class="text-lg" />
+        <span>{{ "sidebar.statistics" | translate }}</span>
+      </li>
 
-        <li class="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 px-3 pt-4 pb-1 pointer-events-none select-none">
-          {{ "Rạp chiếu" | translate }}
-        </li>
-        <li
-          nz-menu-item
-          nzMatchRouterExact
-          [routerLink]="['/admin/movie']"
-          class="rounded-xl font-medium text-slate-600 dark:text-gray-300 hover:text-primary hover:bg-primary-light/50 transition-colors"
-        >
-          <nz-icon nzType="play-square" nzTheme="outline" class="text-lg" />
-          <span>{{ "Phim" | translate }}</span>
-        </li>
-        <li
-          nz-menu-item
-          nzMatchRouterExact
-          [routerLink]="['/admin/theater']"
-          class="rounded-xl font-medium text-slate-600 dark:text-gray-300 hover:text-primary hover:bg-primary-light/50 transition-colors"
-        >
-          <nz-icon nzType="shop" nzTheme="outline" class="text-lg" />
-          <span>{{ "Rạp Chiếu" | translate }}</span>
-        </li>
-        <li
-          nz-menu-item
-          nzMatchRouterExact
-          [routerLink]="['/admin/showtime']"
-          class="rounded-xl font-medium text-slate-600 dark:text-gray-300 hover:text-primary hover:bg-primary-light/50 transition-colors"
-        >
-          <nz-icon nzType="calendar" nzTheme="outline" class="text-lg" />
-          <span>{{ "Suất Chiếu" | translate }}</span>
-        </li>
+      <li
+        class="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 px-3 pt-4 pb-1 pointer-events-none select-none"
+      >
+        {{ "common.theaters" | translate }}
+      </li>
+      <li
+        nz-menu-item
+        nzMatchRouterExact
+        [routerLink]="['/admin/movie']"
+        class="rounded-xl font-medium text-slate-600 dark:text-gray-300 hover:text-primary hover:bg-primary-light/50 transition-colors"
+      >
+        <nz-icon nzType="play-square" nzTheme="outline" class="text-lg" />
+        <span>{{ "common.movies" | translate }}</span>
+      </li>
+      <li
+        nz-menu-item
+        nzMatchRouterExact
+        [routerLink]="['/admin/theater']"
+        class="rounded-xl font-medium text-slate-600 dark:text-gray-300 hover:text-primary hover:bg-primary-light/50 transition-colors"
+      >
+        <nz-icon nzType="shop" nzTheme="outline" class="text-lg" />
+        <span>{{ "sidebar.theaters" | translate }}</span>
+      </li>
+      <li
+        nz-menu-item
+        nzMatchRouterExact
+        [routerLink]="['/admin/showtime']"
+        class="rounded-xl font-medium text-slate-600 dark:text-gray-300 hover:text-primary hover:bg-primary-light/50 transition-colors"
+      >
+        <nz-icon nzType="calendar" nzTheme="outline" class="text-lg" />
+        <span>{{ "sidebar.showtimes" | translate }}</span>
+      </li>
 
-        <li class="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 px-3 pt-4 pb-1 pointer-events-none select-none">
-          {{ "Vận hành" | translate }}
-        </li>
-        <li
-          nz-menu-item
-          nzMatchRouterExact
-          [routerLink]="['/admin/reservation']"
-          class="rounded-xl font-medium text-slate-600 dark:text-gray-300 hover:text-primary hover:bg-primary-light/50 transition-colors"
-        >
-          <nz-icon nzType="ordered-list" nzTheme="outline" class="text-lg" />
-          <span>{{ "Vé đã đặt" | translate }}</span>
-        </li>
-        <li
-          nz-menu-item
-          nzMatchRouterExact
-          [routerLink]="['/admin/voucher']"
-          class="rounded-xl font-medium text-slate-600 dark:text-gray-300 hover:text-primary hover:bg-primary-light/50 transition-colors"
-        >
-          <nz-icon nzType="tags" nzTheme="outline" class="text-lg" />
-          <span>{{ "Voucher" | translate }}</span>
-        </li>
+      <li
+        class="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 px-3 pt-4 pb-1 pointer-events-none select-none"
+      >
+        {{ "sidebar.operations" | translate }}
+      </li>
+      <li
+        nz-menu-item
+        nzMatchRouterExact
+        [routerLink]="['/admin/reservation']"
+        class="rounded-xl font-medium text-slate-600 dark:text-gray-300 hover:text-primary hover:bg-primary-light/50 transition-colors"
+      >
+        <nz-icon nzType="ordered-list" nzTheme="outline" class="text-lg" />
+        <span>{{ "sidebar.bookings" | translate }}</span>
+      </li>
+      <li
+        nz-menu-item
+        nzMatchRouterExact
+        [routerLink]="['/admin/voucher']"
+        class="rounded-xl font-medium text-slate-600 dark:text-gray-300 hover:text-primary hover:bg-primary-light/50 transition-colors"
+      >
+        <nz-icon nzType="tags" nzTheme="outline" class="text-lg" />
+        <span>{{ "profile.voucher" | translate }}</span>
+      </li>
 
-        <li class="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 px-3 pt-4 pb-1 pointer-events-none select-none">
-          {{ "Hệ thống" | translate }}
-        </li>
-        <li
-          nz-menu-item
-          nzMatchRouterExact
-          [routerLink]="['/admin/user']"
-          class="rounded-xl font-medium text-slate-600 dark:text-gray-300 hover:text-primary hover:bg-primary-light/50 transition-colors"
-        >
-          <nz-icon nzType="team" nzTheme="outline" class="text-lg" />
-          <span>{{ "Người dùng" | translate }}</span>
-        </li>
-        <li
-          nz-menu-item
-          nzMatchRouterExact
-          [routerLink]="['/admin/article']"
-          class="rounded-xl font-medium text-slate-600 dark:text-gray-300 hover:text-primary hover:bg-primary-light/50 transition-colors"
-        >
-          <nz-icon nzType="file-text" nzTheme="outline" class="text-lg" />
-          <span>{{ "Bài viết" | translate }}</span>
-        </li>
-      </ul>
+      <li
+        class="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 px-3 pt-4 pb-1 pointer-events-none select-none"
+      >
+        {{ "sidebar.system" | translate }}
+      </li>
+      <li
+        nz-menu-item
+        nzMatchRouterExact
+        [routerLink]="['/admin/user']"
+        class="rounded-xl font-medium text-slate-600 dark:text-gray-300 hover:text-primary hover:bg-primary-light/50 transition-colors"
+      >
+        <nz-icon nzType="team" nzTheme="outline" class="text-lg" />
+        <span>{{ "sidebar.users" | translate }}</span>
+      </li>
+      <li
+        nz-menu-item
+        nzMatchRouterExact
+        [routerLink]="['/admin/article']"
+        class="rounded-xl font-medium text-slate-600 dark:text-gray-300 hover:text-primary hover:bg-primary-light/50 transition-colors"
+      >
+        <nz-icon nzType="file-text" nzTheme="outline" class="text-lg" />
+        <span>{{ "sidebar.articles" | translate }}</span>
+      </li>
+    </ul>
   </div>
 </nz-sider>

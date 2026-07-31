@@ -1,349 +1,338 @@
 <div class="min-h-screen flex bg-white font-sans">
- <!-- LEFT SIDE: IMAGE & BRANDING -->
- <div class="hidden lg:flex lg:w-1/2 relative bg-gray-900 overflow-hidden">
- <!-- Background Image -->
- <div
- class="absolute inset-0 bg-[url('https://image.tmdb.org/t/p/original/xOMo8BRK7PfcJv9JCnx7s5hj0PX.jpg')] bg-cover bg-center opacity-60"
- ></div>
- <div
- class="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-gray-900/50"
- ></div>
- <!-- Content Overlay -->
- <div
- class="relative z-10 w-full flex flex-col justify-between p-12 text-white"
- >
- <div>
- <a
- routerLink="/"
- class="flex items-center gap-2 text-decoration-none w-fit"
- >
- <nz-icon nzType="shop" nzTheme="fill" class="text-4xl text-primary" />
- <span class="text-3xl font-bold tracking-tighter"
- >CINE<span class="text-primary">PLEX</span></span
- >
- </a>
- </div>
-
- <div class="mb-8">
- <h1
- class="text-5xl text-gray-300! fond-bold mb-4 leading-tight"
- translate
- >
- {{ "Phép màu Điện ảnh" | translate }}<br />
- {{ "ngay trong tầm tay." | translate }}
- </h1>
- <p class="text-lg text-gray-300 max-w-md">
- {{
- "Đặt vé cho những siêu phẩm mới nhất, tận hưởng ưu đãi bắp nước độc quyền và trải nghiệm chất lượng hình ảnh tuyệt đỉnh."
- | translate
- }}
- </p>
- </div>
- </div>
- </div>
-
- <!-- RIGHT SIDE: AUTH FORMS -->
- <div
- class="w-full lg:w-1/2 flex items-center justify-center p-8 lg:p-12 overflow-y-auto"
- >
- <div class="max-w-[400px] w-full fade-in">
- <!-- LOGO ON MOBILE ONLY -->
- <div class="lg:hidden text-center mb-8">
- <a routerLink="/" class="inline-flex items-center gap-2">
- <nz-icon nzType="shop" nzTheme="fill" class="text-3xl text-primary" />
- <span class="text-2xl font-bold text-gray-900"
- >CINE <span class="text-primary">PLEX</span></span
- >
- </a>
- </div>
-
- <!-- LOGIN FORM -->
- @if (activeTab() === "login") {
- <ng-container *nzStringTemplateOutlet="loginTpl"></ng-container>
- } @else {
- <ng-container *nzStringTemplateOutlet="registerTpl"></ng-container>
- }
-
- <!-- REGISTER FORM -->
- <ng-template #registerTpl>
- <div class="mb-8">
- <h2 class="text-3xl font-bold text-gray-900 mb-2">
- {{ "Tạo tài khoản 🚀" | translate }}
- </h2>
- <p class="text-gray-500">
- {{
- "Tham gia cùng chúng tôi để đặt vé và nhận ưu đãi độc quyền."
- | translate
- }}
- </p>
- </div>
-
- <form
- nz-form
- [formGroup]="formRegister"
- (ngSubmit)="submitRegister()"
- nzLayout="vertical"
- >
- <nz-form-item class="mb-5">
- <nz-form-label nzRequired
- >{{ "Họ và tên" | translate }}
- </nz-form-label>
- <nz-form-control
- [nzErrorTip]="'Chúng tôi nên gọi bạn là gì?' | translate"
- >
- <nz-input-group
- nzPrefixIcon="user"
- nzSize="large"
- class="rounded-lg"
- >
- <input
- nz-input
- type="text"
- formControlName="username"
- [placeholder]="'Nguyễn Văn A' | translate"
- />
- </nz-input-group>
- </nz-form-control>
- </nz-form-item>
-
- <nz-form-item class="mb-5">
- <nz-form-label nzRequired
- >{{ "Địa chỉ Email" | translate }}
- </nz-form-label>
- <nz-form-control
- [nzErrorTip]="'Vui lòng nhập đúng định dạng email' | translate"
- >
- <nz-input-group
- nzPrefixIcon="mail"
- nzSize="large"
- class="rounded-lg"
- >
- <input
- nz-input
- type="email"
- formControlName="email"
- [placeholder]="'name@gmail.com' | translate"
- />
- </nz-input-group>
- </nz-form-control>
- </nz-form-item>
-
- <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
- <nz-form-item class="mb-5">
- <nz-form-label nzRequired
- >{{ "Mật khẩu" | translate }}
- </nz-form-label>
- <nz-form-control [nzErrorTip]="'Yêu cầu mật khẩu!' | translate">
- <nz-input-group
- nzPrefixIcon="lock"
- nzSize="large"
- class="rounded-lg"
- >
-          <input
-          nz-input
-          type="password"
-          formControlName="password"
-          [placeholder]="'Mật khẩu của bạn' | translate"
-          />
-        </nz-input-group>
-        </nz-form-control>
-        </nz-form-item>
-
-        <nz-form-item class="mb-5">
-        <nz-form-label nzRequired
-        >{{ "Xác nhận" | translate }}
-        </nz-form-label>
-        <nz-form-control [nzErrorTip]="confirmErrorTpl">
-        <nz-input-group
-        nzPrefixIcon="lock"
-        nzSize="large"
-        class="rounded-lg"
+  <!-- LEFT SIDE: IMAGE & BRANDING -->
+  <div class="hidden lg:flex lg:w-1/2 relative bg-gray-900 overflow-hidden">
+    <!-- Background Image -->
+    <div
+      class="absolute inset-0 bg-[url('https://image.tmdb.org/t/p/original/xOMo8BRK7PfcJv9JCnx7s5hj0PX.jpg')] bg-cover bg-center opacity-60"
+    ></div>
+    <div
+      class="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-gray-900/50"
+    ></div>
+    <!-- Content Overlay -->
+    <div
+      class="relative z-10 w-full flex flex-col justify-between p-12 text-white"
+    >
+      <div>
+        <a
+          routerLink="/"
+          class="flex items-center gap-2 text-decoration-none w-fit"
         >
-        <input
-        nz-input
-        type="password"
-        formControlName="confirmPassword"
-        [placeholder]="'Nhập lại mật khẩu' | translate"
- />
- </nz-input-group>
- <ng-template #confirmErrorTpl let-control>
- @if (control.hasError("required")) {
- <ng-container>{{ "Bắt buộc!" | translate }}</ng-container>
- }
- @if (control.hasError("confirm")) {
- <ng-container>{{ "Không khớp!" | translate }}</ng-container>
- }
- </ng-template>
- </nz-form-control>
- </nz-form-item>
- </div>
+          <nz-icon nzType="shop" nzTheme="fill" class="text-4xl text-primary" />
+          <span class="text-3xl font-bold tracking-tighter"
+            >CINE<span class="text-primary">PLEX</span></span
+          >
+        </a>
+      </div>
 
- <button
- nz-button
- nzType="primary"
- nzBlock
- nzSize="large"
- [nzLoading]="isRegisterLoading()"
- class="font-bold h-12 text-base rounded-lg mb-6"
- >
- {{ "Đăng ký tài khoản" | translate }}
- </button>
- </form>
+      <div class="mb-8">
+        <h1
+          class="text-5xl text-gray-300! fond-bold mb-4 leading-tight"
+          translate
+        >
+          {{ "auth.brandSlogan" | translate }}<br />
+          {{ "auth.tagline" | translate }}
+        </h1>
+        <p class="text-lg text-gray-300 max-w-md">
+          {{ "auth.taglineLong" | translate }}
+        </p>
+      </div>
+    </div>
+  </div>
 
- <div class="text-center text-gray-600">
- {{ "Bạn đã có tài khoản?" | translate }}
- <a
- (click)="toggleMode()"
- (keyup.enter)="toggleMode()"
- tabindex="0"
- role="button"
- class="font-bold text-primary hover:underline cursor-pointer ml-1"
- >{{ "Đăng nhập tại đây" | translate }}</a
- >
- </div>
- </ng-template>
+  <!-- RIGHT SIDE: AUTH FORMS -->
+  <div
+    class="w-full lg:w-1/2 flex items-center justify-center p-8 lg:p-12 overflow-y-auto"
+  >
+    <div class="max-w-[400px] w-full fade-in">
+      <!-- LOGO ON MOBILE ONLY -->
+      <div class="lg:hidden text-center mb-8">
+        <a routerLink="/" class="inline-flex items-center gap-2">
+          <nz-icon nzType="shop" nzTheme="fill" class="text-3xl text-primary" />
+          <span class="text-2xl font-bold text-gray-900"
+            >CINE <span class="text-primary">PLEX</span></span
+          >
+        </a>
+      </div>
 
- <ng-template #loginTpl>
- <div class="mb-8">
- <h2 class="text-3xl font-bold text-gray-900 mb-2">
- {{ "Chào mừng quay trở lại 👋" | translate }}
- </h2>
- <p class="text-gray-500">
- {{
- "Nhập thông tin đăng nhập để truy cập tài khoản của bạn."
- | translate
- }}
- </p>
- </div>
+      <!-- LOGIN FORM -->
+      @if (activeTab() === "login") {
+        <ng-container *nzStringTemplateOutlet="loginTpl"></ng-container>
+      } @else {
+        <ng-container *nzStringTemplateOutlet="registerTpl"></ng-container>
+      }
 
- <form
- nz-form
- [formGroup]="formLogin"
- (ngSubmit)="submitLogin()"
- nzLayout="vertical"
- >
- <nz-form-item class="mb-5">
- <nz-form-label nzRequired
- >{{ "Email hoặc Tên đăng nhập" | translate }}
- </nz-form-label>
- <nz-form-control
- [nzErrorTip]="'Vui lòng nhập đúng tên đăng nhập!' | translate"
- >
- <nz-input-group
- nzPrefixIcon="mail"
- nzSize="large"
- class="rounded-lg"
- >
- <input
- nz-input
- type="email"
- formControlName="identifier"
- [placeholder]="'name@gmail.com' | translate"
- />
- </nz-input-group>
- </nz-form-control>
- </nz-form-item>
+      <!-- REGISTER FORM -->
+      <ng-template #registerTpl>
+        <div class="mb-8">
+          <h2 class="text-3xl font-bold text-gray-900 mb-2">
+            {{ "auth.createAccountButton" | translate }}
+          </h2>
+          <p class="text-gray-500">
+            {{ "auth.registerSubtitle" | translate }}
+          </p>
+        </div>
 
- <nz-form-item class="mb-2">
- <nz-form-label nzRequired
- >{{ "Mật khẩu" | translate }}
- </nz-form-label>
- <nz-form-control
- [nzErrorTip]="'Vui lòng nhập mật khẩu!' | translate"
- >
- <nz-input-group
- nzPrefixIcon="lock"
- [nzSuffix]="suffixTemplate"
- nzSize="large"
- class="rounded-lg"
- >
- <input
- nz-input
- [type]="loginPasswordVisible ? 'text' : 'password'"
- formControlName="password"
-  [placeholder]="'Mật khẩu của bạn' | translate"
-  />
-  </nz-input-group>
- <ng-template #suffixTemplate>
- <nz-icon
- [nzType]="loginPasswordVisible ? 'eye-invisible' : 'eye'"
- (click)="loginPasswordVisible = !loginPasswordVisible"
- class="cursor-pointer text-gray-400"
- />
- </ng-template>
- </nz-form-control>
- </nz-form-item>
+        <form
+          nz-form
+          [formGroup]="formRegister"
+          (ngSubmit)="submitRegister()"
+          nzLayout="vertical"
+        >
+          <nz-form-item class="mb-5">
+            <nz-form-label nzRequired
+              >{{ "profile.fullName" | translate }}
+            </nz-form-label>
+            <nz-form-control [nzErrorTip]="'auth.whatName' | translate">
+              <nz-input-group
+                nzPrefixIcon="user"
+                nzSize="large"
+                class="rounded-lg"
+              >
+                <input
+                  nz-input
+                  type="text"
+                  formControlName="username"
+                  [placeholder]="'auth.nameExample' | translate"
+                />
+              </nz-input-group>
+            </nz-form-control>
+          </nz-form-item>
 
- <div class="flex items-center justify-between mb-6">
- <span nz-checkbox formControlName="remember">{{
- "Ghi nhớ đăng nhập" | translate
- }}</span>
- <a
- class="text-sm font-semibold text-primary hover:text-primary/80 hover:underline cursor-pointer"
- >{{ "Quên mật khẩu?" | translate }}</a
- >
- </div>
+          <nz-form-item class="mb-5">
+            <nz-form-label nzRequired
+              >{{ "auth.email" | translate }}
+            </nz-form-label>
+            <nz-form-control [nzErrorTip]="'auth.validEmail' | translate">
+              <nz-input-group
+                nzPrefixIcon="mail"
+                nzSize="large"
+                class="rounded-lg"
+              >
+                <input
+                  nz-input
+                  type="email"
+                  formControlName="email"
+                  [placeholder]="'auth.emailPlaceholder' | translate"
+                />
+              </nz-input-group>
+            </nz-form-control>
+          </nz-form-item>
 
- <button
- nz-button
- nzType="primary"
- nzBlock
- nzSize="large"
- [nzLoading]="isLoginLoading()"
- class="font-bold h-12 text-base rounded-lg mb-6"
- >
- {{ "Đăng nhập vào tài khoản" | translate }}
- </button>
- </form>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <nz-form-item class="mb-5">
+              <nz-form-label nzRequired
+                >{{ "common.password" | translate }}
+              </nz-form-label>
+              <nz-form-control
+                [nzErrorTip]="'auth.passwordRequired' | translate"
+              >
+                <nz-input-group
+                  nzPrefixIcon="lock"
+                  nzSize="large"
+                  class="rounded-lg"
+                >
+                  <input
+                    nz-input
+                    type="password"
+                    formControlName="password"
+                    [placeholder]="'auth.passwordPlaceholder' | translate"
+                  />
+                </nz-input-group>
+              </nz-form-control>
+            </nz-form-item>
 
- <div class="text-center text-gray-600">
- {{ "Chưa là thành viên?" | translate }}
- <a
- (click)="toggleMode()"
- (keyup.enter)="toggleMode()"
- tabindex="0"
- role="button"
- class="font-bold text-primary hover:underline cursor-pointer ml-1"
- >{{ "Tạo tài khoản mới" | translate }}</a
- >
- </div>
- </ng-template>
+            <nz-form-item class="mb-5">
+              <nz-form-label nzRequired
+                >{{ "common.confirm" | translate }}
+              </nz-form-label>
+              <nz-form-control [nzErrorTip]="confirmErrorTpl">
+                <nz-input-group
+                  nzPrefixIcon="lock"
+                  nzSize="large"
+                  class="rounded-lg"
+                >
+                  <input
+                    nz-input
+                    type="password"
+                    formControlName="confirmPassword"
+                    [placeholder]="'auth.confirmPassword' | translate"
+                  />
+                </nz-input-group>
+                <ng-template #confirmErrorTpl let-control>
+                  @if (control.hasError("required")) {
+                    <ng-container>{{
+                      "auth.required" | translate
+                    }}</ng-container>
+                  }
+                  @if (control.hasError("confirm")) {
+                    <ng-container>{{
+                      "auth.passwordMismatch" | translate
+                    }}</ng-container>
+                  }
+                </ng-template>
+              </nz-form-control>
+            </nz-form-item>
+          </div>
 
- <!-- SOCIAL LOGIN -->
- <div class="mt-8">
- <div class="relative mb-6">
- <div class="absolute inset-0 flex items-center">
- <div class="w-full border-t border-gray-200"></div>
- </div>
- <div class="relative flex justify-center text-sm">
- <span class="px-4 bg-white text-gray-500 font-medium">{{
- "Hoặc tiếp tục với" | translate
- }}</span>
- </div>
- </div>
+          <button
+            nz-button
+            nzType="primary"
+            nzBlock
+            nzSize="large"
+            [nzLoading]="isRegisterLoading()"
+            class="font-bold h-12 text-base rounded-lg mb-6"
+          >
+            {{ "auth.registerTitle" | translate }}
+          </button>
+        </form>
 
- <div class="grid grid-cols-2 gap-4">
- <button
- type="button"
- class="flex items-center justify-center w-full px-4 py-3 border border-gray-200 rounded-xl bg-white text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-colors"
- >
- <nz-icon nzType="google" class="mr-2 text-xl text-red-500" />
- Google
- </button>
+        <div class="text-center text-gray-600">
+          {{ "auth.hasAccount" | translate }}
+          <a
+            (click)="toggleMode()"
+            (keyup.enter)="toggleMode()"
+            tabindex="0"
+            role="button"
+            class="font-bold text-primary hover:underline cursor-pointer ml-1"
+            >{{ "auth.loginHere" | translate }}</a
+          >
+        </div>
+      </ng-template>
 
- <button
- type="button"
- class="flex items-center justify-center w-full px-4 py-3 border border-gray-200 rounded-xl bg-white text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-colors"
- >
- <nz-icon
- nzType="facebook"
- nzTheme="fill"
- class="mr-2 text-xl text-blue-500"
- />
- Facebook
- </button>
- </div>
- </div>
- </div>
- </div>
+      <ng-template #loginTpl>
+        <div class="mb-8">
+          <h2 class="text-3xl font-bold text-gray-900 mb-2">
+            {{ "auth.welcomeBack" | translate }}
+          </h2>
+          <p class="text-gray-500">
+            {{ "auth.loginSubtitle" | translate }}
+          </p>
+        </div>
+
+        <form
+          nz-form
+          [formGroup]="formLogin"
+          (ngSubmit)="submitLogin()"
+          nzLayout="vertical"
+        >
+          <nz-form-item class="mb-5">
+            <nz-form-label nzRequired
+              >{{ "auth.emailOrUsername" | translate }}
+            </nz-form-label>
+            <nz-form-control [nzErrorTip]="'auth.validUsername' | translate">
+              <nz-input-group
+                nzPrefixIcon="mail"
+                nzSize="large"
+                class="rounded-lg"
+              >
+                <input
+                  nz-input
+                  type="email"
+                  formControlName="identifier"
+                  [placeholder]="'auth.emailPlaceholder' | translate"
+                />
+              </nz-input-group>
+            </nz-form-control>
+          </nz-form-item>
+
+          <nz-form-item class="mb-2">
+            <nz-form-label nzRequired
+              >{{ "common.password" | translate }}
+            </nz-form-label>
+            <nz-form-control [nzErrorTip]="'auth.requiredPassword' | translate">
+              <nz-input-group
+                nzPrefixIcon="lock"
+                [nzSuffix]="suffixTemplate"
+                nzSize="large"
+                class="rounded-lg"
+              >
+                <input
+                  nz-input
+                  [type]="loginPasswordVisible ? 'text' : 'password'"
+                  formControlName="password"
+                  [placeholder]="'auth.passwordPlaceholder' | translate"
+                />
+              </nz-input-group>
+              <ng-template #suffixTemplate>
+                <nz-icon
+                  [nzType]="loginPasswordVisible ? 'eye-invisible' : 'eye'"
+                  (click)="loginPasswordVisible = !loginPasswordVisible"
+                  class="cursor-pointer text-gray-400"
+                />
+              </ng-template>
+            </nz-form-control>
+          </nz-form-item>
+
+          <div class="flex items-center justify-between mb-6">
+            <span nz-checkbox formControlName="remember">{{
+              "auth.rememberMe" | translate
+            }}</span>
+            <a
+              class="text-sm font-semibold text-primary hover:text-primary/80 hover:underline cursor-pointer"
+              >{{ "auth.forgotPassword" | translate }}</a
+            >
+          </div>
+
+          <button
+            nz-button
+            nzType="primary"
+            nzBlock
+            nzSize="large"
+            [nzLoading]="isLoginLoading()"
+            class="font-bold h-12 text-base rounded-lg mb-6"
+          >
+            {{ "auth.loginTitle" | translate }}
+          </button>
+        </form>
+
+        <div class="text-center text-gray-600">
+          {{ "auth.notMember" | translate }}
+          <a
+            (click)="toggleMode()"
+            (keyup.enter)="toggleMode()"
+            tabindex="0"
+            role="button"
+            class="font-bold text-primary hover:underline cursor-pointer ml-1"
+            >{{ "auth.createAccount" | translate }}</a
+          >
+        </div>
+      </ng-template>
+
+      <!-- SOCIAL LOGIN -->
+      <div class="mt-8">
+        <div class="relative mb-6">
+          <div class="absolute inset-0 flex items-center">
+            <div class="w-full border-t border-gray-200"></div>
+          </div>
+          <div class="relative flex justify-center text-sm">
+            <span class="px-4 bg-white text-gray-500 font-medium">{{
+              "auth.orContinue" | translate
+            }}</span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <button
+            type="button"
+            class="flex items-center justify-center w-full px-4 py-3 border border-gray-200 rounded-xl bg-white text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-colors"
+          >
+            <nz-icon nzType="google" class="mr-2 text-xl text-red-500" />
+            Google
+          </button>
+
+          <button
+            type="button"
+            class="flex items-center justify-center w-full px-4 py-3 border border-gray-200 rounded-xl bg-white text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-colors"
+          >
+            <nz-icon
+              nzType="facebook"
+              nzTheme="fill"
+              class="mr-2 text-xl text-blue-500"
+            />
+            Facebook
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>

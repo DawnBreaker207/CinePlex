@@ -5,7 +5,7 @@
       nz-input
       [formControl]="searchCtrl"
       (keyup.enter)="onSearch()"
-      [placeholder]="'Nhập tên phim API...' | translate"
+      [placeholder]="'admin.movie.api.searchPlaceholder' | translate"
       class="rounded-lg"
     />
     <button
@@ -15,7 +15,7 @@
       class="rounded-lg"
       [nzLoading]="isLoading()"
     >
-      {{ "Tìm kiếm" | translate }}
+      {{ "common.search" | translate }}
     </button>
   </div>
 
@@ -46,11 +46,13 @@
 
               <!-- Content -->
               <div class="flex-1">
-                <h4 class="font-bold text-gray-800 dark:text-gray-100 group-hover:text-primary">
+                <h4
+                  class="font-bold text-gray-800 dark:text-gray-100 group-hover:text-primary"
+                >
                   {{ movie.title }}
                 </h4>
                 <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                  {{ "Phát hành" | translate }}:
+                  {{ "admin.movie.api.releaseDate" | translate }}:
                   {{ movie.release_date | date: "yyyy" }}
                 </p>
 
@@ -64,18 +66,23 @@
                   </div>
                 }
 
-                <p class="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mt-2">
-                  {{ movie.overview || ("Chưa có mô tả" | translate) }}
+                <p
+                  class="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mt-2"
+                >
+                  {{
+                    movie.overview ||
+                      ("admin.movie.form.noDescription" | translate)
+                  }}
                 </p>
               </div>
 
               <!-- Action Icon -->
               <div class="flex items-center px-2">
-                  <nz-icon
-                    nzType="plus-circle"
-                    class="text-2xl text-gray-400 group-hover:text-primary transition-colors"
-                    aria-hidden="true"
-                  />
+                <nz-icon
+                  nzType="plus-circle"
+                  class="text-2xl text-gray-400 group-hover:text-primary transition-colors"
+                  aria-hidden="true"
+                />
               </div>
             </div>
           }
@@ -85,8 +92,13 @@
         <div
           class="flex flex-col items-center justify-center h-full text-gray-500 dark:text-gray-400"
         >
-          <span nz-icon nzType="search" class="text-4xl mb-2" aria-hidden="true"></span>
-          <p>{{ "Chưa có kết quả tìm kiếm" | translate }}</p>
+          <span
+            nz-icon
+            nzType="search"
+            class="text-4xl mb-2"
+            aria-hidden="true"
+          ></span>
+          <p>{{ "admin.movie.api.noResults" | translate }}</p>
         </div>
       }
     }

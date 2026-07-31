@@ -1,6 +1,6 @@
 <div class="p-2">
   <p class="text-lg font-bold mb-4 text-primary">
-    {{ "Lịch chiếu phim" | translate }}
+    {{ "home.movieShowtimes" | translate }}
   </p>
 
   <div class="max-h-[22rem] overflow-y-auto pr-2">
@@ -9,7 +9,7 @@
         <div class="flex items-center gap-2 mb-3">
           <span
             class="bg-primary text-white px-2 py-1 rounded text-xs font-bold"
-            >{{ "Ngày" | translate }}</span
+            >{{ "common.date" | translate }}</span
           >
           <span class="font-bold text-gray-700">
             @if (getDateLabel(group.rawDate); as label) {
@@ -26,7 +26,8 @@
               [disabled]="st.availableSeats === 0"
               class="relative flex flex-col items-center p-3 border-2 rounded-lg transition-colors duration-200"
               [ngClass]="{
-                'border-primary bg-primary-light': st.id === selectedShowtimeId(),
+                'border-primary bg-primary-light':
+                  st.id === selectedShowtimeId(),
                 'border-gray-200 hover:border-primary/40':
                   st.id !== selectedShowtimeId() && st.availableSeats > 0,
                 'bg-gray-100 opacity-50 cursor-not-allowed':
@@ -36,7 +37,7 @@
               <span class="text-sm">{{ formatShowTime(st.showTime) }}</span>
               <span class="text-[10px] text-gray-600">
                 {{ st?.availableSeats }}/{{ st?.totalSeats }}
-                {{ "ghế" | translate }}
+                {{ "home.seats" | translate }}
               </span>
 
               @if (st.id === selectedShowtimeId()) {
@@ -52,8 +53,8 @@
       </div>
     } @empty {
       <div class="text-center py-10 text-gray-400">
-        <nz-icon nzType="calendar" class="text-3xl mb-2"/>
-        <p>{{ "Không có suất chiếu" | translate }}</p>
+        <nz-icon nzType="calendar" class="text-3xl mb-2" />
+        <p>{{ "detail.noShowtime" | translate }}</p>
       </div>
     }
   </div>
@@ -66,6 +67,6 @@
     [disabled]="!selectedShowtimeId()"
     (click)="confirmSelection()"
   >
-    {{ "Xác nhận" | translate }}
+    {{ "common.confirm" | translate }}
   </button>
 </div>

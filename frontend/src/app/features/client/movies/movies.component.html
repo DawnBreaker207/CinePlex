@@ -1,42 +1,66 @@
 <div class="max-w-5xl mx-auto px-4 sm:px-6 py-8">
- <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
- <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">{{ "Danh sách phim" | translate }}</h1>
- <div class="w-full sm:w-[280px]">
- <nz-input-group nzPrefixIcon="search" class="rounded-lg">
- <input nz-input [placeholder]="'Tìm kiếm phim...' | translate" [ngModel]="search()" (ngModelChange)="search.set($event)" maxlength="255"/>
- </nz-input-group>
- </div>
- </div>
+  <div
+    class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6"
+  >
+    <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">
+      {{ "home.movieList" | translate }}
+    </h1>
+    <div class="w-full sm:w-[280px]">
+      <nz-input-group nzPrefixIcon="search" class="rounded-lg">
+        <input
+          nz-input
+          [placeholder]="'home.searchMovie' | translate"
+          [ngModel]="search()"
+          (ngModelChange)="search.set($event)"
+          maxlength="255"
+        />
+      </nz-input-group>
+    </div>
+  </div>
 
- <nz-tabset [nzSelectedIndex]="tabIndex()" (nzSelectedIndexChange)="tabIndex.set($event)">
- <nz-tab [nzTitle]="tabTitles().all"/>
- <nz-tab [nzTitle]="tabTitles().now"/>
- <nz-tab [nzTitle]="tabTitles().upcoming"/>
- </nz-tabset>
+  <nz-tabset
+    [nzSelectedIndex]="tabIndex()"
+    (nzSelectedIndexChange)="tabIndex.set($event)"
+  >
+    <nz-tab [nzTitle]="tabTitles().all" />
+    <nz-tab [nzTitle]="tabTitles().now" />
+    <nz-tab [nzTitle]="tabTitles().upcoming" />
+  </nz-tabset>
 
- @if (loading()) {
- <div nz-row [nzGutter]="[16, 24]" class="mt-8">
- @for (_ of [1,2,3,4,5,6]; track _) {
- <div nz-col [nzXs]="12" [nzSm]="8" [nzMd]="6" [nzLg]="4">
- <nz-skeleton [nzActive]="true" [nzTitle]="false" [nzParagraph]="{ rows: 3, width: ['100%', '60%', '40%'] }" class="block"/>
- </div>
- }
- </div>
- } @else if (filtered().length === 0) {
- <div class="mt-16 text-center">
- <nz-empty [nzNotFoundContent]="'Không tìm thấy phim phù hợp' | translate">
- <div nz-row [nzJustify]="'center'" class="mt-4">
- <button nz-button nzType="primary" routerLink="/home">{{ "Về trang chủ" | translate }}</button>
- </div>
- </nz-empty>
- </div>
- } @else {
- <div nz-row [nzGutter]="[16, 24]" class="mt-8">
- @for (movie of filtered(); track movie.id) {
- <div nz-col [nzXs]="12" [nzSm]="8" [nzMd]="6" [nzLg]="4">
- <app-movie-item [movie]="movie" [canBook]="isNowShowing(movie)" (selectMovie)="onSelectMovie($event)"/>
- </div>
- }
- </div>
- }
+  @if (loading()) {
+    <div nz-row [nzGutter]="[16, 24]" class="mt-8">
+      @for (_ of [1, 2, 3, 4, 5, 6]; track _) {
+        <div nz-col [nzXs]="12" [nzSm]="8" [nzMd]="6" [nzLg]="4">
+          <nz-skeleton
+            [nzActive]="true"
+            [nzTitle]="false"
+            [nzParagraph]="{ rows: 3, width: ['100%', '60%', '40%'] }"
+            class="block"
+          />
+        </div>
+      }
+    </div>
+  } @else if (filtered().length === 0) {
+    <div class="mt-16 text-center">
+      <nz-empty [nzNotFoundContent]="'home.noMatch' | translate">
+        <div nz-row [nzJustify]="'center'" class="mt-4">
+          <button nz-button nzType="primary" routerLink="/home">
+            {{ "reservation.backHome" | translate }}
+          </button>
+        </div>
+      </nz-empty>
+    </div>
+  } @else {
+    <div nz-row [nzGutter]="[16, 24]" class="mt-8">
+      @for (movie of filtered(); track movie.id) {
+        <div nz-col [nzXs]="12" [nzSm]="8" [nzMd]="6" [nzLg]="4">
+          <app-movie-item
+            [movie]="movie"
+            [canBook]="isNowShowing(movie)"
+            (selectMovie)="onSelectMovie($event)"
+          />
+        </div>
+      }
+    </div>
+  }
 </div>

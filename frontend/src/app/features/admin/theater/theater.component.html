@@ -4,7 +4,7 @@
   >
     <div>
       <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">
-        {{ "Quản Lý Rạp Chiếu" | translate }}
+        {{ "admin.theater.manage" | translate }}
       </h1>
     </div>
     <button
@@ -16,23 +16,32 @@
       <nz-icon nzType="plus" nzTheme="outline" aria-hidden="true" />
     </button>
   </div>
-  <div class="mb-5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+  <div
+    class="mb-5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3"
+  >
     <nz-input-group nzPrefixIcon="search" class="w-full max-w-[500px]">
       <input
         nz-input
         [formControl]="searchCtrl"
-        [placeholder]="'Tìm kiếm' | translate"
+        [placeholder]="'common.search' | translate"
         class="w-full"
         type="text"
         maxlength="255"
       />
     </nz-input-group>
-    <nz-select class="w-full sm:w-[150px]" [formControl]="sortCtrl" [nzPlaceHolder]="'Sắp xếp' | translate">
+    <nz-select
+      class="w-full sm:w-[150px]"
+      [formControl]="sortCtrl"
+      [nzPlaceHolder]="'common.sort' | translate"
+    >
       <nz-option
-        [nzLabel]="'Mới nhất' | translate"
+        [nzLabel]="'admin.movie.sortNewest' | translate"
         nzValue="newest"
       ></nz-option>
-      <nz-option [nzLabel]="'Cũ nhất' | translate" nzValue="oldest"></nz-option>
+      <nz-option
+        [nzLabel]="'admin.movie.sortOldest' | translate"
+        nzValue="oldest"
+      ></nz-option>
     </nz-select>
   </div>
   @let errorMsg = error();
@@ -46,7 +55,7 @@
         [nzPageSize]="10"
         nzShowPagination
         [nzShowSizeChanger]="true"
-        [nzNoResult]="'Không tìm thấy rạp chiếu. Hãy thử thay đổi bộ lọc.' | translate"
+        [nzNoResult]="'admin.theater.empty' | translate"
       >
         <thead>
           <tr>
@@ -62,10 +71,14 @@
             >
               <td>{{ item.id }}</td>
               <td class="max-w-[200px]">
-                <span class="truncate block" [title]="item.name">{{ item.name }}</span>
+                <span class="truncate block" [title]="item.name">{{
+                  item.name
+                }}</span>
               </td>
               <td class="max-w-[250px]">
-                <span class="truncate block" [title]="item.location">{{ item.location }}</span>
+                <span class="truncate block" [title]="item.location">{{
+                  item.location
+                }}</span>
               </td>
               <td>{{ item.capacity }}</td>
               <td>{{ item.showtime.length }}</td>
@@ -77,16 +90,20 @@
                       nz-button
                       nzType="text"
                       nzShape="circle"
-                      [attr.aria-label]="'Xem' | translate"
+                      [attr.aria-label]="'common.view' | translate"
                       (click)="openModal('view', item.id)"
                     >
-                      <nz-icon nzType="eye" nzTheme="twotone" aria-hidden="true" />
+                      <nz-icon
+                        nzType="eye"
+                        nzTheme="twotone"
+                        aria-hidden="true"
+                      />
                     </button>
                     <button
                       nz-button
                       nzType="text"
                       nzShape="circle"
-                      [attr.aria-label]="'Sửa' | translate"
+                      [attr.aria-label]="'common.edit' | translate"
                       (click)="openModal('edit', item.id)"
                     >
                       <nz-icon
@@ -99,7 +116,7 @@
                       nz-button
                       nzType="text"
                       nzShape="circle"
-                      [attr.aria-label]="'Xóa' | translate"
+                      [attr.aria-label]="'common.delete' | translate"
                       (click)="onDelete(item.id)"
                     >
                       <nz-icon

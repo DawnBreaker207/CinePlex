@@ -1,65 +1,65 @@
 <div class="mt-6 w-full bg-[url('/assets/bg-slider.png')] bg-repeat-x">
- <div
- class="mx-auto max-w-5xl overflow-hidden rounded-xl border border-slate-700 bg-black shadow-2xl"
- >
- <nz-carousel
- nzAutoPlay
- nzEffect="fade"
- [nzAutoPlaySpeed]="5000"
- [nzEnableSwipe]="true"
- class="block w-full"
- >
- @for (banner of banners; track banner.id) {
- <div nz-carousel-content>
- <div class="relative h-[420px] w-full md:h-[500px]">
- <div
- class="absolute inset-0 bg-cover bg-center pointer-events-none"
- [style.backgroundImage]="'url(' + banner.image + ')'"
- ></div>
+  <div
+    class="mx-auto max-w-5xl overflow-hidden rounded-xl border border-slate-700 bg-black shadow-2xl"
+  >
+    <nz-carousel
+      nzAutoPlay
+      nzEffect="fade"
+      [nzAutoPlaySpeed]="5000"
+      [nzEnableSwipe]="true"
+      class="block w-full"
+    >
+      @for (banner of banners; track banner.id) {
+        <div nz-carousel-content>
+          <div class="relative h-[420px] w-full md:h-[500px]">
+            <div
+              class="absolute inset-0 bg-cover bg-center pointer-events-none"
+              [style.backgroundImage]="'url(' + banner.image + ')'"
+            ></div>
 
- <div
- class="pointer-events-none absolute inset-0 bg-gradient-to-t from-black via-black/75 to-black/15 opacity-100"
- ></div>
+            <div
+              class="pointer-events-none absolute inset-0 bg-gradient-to-t from-black via-black/75 to-black/15 opacity-100"
+            ></div>
 
- <div
- class="absolute inset-0 flex flex-col justify-end p-6 md:p-10 lg:p-14"
- >
- <div class="max-w-3xl">
- <h1
- class="mb-3 font-['Bricolage_Grotesque'] text-3xl font-extrabold leading-tight text-white md:text-5xl"
- >
- {{ banner.title }}
- </h1>
+            <div
+              class="absolute inset-0 flex flex-col justify-end p-6 md:p-10 lg:p-14"
+            >
+              <div class="max-w-3xl">
+                <h1
+                  class="mb-3 font-['Bricolage_Grotesque'] text-3xl font-extrabold leading-tight text-white md:text-5xl"
+                >
+                  {{ banner.title }}
+                </h1>
 
- <p
- class="mb-6 max-w-2xl line-clamp-2 text-sm text-white/95 md:text-base"
- >
- {{ banner.desc }}
- </p>
+                <p
+                  class="mb-6 max-w-2xl line-clamp-2 text-sm text-white/95 md:text-base"
+                >
+                  {{ banner.desc }}
+                </p>
 
- <div class="flex flex-wrap items-center gap-3">
- <button
- nz-button
- nzType="primary"
- class="flex h-10 items-center gap-2 rounded-lg border-none bg-[#E53E3E] px-5 text-sm font-semibold text-white hover:bg-[#C53030]"
- >
- <nz-icon nzType="barcode"/>
- {{ 'Đặt vé ngay' | translate }}
- </button>
- <button
- nz-button
- nzType="default"
- class="flex h-10 items-center gap-2 rounded-lg border border-slate-200/70 bg-transparent px-5 text-sm font-semibold text-white hover:border-[#E53E3E] hover:text-[#E53E3E]"
- >
- <nz-icon nzType="play-circle"/>
- {{ 'Xem trailer' | translate }}
- </button>
- </div>
- </div>
- </div>
- </div>
- </div>
- }
- </nz-carousel>
- </div>
+                <div class="flex flex-wrap items-center gap-3">
+                  <button
+                    nz-button
+                    nzType="primary"
+                    class="flex h-10 items-center gap-2 rounded-lg border-none bg-[#E53E3E] px-5 text-sm font-semibold text-white hover:bg-[#C53030]"
+                  >
+                    <nz-icon nzType="barcode" />
+                    {{ "detail.bookNow" | translate }}
+                  </button>
+                  <button
+                    nz-button
+                    nzType="default"
+                    class="flex h-10 items-center gap-2 rounded-lg border border-slate-200/70 bg-transparent px-5 text-sm font-semibold text-white hover:border-[#E53E3E] hover:text-[#E53E3E]"
+                  >
+                    <nz-icon nzType="play-circle" />
+                    {{ "detail.watchTrailerLower" | translate }}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+    </nz-carousel>
+  </div>
 </div>

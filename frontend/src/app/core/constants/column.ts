@@ -4,75 +4,77 @@ const marker = (key: string) => key;
 
 export const HEADER_COLUMNS = {
   MOVIE: [
-    marker('Poster'),
-    marker('Thông tin'),
-    marker('Thể loại'),
-    marker('Trạng thái'),
-    marker('Hành động'),
+    marker('common.poster'),
+    marker('common.info'),
+    marker('common.genre'),
+    marker('common.status'),
+    marker('common.actions'),
   ],
   THEATER: [
     '#',
-    marker('Name'),
-    marker('Vị trí'),
-    marker('Sức chứa'),
-    marker('Giờ chiếu'),
-    marker('Ngày tạo'),
-    marker('Hành động'),
+    marker('common.name'),
+    marker('common.location'),
+    marker('common.capacity'),
+    marker('booking.showtime'),
+    marker('common.createdAt'),
+    marker('common.actions'),
   ],
   SHOWTIME: [
-    marker('Thông tin phim'),
-    marker('Lịch chiếu'),
-    marker('Vị trí'),
-    marker('Trạng thái'),
-    marker('Hành động'),
+    marker('common.movieInfo'),
+    marker('common.showtime'),
+    marker('common.location'),
+    marker('common.status'),
+    marker('common.actions'),
   ],
   RESEVATION: [
     '#',
-    marker('Trạng thái'),
-    marker('Tổng cộng'),
-    marker('Ngày tạo'),
-    marker('Hành động'),
+    marker('common.status'),
+    marker('reservation.total'),
+    marker('common.createdAt'),
+    marker('common.actions'),
   ],
-  USER: [marker('Thông tin'), marker('Trạng thái'), marker('Hành động')],
+  USER: [
+    marker('common.info'),
+    marker('common.status'),
+    marker('common.actions'),
+  ],
   ARTICLE: [
-    marker('Ảnh'),
-    marker('Tiêu đề'),
-    marker('Danh mục'),
-    marker('Tác giả'),
-    marker('Trạng thái'),
-    marker('Ngày tạo'),
-    marker('Hành động'),
+    marker('common.image'),
+    marker('common.title'),
+    marker('common.category'),
+    marker('common.author'),
+    marker('common.status'),
+    marker('common.createdAt'),
+    marker('common.actions'),
   ],
   VOUCHER: [
-    marker('Thông tin'),
-    marker('Thời gian'),
-    marker('Mức giảm'),
-    marker('Tình trạng'),
-    marker('Phạm vi'),
-    marker('Trạng thái'),
-    marker('Hành động'),
+    marker('common.info'),
+    marker('common.time'),
+    marker('voucher.discountRate'),
+    marker('voucher.condition'),
+    marker('voucher.scope'),
+    marker('common.status'),
+    marker('common.actions'),
   ],
 };
 
-export const HEADERS = [
-  { name: marker('Phim'), path: '/movies' },
-];
+export const HEADERS = [{ name: marker('common.movies'), path: '/movies' }];
 
 export const PROFILE_MENU = [
   {
-    title: marker('Quản trị viên'),
+    title: marker('profileMenu.admin'),
     icon: 'Gauge',
     link: '/admin',
     role: 'admin',
   },
   {
-    title: marker('Hồ sơ cá nhân'),
+    title: marker('profile.title'),
     icon: 'CircleUserRound',
     link: '/profile',
     role: 'user',
   },
   {
-    title: marker('Đăng xuất'),
+    title: marker('common.logout'),
     icon: 'LogOut',
     action: 'logout',
     isDanger: true,
@@ -81,10 +83,10 @@ export const PROFILE_MENU = [
 ];
 
 export const RESERVATION_STATUS_LABELS: Record<ReservationStatus, string> = {
-  CONFIRMED: marker('Đã xác nhận'),
-  CANCELED: marker('Đã hủy'),
-  PENDING: marker('Đang chờ'),
-  REFUNDED: marker('Đã hoàn tiền'),
+  CONFIRMED: marker('status.confirmed'),
+  CANCELED: marker('status.cancelled'),
+  PENDING: marker('status.pending'),
+  REFUNDED: marker('status.refunded'),
 };
 
 export const RESERVATION_STATUS = [

@@ -20,7 +20,10 @@
       <div class="hidden md:block">
         <nz-breadcrumb [nzSeparator]="iconTemplate">
           <ng-template #iconTemplate>
-            <nz-icon nzType="right" class="text-xs text-gray-500 dark:text-gray-400" />
+            <nz-icon
+              nzType="right"
+              class="text-xs text-gray-500 dark:text-gray-400"
+            />
           </ng-template>
           <nz-breadcrumb-item>Admin</nz-breadcrumb-item>
           @for (crum of breadcrumbs(); track crum.url; let last = $last) {
@@ -55,8 +58,8 @@
           />
           <input
             type="text"
-            [placeholder]="'Tìm kiếm nhanh...' | translate"
-            [attr.aria-label]="'Tìm kiếm nhanh' | translate"
+            [placeholder]="'layout.quickSearchPlaceholder' | translate"
+            [attr.aria-label]="'layout.quickSearch' | translate"
             class="w-full h-full bg-transparent border-none outline-none text-sm ml-3 text-slate-700 dark:text-gray-200 placeholder-slate-500 dark:placeholder-gray-400 p-0 focus:ring-0"
           />
         </div>
@@ -88,9 +91,9 @@
           <div
             class="px-4 py-2 border-b border-slate-100 dark:border-gray-700 font-bold text-slate-700 dark:text-gray-100 flex justify-between"
           >
-            <span>{{ "Thông báo" | translate }}</span>
+            <span>{{ "navbar.notifications" | translate }}</span>
             <span class="text-xs text-primary cursor-pointer">{{
-              "Đánh dấu đã đọc" | translate
+              "navbar.markRead" | translate
             }}</span>
           </div>
           <ul class="max-h-64 overflow-y-auto custom-scrollbar">
@@ -103,11 +106,13 @@
                 <nz-icon nzType="pay-circle" />
               </div>
               <div>
-                <p class="text-sm text-slate-800 dark:text-gray-100 font-medium">
-                  {{ "Đơn hàng mới #1234" | translate }}
+                <p
+                  class="text-sm text-slate-800 dark:text-gray-100 font-medium"
+                >
+                  {{ "navbar.newOrder" | translate }}
                 </p>
                 <p class="text-xs text-slate-500 dark:text-gray-400 mt-1">
-                  {{ "Vừa xong" | translate }}
+                  {{ "navbar.justNow" | translate }}
                 </p>
               </div>
             </li>

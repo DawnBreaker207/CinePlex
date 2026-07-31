@@ -1,198 +1,196 @@
 <div class="p-6 md:p-8 h-full overflow-y-auto max-h-[800px]">
- <h2
- class="text-lg font-bold text-gray-800 mb-6 border-b border-gray-100 pb-2"
- >
- {{ "Vé đã đặt gần đây" | translate }}
- <nz-tag
- class="ml-2 mr-0 rounded-full bg-gray-100 border-gray-200 text-gray-500 font-bold px-2"
- >
- {{ tickets().length }}
- </nz-tag>
- </h2>
- <div class="grid grid-cols-1 gap-4">
- @for (ticket of tickets(); track ticket.reservationId) {
- <div
- class="group flex flex-col sm:flex-row bg-white order border-gray-200 rounded-xl overflow-hidden hover:border-primary/50 hover:shadow-md transition-all duration-300"
- >
- <!-- Poster -->
- <div class="sm:w-32 h-40 sm:h-auto bg-gray-100 relative shrink-0">
- <img
- [src]="ticket.moviePoster"
- [alt]="ticket.movieTitle"
- class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
- />
- </div>
+  <h2
+    class="text-lg font-bold text-gray-800 mb-6 border-b border-gray-100 pb-2"
+  >
+    {{ "booking.recent" | translate }}
+    <nz-tag
+      class="ml-2 mr-0 rounded-full bg-gray-100 border-gray-200 text-gray-500 font-bold px-2"
+    >
+      {{ tickets().length }}
+    </nz-tag>
+  </h2>
+  <div class="grid grid-cols-1 gap-4">
+    @for (ticket of tickets(); track ticket.reservationId) {
+      <div
+        class="group flex flex-col sm:flex-row bg-white order border-gray-200 rounded-xl overflow-hidden hover:border-primary/50 hover:shadow-md transition-all duration-300"
+      >
+        <!-- Poster -->
+        <div class="sm:w-32 h-40 sm:h-auto bg-gray-100 relative shrink-0">
+          <img
+            [src]="ticket.moviePoster"
+            [alt]="ticket.movieTitle"
+            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          />
+        </div>
 
- <!-- Info -->
- <div class="flex-1 p-4 flex flex-col justify-between">
- <div>
- <div class="flex justify-between items-start">
- <h3 class="font-bold text-gray-900 text-lg line-clamp-1">
- {{ ticket.movieTitle }}
- </h3>
- <span
- class="text-xs font-mono text-gray-400 bg-gray-50 px-2 py-1 rounded"
- >#{{ ticket.reservationId }}</span
- >
- </div>
+        <!-- Info -->
+        <div class="flex-1 p-4 flex flex-col justify-between">
+          <div>
+            <div class="flex justify-between items-start">
+              <h3 class="font-bold text-gray-900 text-lg line-clamp-1">
+                {{ ticket.movieTitle }}
+              </h3>
+              <span
+                class="text-xs font-mono text-gray-400 bg-gray-50 px-2 py-1 rounded"
+                >#{{ ticket.reservationId }}</span
+              >
+            </div>
 
- <div class="mt-2 space-y-1 text-sm text-gray-600">
- <p class="flex items-center gap-2">
- <nz-icon nzType="environment" class="text-gray-400" />
- {{ ticket.theater }}
- <!-- - {{ ticket.showtime }}-->
- </p>
+            <div class="mt-2 space-y-1 text-sm text-gray-600">
+              <p class="flex items-center gap-2">
+                <nz-icon nzType="environment" class="text-gray-400" />
+                {{ ticket.theater }}
+                <!-- - {{ ticket.showtime }}-->
+              </p>
 
- <p class="flex items-center gap-2">
- <nz-icon nzType="calendar" class="text-gray-400" />
- {{ ticket.date | date: "dd/MM/yyyy" }} -
- <span class="font-semibold text-primary">
- {{ ticket.time }}
- </span>
- </p>
+              <p class="flex items-center gap-2">
+                <nz-icon nzType="calendar" class="text-gray-400" />
+                {{ ticket.date | date: "dd/MM/yyyy" }} -
+                <span class="font-semibold text-primary">
+                  {{ ticket.time }}
+                </span>
+              </p>
 
- <p class="flex items-center gap-2">
- <nz-icon nzType="appstore" class="text-gray-400" />
- {{ "Ghế" | translate }}: {{ ticket.seats.join(",") }}
- </p>
- </div>
- </div>
- <div class="mt-4 pt-3 border-t border-gray-50 flex justify-end">
- <button
- nz-button
- nzType="default"
- nzSize="small"
- (click)="openTicketDetail(ticket)"
- class="rounded-md border-gray-200 text-gray-600 hover:text-primary hover:border-primary"
- >
- {{ "Xem chi tiết" | translate }}
- </button>
- </div>
- </div>
- </div>
- } @empty {
- <div
- class="flex flex-col items-center justify-center py-12 text-gray-400"
- >
- <nz-empty
- [nzNotFoundContent]="'Chưa có lịch sử đặt vé' | translate"
- ></nz-empty>
- </div>
- }
- </div>
- <!-- MODAL DETAIL -->
- <nz-modal
- [(nzVisible)]="isDetailVisible"
- [nzTitle]="''"
- [nzFooter]="null"
- (nzOnCancel)="closeTicketDetail()"
- [nzWidth]="400"
- [nzCentered]="true"
- >
- <ng-container *nzModalContent>
- @if (selectedTicket) {
- <div class="relative overflow-hidden">
- <!-- Ticket Header-->
- <div class="text-center mb-6">
- <h3 class="text-xl font-bold text-gray-900 leading-tight mb-1">
- {{ selectedTicket.movieTitle }}
- </h3>
- <p class="text-sm text-gray-500">{{ selectedTicket.theater }}</p>
- </div>
+              <p class="flex items-center gap-2">
+                <nz-icon nzType="appstore" class="text-gray-400" />
+                {{ "booking.seat" | translate }}: {{ ticket.seats.join(",") }}
+              </p>
+            </div>
+          </div>
+          <div class="mt-4 pt-3 border-t border-gray-50 flex justify-end">
+            <button
+              nz-button
+              nzType="default"
+              nzSize="small"
+              (click)="openTicketDetail(ticket)"
+              class="rounded-md border-gray-200 text-gray-600 hover:text-primary hover:border-primary"
+            >
+              {{ "booking.viewDetail" | translate }}
+            </button>
+          </div>
+        </div>
+      </div>
+    } @empty {
+      <div
+        class="flex flex-col items-center justify-center py-12 text-gray-400"
+      >
+        <nz-empty [nzNotFoundContent]="'booking.empty' | translate"></nz-empty>
+      </div>
+    }
+  </div>
+  <!-- MODAL DETAIL -->
+  <nz-modal
+    [(nzVisible)]="isDetailVisible"
+    [nzTitle]="''"
+    [nzFooter]="null"
+    (nzOnCancel)="closeTicketDetail()"
+    [nzWidth]="400"
+    [nzCentered]="true"
+  >
+    <ng-container *nzModalContent>
+      @if (selectedTicket) {
+        <div class="relative overflow-hidden">
+          <!-- Ticket Header-->
+          <div class="text-center mb-6">
+            <h3 class="text-xl font-bold text-gray-900 leading-tight mb-1">
+              {{ selectedTicket.movieTitle }}
+            </h3>
+            <p class="text-sm text-gray-500">{{ selectedTicket.theater }}</p>
+          </div>
 
- <!-- Ticket Body-->
- <div
- class="bg-gray-50 rounded-xl p-4 border border-dashed border-gray-300 relative"
- >
- <!-- Vết cắt-->
- <div
- class="absolute -left-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-white rounded-full border border-gray-200"
- ></div>
- <div
- class="absolute -left-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-white rounded-full border border-gray-200"
- ></div>
+          <!-- Ticket Body-->
+          <div
+            class="bg-gray-50 rounded-xl p-4 border border-dashed border-gray-300 relative"
+          >
+            <!-- Vết cắt-->
+            <div
+              class="absolute -left-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-white rounded-full border border-gray-200"
+            ></div>
+            <div
+              class="absolute -left-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-white rounded-full border border-gray-200"
+            ></div>
 
- <div class="space-y-4">
- <div class="flex justify-between">
- <div>
- <p
- class="text-xs text-gray-400 uppercase font-bold tracking-wider"
- >
- {{ "Ngày chiếu" | translate }}
- </p>
- <p class="font-semibold text-gray-800">
- {{ selectedTicket.date | date: "dd/MM/yyyy" }}
- </p>
- </div>
- <div class="text-right">
- <p
- class="text-xs text-gray-400 uppercase font-bold tracking-wider"
- >
- {{ "Giờ chiếu" | translate }}
- </p>
- <p class="font-bold text-primary text-lg">
- {{ selectedTicket.time }}
- </p>
- </div>
- </div>
+            <div class="space-y-4">
+              <div class="flex justify-between">
+                <div>
+                  <p
+                    class="text-xs text-gray-400 uppercase font-bold tracking-wider"
+                  >
+                    {{ "booking.showDate" | translate }}
+                  </p>
+                  <p class="font-semibold text-gray-800">
+                    {{ selectedTicket.date | date: "dd/MM/yyyy" }}
+                  </p>
+                </div>
+                <div class="text-right">
+                  <p
+                    class="text-xs text-gray-400 uppercase font-bold tracking-wider"
+                  >
+                    {{ "booking.showtime" | translate }}
+                  </p>
+                  <p class="font-bold text-primary text-lg">
+                    {{ selectedTicket.time }}
+                  </p>
+                </div>
+              </div>
 
- <div class="flex justify-between">
- <div>
- <p
- class="text-xs text-gray-400 uppercase font-bold tracking-wider"
- >
- {{ "Phòng" | translate }}
- </p>
- <p class="font-semibold text-gray-800">
- {{ selectedTicket.room }}
- </p>
- </div>
- <div class="text-right">
- <p
- class="text-xs text-gray-400 uppercase font-bold tracking-wider"
- >
- {{ "Ghế" | translate }}
- </p>
- <p class="font-bold text-lg">
- {{ selectedTicket.seats.join(",") }}
- </p>
- </div>
- </div>
- </div>
+              <div class="flex justify-between">
+                <div>
+                  <p
+                    class="text-xs text-gray-400 uppercase font-bold tracking-wider"
+                  >
+                    {{ "booking.room" | translate }}
+                  </p>
+                  <p class="font-semibold text-gray-800">
+                    {{ selectedTicket.room }}
+                  </p>
+                </div>
+                <div class="text-right">
+                  <p
+                    class="text-xs text-gray-400 uppercase font-bold tracking-wider"
+                  >
+                    {{ "booking.seat" | translate }}
+                  </p>
+                  <p class="font-bold text-lg">
+                    {{ selectedTicket.seats.join(",") }}
+                  </p>
+                </div>
+              </div>
+            </div>
 
- <div class="border-t border-dashed border-gray-300 my-4"></div>
+            <div class="border-t border-dashed border-gray-300 my-4"></div>
 
- <!-- Barcode-->
- <div class="flex flex-col items-center gap-2">
- <app-barcode [value]="selectedTicket.reservationId" />
- <p class="text-xs text-gray-400 font-mono tracking-widest mt-1">
- ID: {{ selectedTicket.reservationId }}
- </p>
- </div>
- </div>
+            <!-- Barcode-->
+            <div class="flex flex-col items-center gap-2">
+              <app-barcode [value]="selectedTicket.reservationId" />
+              <p class="text-xs text-gray-400 font-mono tracking-widest mt-1">
+                ID: {{ selectedTicket.reservationId }}
+              </p>
+            </div>
+          </div>
 
- <!-- Total Price-->
- <div class="mt-6 flex justify-between items-center px-2">
- <span class="text-gray-500 font-medium">{{
- "Tổng tiền" | translate
- }}</span>
- <span class="text-xl font-bold text-primary">{{
- selectedTicket.amount | currencyFormat
- }}</span>
- </div>
+          <!-- Total Price-->
+          <div class="mt-6 flex justify-between items-center px-2">
+            <span class="text-gray-500 font-medium">{{
+              "common.total" | translate
+            }}</span>
+            <span class="text-xl font-bold text-primary">{{
+              selectedTicket.amount | currencyFormat
+            }}</span>
+          </div>
 
- <div class="mt-6">
- <button
- nz-button
- nzBlock
- nzType="primary"
- (click)="closeTicketDetail()"
- >
- {{ "Đóng" | translate }}
- </button>
- </div>
- </div>
- }
- </ng-container>
- </nz-modal>
+          <div class="mt-6">
+            <button
+              nz-button
+              nzBlock
+              nzType="primary"
+              (click)="closeTicketDetail()"
+            >
+              {{ "common.close" | translate }}
+            </button>
+          </div>
+        </div>
+      }
+    </ng-container>
+  </nz-modal>
 </div>

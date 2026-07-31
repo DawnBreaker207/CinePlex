@@ -3,13 +3,13 @@
     <!--  Poster-->
     <nz-col [nzSpan]="8">
       <nz-form-item class="mt-8">
-        <nz-form-label>{{ "Tên rạp" | translate }}</nz-form-label>
+        <nz-form-label>{{ "common.theaterName" | translate }}</nz-form-label>
         <nz-form-control>
           <input
             nz-input
             formControlName="name"
             type="text"
-            [placeholder]="'Điền tên rạp' | translate"
+            [placeholder]="'admin.theater.namePlaceholder' | translate"
             [readOnly]="mode === 'view'"
             maxlength="255"
           />
@@ -17,25 +17,25 @@
       </nz-form-item>
 
       <nz-form-item class="mt-8">
-        <nz-form-label>{{ "Địa điểm" | translate }}</nz-form-label>
+        <nz-form-label>{{ "common.location" | translate }}</nz-form-label>
         <nz-form-control>
           <input
             nz-input
             formControlName="location"
             type="text"
-            [placeholder]="'Điền địa điểm' | translate"
+            [placeholder]="'admin.theater.locationPlaceholder' | translate"
             [readOnly]="mode === 'view'"
             maxlength="500"
           />
         </nz-form-control>
       </nz-form-item>
       <nz-form-item class="mt-8">
-        <nz-form-label>{{ "Sức chứa" | translate }}</nz-form-label>
+        <nz-form-label>{{ "common.capacity" | translate }}</nz-form-label>
 
         <nz-select
           formControlName="capacity"
           [nzDisabled]="mode === 'view'"
-          [nzPlaceHolder]="'Chọn Sức chứa' | translate"
+          [nzPlaceHolder]="'admin.theater.selectCapacity' | translate"
         >
           <nz-option [nzLabel]="40" [nzValue]="40"></nz-option>
           <nz-option [nzLabel]="50" [nzValue]="50"></nz-option>
