@@ -24,6 +24,12 @@ import {
   VOUCHER_CALCULATIONS,
 } from './mock-data';
 
+type MockBody = Record<string, unknown>;
+
+const pushMock = <T>(list: T[], item: unknown): void => {
+  list.push(item as T);
+};
+
 function b64url(input: string): string {
   return btoa(unescape(encodeURIComponent(input)))
     .replace(/\+/g, '-')
@@ -97,8 +103,8 @@ export function mockInterceptor(
 
   /* ---------------------------- AUTH ---------------------------- */
   if (url.includes('/auth/login') && method === 'POST') {
-    const { identifier, password } = req.body as any;
-    const user = findByCredential(identifier, password);
+    const { identifier, password } = req.body as MockBody;
+    const user = findByCredential(String(identifier), String(password));
     if (!user) return fail('Sai email hoặc mật khẩu', 401);
     const jwt = {
       userId: user.userId,
@@ -110,8 +116,8 @@ export function mockInterceptor(
   }
 
   if (url.includes('/auth/register') && method === 'POST') {
-    const { username, email, password } = req.body as any;
-    addUser(username, email, password);
+    const { username, email, password } = req.body as MockBody;
+    addUser(String(username), String(email), String(password));
     return ok('Tài khoản đã được tạo thành công');
   }
 
@@ -131,8 +137,8 @@ export function mockInterceptor(
   }
 
   if (url.includes('/movie') && method === 'POST') {
-    const movie = { ...(req.body as any), id: MOCK_MOVIES.length + 1 };
-    (MOCK_MOVIES as any[]).push(movie);
+    const movie = { ...(req.body as MockBody), id: MOCK_MOVIES.length + 1 };
+    pushMock(MOCK_MOVIES, movie);
     return ok(movie);
   }
 
@@ -140,7 +146,7 @@ export function mockInterceptor(
     const id = num(url.split('/').pop());
     const idx = MOCK_MOVIES.findIndex((m) => m.id === id);
     if (idx === -1) return fail('Không tìm thấy phim', 404);
-    MOCK_MOVIES[idx] = { ...MOCK_MOVIES[idx], ...(req.body as any), id };
+    MOCK_MOVIES[idx] = { ...MOCK_MOVIES[idx], ...(req.body as MockBody), id };
     return ok(MOCK_MOVIES[idx]);
   }
 
@@ -185,10 +191,10 @@ export function mockInterceptor(
       createdAt: new Date(),
       updatedAt: new Date(),
       isDeleted: false,
-      ...(req.body as any),
+      ...(req.body as MockBody),
       id: MOCK_THEATERS.length + 1,
     };
-    (MOCK_THEATERS as any[]).push(theater);
+    pushMock(MOCK_THEATERS, theater);
     return ok(theater);
   }
 
@@ -196,7 +202,7 @@ export function mockInterceptor(
     const id = num(url.split('/').pop());
     const idx = MOCK_THEATERS.findIndex((t) => t.id === id);
     if (idx === -1) return fail('Không tìm thấy rạp', 404);
-    MOCK_THEATERS[idx] = { ...MOCK_THEATERS[idx], ...(req.body as any), id };
+    MOCK_THEATERS[idx] = { ...MOCK_THEATERS[idx], ...(req.body as MockBody), id };
     return ok(MOCK_THEATERS[idx]);
   }
 
@@ -215,7 +221,7 @@ export function mockInterceptor(
   if (url.match(/\/showtime\/available\/movies\/\d+$/) && method === 'GET') {
     const movieId = num(url.split('/').pop());
     const all = [1, 2, 3, 4].flatMap((tid) => getShowtimes(tid));
-    return ok(all.filter((st: any) => st.movieId === movieId));
+    return ok(all.filter((st) => st.movieId === movieId));
   }
 
   if (url.match(/\/showtime\/theaters\/\d+$/) && method === 'GET') {
@@ -230,27 +236,27 @@ export function mockInterceptor(
   if (url.match(/\/showtime\/movies\/\d+$/) && method === 'GET') {
     const movieId = num(url.match(/movies\/(\d+)/)?.[1]);
     const all = [1, 2, 3, 4].flatMap((tid) => getShowtimes(tid));
-    return paginate(all.filter((st: any) => st.movieId === movieId), page, size);
+    return paginate(all.filter((st) => st.movieId === movieId), page, size);
   }
 
   if (url.match(/\/showtime\/\d+$/) && method === 'GET') {
     const id = num(url.split('/').pop());
     const all = [1, 2, 3, 4].flatMap((tid) => getShowtimes(tid));
-    return ok(all.find((st: any) => st.id === id) || null);
+    return ok(all.find((st) => st.id === id) || null);
   }
 
   if (url.includes('/showtime') && method === 'POST') {
     const all = [1, 2, 3, 4].flatMap((tid) => getShowtimes(tid));
-    const body = req.body as any;
+    const { showDate, showTime } = req.body as MockBody;
     const showtime = {
-      id: Math.max(...all.map((s: any) => s.id)) + 1,
-      ...body,
-      showDate: body.showDate
-        ? new Date(String(body.showDate).split('/').reverse().join('-'))
-        : body.showDate,
-      showTime: body.showTime
-        ? new Date(`1970-01-01T${body.showTime}`)
-        : body.showTime,
+      id: Math.max(...all.map((s) => s.id)) + 1,
+      ...(req.body as MockBody),
+      showDate: showDate
+        ? new Date(String(showDate).split('/').reverse().join('-'))
+        : showDate,
+      showTime: showTime
+        ? new Date(`1970-01-01T${showTime}`)
+        : showTime,
       createdAt: new Date(),
       updatedAt: new Date(),
       isDeleted: false,
@@ -260,16 +266,16 @@ export function mockInterceptor(
 
   if (url.match(/\/showtime\/\d+$/) && method === 'PUT') {
     const id = num(url.split('/').pop());
-    const body = req.body as any;
+    const { showDate, showTime } = req.body as MockBody;
     return ok({
       id,
-      ...body,
-      showDate: body.showDate
-        ? new Date(String(body.showDate).split('/').reverse().join('-'))
-        : body.showDate,
-      showTime: body.showTime
-        ? new Date(`1970-01-01T${body.showTime}`)
-        : body.showTime,
+      ...(req.body as MockBody),
+      showDate: showDate
+        ? new Date(String(showDate).split('/').reverse().join('-'))
+        : showDate,
+      showTime: showTime
+        ? new Date(`1970-01-01T${showTime}`)
+        : showTime,
     });
   }
 
@@ -294,11 +300,11 @@ export function mockInterceptor(
 
   /* ---------------------------- RESERVATION ---------------------------- */
   if (url.includes('/reservation/init') && method === 'POST') {
-    const body = req.body as any;
+    const { showtimeId } = req.body as MockBody;
     const reservationId = `res-${Math.floor(1000 + Math.random() * 9000)}`;
     return ok({
       reservationId,
-      showtimeId: body.showtimeId,
+      showtimeId,
       ttl: 600,
       expiredAt: new Date(Date.now() + 600000),
     });
@@ -358,13 +364,14 @@ export function mockInterceptor(
   if (url.match(/\/user\/update\/\d+\/profile$/) && method === 'PUT') {
     const id = num(url.match(/update\/(\d+)/)?.[1]);
     const user = publicUsers().find((u) => u.userId === id);
-    return ok({ ...user, ...(req.body as any), userId: id });
+    return ok({ ...user, ...(req.body as MockBody), userId: id });
   }
 
   if (url.match(/\/user\/update\/\d+\/status$/) && method === 'PUT') {
     const id = num(url.match(/update\/(\d+)/)?.[1]);
     const user = publicUsers().find((u) => u.userId === id);
-    return ok({ ...user, isDeleted: (req.body as any)?.isDeleted });
+    const isDeleted = (req.body as MockBody)?.['isDeleted'];
+    return ok({ ...user, isDeleted });
   }
 
   if (url.includes('/user/email/') && method === 'GET') {
@@ -389,8 +396,8 @@ export function mockInterceptor(
   }
 
   if (url.includes('/article') && method === 'POST') {
-    const article = { ...(req.body as any), id: MOCK_ARTICLES.length + 1 };
-    (MOCK_ARTICLES as any[]).push(article);
+    const article = { ...(req.body as MockBody), id: MOCK_ARTICLES.length + 1 };
+    pushMock(MOCK_ARTICLES, article);
     return ok(article);
   }
 
@@ -398,7 +405,7 @@ export function mockInterceptor(
     const id = num(url.split('/').pop());
     const idx = MOCK_ARTICLES.findIndex((a) => a.id === id);
     if (idx === -1) return fail('Không tìm thấy bài viết', 404);
-    MOCK_ARTICLES[idx] = { ...MOCK_ARTICLES[idx], ...(req.body as any), id };
+    MOCK_ARTICLES[idx] = { ...MOCK_ARTICLES[idx], ...(req.body as MockBody), id };
     return ok(MOCK_ARTICLES[idx]);
   }
 
@@ -431,8 +438,8 @@ export function mockInterceptor(
   }
 
   if (url.includes('/voucher') && method === 'POST') {
-    const voucher = { id: MOCK_VOUCHERS.length + 1, ...(req.body as any) };
-    (MOCK_VOUCHERS as any[]).push(voucher);
+    const voucher = { id: MOCK_VOUCHERS.length + 1, ...(req.body as MockBody) };
+    pushMock(MOCK_VOUCHERS, voucher);
     return ok(voucher);
   }
 
@@ -440,7 +447,7 @@ export function mockInterceptor(
     const id = num(url.split('/').pop());
     const idx = MOCK_VOUCHERS.findIndex((v) => v.id === id);
     if (idx === -1) return fail('Không tìm thấy voucher', 404);
-    MOCK_VOUCHERS[idx] = { ...MOCK_VOUCHERS[idx], ...(req.body as any), id };
+    MOCK_VOUCHERS[idx] = { ...MOCK_VOUCHERS[idx], ...(req.body as MockBody), id };
     return ok(MOCK_VOUCHERS[idx]);
   }
 

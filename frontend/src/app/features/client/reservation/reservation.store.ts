@@ -114,7 +114,7 @@ export const ReservationStore = signalStore(
 
       const startCountdown = (ttl: number) => {
         stopCountdown();
-        patchState(store, (state) => ({
+        patchState(store, () => ({
           currentTTL: {
             reservationId: store.reservationId() || '',
             ttl: ttl,

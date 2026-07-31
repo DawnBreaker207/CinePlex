@@ -38,7 +38,7 @@ export class AuthEffects {
         if (jwt) {
           try {
             return AuthActions.loadLoginSuccess({ jwt });
-          } catch (e) {
+          } catch {
             console.error('Invalid JWT in storage');
             return AuthActions.loadLogoutSuccess();
           }

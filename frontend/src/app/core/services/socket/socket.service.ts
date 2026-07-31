@@ -22,7 +22,7 @@ export class SocketService extends RxStomp {
     }
     return this.watch(topic).pipe(
       map((msg) => {
-        return JSON.parse(msg.body);
+        return JSON.parse(msg.body) as T;
       }),
       retry({ delay: 2000, count: 3 }),
       shareReplay({ bufferSize: 1, refCount: true }),

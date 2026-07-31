@@ -289,7 +289,7 @@ export function getShowtimes(theaterId: number) {
 }
 
 MOCK_THEATERS.forEach((t) => {
-  (t as any).showtime = getShowtimes(t.id);
+  Object.assign(t, { showtime: getShowtimes(t.id) });
 });
 
 export const MOCK_SEATS = generateSeats(101);
@@ -513,7 +513,7 @@ export const MOCK_VOUCHERS = [
   },
 ];
 
-export const VOUCHER_CALCULATIONS: Record<string, any> = {
+export const VOUCHER_CALCULATIONS: Record<string, unknown> = {
   WELCOME10: {
     code: 'WELCOME10',
     discountAmount: 10000,

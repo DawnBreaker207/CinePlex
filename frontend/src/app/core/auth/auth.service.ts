@@ -96,7 +96,7 @@ export class AuthService {
     return roles.some((role) => user.roles.includes(role));
   }
 
-  private handleError<T>(operation = 'operation', result?: T) {
+  private handleError<T>(operation = 'operation', _result?: T) {
     return (error: unknown): Observable<T> => {
       console.error(`${operation} failed: ${error}`);
       return throwError(() => error);

@@ -201,8 +201,11 @@ export const SeatStore = signalStore(
                   }),
                 ),
               ),
-              catchError((error: any) => {
-                patchState(store, { error, loading: false });
+              catchError((error: unknown) => {
+                patchState(store, {
+                  error: error instanceof Error ? error.message : String(error),
+                  loading: false,
+                });
                 return EMPTY;
               }),
             ),

@@ -149,7 +149,7 @@ export const DashboardStore = signalStore(
                     operations: operations,
                   }),
               ),
-              catchError((err) => {
+              catchError(() => {
                 patchState(store, { error: translate.instant('dashboard.loadFailed') });
                 return of(null);
               }),

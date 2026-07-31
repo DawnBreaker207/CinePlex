@@ -151,7 +151,7 @@ export class InfoComponent implements OnInit {
 
       this.msg.success(this.translate.instant('profile.saveSuccess'));
       this.selectedFile = null;
-    } catch (error) {
+    } catch {
       this.msg.error(this.translate.instant('profile.uploadError'));
     } finally {
       this.isSaving = false;

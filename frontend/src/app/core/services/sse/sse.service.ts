@@ -31,7 +31,7 @@ export class SseService {
           try {
             const parsedData = JSON.parse(data);
             observer.next({ event: eventName, data: parsedData });
-          } catch (e) {
+          } catch {
             observer.next({ event: eventName, data });
           }
         });
@@ -59,7 +59,7 @@ export class SseService {
         });
       };
 
-      source.onerror = (error) => {
+      source.onerror = (_error) => {
         if (source.readyState === EventSource.CLOSED) {
           console.error(
             'SSE Connection was closed. Browser will attempt to reconnect...',

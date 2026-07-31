@@ -75,7 +75,7 @@ export class StorageService extends Dexie {
   setSelectedTheaterId(theaterId: number) {
     try {
       localStorage.setItem(this.SELECTED_THEATER_KEY, theaterId.toString());
-    } catch (error) {
+    } catch {
       console.error(`Failed to set selected theater `, theaterId);
     }
   }
@@ -84,7 +84,7 @@ export class StorageService extends Dexie {
     try {
       const id = localStorage.getItem(this.SELECTED_THEATER_KEY);
       return id ? Number(id) : null;
-    } catch (error) {
+    } catch {
       console.error(`Failed to get selected theater `);
       return null;
     }
