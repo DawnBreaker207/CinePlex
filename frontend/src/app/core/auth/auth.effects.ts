@@ -9,7 +9,6 @@ import { catchError, map, of, switchMap, tap } from 'rxjs';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { AuthService } from '@core/auth/auth.service';
-import { StorageService } from '@core/services/storage/storage.service';
 import { ToastService } from '@core/services/toast/toast.service';
 import { AuthActions } from '@core/auth/auth.actions';
 
@@ -17,7 +16,6 @@ import { AuthActions } from '@core/auth/auth.actions';
 export class AuthEffects {
   private actions$ = inject(Actions);
   private authService = inject(AuthService);
-  private storageService = inject(StorageService);
   private toastService = inject(ToastService);
   private translate = inject(TranslateService);
   private router = inject(Router);
@@ -33,18 +31,26 @@ export class AuthEffects {
   initAuth$ = createEffect(() => {
     return this.actions$.pipe(
       ofType(ROOT_EFFECTS_INIT),
-      map(() => {
-        const jwt = this.storageService.getJwt();
-        if (jwt) {
-          try {
-            return AuthActions.loadLoginSuccess({ jwt });
-          } catch {
-            console.error('Invalid JWT in storage');
-            return AuthActions.loadLogoutSuccess();
-          }
-        } else {
-          return AuthActions.loadLogoutSuccess();
-        }
+      switchMap(() => {
+        const existing = this.authService.accessToken();
+        return (existing
+          ? of(existing)
+          : this.authService.silentRefresh()
+        ).pipe(
+          map((accessToken) => {
+            if (!accessToken) return AuthActions.loadLogoutSuccess();
+            const payload = this.authService.getFromToken(accessToken);
+            if (!payload) return AuthActions.loadLogoutSuccess();
+            return AuthActions.loadLoginSuccess({
+              jwt: {
+                userId: Number(payload.sub),
+                username: payload.username ?? '',
+                email: payload.email ?? '',
+                accessToken,
+              },
+            });
+          }),
+        );
       }),
     );
   });
@@ -71,20 +77,25 @@ export class AuthEffects {
       ofType(AuthActions.loadLogin),
       switchMap(({ user }) =>
         this.authService.login(user).pipe(
-          tap((jwt) => {
-            console.log('[login$] jwt received:', jwt);
-            this.storageService.setJWT(jwt);
+          tap(() => {
             this.toast('auth.toast.loginSuccess');
             this.router.navigate(['/home']);
           }),
           map((jwt) => {
             if (!jwt || !jwt.accessToken) {
-              console.error('[login$] invalid jwt from service, dispatching failure:', jwt);
-              return AuthActions.loadLoginFailure({ error: 'Invalid JWT response' });
+              console.error(
+                '[login$] invalid jwt from service, dispatching failure:',
+                jwt,
+              );
+              return AuthActions.loadLoginFailure({
+                error: 'Invalid JWT response',
+              });
             }
             return AuthActions.loadLoginSuccess({ jwt });
           }),
-          catchError((err) => of(AuthActions.loadLoginFailure({ error: err }))),
+          catchError((err) =>
+            of(AuthActions.loadLoginFailure({ error: err })),
+          ),
         ),
       ),
     );
@@ -97,29 +108,11 @@ export class AuthEffects {
         this.authService.logout().pipe(
           tap(() => {
             this.toast('auth.toast.logoutSuccess');
-            this.storageService.clearAuth();
             this.router.navigate(['/home']);
           }),
           map(() => AuthActions.loadLogoutSuccess()),
-          catchError((err) => {
-            this.storageService.clearAuth();
-            return of(AuthActions.loadLogoutFailure({ error: err }));
-          }),
-        ),
-      ),
-    );
-  });
-
-  refreshToken$ = createEffect(() => {
-    return this.actions$.pipe(
-      ofType(AuthActions.loadRefreshToken),
-      switchMap(() =>
-        this.authService.callRefreshToken().pipe(
-          map((token) => {
-            return AuthActions.loadRefreshTokenSuccess({ token });
-          }),
           catchError((err) =>
-            of(AuthActions.loadRefreshTokenFailure({ error: err })),
+            of(AuthActions.loadLogoutFailure({ error: err })),
           ),
         ),
       ),

@@ -32,7 +32,93 @@ describe('MockInterceptor', () => {
     ctrl = TestBed.inject(HttpTestingController);
   });
 
-  afterEach(() => ctrl.verify());
+  afterEach(() => {
+    ctrl.verify();
+    document.cookie = 'refreshToken=; path=/; Max-Age=0';
+    localStorage.removeItem('mockRefreshTokens');
+  });
+
+  const readCookie = () =>
+    document.cookie
+      .split('; ')
+      .find((c) => c.startsWith('refreshToken='))
+      ?.slice('refreshToken='.length) ?? null;
+
+  it('login sets refresh cookie and issues 10-minute access token', (done) => {
+    http.post<ApiRes<LoginData>>('/api/v1/auth/login', { identifier: 'admin@cineplex.vn', password: 'admin' }).subscribe({
+      next: (res) => {
+        expect(res.data.accessToken).toBeTruthy();
+        const payload = jwtDecode<{ roles: string[]; exp: number }>(res.data.accessToken);
+        expect(payload.roles).toContain('ADMIN');
+        expect(payload.exp).toBeLessThanOrEqual(Math.floor(Date.now() / 1000) + 600);
+        expect(readCookie()).toBeTruthy();
+        done();
+      },
+      error: () => fail('login should not error'),
+    });
+  });
+
+  it('refresh-token rotates the cookie (old token revoked, new issued)', (done) => {
+    http.post<ApiRes<LoginData>>('/api/v1/auth/login', { identifier: 'admin@cineplex.vn', password: 'admin' }).subscribe({
+      next: () => {
+        const oldCookie = readCookie();
+        expect(oldCookie).toBeTruthy();
+        http.post<ApiRes<{ accessToken: string }>>('/api/v1/auth/refresh-token', {}).subscribe({
+          next: (res) => {
+            expect(res.data.accessToken).toBeTruthy();
+            expect(readCookie()).toBeTruthy();
+            expect(readCookie()).not.toBe(oldCookie);
+            done();
+          },
+          error: () => fail('refresh should not error'),
+        });
+      },
+      error: () => fail('login should not error'),
+    });
+  });
+
+  it('replay of a rotated refresh token revokes the whole chain (401)', (done) => {
+    http.post<ApiRes<LoginData>>('/api/v1/auth/login', { identifier: 'admin@cineplex.vn', password: 'admin' }).subscribe({
+      next: () => {
+        const oldCookie = readCookie();
+        http.post('/api/v1/auth/refresh-token', {}).subscribe({
+          next: () => {
+            document.cookie = `refreshToken=${oldCookie}; path=/`;
+            http.post('/api/v1/auth/refresh-token', {}).subscribe({
+              next: () => fail('replay should be rejected'),
+              error: (err) => {
+                expect(err.status).toBe(401);
+                done();
+              },
+            });
+          },
+          error: () => fail('first refresh should not error'),
+        });
+      },
+      error: () => fail('login should not error'),
+    });
+  });
+
+  it('logout clears the refresh cookie and refresh afterwards returns 401', (done) => {
+    http.post<ApiRes<LoginData>>('/api/v1/auth/login', { identifier: 'admin@cineplex.vn', password: 'admin' }).subscribe({
+      next: () => {
+        http.post('/api/v1/auth/logout', {}).subscribe({
+          next: () => {
+            expect(readCookie()).toBeNull();
+            http.post('/api/v1/auth/refresh-token', {}).subscribe({
+              next: () => fail('refresh after logout should fail'),
+              error: (err) => {
+                expect(err.status).toBe(401);
+                done();
+              },
+            });
+          },
+          error: () => fail('logout should not error'),
+        });
+      },
+      error: () => fail('login should not error'),
+    });
+  });
 
   it('login with identifier returns Jwt object', (done) => {
     http.post<ApiRes<LoginData>>('/api/v1/auth/login', { identifier: 'admin@cineplex.vn', password: 'admin' }).subscribe({

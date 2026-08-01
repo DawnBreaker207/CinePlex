@@ -61,6 +61,7 @@ import {
   showtimeReducer,
 } from '@domain/showtime/data-access/showtime.reducers';
 import { AuthEffects } from '@core/auth/auth.effects';
+import { AuthService } from '@core/auth/auth.service';
 import { MovieEffects } from '@domain/movie/data-access/movie.effects';
 import { TheaterEffects } from '@domain/theater/data-access/theater.effects';
 import { ShowtimeEffects } from '@domain/showtime/data-access/showtime.effects';
@@ -117,9 +118,11 @@ export const appConfig: ApplicationConfig = {
     ]),
     provideAppInitializer(() => {
       const store = inject(Store);
+      const authService = inject(AuthService);
       inject(SettingsService);
       store.dispatch(MovieActions.loadMovies({ page: 0, size: 100 }));
       store.dispatch(TheaterActions.loadTheaters({ page: 0, size: 10 }));
+      return authService.silentRefresh();
     }),
     provideTranslateService({
       fallbackLang: 'vi',

@@ -43,11 +43,94 @@ function mockJwt(user: MockUser): string {
     username: user.username,
     email: user.email,
     roles: [user.role],
-    exp: Math.floor(Date.now() / 1000) + 7 * 86400,
+    exp: Math.floor(Date.now() / 1000) + 600, // access token TTL 10 phút (<= 15 phút)
   };
   const header = { alg: 'none', typ: 'JWT' };
   return `${b64url(JSON.stringify(header))}.${b64url(JSON.stringify(payload))}.mock-sig`;
 }
+
+/* ---- mock refresh token: simulate httpOnly cookie (JS không set được httpOnly, chỉ mock) ---- */
+const RT_COOKIE = 'refreshToken';
+// ponytail: path '/' thay vì '/api/v1/auth/refresh-token' — cookie path-scoped
+// không đọc được từ page khác path (karma chạy ở '/'); BE thật vẫn dùng path scope.
+const RT_PATH = '/';
+const RT_TTL_MS = 7 * 24 * 3600 * 1000; // refresh token TTL 7 ngày (<= 30 ngày)
+
+interface MockRefreshToken {
+  tokenHash: string;
+  userId: number;
+  expiresAt: number;
+  revokedAt: number | null;
+  replacedBy: string | null;
+}
+
+// ponytail: chain lưu localStorage (chỉ MOCK data — hash, không phải token thật;
+// cần persist qua reload vì Map in-memory mất khi F5, cookie thì sống).
+const RT_STORE_KEY = 'mockRefreshTokens';
+const loadRefreshTokens = (): Map<string, MockRefreshToken> => {
+  try {
+    const raw = localStorage.getItem(RT_STORE_KEY);
+    const list = raw ? (JSON.parse(raw) as MockRefreshToken[]) : [];
+    return new Map(list.map((t) => [t.tokenHash, t]));
+  } catch {
+    return new Map();
+  }
+};
+const saveRefreshTokens = (map: Map<string, MockRefreshToken>) => {
+  try {
+    localStorage.setItem(RT_STORE_KEY, JSON.stringify([...map.values()]));
+  } catch {
+    /* mock only */
+  }
+};
+
+const refreshTokens = loadRefreshTokens();
+
+// ponytail: hash djb2 — chỉ dành cho mock; BE thật hash server-side
+const hashToken = (raw: string): string => {
+  let h = 5381;
+  for (let i = 0; i < raw.length; i++) h = ((h << 5) + h + raw.charCodeAt(i)) | 0;
+  return h.toString(36);
+};
+
+const issueRefreshToken = (userId: number): string => {
+  const raw = crypto.randomUUID();
+  const tokenHash = hashToken(raw);
+  refreshTokens.set(tokenHash, {
+    tokenHash,
+    userId,
+    expiresAt: Date.now() + RT_TTL_MS,
+    revokedAt: null,
+    replacedBy: null,
+  });
+  saveRefreshTokens(refreshTokens);
+  document.cookie = `${RT_COOKIE}=${raw}; path=${RT_PATH}; SameSite=Strict; Max-Age=${7 * 86400}`;
+  return raw;
+};
+
+const readRefreshToken = (): MockRefreshToken | null => {
+  const raw = document.cookie
+    .split('; ')
+    .find((c) => c.startsWith(`${RT_COOKIE}=`))
+    ?.slice(RT_COOKIE.length + 1);
+  if (!raw) return null;
+  return refreshTokens.get(hashToken(raw)) ?? null;
+};
+
+const revokeRefreshChain = (entry: MockRefreshToken | null) => {
+  let current = entry;
+  while (current) {
+    current.revokedAt = Date.now();
+    current = current.replacedBy
+      ? refreshTokens.get(current.replacedBy) ?? null
+      : null;
+  }
+  saveRefreshTokens(refreshTokens);
+};
+
+const clearRefreshCookie = () => {
+  document.cookie = `${RT_COOKIE}=; path=${RT_PATH}; Max-Age=0`;
+};
 
 function ok<T>(data: T) {
   return of(
@@ -106,6 +189,7 @@ export function mockInterceptor(
     const { identifier, password } = req.body as MockBody;
     const user = findByCredential(String(identifier), String(password));
     if (!user) return fail('Sai email hoặc mật khẩu', 401);
+    issueRefreshToken(user.userId);
     const jwt = {
       userId: user.userId,
       username: user.username,
@@ -122,11 +206,27 @@ export function mockInterceptor(
   }
 
   if (url.includes('/auth/logout') && method === 'POST') {
+    revokeRefreshChain(readRefreshToken());
+    clearRefreshCookie();
     return ok(null);
   }
 
   if (url.includes('/auth/refresh-token') && method === 'POST') {
-    const user = MOCK_USERS[0];
+    const entry = readRefreshToken();
+    if (!entry || entry.revokedAt !== null) {
+      // replay/revoked → revoke toàn bộ chain rồi từ chối
+      revokeRefreshChain(entry);
+      clearRefreshCookie();
+      return fail('Refresh token not found', 401);
+    }
+    if (entry.expiresAt < Date.now()) {
+      return fail('Refresh token expired', 401);
+    }
+    const user = MOCK_USERS.find((u) => u.userId === entry.userId);
+    if (!user) return fail('Refresh token invalid', 401);
+    const nextRaw = issueRefreshToken(entry.userId);
+    entry.revokedAt = Date.now();
+    entry.replacedBy = hashToken(nextRaw);
     return ok({ accessToken: mockJwt(user) });
   }
 

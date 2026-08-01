@@ -8,6 +8,7 @@ export interface Jwt {
 }
 
 export interface JWTPayload extends JWTDecodePayload {
+  username?: string;
   email: string;
   roles: string[];
 }
