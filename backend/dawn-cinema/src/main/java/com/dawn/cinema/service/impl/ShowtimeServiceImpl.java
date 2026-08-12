@@ -6,12 +6,8 @@ import com.dawn.cinema.dto.request.ShowtimeRequest;
 import com.dawn.cinema.dto.response.MovieDTO;
 import com.dawn.cinema.dto.response.ShowtimeResponse;
 import com.dawn.cinema.helper.ShowtimeMappingHelper;
-import com.dawn.cinema.model.Seat;
-import com.dawn.cinema.model.Showtime;
-import com.dawn.cinema.model.Theater;
-import com.dawn.cinema.repository.SeatRepository;
-import com.dawn.cinema.repository.ShowtimeRepository;
-import com.dawn.cinema.repository.TheaterRepository;
+import com.dawn.cinema.model.*;
+import com.dawn.cinema.repository.*;
 import com.dawn.cinema.service.ShowtimeService;
 import com.dawn.common.core.constant.Constants;
 import com.dawn.common.core.constant.Message;
@@ -46,7 +42,11 @@ public class ShowtimeServiceImpl implements ShowtimeService {
 
     private final TheaterRepository theaterRepository;
 
-    private final SeatRepository seatRepository;
+    private final RoomRepository roomRepository;
+
+    private final SeatTemplateRepository seatTemplateRepository;
+
+    private final SeatInstanceRepository seatInstanceRepository;
 
     @Override
     public List<ShowtimeResponse> getByDate(LocalDate date) {
@@ -56,7 +56,8 @@ public class ShowtimeServiceImpl implements ShowtimeService {
                 .stream()
                 .map(showtime -> {
                     MovieDTO movie = movieService.findOne(showtime.getMovieId());
-                    return ShowtimeMappingHelper.map(showtime, movie);
+                    Theater theater = resolveTheater(showtime.getRoomId());
+                    return ShowtimeMappingHelper.map(showtime, movie, theater);
                 })
                 .toList();
     }
@@ -68,7 +69,8 @@ public class ShowtimeServiceImpl implements ShowtimeService {
                 .findByMovieId(movieId, pageable)
                 .map((showtime) -> {
                     MovieDTO movie = movieService.findOne(movieId);
-                    return ShowtimeMappingHelper.map(showtime, movie);
+                    Theater theater = resolveTheater(showtime.getRoomId());
+                    return ShowtimeMappingHelper.map(showtime, movie, theater);
                 }));
     }
 
@@ -81,7 +83,7 @@ public class ShowtimeServiceImpl implements ShowtimeService {
                 .findById(req.getTheaterId())
                 .orElseThrow(() -> new ResourceNotFoundException(Message.Exception.THEATER_NOT_FOUND));
         Page<Showtime> showtimePage = showtimeRepository
-                .findByTheater(theater, start, end, pageable);
+                .findByTheater(theater.getId(), start, end, pageable);
         List<Long> movieIds = showtimePage.getContent()
                 .stream()
                 .map(Showtime::getMovieId)
@@ -95,7 +97,8 @@ public class ShowtimeServiceImpl implements ShowtimeService {
                 showtimePage.map(
                         showtime -> ShowtimeMappingHelper.map(
                                 showtime,
-                                movieCache.get(showtime.getMovieId()))));
+                                movieCache.get(showtime.getMovieId()),
+                                theater)));
     }
 
     @Override
@@ -106,7 +109,8 @@ public class ShowtimeServiceImpl implements ShowtimeService {
                 .stream()
                 .map(showtime -> {
                     MovieDTO movie = movieService.findOne(showtime.getMovieId());
-                    return ShowtimeMappingHelper.map(showtime, movie);
+                    Theater theater = resolveTheater(showtime.getRoomId());
+                    return ShowtimeMappingHelper.map(showtime, movie, theater);
                 })
                 .toList();
     }
@@ -128,9 +132,13 @@ public class ShowtimeServiceImpl implements ShowtimeService {
                 .stream()
                 .collect(Collectors.toMap(MovieDTO::getId, m -> m));
         return showtimes.stream()
-                .map(showtime -> ShowtimeMappingHelper.map(
-                        showtime,
-                        movieMap.get(showtime.getMovieId())))
+                .map(showtime -> {
+                    Theater theater = resolveTheater(showtime.getRoomId());
+                    return ShowtimeMappingHelper.map(
+                            showtime,
+                            movieMap.get(showtime.getMovieId()),
+                            theater);
+                })
                 .toList();
     }
 
@@ -142,7 +150,8 @@ public class ShowtimeServiceImpl implements ShowtimeService {
                 .stream()
                 .map(showtime -> {
                     MovieDTO movie = movieService.findOne(showtime.getMovieId());
-                    return ShowtimeMappingHelper.map(showtime, movie);
+                    Theater theater = resolveTheater(showtime.getRoomId());
+                    return ShowtimeMappingHelper.map(showtime, movie, theater);
                 })
                 .toList();
     }
@@ -154,7 +163,8 @@ public class ShowtimeServiceImpl implements ShowtimeService {
                 .findById(id)
                 .map(showtime -> {
                     MovieDTO movie = movieService.findOne(showtime.getMovieId());
-                    return ShowtimeMappingHelper.map(showtime, movie);
+                    Theater theater = resolveTheater(showtime.getRoomId());
+                    return ShowtimeMappingHelper.map(showtime, movie, theater);
                 })
                 .orElseThrow(() -> new ResourceNotFoundException(Message.Exception.SHOWTIME_NOT_FOUND));
     }
@@ -171,33 +181,28 @@ public class ShowtimeServiceImpl implements ShowtimeService {
                 .findById(showtimeRequest.getTheaterId())
                 .orElseThrow(() -> new ResourceNotFoundException(Message.Exception.THEATER_NOT_FOUND));
 
-        if (showtimeRequest.getTotalSeats() > theater.getCapacity()) {
-            throw new IllegalArgumentException(Message.format(Message.Exception.SEAT_CAPACITY_EXCEEDED, theater.getCapacity()));
+        List<Room> rooms = roomRepository.findByTheaterId(theater.getId());
+        if (rooms.isEmpty()) {
+            throw new IllegalArgumentException("No rooms found for theater: " + theater.getId());
         }
+        Room room = rooms.get(0);
 
-        //        All seat available at first
         Showtime showtime = Showtime
                 .builder()
                 .movieId(movie.getId())
-                .theater(theater)
+                .roomId(room.getId())
                 .showDate(showtimeRequest.getShowDate())
                 .showTime(showtimeRequest.getShowTime())
-                .totalSeats(showtimeRequest.getTotalSeats())
-                .availableSeats(showtimeRequest.getTotalSeats())
                 .price(showtimeRequest.getPrice())
                 .build();
-
 
         Showtime savedShowtime = showtimeRepository.save(showtime);
         log.info("Saved showtime with ID: {}", savedShowtime.getPrice());
 
-//        Create and saved seats
-        List<Seat> seats = createSeats(savedShowtime);
-        seatRepository.saveAll(seats);
+        createSeatInstances(savedShowtime);
 
-
-        log.info("Created {} seats for showtime ID: {}", seats.size(), savedShowtime.getId());
-        return ShowtimeMappingHelper.map(savedShowtime, movie);
+        log.info("Created seat instances for showtime ID: {}", savedShowtime.getId());
+        return ShowtimeMappingHelper.map(savedShowtime, movie, theater);
     }
 
     @Override
@@ -216,10 +221,10 @@ public class ShowtimeServiceImpl implements ShowtimeService {
         }
 
         if (showtimeDetails.getTheaterId() != null) {
-            Theater theater = theaterRepository
-                    .findById(showtimeDetails.getTheaterId())
-                    .orElseThrow(() -> new ResourceNotFoundException(Message.Exception.THEATER_NOT_FOUND));
-            showtime.setTheater(theater);
+            List<Room> rooms = roomRepository.findByTheaterId(showtimeDetails.getTheaterId());
+            if (!rooms.isEmpty()) {
+                showtime.setRoomId(rooms.get(0).getId());
+            }
         }
 
         if (showtimeDetails.getShowDate() != null) {
@@ -234,12 +239,10 @@ public class ShowtimeServiceImpl implements ShowtimeService {
             showtime.setPrice(showtimeDetails.getPrice());
         }
 
-//        DANGER: Don't update total seats or available seats directly - would break reservation!
         Showtime updatedShowtime = showtimeRepository.save(showtime);
         log.info("Updated showtime with ID: {}", updatedShowtime.getId());
-        return ShowtimeMappingHelper.map(updatedShowtime, movie);
-
-
+        Theater theater = resolveTheater(updatedShowtime.getRoomId());
+        return ShowtimeMappingHelper.map(updatedShowtime, movie, theater);
     }
 
     @Override
@@ -251,39 +254,41 @@ public class ShowtimeServiceImpl implements ShowtimeService {
                 .findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(Message.Exception.SHOWTIME_NOT_FOUND));
 
-//        Delete the seats first (FK constraint)
-        List<Seat> seats = seatRepository.findByShowtime(showtime);
+        List<SeatInstance> seats = seatInstanceRepository.findAllByShowtimeId(id);
 
         if (seats != null && !seats.isEmpty()) {
             log.info("Deleting {} seats for showtime ID: {}", seats.size(), id);
-
-            seatRepository.deleteAll(seats);
+            seatInstanceRepository.deleteAll(seats);
         }
 
         showtimeRepository.delete(showtime);
         log.info("Deleted showtime with ID: {}", id);
     }
 
+    private void createSeatInstances(Showtime showtime) {
+        List<SeatTemplate> templates = seatTemplateRepository.findByRoomId(showtime.getRoomId());
+        List<SeatInstance> seats = new ArrayList<>();
 
-    private List<Seat> createSeats(Showtime showtime) {
-        List<Seat> seats = new ArrayList<>();
-        int totalSeats = showtime.getTotalSeats();
-        int seatPerRow = 10;
-
-        for (int i = 1; i <= totalSeats; i++) {
-            char row = (char) ('A' + (i - 1) / seatPerRow);
-            int seatNum = (i - 1) % seatPerRow + 1;
-
-            Seat seat = Seat
+        for (SeatTemplate template : templates) {
+            SeatInstance seat = SeatInstance
                     .builder()
-                    .showtime(showtime)
-                    .seatNumber(String.format("%c%d", row, seatNum))
-                    .status(SeatStatus.AVAILABLE)
+                    .showtimeId(showtime.getId())
+                    .seatTemplateId(template.getId())
+                    .status(SeatStatus.AVAILABLE.name())
+                    .price("VIP".equals(template.getSeatType()) && showtime.getVipPrice() != null
+                            ? showtime.getVipPrice()
+                            : showtime.getPrice())
                     .build();
-
             seats.add(seat);
         }
 
-        return seats;
+        seatInstanceRepository.saveAll(seats);
+    }
+
+    private Theater resolveTheater(Long roomId) {
+        if (roomId == null) return null;
+        return roomRepository.findById(roomId)
+                .map(room -> theaterRepository.findById(room.getTheaterId()).orElse(null))
+                .orElse(null);
     }
 }

@@ -1,6 +1,7 @@
 package com.dawn.catalog.model;
 
 import com.dawn.common.core.constant.UserVoucherStatus;
+import com.dawn.common.core.model.AbstractMappedEntity;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -13,8 +14,8 @@ import java.time.Instant;
 @SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(callSuper = false)
-public class UserVoucher {
+@EqualsAndHashCode(callSuper = true)
+public class UserVoucher extends AbstractMappedEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -30,14 +31,13 @@ public class UserVoucher {
     @Column(name = "code", nullable = false, length = 50)
     private String code;
 
+    @Column(name = "status", nullable = false)
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false, length = 20)
     @Builder.Default
     private UserVoucherStatus status = UserVoucherStatus.AVAILABLE;
 
     @Column(name = "claimed_at", nullable = false)
-    @Builder.Default
-    private Instant claimedAt = Instant.now();
+    private Instant claimedAt;
 
     @Column(name = "used_at")
     private Instant usedAt;

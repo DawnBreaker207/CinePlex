@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 
 @Hidden
 @Entity
@@ -43,5 +44,14 @@ public class Payment extends AbstractMappedEntity {
     @Column(name = "status", nullable = false)
     @Enumerated(EnumType.STRING)
     private PaymentStatus status;
+
+    @Column(name = "gateway_txn_ref")
+    private String gatewayTxnRef;
+
+    @Column(name = "gateway_response", columnDefinition = "TEXT")
+    private String gatewayResponse;
+
+    @Column(name = "paid_at")
+    private Instant paidAt;
 
 }

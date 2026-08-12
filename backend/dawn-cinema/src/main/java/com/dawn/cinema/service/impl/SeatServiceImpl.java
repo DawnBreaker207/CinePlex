@@ -3,9 +3,13 @@ package com.dawn.cinema.service.impl;
 import com.dawn.cinema.dto.request.SeatRequest;
 import com.dawn.cinema.dto.response.SeatResponse;
 import com.dawn.cinema.helper.SeatMappingHelper;
-import com.dawn.cinema.model.Seat;
+import com.dawn.cinema.model.Room;
+import com.dawn.cinema.model.SeatInstance;
+import com.dawn.cinema.model.SeatTemplate;
 import com.dawn.cinema.model.Showtime;
-import com.dawn.cinema.repository.SeatRepository;
+import com.dawn.cinema.repository.RoomRepository;
+import com.dawn.cinema.repository.SeatInstanceRepository;
+import com.dawn.cinema.repository.SeatTemplateRepository;
 import com.dawn.cinema.repository.ShowtimeRepository;
 import com.dawn.cinema.service.SeatService;
 import com.dawn.common.core.constant.Message;
@@ -28,10 +32,11 @@ import java.util.stream.Collectors;
 @Slf4j
 public class SeatServiceImpl implements SeatService {
 
-    private static final Long THEATER_ID_STANDARD = 1L;
-    private static final Long THEATER_ID_VIP = 2L;
+    private final SeatInstanceRepository seatInstanceRepository;
 
-    private final SeatRepository seatRepository;
+    private final SeatTemplateRepository seatTemplateRepository;
+
+    private final RoomRepository roomRepository;
 
     private final ShowtimeRepository showtimeRepository;
 
@@ -42,28 +47,23 @@ public class SeatServiceImpl implements SeatService {
                 .findById(showtimeId)
                 .orElseThrow(() -> new ResourceNotFoundException(Message.Exception.SHOWTIME_NOT_FOUND));
 
-        log.info("Found showtime: {} for movie: {} at theater: {}",
-                showtimeId,
-                showtime.getMovieId() != null ? showtime.getMovieId() : "unknown",
-                showtime.getTheater() != null ? showtime.getTheater().getName() : "unknown");
-
-        List<Seat> seats = seatRepository.findByShowtime(showtime);
+        List<SeatInstance> seats = seatInstanceRepository.findAllByShowtimeId(showtimeId);
 
         if (seats.isEmpty()) {
             log.warn("No seats found for showtime id: {}. Creating seats automatically.", showtimeId);
             try {
                 seats = create(showtime);
-                log.info("Successfully created {} seats for showtime id: {}", seats.size(), showtime);
+                log.info("Successfully created {} seats for showtime id: {}", seats.size(), showtimeId);
             } catch (Exception e) {
                 log.error("Failed to create seats for showtime id: {}, Error: {}", showtimeId, e.getMessage(), e);
                 throw new InternalServiceException("Failed to create seats for showtime: " + e.getMessage());
             }
-        } else {
-            log.info("Found {} existing seats for showtime id: {}", seats.size(), showtimeId);
         }
 
-        return seats.stream().map(SeatMappingHelper::map).toList();
-
+        Map<Long, SeatTemplate> templateMap = getSeatTemplateMap(showtime.getRoomId());
+        return seats.stream()
+                .map(s -> toResponse(s, templateMap.get(s.getSeatTemplateId())))
+                .toList();
     }
 
     @Override
@@ -74,7 +74,7 @@ public class SeatServiceImpl implements SeatService {
                 .findById(showtimeId)
                 .orElseThrow(() -> new ResourceNotFoundException(Message.Exception.THEATER_NOT_FOUND));
 
-        List<Seat> allSeats = seatRepository.findByShowtime(showtime);
+        List<SeatInstance> allSeats = seatInstanceRepository.findAllByShowtimeId(showtimeId);
         if (allSeats.isEmpty()) {
             log.warn("No seats found for showtime id: {}. Creating seats before fetching available ones.", showtimeId);
             try {
@@ -85,10 +85,11 @@ public class SeatServiceImpl implements SeatService {
             }
         }
 
-        return seatRepository
-                .findByShowtimeAndStatus(showtime, SeatStatus.AVAILABLE)
+        Map<Long, SeatTemplate> templateMap = getSeatTemplateMap(showtime.getRoomId());
+        return seatInstanceRepository
+                .findByShowtimeIdAndStatus(showtimeId, SeatStatus.AVAILABLE.name())
                 .stream()
-                .map(SeatMappingHelper::map)
+                .map(s -> toResponse(s, templateMap.get(s.getSeatTemplateId())))
                 .toList();
     }
 
@@ -96,46 +97,71 @@ public class SeatServiceImpl implements SeatService {
     public List<SeatResponse> findAllByReservationIds(List<String> ids) {
         if (ids == null || ids.isEmpty()) return List.of();
         log.info("Batch fetching {} seats", ids.size());
-        return seatRepository.findAllByReservationIdIn(ids)
-                .stream()
-                .map(SeatMappingHelper::map)
+        List<SeatInstance> seatInstances = seatInstanceRepository.findAllByReservationIdIn(ids);
+        if (seatInstances.isEmpty()) return List.of();
+        Long showtimeId = seatInstances.get(0).getShowtimeId();
+        Showtime showtime = showtimeRepository.findById(showtimeId).orElse(null);
+        Map<Long, SeatTemplate> templateMap = showtime != null
+                ? getSeatTemplateMap(showtime.getRoomId())
+                : Map.of();
+        return seatInstances.stream()
+                .map(s -> toResponse(s, templateMap.get(s.getSeatTemplateId())))
                 .toList();
     }
 
     @Override
     @Transactional
     public List<SeatResponse> findByIdWithLock(List<Long> seatIds) {
-        return seatRepository
-                .findByIdWithLock(seatIds)
-                .stream()
-                .map(SeatMappingHelper::map)
+        List<SeatInstance> seatInstances = seatInstanceRepository.findByIdWithLock(seatIds);
+        if (seatInstances.isEmpty()) return List.of();
+        Long showtimeId = seatInstances.get(0).getShowtimeId();
+        Showtime showtime = showtimeRepository.findById(showtimeId).orElse(null);
+        Map<Long, SeatTemplate> templateMap = showtime != null
+                ? getSeatTemplateMap(showtime.getRoomId())
+                : Map.of();
+        return seatInstances.stream()
+                .map(s -> toResponse(s, templateMap.get(s.getSeatTemplateId())))
                 .toList();
     }
 
     @Override
     public List<SeatResponse> findAllById(List<Long> seatIds) {
-        return seatRepository
-                .findAllById(seatIds)
-                .stream()
-                .map(SeatMappingHelper::map)
+        List<SeatInstance> seatInstances = seatInstanceRepository.findAllById(seatIds);
+        if (seatInstances.isEmpty()) return List.of();
+        Long showtimeId = seatInstances.get(0).getShowtimeId();
+        Showtime showtime = showtimeRepository.findById(showtimeId).orElse(null);
+        Map<Long, SeatTemplate> templateMap = showtime != null
+                ? getSeatTemplateMap(showtime.getRoomId())
+                : Map.of();
+        return seatInstances.stream()
+                .map(s -> toResponse(s, templateMap.get(s.getSeatTemplateId())))
                 .toList();
     }
 
     @Override
     public List<SeatResponse> findAllByShowtimeId(Long showtimeId) {
-        return seatRepository
+        Showtime showtime = showtimeRepository.findById(showtimeId).orElse(null);
+        Map<Long, SeatTemplate> templateMap = showtime != null
+                ? getSeatTemplateMap(showtime.getRoomId())
+                : Map.of();
+        return seatInstanceRepository
                 .findAllByShowtimeId(showtimeId)
                 .stream()
-                .map(SeatMappingHelper::map)
+                .map(s -> toResponse(s, templateMap.get(s.getSeatTemplateId())))
                 .toList();
     }
 
     @Override
     public List<SeatResponse> findAllByReservationId(String reservationId) {
-        return seatRepository
-                .findAllByReservationId(reservationId)
-                .stream()
-                .map(SeatMappingHelper::map)
+        List<SeatInstance> seatInstances = seatInstanceRepository.findAllByReservationId(reservationId);
+        if (seatInstances.isEmpty()) return List.of();
+        Long showtimeId = seatInstances.get(0).getShowtimeId();
+        Showtime showtime = showtimeRepository.findById(showtimeId).orElse(null);
+        Map<Long, SeatTemplate> templateMap = showtime != null
+                ? getSeatTemplateMap(showtime.getRoomId())
+                : Map.of();
+        return seatInstances.stream()
+                .map(s -> toResponse(s, templateMap.get(s.getSeatTemplateId())))
                 .toList();
     }
 
@@ -145,81 +171,70 @@ public class SeatServiceImpl implements SeatService {
             return;
         }
         List<Long> seatIds = seatRequests.stream().map(SeatRequest::getId).toList();
-        List<Seat> existingSeats = seatRepository.findAllById(seatIds);
+        List<SeatInstance> existingSeats = seatInstanceRepository.findAllById(seatIds);
         Map<Long, SeatRequest> requestMap = seatRequests.stream().collect(Collectors.toMap(SeatRequest::getId, Function.identity()));
 
-        for (Seat seat : existingSeats) {
+        for (SeatInstance seat : existingSeats) {
             SeatRequest request = requestMap.get(seat.getId());
-            seat.setStatus(request.getStatus());
+            if (request.getStatus() != null) {
+                seat.setStatus(request.getStatus().name());
+            }
             seat.setReservationId(request.getReservationId());
         }
 
-        seatRepository.saveAll(existingSeats);
+        seatInstanceRepository.saveAll(existingSeats);
     }
 
     @Override
-    public List<Seat> create(Showtime showtime) {
+    public List<SeatInstance> create(Showtime showtime) {
         if (showtime == null) {
             throw new IllegalArgumentException("Showtime cannot be null");
         }
 
-        if (showtime.getTheater() == null) {
-            throw new IllegalArgumentException("Showtime must have an associated theater");
+        Long roomId = showtime.getRoomId();
+        Room room = roomRepository.findById(roomId)
+                .orElseThrow(() -> new IllegalArgumentException("Room not found: " + roomId));
+
+        List<SeatTemplate> templates = seatTemplateRepository.findByRoomId(roomId);
+        if (templates.isEmpty()) {
+            throw new IllegalArgumentException("No seat templates found for room: " + roomId);
         }
 
-        Long theaterId = showtime.getTheater().getId();
-        Integer capacity = showtime.getTheater().getCapacity();
+        log.info("Creating {} seat instances for showtime id: {} in room id: {}", templates.size(), showtime.getId(), roomId);
 
-        log.info("Creating seats for showtime id: {} in theater id: {} with capacity: {}", showtime.getId(), theaterId, capacity);
-
-        List<Seat> seats = new ArrayList<>();
-
-        if (THEATER_ID_STANDARD.equals(theaterId)) {
-            log.info("Creating seats for theater layout (15 rows x 20 seats)");
-            for (char row = 'A'; row <= 'O'; row++) {
-                for (int seatNum = 1; seatNum <= 10; seatNum++) {
-                    Seat seat = new Seat();
-                    seat.setShowtime(showtime);
-                    seat.setSeatNumber(row + String.valueOf(seatNum));
-                    seat.setStatus(SeatStatus.AVAILABLE);
-                    seats.add(seat);
-                }
-            }
-        } else if (THEATER_ID_VIP.equals(theaterId)) {
-            log.info("Creating seats for theater layout (10 rows x 20 seats)");
-            for (char row = 'A'; row <= 'J'; row++) {
-                for (char seatNum = 'A'; seatNum <= '0'; seatNum++) {
-                    Seat seat = new Seat();
-                    seat.setShowtime(showtime);
-                    seat.setSeatNumber(row + String.valueOf(seatNum));
-                    seat.setStatus(SeatStatus.AVAILABLE);
-                    seats.add(seat);
-                }
-            }
-        } else {
-            int rows = (int) Math.ceil(Math.sqrt(capacity));
-            int seatsPerRow = (int) Math.ceil((double) capacity / rows);
-            log.info("Creating seats for theater id: {} with dynamic layout ({} rows x {} seats)", theaterId, rows, seatsPerRow);
-
-            for (int rowIdx = 0; rowIdx < rows; rowIdx++) {
-                char row = (char) ('A' + rowIdx);
-                for (int seatNum = 1; seatNum <= seatsPerRow && seats.size() < capacity; seatNum++) {
-                    Seat seat = new Seat();
-                    seat.setShowtime(showtime);
-                    seat.setSeatNumber(row + String.valueOf(seatNum));
-                    seat.setStatus(SeatStatus.AVAILABLE);
-                    seats.add(seat);
-                }
-            }
+        List<SeatInstance> seats = new ArrayList<>();
+        for (SeatTemplate template : templates) {
+            SeatInstance seat = SeatInstance.builder()
+                    .showtimeId(showtime.getId())
+                    .seatTemplateId(template.getId())
+                    .status(SeatStatus.AVAILABLE.name())
+                    .price("VIP".equals(template.getSeatType()) && showtime.getVipPrice() != null
+                            ? showtime.getVipPrice()
+                            : showtime.getPrice())
+                    .build();
+            seats.add(seat);
         }
 
-        if (seats.size() != showtime.getTotalSeats()) {
-            log.warn("Created {} seats but showtime has {} total seats. Updating showtime.", seats.size(), showtime.getTotalSeats());
-            showtime.setTotalSeats(seats.size());
-            showtime.setAvailableSeats(seats.size());
-            showtimeRepository.save(showtime);
+        return seatInstanceRepository.saveAll(seats);
+    }
+
+    private Map<Long, SeatTemplate> getSeatTemplateMap(Long roomId) {
+        return seatTemplateRepository.findByRoomId(roomId)
+                .stream()
+                .collect(Collectors.toMap(SeatTemplate::getId, Function.identity()));
+    }
+
+    private SeatResponse toResponse(SeatInstance seatInstance, SeatTemplate template) {
+        if (template == null) {
+            return SeatResponse.builder()
+                    .id(seatInstance.getId())
+                    .showtimeId(seatInstance.getShowtimeId())
+                    .build();
         }
-        log.info("Created {} seats for showtime id: {}, saving to database...", seats.size(), showtime.getId());
-        return seatRepository.saveAll(seats);
+        return SeatResponse.builder()
+                .id(seatInstance.getId())
+                .showtimeId(seatInstance.getShowtimeId())
+                .seatNumber(template.getRowLabel() + template.getSeatNumber())
+                .build();
     }
 }

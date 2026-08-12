@@ -300,7 +300,7 @@ public class ReservationServiceImpl implements ReservationService {
 
         // Idempotency check
         Optional<Reservation> existing = reservationRepository.findById(reservationId);
-        if (existing.isPresent() && existing.get().getIsPaid()) {
+        if (existing.isPresent() && existing.get().getReservationStatus() == ReservationStatus.CONFIRMED) {
             log.info("Reservation {} already confirmed, returning existing", reservationId);
             Reservation r = existing.get();
             List<SeatDTO> seats = seatService.findAllByReservationId(reservationId);
@@ -356,7 +356,6 @@ public class ReservationServiceImpl implements ReservationService {
                 .discountAmount(discountAmount)
                 .totalAmount(total)
                 .voucherCode(voucherCode)
-                .isPaid(true)
                 .isDeleted(false)
                 .build();
 
@@ -412,7 +411,7 @@ public class ReservationServiceImpl implements ReservationService {
 
         // Check confirm
         Optional<Reservation> existing = reservationRepository.findById(reservationId);
-        if (existing.isPresent() && existing.get().getIsPaid()) {
+        if (existing.isPresent() && existing.get().getReservationStatus() == ReservationStatus.CONFIRMED) {
             log.warn("Reservation {} already confirmed, skipping cancel", reservationId);
             return;
         }
@@ -447,7 +446,6 @@ public class ReservationServiceImpl implements ReservationService {
                     .originalAmount(total)
                     .totalAmount(total)
                     .voucherCode(cachedData.getVoucherCode())
-                    .isPaid(false)
                     .isDeleted(false)
                     .build();
             reservationRepository.save(reservation);

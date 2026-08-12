@@ -12,6 +12,7 @@ import com.dawn.catalog.repository.UserVoucherRepository;
 import com.dawn.catalog.repository.VoucherRepository;
 import com.dawn.catalog.service.VoucherService;
 import com.dawn.common.core.constant.Message;
+import com.dawn.common.core.constant.UserVoucherStatus;
 import com.dawn.common.core.constant.VoucherStatus;
 import com.dawn.common.core.dto.response.ResponsePage;
 import com.dawn.common.core.exception.wrapper.InvalidRequestException;
@@ -119,9 +120,9 @@ public class VoucherServiceImpl implements VoucherService {
             throw new InvalidRequestException(Message.Exception.VOUCHER_CONFLICT);
         }
 
-        userVoucherRepository.findByUserIdAndCodeAndStatus(userId, code, com.dawn.common.core.constant.UserVoucherStatus.AVAILABLE)
+        userVoucherRepository.findByUserIdAndCodeAndStatus(userId, code, UserVoucherStatus.AVAILABLE)
                 .ifPresent(uv -> {
-                    uv.setStatus(com.dawn.common.core.constant.UserVoucherStatus.USED);
+                    uv.setStatus(UserVoucherStatus.USED);
                     uv.setUsedAt(Instant.now());
                     uv.setReservationId(reservationId);
                     userVoucherRepository.save(uv);
@@ -132,7 +133,7 @@ public class VoucherServiceImpl implements VoucherService {
     @Transactional
     public void releaseVoucher(String code, Long userId) {
         voucherRepository.releaseVoucher(code);
-        userVoucherRepository.markAsAvailable(userId, code);
+        userVoucherRepository.updateStatusByUserIdAndCode(userId, code, UserVoucherStatus.AVAILABLE);
     }
 
     @Override
@@ -172,7 +173,7 @@ public class VoucherServiceImpl implements VoucherService {
         }
 
         long claimed = userVoucherRepository.countByUserIdAndVoucherIdAndStatus(
-                userId, voucher.getId(), com.dawn.common.core.constant.UserVoucherStatus.AVAILABLE);
+                userId, voucher.getId(), UserVoucherStatus.AVAILABLE);
         if (claimed >= voucher.getMaxPerUser()) {
             throw new InvalidRequestException(Message.Exception.VOUCHER_MAX_PER_USER);
         }
@@ -186,7 +187,7 @@ public class VoucherServiceImpl implements VoucherService {
                 .userId(userId)
                 .voucherId(voucher.getId())
                 .code(voucher.getCode())
-                .status(com.dawn.common.core.constant.UserVoucherStatus.AVAILABLE)
+                .status(UserVoucherStatus.AVAILABLE)
                 .claimedAt(now)
                 .expiredAt(voucher.getEndAt())
                 .build();

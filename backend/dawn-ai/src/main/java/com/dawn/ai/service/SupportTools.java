@@ -3,6 +3,7 @@ package com.dawn.ai.service;
 import com.dawn.booking.model.Reservation;
 import com.dawn.booking.repository.ReservationRepository;
 import com.dawn.booking.service.ReservationService;
+import com.dawn.common.core.constant.ReservationStatus;
 
 import com.dawn.identity.model.User;
 import com.dawn.identity.repository.UserRepository;
@@ -85,7 +86,7 @@ public class SupportTools {
             sb.append("- **Tiền gốc**: ").append(r.getOriginalAmount()).append(" VNĐ\n");
         }
 
-        sb.append("- **Đã thanh toán**: ").append(r.getIsPaid() ? "Có" : "Chưa").append("\n");
+        sb.append("- **Đã thanh toán**: ").append(r.getReservationStatus() == ReservationStatus.CONFIRMED ? "Có" : "Chưa").append("\n");
 
         if (paymentOpt.isPresent()) {
             Payment p = paymentOpt.get();
@@ -114,7 +115,7 @@ public class SupportTools {
 
         Reservation r = reservationOpt.get();
 
-        if (r.getIsPaid()) {
+        if (r.getReservationStatus() == ReservationStatus.CONFIRMED) {
             reservationService.forceCancelReservation(reservationId);
             return String.format("""
                     Đã hủy reservation **%s** (đã thanh toán).

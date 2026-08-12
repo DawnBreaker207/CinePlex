@@ -8,23 +8,27 @@ import lombok.experimental.SuperBuilder;
 
 @Hidden
 @Entity
-@Table(name = "theater")
+@Table(name = "room")
 @SuperBuilder
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-public class Theater extends AbstractMappedEntity {
+public class Room extends AbstractMappedEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
     private Long id;
 
+    @Column(name = "theater_id", nullable = false)
+    private Long theaterId;
+
     @Column(name = "name", nullable = false)
     private String name;
 
-    @Column(name = "location", nullable = false)
-    private String location;
+    @Column(name = "total_seats", nullable = false)
+    @Builder.Default
+    private Integer totalSeats = 0;
 
     @Column(name = "is_deleted", nullable = false)
     @Builder.Default
