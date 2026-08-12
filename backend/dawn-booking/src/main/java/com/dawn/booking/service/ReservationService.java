@@ -27,4 +27,6 @@ public interface ReservationService {
 
     void cancelReservation(String reservationId);
 
+    void forceCancelReservation(String reservationId);
+
 }

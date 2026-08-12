@@ -182,8 +182,8 @@ langchain4j:
       base-url: ${OPEN_ROUTER_URL}
       api-key: ${OPEN_ROUTER_API_KEY}
       model-name: ${OPEN_ROUTER_API_MODEL}
-      log-requests: true
-      log-responses: true
+      log-requests: false
+      log-responses: false
       timeout: 60s
       max-retries: 0
       temperature: 0.0
