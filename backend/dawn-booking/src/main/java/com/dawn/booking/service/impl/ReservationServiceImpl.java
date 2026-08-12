@@ -371,7 +371,7 @@ public class ReservationServiceImpl implements ReservationService {
 
         try {
             if (voucherCode != null && !voucherCode.isBlank()) {
-                voucherClientService.useVoucher(voucherCode);
+                voucherClientService.useVoucher(voucherCode, cachedData.getUserId(), reservationId);
             }
         } catch (Exception e) {
             log.warn("Failed to use voucher {} for reservation {}", voucherCode, reservationId);
@@ -466,6 +466,15 @@ public class ReservationServiceImpl implements ReservationService {
             log.warn("Failed to broadcast seat release for reservation {}", reservationId);
 
         }
+
+        String voucherCode = cachedData.getVoucherCode();
+        if (voucherCode != null && !voucherCode.isBlank()) {
+            try {
+                voucherClientService.releaseVoucher(voucherCode, cachedData.getUserId());
+            } catch (Exception e) {
+                log.warn("Failed to release voucher {} for reservation {}", voucherCode, reservationId);
+            }
+        }
     }
 
     private void validateSeatsForReservation(List<SeatDTO> seats, Long showtimeId, List<Long> seatIds) {
@@ -490,7 +499,7 @@ public class ReservationServiceImpl implements ReservationService {
 
         if (!wrongShowtimeSeats.isEmpty()) {
             String wrongSeatNumbers = String.join(", ", wrongShowtimeSeats);
-            throw new SeatUnavailableException("Seats " + wrongSeatNumbers + " do not belong to the requested showtime");
+            throw new SeatUnavailableException(Message.format(Message.Exception.SEAT_WRONG_SHOWTIME, wrongSeatNumbers));
         }
 
         //        Check seat in showtime was booked in database
@@ -534,7 +543,7 @@ public class ReservationServiceImpl implements ReservationService {
         String reservationIdStr = (String) reservationData.get("reservationId");
         log.info("Reservation id: {}", reservationIdStr);
         if (reservationIdStr == null || !reservationIdStr.equals(reservationId)) {
-            throw new ResourceNotFoundException("Invalid reservation data");
+            throw new ResourceNotFoundException(Message.Exception.RESERVATION_INVALID_DATA);
         }
         //        Check user existed
         log.info("User service find by id");
@@ -549,12 +558,12 @@ public class ReservationServiceImpl implements ReservationService {
         if (showtime.getShowDate().isBefore((LocalDate.now())) ||
                 (showtime.getShowDate().isEqual(LocalDate.now()) &&
                         showtime.getShowTime().isBefore(LocalTime.now()))) {
-            throw new IllegalStateException("Cannot reserve seats for past showtime");
+            throw new IllegalStateException(Message.Exception.RESERVATION_PAST_SHOWTIME);
         }
 
         //        Check if showtime has enough available seats
         if (showtime.getAvailableSeats() < requestSeats) {
-            throw new IllegalStateException(String.format("Not enough available seats. Request: %d, Available: %d", requestSeats, showtime.getAvailableSeats()));
+            throw new IllegalStateException(Message.format(Message.Exception.RESERVATION_NOT_ENOUGH_SEATS, requestSeats, showtime.getAvailableSeats()));
         }
     }
 
@@ -564,7 +573,7 @@ public class ReservationServiceImpl implements ReservationService {
         List<SeatDTO> seats = seatService.findByIdWithLock(seatIds);
         if (seats.size() != seatIds.size()) {
             log.error("Expected {} seats but found {} for reservation {}", seatIds.size(), seats.size(), reservationId);
-            throw new IllegalStateException("Some seats not found in database");
+            throw new IllegalStateException(Message.Exception.RESERVATION_SEATS_NOT_FOUND_DB);
         }
 
         return seats;

@@ -2,13 +2,17 @@ package com.dawn.catalog.service.impl;
 
 import com.dawn.catalog.constant.DiscountType;
 import com.dawn.catalog.dto.request.VoucherRequest;
+import com.dawn.catalog.dto.response.UserVoucherResponse;
 import com.dawn.catalog.dto.response.VoucherCalculation;
 import com.dawn.catalog.dto.response.VoucherResponse;
 import com.dawn.catalog.helper.VoucherMappingHelper;
+import com.dawn.catalog.model.UserVoucher;
 import com.dawn.catalog.model.Voucher;
+import com.dawn.catalog.repository.UserVoucherRepository;
 import com.dawn.catalog.repository.VoucherRepository;
 import com.dawn.catalog.service.VoucherService;
 import com.dawn.common.core.constant.Message;
+import com.dawn.common.core.constant.VoucherStatus;
 import com.dawn.common.core.dto.response.ResponsePage;
 import com.dawn.common.core.exception.wrapper.InvalidRequestException;
 import com.dawn.common.core.exception.wrapper.ResourceAlreadyExistedException;
@@ -22,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -29,6 +34,7 @@ import java.time.Instant;
 public class VoucherServiceImpl implements VoucherService {
 
     private final VoucherRepository voucherRepository;
+    private final UserVoucherRepository userVoucherRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -44,7 +50,7 @@ public class VoucherServiceImpl implements VoucherService {
     public VoucherResponse findByCode(String code) {
         Voucher voucher = voucherRepository
                 .findByCode(code)
-                .orElseThrow(() -> new ResourceNotFoundException("Voucher not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(Message.Exception.VOUCHER_NOT_FOUND));
         return VoucherMappingHelper.map(voucher);
     }
 
@@ -55,9 +61,6 @@ public class VoucherServiceImpl implements VoucherService {
             throw new ResourceAlreadyExistedException("This voucher already existed");
         }
         Voucher voucher = VoucherMappingHelper.map(req);
-        voucher.setQuantityUsed(0L);
-        voucher.setIsActive(true);
-
         return VoucherMappingHelper.map(voucherRepository.save(voucher));
     }
 
@@ -66,9 +69,10 @@ public class VoucherServiceImpl implements VoucherService {
     public VoucherResponse update(Long id, VoucherRequest req) {
         Voucher existedVoucher = voucherRepository
                 .findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Voucher not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(Message.Exception.VOUCHER_NOT_FOUND));
 
-        if (!existedVoucher.getCode().equals(req.getCode()) && voucherRepository.findByCode(req.getCode()).isPresent()) {
+        if (!existedVoucher.getCode().equals(req.getCode())
+                && voucherRepository.findByCode(req.getCode()).isPresent()) {
             throw new ResourceAlreadyExistedException("This voucher already existed");
         }
 
@@ -81,6 +85,11 @@ public class VoucherServiceImpl implements VoucherService {
         existedVoucher.setMinOrderValue(req.getMinOrderValue());
         existedVoucher.setStartAt(req.getStartAt());
         existedVoucher.setEndAt(req.getEndAt());
+        existedVoucher.setCategory(req.getCategory());
+        existedVoucher.setGroupRef(req.getGroupRef());
+        existedVoucher.setConditions(req.getConditions());
+        existedVoucher.setStatus(req.getStatus());
+        existedVoucher.setMaxPerUser(req.getMaxPerUser());
 
         return VoucherMappingHelper.map(voucherRepository.save(existedVoucher));
     }
@@ -88,38 +97,42 @@ public class VoucherServiceImpl implements VoucherService {
     @Override
     @Transactional
     public void delete(Long id) {
-        voucherRepository
+        Voucher voucher = voucherRepository
                 .findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Voucher not found"));
-        voucherRepository.deleteById(id);
+                .orElseThrow(() -> new ResourceNotFoundException(Message.Exception.VOUCHER_NOT_FOUND));
+        voucherRepository.delete(voucher);
     }
 
     @Override
     @Transactional
-    public void useVoucher(String code) {
-        log.info("Using voucher: {}", code);
+    public void useVoucher(String code, Long userId, String reservationId) {
+        log.info("Using voucher: {} for user: {}", code, userId);
 
         Voucher voucher = voucherRepository.findByCode(code)
                 .orElseThrow(() -> new ResourceNotFoundException(Message.Exception.VOUCHER_NOT_FOUND));
 
         Instant now = Instant.now();
-        if (now.isAfter(voucher.getEndAt())) {
-            throw new InvalidRequestException(Message.Exception.VOUCHER_EXPIRED);
-        }
-        if (voucher.getQuantityUsed() >= voucher.getQuantityTotal()) {
-            throw new InvalidRequestException(Message.Exception.VOUCHER_OUT_OF_STOCK);
-        }
+        validateVoucherBasic(voucher, now);
 
         int updated = voucherRepository.useVoucher(code, Instant.now());
         if (updated == 0) {
-            throw new ResourceNotFoundException(Message.Exception.VOUCHER_CONFLICT);
+            throw new InvalidRequestException(Message.Exception.VOUCHER_CONFLICT);
         }
+
+        userVoucherRepository.findByUserIdAndCodeAndStatus(userId, code, com.dawn.common.core.constant.UserVoucherStatus.AVAILABLE)
+                .ifPresent(uv -> {
+                    uv.setStatus(com.dawn.common.core.constant.UserVoucherStatus.USED);
+                    uv.setUsedAt(Instant.now());
+                    uv.setReservationId(reservationId);
+                    userVoucherRepository.save(uv);
+                });
     }
 
     @Override
     @Transactional
-    public void releaseVoucher(String code) {
+    public void releaseVoucher(String code, Long userId) {
         voucherRepository.releaseVoucher(code);
+        userVoucherRepository.markAsAvailable(userId, code);
     }
 
     @Override
@@ -128,11 +141,10 @@ public class VoucherServiceImpl implements VoucherService {
         log.info("Calculate voucher with code: {} and total: {}", code, total);
         Voucher voucher = voucherRepository
                 .findByCode(code)
-                .orElseThrow(() -> new ResourceNotFoundException("Voucher Invalid"));
+                .orElseThrow(() -> new ResourceNotFoundException(Message.Exception.VOUCHER_NOT_FOUND));
 
         validateVoucher(voucher, total);
         BigDecimal discountAmount = computeDiscount(voucher, total);
-        log.info("Discount amount: {}", discountAmount);
         BigDecimal finalAmount = total.subtract(discountAmount).max(BigDecimal.ZERO);
 
         return VoucherCalculation
@@ -144,34 +156,103 @@ public class VoucherServiceImpl implements VoucherService {
                 .build();
     }
 
-    private void validateVoucher(Voucher voucher, BigDecimal value) {
+    @Override
+    @Transactional
+    public UserVoucherResponse claimVoucher(String code, Long userId) {
+        log.info("Claiming voucher: {} for user: {}", code, userId);
+
+        Voucher voucher = voucherRepository.findByCode(code)
+                .orElseThrow(() -> new ResourceNotFoundException(Message.Exception.VOUCHER_NOT_FOUND));
+
         Instant now = Instant.now();
-        if (!Boolean.TRUE.equals(voucher.getIsActive())) throw new InvalidRequestException("Voucher inactive");
+        validateVoucherBasic(voucher, now);
 
-        if (now.isBefore(voucher.getStartAt())) throw new InvalidRequestException("Not started yet");
+        if (voucher.getQuantityUsed() >= voucher.getQuantityTotal()) {
+            throw new InvalidRequestException(Message.Exception.VOUCHER_OUT_OF_STOCK);
+        }
 
-        if (now.isAfter(voucher.getEndAt())) throw new InvalidRequestException("Expired");
+        long claimed = userVoucherRepository.countByUserIdAndVoucherIdAndStatus(
+                userId, voucher.getId(), com.dawn.common.core.constant.UserVoucherStatus.AVAILABLE);
+        if (claimed >= voucher.getMaxPerUser()) {
+            throw new InvalidRequestException(Message.Exception.VOUCHER_MAX_PER_USER);
+        }
 
-        if (voucher.getQuantityUsed() >= voucher.getQuantityTotal())
-            throw new InvalidRequestException("Out of stock");
+        int updated = voucherRepository.useVoucher(code, now);
+        if (updated == 0) {
+            throw new InvalidRequestException(Message.Exception.VOUCHER_CONFLICT);
+        }
 
-        if (value.compareTo(BigDecimal.valueOf(voucher.getMinOrderValue())) < 0) {
-            throw new InvalidRequestException("Order total is less than minimum requirement");
+        UserVoucher uv = UserVoucher.builder()
+                .userId(userId)
+                .voucherId(voucher.getId())
+                .code(voucher.getCode())
+                .status(com.dawn.common.core.constant.UserVoucherStatus.AVAILABLE)
+                .claimedAt(now)
+                .expiredAt(voucher.getEndAt())
+                .build();
+
+        userVoucherRepository.save(uv);
+        log.info("User {} claimed voucher {} successfully", userId, code);
+
+        return VoucherMappingHelper.toUserVoucherResponse(uv, voucher);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<UserVoucherResponse> getUserVouchers(Long userId) {
+        List<UserVoucher> userVouchers = userVoucherRepository.findByUserIdOrderByClaimedAtDesc(userId);
+
+        return userVouchers.stream()
+                .map(uv -> {
+                    Voucher voucher = voucherRepository.findById(uv.getVoucherId())
+                            .orElse(null);
+                    return VoucherMappingHelper.toUserVoucherResponse(uv, voucher);
+                })
+                .toList();
+    }
+
+    private void validateVoucherBasic(Voucher voucher, Instant now) {
+        if (voucher.getStatus() != VoucherStatus.ACTIVE) {
+            throw new InvalidRequestException(Message.Exception.VOUCHER_INACTIVE);
+        }
+        if (now.isBefore(voucher.getStartAt())) {
+            throw new InvalidRequestException(Message.Exception.VOUCHER_NOT_STARTED);
+        }
+        if (now.isAfter(voucher.getEndAt())) {
+            throw new InvalidRequestException(Message.Exception.VOUCHER_EXPIRED);
         }
     }
 
+    private void validateVoucher(Voucher voucher, BigDecimal value) {
+        Instant now = Instant.now();
+        if (voucher.getStatus() != VoucherStatus.ACTIVE) {
+            throw new InvalidRequestException(Message.Exception.VOUCHER_INACTIVE);
+        }
+        if (now.isBefore(voucher.getStartAt())) {
+            throw new InvalidRequestException(Message.Exception.VOUCHER_NOT_STARTED);
+        }
+        if (now.isAfter(voucher.getEndAt())) {
+            throw new InvalidRequestException(Message.Exception.VOUCHER_EXPIRED);
+        }
+        if (voucher.getQuantityUsed() >= voucher.getQuantityTotal()) {
+            throw new InvalidRequestException(Message.Exception.VOUCHER_OUT_OF_STOCK);
+        }
+        if (value.compareTo(voucher.getMinOrderValue()) < 0) {
+            throw new InvalidRequestException("Order total is less than minimum requirement");
+        }
+    }
 
     private BigDecimal computeDiscount(Voucher voucher, BigDecimal value) {
         BigDecimal discount;
 
         if (voucher.getDiscountType() == DiscountType.FIXED) {
-            discount = BigDecimal.valueOf(voucher.getDiscountValue());
+            discount = voucher.getDiscountValue();
         } else {
             discount = value
-                    .multiply(BigDecimal.valueOf(voucher.getDiscountValue()))
+                    .multiply(voucher.getDiscountValue())
                     .divide(BigDecimal.valueOf(100), 0, RoundingMode.HALF_UP);
             if (voucher.getMaxDiscountAmount() != null) {
-                discount = discount.min(BigDecimal.valueOf(voucher.getMaxDiscountAmount()));
+                discount = discount.min(voucher.getMaxDiscountAmount());
             }
         }
 

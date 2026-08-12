@@ -2,14 +2,13 @@ package com.dawn.catalog.dto.response;
 
 import com.dawn.catalog.constant.DiscountType;
 import com.dawn.catalog.constant.VoucherType;
+import com.dawn.common.core.constant.VoucherStatus;
 import com.dawn.common.core.dto.response.BaseResponse;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
+import java.math.BigDecimal;
 import java.time.Instant;
-
 
 @Data
 @NoArgsConstructor
@@ -23,24 +22,29 @@ public class VoucherResponse extends BaseResponse {
 
     private String code;
 
-    private Long quantityTotal;
+    private Integer quantityTotal;
 
-    private Long quantityUsed;
+    private Integer quantityUsed;
 
-    @Enumerated(EnumType.STRING)
     private VoucherType category;
 
     private String groupRef;
 
-    @Enumerated(EnumType.STRING)
     private DiscountType discountType;
 
-    private Long discountValue;
-    private Long maxDiscountAmount;
-    private Long minOrderValue;
+    private BigDecimal discountValue;
+
+    private BigDecimal maxDiscountAmount;
+
+    private BigDecimal minOrderValue;
 
     private Instant startAt;
+
     private Instant endAt;
 
-    private Boolean isActive;
+    private VoucherStatus status;
+
+    private Integer maxPerUser;
+
+    private String conditions;
 }

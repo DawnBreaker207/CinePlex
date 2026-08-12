@@ -39,7 +39,7 @@ public class VoucherClientServiceImpl implements VoucherClientService {
                 .uri(url + "/voucher/calculate?code={code}&total={totalAmount}", code, totalAmount)
                 .retrieve()
                 .onStatus(HttpStatusCode::is4xxClientError, (req, res) -> {
-                    throw new ResourceNotFoundException("Voucher không hợp lệ hoặc không đủ điều kiện áp dụng");
+                    throw new ResourceNotFoundException(Message.Exception.VOUCHER_INVALID);
                 })
                 .onStatus(HttpStatusCode::is5xxServerError, (req, res) -> {
                     throw new InternalServiceException(Message.Exception.INTERNAL_SERVICE_ERROR);
@@ -50,14 +50,15 @@ public class VoucherClientServiceImpl implements VoucherClientService {
         if (response != null && response.getData() != null) {
             return response.getData();
         }
-        throw new ResourceNotFoundException("Không nhận được phản hồi từ hệ thống Voucher");
+        throw new ResourceNotFoundException(Message.Exception.VOUCHER_NO_RESPONSE);
     }
 
     @Retry(name = "internal")
-    public void useVoucher(String code) {
+    public void useVoucher(String code, Long userId, String reservationId) {
         internalRestClient
                 .post()
-                .uri(url + "/voucher/use?code={code}", code)
+                .uri(url + "/voucher/use?code={code}&userId={userId}&reservationId={reservationId}",
+                        code, userId, reservationId)
                 .retrieve()
                 .onStatus(HttpStatusCode::is4xxClientError, (req, res) -> {
                     throw new ResourceNotFoundException(Message.Exception.ROLE_NOT_FOUND);
@@ -70,10 +71,10 @@ public class VoucherClientServiceImpl implements VoucherClientService {
     }
 
     @Retry(name = "internal")
-    public void releaseVoucher(String code) {
+    public void releaseVoucher(String code, Long userId) {
         internalRestClient
                 .post()
-                .uri(url + "/voucher/release?code={code}", code)
+                .uri(url + "/voucher/release?code={code}&userId={userId}", code, userId)
                 .retrieve()
                 .onStatus(HttpStatusCode::is4xxClientError, (req, res) -> {
                     throw new ResourceNotFoundException(Message.Exception.ROLE_NOT_FOUND);

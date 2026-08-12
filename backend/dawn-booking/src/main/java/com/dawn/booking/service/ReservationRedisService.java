@@ -55,10 +55,13 @@ public class ReservationRedisService {
     public void updateReservationSeats(String reservationId, List<Long> seats) {
         try {
             String key = RedisKeyHelper.reservationHoldKey(reservationId);
+            Map<Object, Object> existing = redisService.getHash(key);
             Map<String, String> updates = new HashMap<>();
 
             updates.put("seatIds", mapper.writeValueAsString(seats));
-            updates.put("voucherCode", "");
+            if (existing != null && existing.get("voucherCode") != null) {
+                updates.put("voucherCode", (String) existing.get("voucherCode"));
+            }
 
             redisService.putHash(key, updates, HOLD_TIMEOUT);
             log.info("Updated seats to redis success");
@@ -104,7 +107,7 @@ public class ReservationRedisService {
             log.info("Successfully publish event {} to channel {}", event.get("event"), channel);
         } catch (Exception ex) {
             log.error("Failed to serialize event", ex);
-            throw new RedisStorageException("Failed to store seat information. Please try again");
+            throw new RedisStorageException(Message.Exception.FAILED_STORE_SEAT);
         }
     }
 
@@ -118,7 +121,7 @@ public class ReservationRedisService {
 
         if (result == null || result.isEmpty() || result.get(0) == null) {
             log.error("Lua script returned null or empty result for reservation {}", redisKey);
-            throw new SeatUnavailableException("Failed to acquire seat lock, please try again");
+            throw new SeatUnavailableException(Message.Exception.FAILED_SEAT_LOCK);
         }
 
         Long status = Long.parseLong(result.get(0).toString());
@@ -127,8 +130,8 @@ public class ReservationRedisService {
             log.info("Successfully locked {} seats for reservation {}", seatIds.size(), redisKey);
             return seatIds;
         } else {
-            String failedKey = result.size() > 1 & result.get(1) != null ? result.get(1).toString() : "unknown";
-            String currentOwner = result.size() > 2 & result.get(2) != null ? result.get(2).toString() : "unknown";
+            String failedKey = result.size() > 1 && result.get(1) != null ? result.get(1).toString() : "unknown";
+            String currentOwner = result.size() > 2 && result.get(2) != null ? result.get(2).toString() : "unknown";
 
             String failedSeatIdStr = failedKey.contains(":") ? failedKey.substring(failedKey.lastIndexOf(":") + 1) : failedKey;
             Long parsedSeatId = null;
@@ -149,7 +152,7 @@ public class ReservationRedisService {
                     : failedSeatIdStr;
 
             log.warn("Bulk lock failed! Seat {} ({}) is held by {}", failedSeatId, seatNumber, currentOwner);
-            throw new SeatUnavailableException("Seat " + seatNumber + " was held by another");
+            throw new SeatUnavailableException(Message.format(Message.Exception.SEAT_HELD_BY_ANOTHER, seatNumber));
         }
     }
 
@@ -202,7 +205,7 @@ public class ReservationRedisService {
             return Long.parseLong(value);
         } catch (NumberFormatException e) {
             log.error("Invalid {} format in Redis: {}", fieldName, value);
-            throw new RedisStorageException("Invalid " + fieldName + " format in Redis");
+            throw new RedisStorageException(Message.format(Message.Exception.INVALID_REDIS_FORMAT, fieldName));
         }
     }
 
@@ -261,7 +264,7 @@ public class ReservationRedisService {
             }
         } catch (JsonProcessingException ex) {
             log.error("Error parsing seat IDs from Redis", ex);
-            throw new RedisStorageException("Info in redis not exists or error when getting that");
+            throw new RedisStorageException(Message.Exception.INVALID_REDIS_DATA);
         }
         return ReservationRedisDTO
                 .builder()
@@ -285,7 +288,7 @@ public class ReservationRedisService {
             });
         } catch (JsonProcessingException e) {
             log.error(e.getMessage());
-            throw new RedisStorageException("Info in redis not exists or error when getting that");
+            throw new RedisStorageException(Message.Exception.INVALID_REDIS_DATA);
         }
     }
 
