@@ -185,7 +185,7 @@ public class ShowtimeServiceImpl implements ShowtimeService {
         if (rooms.isEmpty()) {
             throw new IllegalArgumentException("No rooms found for theater: " + theater.getId());
         }
-        Room room = rooms.get(0);
+        Room room = rooms.getFirst();
 
         Showtime showtime = Showtime
                 .builder()
@@ -223,7 +223,7 @@ public class ShowtimeServiceImpl implements ShowtimeService {
         if (showtimeDetails.getTheaterId() != null) {
             List<Room> rooms = roomRepository.findByTheaterId(showtimeDetails.getTheaterId());
             if (!rooms.isEmpty()) {
-                showtime.setRoomId(rooms.get(0).getId());
+                showtime.setRoomId(rooms.getFirst().getId());
             }
         }
 

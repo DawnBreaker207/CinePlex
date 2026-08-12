@@ -66,7 +66,7 @@ class SeatServiceImplTest {
             List<SeatResponse> results = service.findByIdWithLock(List.of(1L));
 
             assertThat(results).hasSize(1);
-            assertThat(results.get(0).getSeatNumber()).isEqualTo("A1");
+            assertThat(results.getFirst().getSeatNumber()).isEqualTo("A1");
         }
     }
 

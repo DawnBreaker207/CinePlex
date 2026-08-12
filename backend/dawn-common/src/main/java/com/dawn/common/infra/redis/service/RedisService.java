@@ -102,7 +102,7 @@ public class RedisService {
                     String.valueOf(ttl.getSeconds()));
         } catch (Exception e) {
             log.error("Redis error: {}", e.getMessage());
-            return Arrays.asList(0L, keys.get(0), "System_error");
+            return Arrays.asList(0L, keys.getFirst(), "System_error");
         }
     }
 

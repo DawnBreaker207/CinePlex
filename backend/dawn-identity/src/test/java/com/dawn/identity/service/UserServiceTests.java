@@ -58,8 +58,8 @@ public class UserServiceTests {
         // Assert
         assertNotNull(result);
         assertEquals(1, result.size());
-        assertEquals(user.getUsername(), result.get(0).getUsername());
-        assertEquals(user.getEmail(), result.get(0).getEmail());
+        assertEquals(user.getUsername(), result.getFirst().getUsername());
+        assertEquals(user.getEmail(), result.getFirst().getEmail());
         verify(userRepository, times(1))
                 .findAll();
     }

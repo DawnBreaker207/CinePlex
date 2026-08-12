@@ -99,7 +99,7 @@ public class SeatServiceImpl implements SeatService {
         log.info("Batch fetching {} seats", ids.size());
         List<SeatInstance> seatInstances = seatInstanceRepository.findAllByReservationIdIn(ids);
         if (seatInstances.isEmpty()) return List.of();
-        Long showtimeId = seatInstances.get(0).getShowtimeId();
+        Long showtimeId = seatInstances.getFirst().getShowtimeId();
         Showtime showtime = showtimeRepository.findById(showtimeId).orElse(null);
         Map<Long, SeatTemplate> templateMap = showtime != null
                 ? getSeatTemplateMap(showtime.getRoomId())
@@ -114,7 +114,7 @@ public class SeatServiceImpl implements SeatService {
     public List<SeatResponse> findByIdWithLock(List<Long> seatIds) {
         List<SeatInstance> seatInstances = seatInstanceRepository.findByIdWithLock(seatIds);
         if (seatInstances.isEmpty()) return List.of();
-        Long showtimeId = seatInstances.get(0).getShowtimeId();
+        Long showtimeId = seatInstances.getFirst().getShowtimeId();
         Showtime showtime = showtimeRepository.findById(showtimeId).orElse(null);
         Map<Long, SeatTemplate> templateMap = showtime != null
                 ? getSeatTemplateMap(showtime.getRoomId())
@@ -128,7 +128,7 @@ public class SeatServiceImpl implements SeatService {
     public List<SeatResponse> findAllById(List<Long> seatIds) {
         List<SeatInstance> seatInstances = seatInstanceRepository.findAllById(seatIds);
         if (seatInstances.isEmpty()) return List.of();
-        Long showtimeId = seatInstances.get(0).getShowtimeId();
+        Long showtimeId = seatInstances.getFirst().getShowtimeId();
         Showtime showtime = showtimeRepository.findById(showtimeId).orElse(null);
         Map<Long, SeatTemplate> templateMap = showtime != null
                 ? getSeatTemplateMap(showtime.getRoomId())
@@ -155,7 +155,7 @@ public class SeatServiceImpl implements SeatService {
     public List<SeatResponse> findAllByReservationId(String reservationId) {
         List<SeatInstance> seatInstances = seatInstanceRepository.findAllByReservationId(reservationId);
         if (seatInstances.isEmpty()) return List.of();
-        Long showtimeId = seatInstances.get(0).getShowtimeId();
+        Long showtimeId = seatInstances.getFirst().getShowtimeId();
         Showtime showtime = showtimeRepository.findById(showtimeId).orElse(null);
         Map<Long, SeatTemplate> templateMap = showtime != null
                 ? getSeatTemplateMap(showtime.getRoomId())

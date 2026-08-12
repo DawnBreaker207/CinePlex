@@ -71,7 +71,7 @@ class RedisServiceTest {
         List result = redisService.lockMulti(keys, OWNER_A, Duration.ofMinutes(15));
 
         assertThat(result).hasSize(1);
-        assertThat(result.get(0)).isEqualTo(1L);
+        assertThat(result.getFirst()).isEqualTo(1L);
         assertThat(stringRedisTemplate.opsForValue().get(SEAT_KEY_1)).isEqualTo(OWNER_A);
         assertThat(stringRedisTemplate.opsForValue().get(SEAT_KEY_2)).isEqualTo(OWNER_A);
     }
@@ -93,7 +93,7 @@ class RedisServiceTest {
         List result = redisService.lockMulti(Collections.emptyList(), OWNER_A, Duration.ofMinutes(15));
 
         assertThat(result).hasSize(1);
-        assertThat(result.get(0)).isEqualTo(1L);
+        assertThat(result.getFirst()).isEqualTo(1L);
     }
 
     // ----------------------------------------------------------------
@@ -109,7 +109,7 @@ class RedisServiceTest {
         List result = redisService.lockMulti(keys, OWNER_A, Duration.ofMinutes(15));
 
         assertThat(result).hasSize(3);
-        assertThat(result.get(0)).isEqualTo(0L);
+        assertThat(result.getFirst()).isEqualTo(0L);
         assertThat(result.get(1)).isEqualTo(SEAT_KEY_2);
         assertThat(result.get(2)).isEqualTo(OWNER_B);
     }
@@ -134,7 +134,7 @@ class RedisServiceTest {
         List result = redisService.lockMulti(
                 Collections.singletonList(SEAT_KEY_1), OWNER_A, Duration.ofMinutes(15));
 
-        assertThat(result.get(0)).isEqualTo(1L);
+        assertThat(result.getFirst()).isEqualTo(1L);
     }
 
     // ----------------------------------------------------------------
@@ -208,7 +208,7 @@ class RedisServiceTest {
                             Collections.singletonList(SEAT_KEY_1),
                             owner,
                             Duration.ofMinutes(15));
-                    if (Long.valueOf(1L).equals(result.get(0))) {
+                    if (Long.valueOf(1L).equals(result.getFirst())) {
                         successCount.incrementAndGet();
                     }
                 } catch (InterruptedException e) {
@@ -243,7 +243,7 @@ class RedisServiceTest {
                 try {
                     startLatch.await();
                     List result = redisService.lockMulti(seatKeys, owner, Duration.ofMinutes(15));
-                    if (Long.valueOf(1L).equals(result.get(0))) {
+                    if (Long.valueOf(1L).equals(result.getFirst())) {
                         successCount.incrementAndGet();
                     }
                 } catch (InterruptedException e) {

@@ -66,9 +66,9 @@ class DashboardServiceImplTest {
 
             assertThat(result).isNotNull();
             assertThat(result.getMovies()).hasSize(1);
-            assertThat(result.getMovies().get(0).getMovieName()).isEqualTo("Movie A");
+            assertThat(result.getMovies().getFirst().getMovieName()).isEqualTo("Movie A");
             assertThat(result.getTheaters()).hasSize(1);
-            assertThat(result.getTheaters().get(0).getTheaterName()).isEqualTo("Theater 1");
+            assertThat(result.getTheaters().getFirst().getTheaterName()).isEqualTo("Theater 1");
             assertThat(result.getMetrics()).isNotNull();
             assertThat(result.getMetrics().getTotalRevenue()).isEqualTo(100000.0);
             assertThat(result.getRevenues()).hasSize(1);
@@ -111,7 +111,7 @@ class DashboardServiceImplTest {
             List<TopMovieResponse> movies = service.getTopMovies(req);
 
             assertThat(movies).hasSize(1);
-            assertThat(movies.get(0).getMovieName()).isEqualTo("Movie A");
+            assertThat(movies.getFirst().getMovieName()).isEqualTo("Movie A");
         }
     }
 
@@ -129,7 +129,7 @@ class DashboardServiceImplTest {
             List<TopTheaterResponse> theaters = service.getTopTheaters(req);
 
             assertThat(theaters).hasSize(1);
-            assertThat(theaters.get(0).getTheaterName()).isEqualTo("Theater 1");
+            assertThat(theaters.getFirst().getTheaterName()).isEqualTo("Theater 1");
         }
     }
 }
