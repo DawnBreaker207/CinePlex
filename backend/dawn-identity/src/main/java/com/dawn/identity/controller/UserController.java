@@ -8,6 +8,7 @@ import com.dawn.identity.model.Role;
 import com.dawn.identity.service.UserService;
 import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -25,7 +26,7 @@ public class UserController {
 
     @GetMapping("")
     @RateLimiter(name = "limit")
-//    @PreAuthorize("hasRole('ADMIN') or hasRole('MODERATOR')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('MODERATOR')")
     public ResponseObject<ResponsePage<UserResponse>> getAll(Pageable pageable) {
         return ResponseObject.success(userService.findAll(pageable));
     }
@@ -52,7 +53,7 @@ public class UserController {
     }
 
     @PutMapping("/update/{id}/profile")
-    public ResponseObject<UserResponse> updateUserInfo(@PathVariable Long id, @RequestBody UserRequest req) {
+    public ResponseObject<UserResponse> updateUserInfo(@PathVariable Long id, @Valid @RequestBody UserRequest req) {
         return ResponseObject.success(userService.update(id, req));
     }
 

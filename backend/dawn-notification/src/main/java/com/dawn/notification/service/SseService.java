@@ -1,5 +1,6 @@
 package com.dawn.notification.service;
 
+import com.dawn.common.core.constant.Constants;
 import com.dawn.notification.dto.SeatDTO;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -29,7 +30,7 @@ public class SseService {
     private final ExecutorService executor = Executors.newCachedThreadPool();
 
     public SseEmitter subscribe(String channel, String clientId) {
-        SseEmitter emitter = new SseEmitter(300_000L);
+        SseEmitter emitter = new SseEmitter(Constants.SSE_EMITTER_TIMEOUT_MS);
 
         emitter.onCompletion(() -> removeEmitter(channel, clientId));
         emitter.onTimeout(() -> removeEmitter(channel, clientId));
@@ -38,7 +39,7 @@ public class SseService {
             emitters.computeIfAbsent(channel, c -> new ConcurrentHashMap<>()).put(clientId, emitter);
             log.info("Client [{}] subscribed to [{}]", clientId, channel);
 
-            emitter.send(SseEmitter.event().name("CONNECTED").data("connected"));
+            emitter.send(SseEmitter.event().name(Constants.SSE_CONNECTED).data("connected"));
 
             if (channel.startsWith("channel:showtime:")) {
                 executor.execute(() -> sendCurrentSeatState(emitter, channel, clientId));
@@ -77,13 +78,13 @@ public class SseService {
             List<SeatDTO> lockedSeats = reservationNotifyService.getLockedSeats(showtimeId);
 
             Map<String, Object> initialState = Map.of(
-                    "event", "SEAT_STATE_INIT",
-                    "showtimeId", showtimeId,
-                    "seatIds", lockedSeats
+                    Constants.SSE_FIELD_EVENT, Constants.SSE_SEAT_STATE_INIT,
+                    Constants.SSE_FIELD_SHOWTIME_ID, showtimeId,
+                    Constants.SSE_FIELD_SEAT_IDS, lockedSeats
             );
 
             String messageJson = objectMapper.writeValueAsString(initialState);
-            emitter.send(SseEmitter.event().name("SEAT_STATE_INIT").data(messageJson));
+            emitter.send(SseEmitter.event().name(Constants.SSE_SEAT_STATE_INIT).data(messageJson));
             log.info("Sent initial seat state to new client, {} seats hold", lockedSeats);
         } catch (Exception e) {
             log.debug("Emitter disconnected before receiving initial state.");
@@ -119,7 +120,7 @@ public class SseService {
         try {
             log.info("Parsing event from: {}", messageJson);
             JsonNode node = objectMapper.readTree(messageJson);
-            String eventName = node.has("event") ? node.get("event").asText() : "message";
+            String eventName = node.has(Constants.SSE_FIELD_EVENT) ? node.get(Constants.SSE_FIELD_EVENT).asText() : "message";
             log.info("Extracted event name [{}]", eventName);
             return eventName;
         } catch (Exception e) {

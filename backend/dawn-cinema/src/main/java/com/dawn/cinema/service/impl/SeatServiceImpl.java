@@ -10,11 +10,12 @@ import com.dawn.cinema.repository.ShowtimeRepository;
 import com.dawn.cinema.service.SeatService;
 import com.dawn.common.core.constant.Message;
 import com.dawn.common.core.constant.SeatStatus;
+import com.dawn.common.core.exception.wrapper.InternalServiceException;
 import com.dawn.common.core.exception.wrapper.ResourceNotFoundException;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,6 +27,9 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Slf4j
 public class SeatServiceImpl implements SeatService {
+
+    private static final Long THEATER_ID_STANDARD = 1L;
+    private static final Long THEATER_ID_VIP = 2L;
 
     private final SeatRepository seatRepository;
 
@@ -52,7 +56,7 @@ public class SeatServiceImpl implements SeatService {
                 log.info("Successfully created {} seats for showtime id: {}", seats.size(), showtime);
             } catch (Exception e) {
                 log.error("Failed to create seats for showtime id: {}, Error: {}", showtimeId, e.getMessage(), e);
-                throw new RuntimeException("Failed to create seats for showtime: " + e.getMessage(), e);
+                throw new InternalServiceException("Failed to create seats for showtime: " + e.getMessage());
             }
         } else {
             log.info("Found {} existing seats for showtime id: {}", seats.size(), showtimeId);
@@ -77,7 +81,7 @@ public class SeatServiceImpl implements SeatService {
                 create(showtime);
             } catch (Exception e) {
                 log.error("Failed to create seats for showtime id: {}, Error: {}", showtimeId, e.getMessage(), e);
-                throw new RuntimeException("Failed to create seats for showtime: " + e.getMessage(), e);
+                throw new InternalServiceException("Failed to create seats for showtime: " + e.getMessage());
             }
         }
 
@@ -170,7 +174,7 @@ public class SeatServiceImpl implements SeatService {
 
         List<Seat> seats = new ArrayList<>();
 
-        if (theaterId == 1) {
+        if (THEATER_ID_STANDARD.equals(theaterId)) {
             log.info("Creating seats for theater layout (15 rows x 20 seats)");
             for (char row = 'A'; row <= 'O'; row++) {
                 for (int seatNum = 1; seatNum <= 10; seatNum++) {
@@ -181,7 +185,7 @@ public class SeatServiceImpl implements SeatService {
                     seats.add(seat);
                 }
             }
-        } else if (theaterId == 2) {
+        } else if (THEATER_ID_VIP.equals(theaterId)) {
             log.info("Creating seats for theater layout (10 rows x 20 seats)");
             for (char row = 'A'; row <= 'J'; row++) {
                 for (char seatNum = 'A'; seatNum <= '0'; seatNum++) {

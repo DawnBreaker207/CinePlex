@@ -1,5 +1,6 @@
 package com.dawn.common.infra.security;
 
+import com.dawn.common.core.constant.Constants;
 import com.dawn.common.core.utils.JWTUtils;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -51,7 +52,7 @@ public class AuthTokenFilter extends OncePerRequestFilter {
     private String parseJwt(HttpServletRequest request) {
         String headerAuth = request.getHeader("Authorization");
         if (StringUtils.hasText(headerAuth) && headerAuth.startsWith("Bearer ")) {
-            return headerAuth.substring(7);
+            return headerAuth.substring(Constants.BEARER_TOKEN_LENGTH);
         }
         return null;
     }

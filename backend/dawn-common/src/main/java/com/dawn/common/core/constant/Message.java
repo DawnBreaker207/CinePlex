@@ -67,7 +67,17 @@ public class Message {
         public static final String VOUCHER_NOT_STARTED = "Voucher has not started yet";
         public static final String VOUCHER_INVALID = "Voucher is invalid or not eligible for application";
         public static final String VOUCHER_NO_RESPONSE = "No response received from Voucher system";
+        // General
+        public static final String PROVIDER_NOT_SUPPORTED = "Provider not supported";
+        public static final String DASHBOARD_CAN_NOT_GET_DATA = "Can not get data dashboard";
+        public static final String PAYMENT_INTERNAL_ERROR = "Internal Error";
+        public static final String CAN_NOT_FIND_USER_BY_USERNAME = "Can not find this user";
+        public static final String USER_CANNOT_UPDATE_SELF = "You can't update yourself";
+        public static final String PERMISSION_NOT_ENOUGH = "You permission not enough (Must higher than this person)";
+        public static final String MOMO_PAYMENT_FAILED = "MoMo payment failed or payUrl is null";
+        public static final String VOUCHER_ALREADY_EXISTED = "This voucher already existed";
+        public static final String MIN_ORDER_NOT_MET = "Order total is less than minimum requirement";
+        public static final String SEAT_CAPACITY_EXCEEDED = "Total seats cannot be greater than capacity of {0}";
     }
-
 
 }

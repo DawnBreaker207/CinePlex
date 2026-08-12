@@ -1,7 +1,9 @@
 package com.dawn.payment.handler;
 
+import com.dawn.common.core.constant.Message;
 import com.dawn.payment.config.payment.MomoConfig;
 import com.dawn.payment.utils.MomoUtils;
+import com.dawn.common.core.exception.wrapper.InternalServiceException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
@@ -46,7 +48,7 @@ public class MomoHandler implements PaymentHandler {
                 .body(new ParameterizedTypeReference<>() {
                 });
         if (response == null || response.get("payUrl") == null) {
-            throw new RuntimeException("MoMo payment failed or payUrl is null");
+            throw new InternalServiceException(Message.Exception.MOMO_PAYMENT_FAILED);
         }
         return (String) response.get("payUrl");
     }

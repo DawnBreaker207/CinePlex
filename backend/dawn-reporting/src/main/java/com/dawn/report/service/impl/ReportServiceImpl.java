@@ -6,6 +6,7 @@ import com.dawn.report.dto.response.RevenuePointResponse;
 import com.dawn.report.dto.response.TopMovieResponse;
 import com.dawn.report.repository.DashboardRepository;
 import com.dawn.report.service.ReportService;
+import com.dawn.common.core.exception.wrapper.InternalServiceException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.jasperreports.engine.*;
@@ -127,7 +128,7 @@ public class ReportServiceImpl implements ReportService {
 
             return new ReportResponse(reportBytes, filename, contentType);
         } catch (JRException | IOException ex) {
-            throw new RuntimeException(ex);
+            throw new InternalServiceException(ex.getMessage());
         }
     }
 }

@@ -13,6 +13,7 @@ import com.dawn.cinema.repository.SeatRepository;
 import com.dawn.cinema.repository.ShowtimeRepository;
 import com.dawn.cinema.repository.TheaterRepository;
 import com.dawn.cinema.service.ShowtimeService;
+import com.dawn.common.core.constant.Constants;
 import com.dawn.common.core.constant.Message;
 import com.dawn.common.core.constant.SeatStatus;
 import com.dawn.common.core.dto.response.ResponsePage;
@@ -171,7 +172,7 @@ public class ShowtimeServiceImpl implements ShowtimeService {
                 .orElseThrow(() -> new ResourceNotFoundException(Message.Exception.THEATER_NOT_FOUND));
 
         if (showtimeRequest.getTotalSeats() > theater.getCapacity()) {
-            throw new IllegalArgumentException("Total seats cannot be greater than capacity of " + theater.getCapacity());
+            throw new IllegalArgumentException(Message.format(Message.Exception.SEAT_CAPACITY_EXCEEDED, theater.getCapacity()));
         }
 
         //        All seat available at first

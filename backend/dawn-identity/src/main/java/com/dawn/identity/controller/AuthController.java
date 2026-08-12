@@ -8,6 +8,7 @@ import com.dawn.identity.dto.response.JwtResponse;
 import com.dawn.identity.dto.response.TokenRefreshResponse;
 import com.dawn.identity.service.AuthService;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -24,13 +25,13 @@ public class AuthController {
     private final JWTUtils jWTUtils;
 
     @PostMapping("/register")
-    public ResponseObject<String> register(@RequestBody RegisterRequest newUser) {
+    public ResponseObject<String> register(@Valid @RequestBody RegisterRequest newUser) {
         authService.register(newUser);
         return ResponseObject.success("");
     }
 
     @PostMapping("/login")
-    public ResponseObject<JwtResponse> login(@RequestBody LoginRequest user) {
+    public ResponseObject<JwtResponse> login(@Valid @RequestBody LoginRequest user) {
         JwtResponse jwt = authService.login(user);
         return new ResponseObject<>(
                 HttpStatus.OK,

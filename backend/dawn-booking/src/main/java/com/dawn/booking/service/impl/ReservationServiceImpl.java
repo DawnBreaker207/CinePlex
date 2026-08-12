@@ -17,6 +17,7 @@ import com.dawn.booking.repository.ReservationRepository;
 import com.dawn.booking.service.ReservationRedisService;
 import com.dawn.booking.service.ReservationService;
 import com.dawn.booking.utils.ReservationUtils;
+import com.dawn.common.core.constant.Constants;
 import com.dawn.common.core.constant.Message;
 import com.dawn.common.core.constant.ReservationStatus;
 import com.dawn.common.core.constant.SeatStatus;
@@ -49,7 +50,7 @@ import java.util.stream.Collectors;
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 public class ReservationServiceImpl implements ReservationService {
 
-    static Duration HOLD_TIMEOUT = Duration.ofMinutes(15);
+    static Duration HOLD_TIMEOUT = Duration.ofMinutes(Constants.RESERVATION_HOLD_MINUTES);
 
     ReservationRepository reservationRepository;
 
@@ -120,7 +121,7 @@ public class ReservationServiceImpl implements ReservationService {
     @Override
     public ResponsePage<ReservationResponse> findAll(ReservationFilterRequest req, Pageable pageable) {
         LocalDate end = req.getEndDate() != null ? req.getEndDate() : LocalDate.now();
-        LocalDate start = req.getStartDate() != null ? req.getStartDate() : end.minusDays(30);
+        LocalDate start = req.getStartDate() != null ? req.getStartDate() : end.minusDays(Constants.DEFAULT_DASHBOARD_DAYS);
 
         //  Convert to Instant
         Instant startDate = start.atStartOfDay(ZoneId.systemDefault()).toInstant();
@@ -196,7 +197,7 @@ public class ReservationServiceImpl implements ReservationService {
             throw new ResourceNotFoundException(Message.Exception.RESERVATION_NOT_FOUND);
         }
 
-        String showtimeIdStr = (String) reservation.get("showtimeId");
+        String showtimeIdStr = (String) reservation.get(Constants.REDIS_SHOWTIME_ID);
         Instant expiredAt = Instant.now().plusSeconds(ttl);
 
         return ReservationInitResponse.builder()
@@ -215,12 +216,12 @@ public class ReservationServiceImpl implements ReservationService {
         ShowtimeDTO showtime = showtimeService.findById(o.getShowtimeId());
         //        Create essential value to save on redis
         Map<String, String> initialData = Map.of(
-                "reservationId", reservationId,
-                "userId", o.getUserId().toString(),
-                "showtimeId", o.getShowtimeId().toString(),
-                "theaterId", o.getTheaterId().toString(),
-                "price", showtime.getPrice().toPlainString(),
-                "seatIds", "[]");
+                Constants.REDIS_RESERVATION_ID, reservationId,
+                Constants.REDIS_USER_ID, o.getUserId().toString(),
+                Constants.REDIS_SHOWTIME_ID, o.getShowtimeId().toString(),
+                Constants.REDIS_THEATER_ID, o.getTheaterId().toString(),
+                Constants.REDIS_PRICE, showtime.getPrice().toPlainString(),
+                Constants.REDIS_SEAT_IDS, "[]");
 
         //        Create expired time on redis key
         reservationRedisService.saveReservationInit(reservationId, initialData, HOLD_TIMEOUT);
@@ -534,13 +535,13 @@ public class ReservationServiceImpl implements ReservationService {
         if (reservationData == null || reservationData.isEmpty()) {
             throw new ResourceNotFoundException(Message.Exception.RESERVATION_NOT_FOUND);
         }
-        String userIdStr = (String) reservationData.get("userId");
+        String userIdStr = (String) reservationData.get(Constants.REDIS_USER_ID);
         log.info("User id {}", userIdStr);
         if (!userIdStr.equals(String.valueOf(userId))) {
             throw new PermissionDeniedException(Message.Exception.PERMISSION_FORBIDDEN);
         }
         //        Check and compare value valid
-        String reservationIdStr = (String) reservationData.get("reservationId");
+        String reservationIdStr = (String) reservationData.get(Constants.REDIS_RESERVATION_ID);
         log.info("Reservation id: {}", reservationIdStr);
         if (reservationIdStr == null || !reservationIdStr.equals(reservationId)) {
             throw new ResourceNotFoundException(Message.Exception.RESERVATION_INVALID_DATA);

@@ -1,6 +1,7 @@
 package com.dawn.payment.utils;
 
 import com.dawn.payment.config.payment.MomoConfig;
+import com.dawn.common.core.exception.wrapper.InternalServiceException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -44,7 +45,7 @@ public class MomoUtils {
             return hexString.toString();
         } catch (Exception e) {
             log.error("Failed to sign HMAC SHA256", e);
-            throw new RuntimeException(e);
+            throw new InternalServiceException(e.getMessage());
         }
     }
 
