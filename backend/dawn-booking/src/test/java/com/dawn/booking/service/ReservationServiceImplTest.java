@@ -67,7 +67,7 @@ class ReservationServiceImplTest {
     class InitReservation {
 
         @Test
-        @DisplayName("input hợp lệ → tạo reservationId, lưu Redis, trả về response đúng TTL")
+        @DisplayName("valid input → create reservationId, save to Redis, return response with correct TTL")
         void initReservation_valid_shouldSaveRedisAndReturnResponse() {
             ReservationInitRequest request = ReservationInitRequest.builder()
                     .userId(1L)
@@ -75,9 +75,11 @@ class ReservationServiceImplTest {
                     .theaterId(5L)
                     .build();
 
+            when(showtimeService.findById(10L)).thenReturn(buildShowtime(10L));
+
             ReservationInitResponse response = service.initReservation(request);
 
-            // Verify Redis đã được gọi với đúng data
+            // Verify Redis was called with correct data
             ArgumentCaptor<String> reservationIdCaptor = ArgumentCaptor.forClass(String.class);
             verify(reservationRedisService).saveReservationInit(
                     reservationIdCaptor.capture(), anyMap(), any());
@@ -86,7 +88,7 @@ class ReservationServiceImplTest {
             assertThat(response.getShowtimeId()).isEqualTo(10L);
             assertThat(response.getTtl()).isEqualTo(900L); // 15 phút
             assertThat(response.getExpiredAt()).isNotNull();
-            // reservationId trong response khớp với cái lưu Redis
+            // reservationId in response matches the one saved in Redis
             assertThat(response.getReservationId()).isEqualTo(reservationIdCaptor.getValue());
         }
     }
@@ -100,7 +102,7 @@ class ReservationServiceImplTest {
     class HoldReservationSeats {
 
         @Test
-        @DisplayName("hold thành công → acquireSeatLock và updateReservationSeats được gọi")
+        @DisplayName("hold success → acquireSeatLock and updateReservationSeats are called")
         void holdSeats_success_shouldLockAndUpdateRedis() {
             ReservationHoldSeatRequest request = buildHoldRequest("RES-001", 1L, 10L, List.of(101L, 102L));
             stubValidReservationData("RES-001", 1L, 10L);
@@ -108,7 +110,7 @@ class ReservationServiceImplTest {
             stubSeats(List.of(101L, 102L), 10L);
 
             when(reservationRedisService.parseSeatIdsFromReservationData(any()))
-                    .thenReturn(Collections.emptyList()); // không có ghế cũ
+                    .thenReturn(Collections.emptyList()); // no old seats
             when(seatService.findAllByShowtimeId(10L)).thenReturn(
                     List.of(buildSeat(101L, 10L), buildSeat(102L, 10L)));
 
@@ -119,7 +121,7 @@ class ReservationServiceImplTest {
         }
 
         @Test
-        @DisplayName("ghế không thuộc showtime → throw SeatUnavailableException")
+        @DisplayName("seat not in showtime → throw SeatUnavailableException")
         void holdSeats_wrongShowtime_shouldThrow() {
             ReservationHoldSeatRequest request = buildHoldRequest("RES-001", 1L, 10L, List.of(101L));
             stubValidReservationData("RES-001", 1L, 10L);
@@ -128,7 +130,7 @@ class ReservationServiceImplTest {
                     .thenReturn(Collections.emptyList());
             when(seatService.findAllByShowtimeId(10L)).thenReturn(List.of(buildSeat(101L, 10L)));
 
-            // Seat thuộc showtime khác (99L)
+            // Seat belongs to a different showtime (99L)
             SeatDTO wrongSeat = buildSeat(101L, 99L);
             when(seatService.findAllById(anyList())).thenReturn(List.of(wrongSeat));
 
@@ -138,7 +140,7 @@ class ReservationServiceImplTest {
         }
 
         @Test
-        @DisplayName("ghế đã BOOKED trong DB → throw SeatUnavailableException")
+        @DisplayName("seat already BOOKED in DB → throw SeatUnavailableException")
         void holdSeats_bookedSeat_shouldThrow() {
             ReservationHoldSeatRequest request = buildHoldRequest("RES-001", 1L, 10L, List.of(101L));
             stubValidReservationData("RES-001", 1L, 10L);
@@ -156,15 +158,12 @@ class ReservationServiceImplTest {
         }
 
         @Test
-        @DisplayName("showtime đã qua → throw IllegalStateException")
+        @DisplayName("past showtime → throw IllegalStateException")
         void holdSeats_pastShowtime_shouldThrow() {
             ReservationHoldSeatRequest request = buildHoldRequest("RES-001", 1L, 10L, List.of(101L));
             stubValidReservationData("RES-001", 1L, 10L);
-            when(reservationRedisService.parseSeatIdsFromReservationData(any()))
-                    .thenReturn(Collections.emptyList());
-            when(seatService.findAllByShowtimeId(10L)).thenReturn(List.of(buildSeat(101L, 10L)));
 
-            // Showtime ngày hôm qua
+            // Yesterday's showtime
             ShowtimeDTO pastShowtime = buildShowtime(10L);
             pastShowtime.setShowDate(LocalDate.now().minusDays(1));
             when(showtimeService.findById(10L)).thenReturn(pastShowtime);
@@ -175,15 +174,12 @@ class ReservationServiceImplTest {
         }
 
         @Test
-        @DisplayName("không đủ ghế available trong showtime → throw IllegalStateException")
+        @DisplayName("not enough available seats in showtime → throw IllegalStateException")
         void holdSeats_notEnoughSeats_shouldThrow() {
             ReservationHoldSeatRequest request = buildHoldRequest("RES-001", 1L, 10L, List.of(101L, 102L, 103L));
             stubValidReservationData("RES-001", 1L, 10L);
-            when(reservationRedisService.parseSeatIdsFromReservationData(any()))
-                    .thenReturn(Collections.emptyList());
-            when(seatService.findAllByShowtimeId(10L)).thenReturn(List.of(buildSeat(101L, 10L)));
 
-            // Chỉ còn 1 ghế nhưng request 3
+            // Only 1 seat available but request 3
             ShowtimeDTO showtime = buildShowtime(10L);
             showtime.setAvailableSeats(1);
             when(showtimeService.findById(10L)).thenReturn(showtime);
@@ -194,7 +190,7 @@ class ReservationServiceImplTest {
         }
 
         @Test
-        @DisplayName("acquireSeatLock throw → deleteSeatLocks được gọi (rollback)")
+        @DisplayName("acquireSeatLock throws → deleteSeatLocks called (rollback)")
         void holdSeats_lockFails_shouldRollbackLocks() {
             ReservationHoldSeatRequest request = buildHoldRequest("RES-001", 1L, 10L, List.of(101L, 102L));
             stubValidReservationData("RES-001", 1L, 10L);
@@ -211,8 +207,8 @@ class ReservationServiceImplTest {
             assertThatThrownBy(() -> service.holdReservationSeats(request))
                     .isInstanceOf(SeatUnavailableException.class);
 
-            // acquireSeatLock throw trước khi update redis, không cần verify deleteSeatLocks
-            // nhưng verify updateReservationSeats KHÔNG được gọi
+            // acquireSeatLock throws before update redis, no need to verify deleteSeatLocks
+            // but verify updateReservationSeats was NOT called
             verify(reservationRedisService, never()).updateReservationSeats(any(), any());
         }
     }
@@ -226,19 +222,22 @@ class ReservationServiceImplTest {
     class ConfirmReservation {
 
         @Test
-        @DisplayName("idempotency: đã confirm trước đó → trả về null, không save lại")
-        void confirmReservation_alreadyPaid_shouldReturnNull() {
+        @DisplayName("idempotency: already confirmed → return response, no re-save")
+        void confirmReservation_alreadyPaid_shouldReturnExisting() {
             Reservation existing = buildReservation("RES-001", true);
             when(reservationRepository.findById("RES-001")).thenReturn(Optional.of(existing));
+            when(seatService.findAllByReservationId("RES-001")).thenReturn(List.of());
+            when(showtimeService.findById(10L)).thenReturn(buildShowtime(10L));
+            when(userService.findById(1L)).thenReturn(buildUser(1L));
 
             ReservationResponse result = service.confirmReservation("RES-001");
 
-            assertThat(result).isNull();
+            assertThat(result).isNotNull();
             verify(reservationRepository, never()).saveAndFlush(any());
         }
 
         @Test
-        @DisplayName("flow thành công → lưu Reservation CONFIRMED, isPaid=true")
+        @DisplayName("successful flow → save Reservation CONFIRMED, isPaid=true")
         void confirmReservation_success_shouldSaveConfirmedReservation() {
             when(reservationRepository.findById("RES-001")).thenReturn(Optional.empty());
             stubRedisData("RES-001", List.of(101L, 102L));
@@ -256,7 +255,7 @@ class ReservationServiceImplTest {
             Reservation saved = buildReservation("RES-001", true);
             when(reservationRepository.saveAndFlush(any())).thenReturn(saved);
 
-            // Side effects — mock để không throw
+            // Side effects — mock to prevent throws
             doNothing().when(notificationHelper).handleNotification(any(), any(), any());
             doNothing().when(reservationRedisService).cleanupRedisLocks(any(), any());
             doNothing().when(seatService).saveAllSeat(any());
@@ -272,7 +271,7 @@ class ReservationServiceImplTest {
         }
 
         @Test
-        @DisplayName("side effect email fail → reservation vẫn được confirm (không rollback)")
+        @DisplayName("side effect email fails → reservation still confirmed (no rollback)")
         void confirmReservation_emailFails_shouldNotRollback() {
             when(reservationRepository.findById("RES-001")).thenReturn(Optional.empty());
             stubRedisData("RES-001", List.of(101L));
@@ -288,20 +287,20 @@ class ReservationServiceImplTest {
             doNothing().when(seatService).saveAllSeat(any());
             when(showtimeService.save(any())).thenReturn(showtime);
 
-            // Email/notification throw
+            // Email/notification throws
             doThrow(new RuntimeException("SMTP down"))
                     .when(notificationHelper).handleNotification(any(), any(), any());
             doNothing().when(reservationRedisService).cleanupRedisLocks(any(), any());
 
-            // Không throw ra ngoài
+            // Does not throw to caller
             assertThatNoException().isThrownBy(() -> service.confirmReservation("RES-001"));
 
-            // Reservation vẫn đã được save
+            // Reservation was still saved
             verify(reservationRepository).saveAndFlush(any());
         }
 
         @Test
-        @DisplayName("seat không còn AVAILABLE khi confirm → throw SeatUnavailableException")
+        @DisplayName("seat no longer AVAILABLE on confirm → throw SeatUnavailableException")
         void confirmReservation_seatBecomesUnavailable_shouldThrow() {
             when(reservationRepository.findById("RES-001")).thenReturn(Optional.empty());
             stubRedisData("RES-001", List.of(101L));
@@ -309,7 +308,7 @@ class ReservationServiceImplTest {
 
             when(userService.findById(1L)).thenReturn(buildUser(1L));
 
-            // Seat đã bị BOOKED khi load lại từ DB
+            // Seat already BOOKED when reloaded from DB
             SeatDTO bookedSeat = buildSeat(101L, 10L);
             bookedSeat.setStatus(SeatStatus.BOOKED);
             when(seatService.findByIdWithLock(anyList())).thenReturn(List.of(bookedSeat));
@@ -322,11 +321,11 @@ class ReservationServiceImplTest {
         }
 
         @Test
-        @DisplayName("có voucher → calculateVoucher được gọi, discountAmount đúng")
+        @DisplayName("has voucher → calculateVoucher called, discountAmount correct")
         void confirmReservation_withVoucher_shouldApplyDiscount() {
             when(reservationRepository.findById("RES-001")).thenReturn(Optional.empty());
 
-            // Redis có voucherCode
+            // Redis has voucherCode
             ReservationRedisDTO redisData = ReservationRedisDTO.builder()
                     .id("RES-001")
                     .userId(1L)
@@ -348,7 +347,7 @@ class ReservationServiceImplTest {
                     .finalAmount(new BigDecimal("90000"))
                     .build();
             when(voucherClientService.calculateVoucher(eq("DAWN10"), any())).thenReturn(discount);
-            doNothing().when(voucherClientService).useVoucher("DAWN10");
+            doNothing().when(voucherClientService).useVoucher(eq("DAWN10"), eq(1L), anyString());
 
             Reservation saved = buildReservation("RES-001", true);
             when(reservationRepository.saveAndFlush(any())).thenReturn(saved);
@@ -366,7 +365,7 @@ class ReservationServiceImplTest {
         }
 
         @Test
-        @DisplayName("voucher useVoucher fail → reservation vẫn confirm (side effect isolation)")
+        @DisplayName("useVoucher fails → reservation still confirmed (side effect isolation)")
         void confirmReservation_voucherUseFails_shouldNotRollback() {
             when(reservationRepository.findById("RES-001")).thenReturn(Optional.empty());
 
@@ -386,9 +385,9 @@ class ReservationServiceImplTest {
                             .finalAmount(new BigDecimal("100000"))
                             .build());
 
-            // useVoucher throw
+            // useVoucher throws
             doThrow(new RuntimeException("Voucher service down"))
-                    .when(voucherClientService).useVoucher(anyString());
+                    .when(voucherClientService).useVoucher(anyString(), anyLong(), anyString());
 
             Reservation saved = buildReservation("RES-001", true);
             when(reservationRepository.saveAndFlush(any())).thenReturn(saved);
@@ -402,7 +401,7 @@ class ReservationServiceImplTest {
         }
 
         @Test
-        @DisplayName("seatIds rỗng trong Redis → throw IllegalStateException")
+        @DisplayName("empty seatIds in Redis → throw IllegalStateException")
         void confirmReservation_noSeats_shouldThrow() {
             when(reservationRepository.findById("RES-001")).thenReturn(Optional.empty());
 
@@ -425,7 +424,7 @@ class ReservationServiceImplTest {
     class CancelReservation {
 
         @Test
-        @DisplayName("đã isPaid=true → skip cancel, không xóa Redis")
+        @DisplayName("already isPaid=true → skip cancel, don't delete Redis")
         void cancelReservation_alreadyPaid_shouldSkip() {
             when(reservationRepository.findById("RES-001"))
                     .thenReturn(Optional.of(buildReservation("RES-001", true)));
@@ -437,15 +436,14 @@ class ReservationServiceImplTest {
         }
 
         @Test
-        @DisplayName("cancel thành công → xóa Redis lock, lưu CANCELED")
+        @DisplayName("cancel success → delete Redis lock, save CANCELED")
         void cancelReservation_success_shouldCleanRedisAndSaveRecord() {
             when(reservationRepository.findById("RES-001")).thenReturn(Optional.empty());
 
             ReservationRedisDTO redisData = ReservationRedisDTO.builder()
                     .id("RES-001").userId(1L).showtimeId(10L).theaterId(5L)
-                    .seatsIds(List.of(101L, 102L)).build();
+                    .seatsIds(List.of(101L, 102L)).price("100000").build();
             when(reservationRedisService.getFromRedis("RES-001")).thenReturn(redisData);
-            when(showtimeService.findById(10L)).thenReturn(buildShowtime(10L));
             when(seatService.findAllByShowtimeId(10L)).thenReturn(
                     List.of(buildSeat(101L, 10L), buildSeat(102L, 10L)));
 
@@ -458,6 +456,38 @@ class ReservationServiceImplTest {
             verify(reservationRepository).save(captor.capture());
             assertThat(captor.getValue().getReservationStatus()).isEqualTo(ReservationStatus.CANCELED);
             assertThat(captor.getValue().getIsPaid()).isFalse();
+        }
+
+        @Test
+        @DisplayName("has voucher → releaseVoucher called on cancel")
+        void cancelReservation_withVoucher_shouldReleaseVoucher() {
+            when(reservationRepository.findById("RES-001")).thenReturn(Optional.empty());
+
+            ReservationRedisDTO redisData = ReservationRedisDTO.builder()
+                    .id("RES-001").userId(1L).showtimeId(10L).theaterId(5L)
+                    .seatsIds(List.of(101L)).voucherCode("DAWN10").price("100000").build();
+            when(reservationRedisService.getFromRedis("RES-001")).thenReturn(redisData);
+            when(seatService.findAllByShowtimeId(10L)).thenReturn(List.of(buildSeat(101L, 10L)));
+
+            service.cancelReservation("RES-001");
+
+            verify(voucherClientService).releaseVoucher(eq("DAWN10"), eq(1L));
+        }
+
+        @Test
+        @DisplayName("voucher release fails → does not affect cancel flow")
+        void cancelReservation_releaseVoucherFails_shouldNotThrow() {
+            when(reservationRepository.findById("RES-001")).thenReturn(Optional.empty());
+
+            ReservationRedisDTO redisData = ReservationRedisDTO.builder()
+                    .id("RES-001").userId(1L).showtimeId(10L).theaterId(5L)
+                    .seatsIds(List.of(101L)).voucherCode("DAWN10").price("100000").build();
+            when(reservationRedisService.getFromRedis("RES-001")).thenReturn(redisData);
+            when(seatService.findAllByShowtimeId(10L)).thenReturn(List.of(buildSeat(101L, 10L)));
+            doThrow(new RuntimeException("Voucher service down"))
+                    .when(voucherClientService).releaseVoucher(anyString(), anyLong());
+
+            assertThatNoException().isThrownBy(() -> service.cancelReservation("RES-001"));
         }
     }
 
