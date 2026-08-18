@@ -2,6 +2,7 @@ package com.dawn.booking.helper;
 
 import com.dawn.booking.dto.response.*;
 import com.dawn.booking.model.Reservation;
+import com.dawn.catalog.dto.response.MovieResponse;
 import com.dawn.common.core.constant.ReservationStatus;
 
 import java.util.List;
@@ -31,7 +32,7 @@ public interface ReservationMappingHelper {
 
     static UserReservationResponse toUserResponse(
             final Reservation reservation,
-            final MovieDTO movie,
+            final MovieResponse movie,
             final ShowtimeDTO showtime,
             final List<SeatDTO> seats) {
         return UserReservationResponse.builder()

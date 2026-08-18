@@ -2,10 +2,11 @@ package com.dawn.booking.helper;
 
 import com.dawn.booking.dto.response.*;
 import com.dawn.booking.model.Reservation;
-import com.dawn.booking.client.MovieClientBookingService;
 import com.dawn.common.core.constant.Constants;
 import com.dawn.booking.service.ReservationRedisService;
 import com.dawn.booking.client.UserClientService;
+import com.dawn.catalog.api.CatalogModuleApi;
+import com.dawn.catalog.dto.response.MovieResponse;
 import com.dawn.common.core.constant.RabbitMQConstants;
 import com.dawn.common.core.dto.event.BookingCompleteEvent;
 import lombok.AccessLevel;
@@ -31,7 +32,7 @@ public class ReservationNotificationHelper {
 
     RabbitTemplate rabbitTemplate;
 
-    MovieClientBookingService movieService;
+    CatalogModuleApi catalogApi;
 
     UserClientService userService;
 
@@ -43,7 +44,7 @@ public class ReservationNotificationHelper {
             UserDTO user = userService.findById(reservation.getUserId());
             log.info("Get user from reservation: {}", user);
             log.info("Get showtime from reservation: {}", showtime);
-            MovieDTO movie = movieService.findOne(showtime.getMovieId());
+            MovieResponse movie = catalogApi.findMovieById(showtime.getMovieId());
             log.info("Get movie from reservation: {}", movie);
             String seatNumbers = seats.stream().map(SeatDTO::getSeatNumber).collect(Collectors.joining(","));
 

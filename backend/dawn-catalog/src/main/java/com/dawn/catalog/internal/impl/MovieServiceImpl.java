@@ -1,13 +1,13 @@
-    package com.dawn.catalog.service.impl;
+    package com.dawn.catalog.internal.impl;
 
     import com.dawn.catalog.dto.request.MovieRequest;
     import com.dawn.catalog.dto.response.MovieResponse;
     import com.dawn.catalog.helper.MovieMappingHelper;
+    import com.dawn.catalog.internal.MovieService;
     import com.dawn.catalog.model.Genre;
     import com.dawn.catalog.model.Movie;
     import com.dawn.catalog.repository.GenreRepository;
     import com.dawn.catalog.repository.MovieRepository;
-    import com.dawn.catalog.service.MovieService;
     import com.dawn.common.core.constant.Message;
     import com.dawn.common.core.dto.response.ResponsePage;
     import com.dawn.common.core.exception.wrapper.ResourceAlreadyExistedException;
@@ -86,7 +86,7 @@
                     .ifPresent((movie) -> {
                         throw new ResourceAlreadyExistedException(Message.Exception.MOVIE_EXISTED);
                     });
-            Set<Genre> genres = checkExistedGenre(m.getGenres());
+            Set<Genre> genres = getOrCreateGenres(m.getGenres());
             Movie movie = MovieMappingHelper.map(m);
             movie.setGenres(genres);
             return MovieMappingHelper.map(movieRepository.save(movie));
@@ -104,7 +104,7 @@
                     .findById(id)
                     .orElseThrow(() -> new ResourceNotFoundException(Message.Exception.MOVIE_NOT_FOUND));
 
-            Set<Genre> genres = checkExistedGenre(movieDetails.getGenres());
+            Set<Genre> genres = getOrCreateGenres(movieDetails.getGenres());
 
             movie.setTitle(movieDetails.getTitle());
             movie.setOriginalTitle(movieDetails.getOriginalTitle());
@@ -123,6 +123,7 @@
         }
 
         @Override
+        @Transactional
         @Caching(evict = {
                 @CacheEvict(value = CACHE_INFO, key = "#id"),
                 @CacheEvict(value = CACHE_LIST, allEntries = true)
@@ -135,7 +136,7 @@
             movieRepository.deleteById(id);
         }
 
-        private Set<Genre> checkExistedGenre(Set<String> genreNames) {
+        private Set<Genre> getOrCreateGenres(Set<String> genreNames) {
             List<Genre> existedGenres = genreRepository.findAll();
 
             Map<String, Genre> existingNames = existedGenres

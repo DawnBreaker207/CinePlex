@@ -4,7 +4,7 @@ import com.dawn.catalog.dto.request.VoucherRequest;
 import com.dawn.catalog.dto.response.UserVoucherResponse;
 import com.dawn.catalog.dto.response.VoucherCalculation;
 import com.dawn.catalog.dto.response.VoucherResponse;
-import com.dawn.catalog.service.VoucherService;
+import com.dawn.catalog.internal.VoucherService;
 import com.dawn.common.core.dto.response.ResponseObject;
 import com.dawn.common.core.dto.response.ResponsePage;
 import io.swagger.v3.oas.annotations.Operation;

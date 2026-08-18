@@ -21,6 +21,8 @@ public interface UserService {
 
     List<UserResponse> findAllByIds(List<Long> ids);
 
+    List<UserResponse> searchUsers(String keyword);
+
     boolean existsByRolesName(String roleName);
 
     Role findByRoleName(String roleName);

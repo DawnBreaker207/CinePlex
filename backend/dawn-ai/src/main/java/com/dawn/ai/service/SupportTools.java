@@ -1,21 +1,16 @@
 package com.dawn.ai.service;
 
-import com.dawn.booking.model.Reservation;
-import com.dawn.booking.repository.ReservationRepository;
 import com.dawn.booking.service.ReservationService;
-import com.dawn.common.core.constant.ReservationStatus;
-
-import com.dawn.identity.model.User;
-import com.dawn.identity.repository.UserRepository;
-import com.dawn.payment.model.Payment;
-import com.dawn.payment.repository.PaymentRepository;
+import com.dawn.identity.dto.response.UserResponse;
+import com.dawn.identity.service.UserService;
+import com.dawn.payment.dto.response.PaymentDetailDTO;
+import com.dawn.payment.service.PaymentService;
 import dev.langchain4j.agent.tool.Tool;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Component
@@ -23,10 +18,9 @@ import java.util.stream.Collectors;
 @Slf4j
 public class SupportTools {
 
-    private final UserRepository userRepository;
-    private final ReservationRepository reservationRepository;
-    private final PaymentRepository paymentRepository;
+    private final UserService userService;
     private final ReservationService reservationService;
+    private final PaymentService paymentService;
 
     @Tool("""
             Tìm kiếm người dùng theo email, username hoặc ID.
@@ -37,17 +31,7 @@ public class SupportTools {
             return "Vui lòng nhập từ khóa tìm kiếm (email, username hoặc ID).";
         }
 
-        try {
-            Long id = Long.parseLong(keyword.trim());
-            Optional<User> userOpt = userRepository.findById(id);
-            if (userOpt.isPresent()) {
-                return formatUser(userOpt.get());
-            }
-        } catch (NumberFormatException e) {
-            // not an ID, search by username/email
-        }
-
-        List<User> users = userRepository.searchByKeyword(keyword.trim());
+        List<UserResponse> users = userService.searchUsers(keyword);
         if (users.isEmpty()) {
             return "Không tìm thấy người dùng nào khớp với \"" + keyword + "\".";
         }
@@ -65,13 +49,13 @@ public class SupportTools {
             return "Vui lòng cung cấp mã reservation.";
         }
 
-        Optional<Reservation> reservationOpt = reservationRepository.findById(reservationId);
+        var reservationOpt = reservationService.findReservationDetail(reservationId);
         if (reservationOpt.isEmpty()) {
             return "Không tìm thấy reservation \"" + reservationId + "\".";
         }
 
-        Reservation r = reservationOpt.get();
-        Optional<Payment> paymentOpt = paymentRepository.findByReservationId(reservationId);
+        var r = reservationOpt.get();
+        var paymentOpt = paymentService.findPaymentByReservationId(reservationId);
 
         StringBuilder sb = new StringBuilder();
         sb.append("**Reservation**: ").append(r.getId()).append("\n");
@@ -86,10 +70,10 @@ public class SupportTools {
             sb.append("- **Tiền gốc**: ").append(r.getOriginalAmount()).append(" VNĐ\n");
         }
 
-        sb.append("- **Đã thanh toán**: ").append(r.getReservationStatus() == ReservationStatus.CONFIRMED ? "Có" : "Chưa").append("\n");
+        sb.append("- **Đã thanh toán**: ").append(Boolean.TRUE.equals(r.getIsPaid()) ? "Có" : "Chưa").append("\n");
 
         if (paymentOpt.isPresent()) {
-            Payment p = paymentOpt.get();
+            PaymentDetailDTO p = paymentOpt.get();
             sb.append("- **Phương thức**: ").append(p.getMethod()).append("\n");
             sb.append("- **Trạng thái thanh toán**: ").append(p.getStatus()).append("\n");
             sb.append("- **Mã GD**: ").append(p.getPaymentIntentId()).append("\n");
@@ -108,14 +92,14 @@ public class SupportTools {
             return "Vui lòng cung cấp mã reservation.";
         }
 
-        Optional<Reservation> reservationOpt = reservationRepository.findById(reservationId);
+        var reservationOpt = reservationService.findReservationDetail(reservationId);
         if (reservationOpt.isEmpty()) {
             return "Không tìm thấy reservation \"" + reservationId + "\".";
         }
 
-        Reservation r = reservationOpt.get();
+        var r = reservationOpt.get();
 
-        if (r.getReservationStatus() == ReservationStatus.CONFIRMED) {
+        if (r.getReservationStatus() == com.dawn.common.core.constant.ReservationStatus.CONFIRMED) {
             reservationService.forceCancelReservation(reservationId);
             return String.format("""
                     Đã hủy reservation **%s** (đã thanh toán).
@@ -132,7 +116,7 @@ public class SupportTools {
                 """, reservationId, reason != null ? reason : "Không có lý do");
     }
 
-    private String formatUser(User user) {
+    private String formatUser(UserResponse user) {
         return String.format("""
                         **User**: %s (ID: %d)
                         - **Email**: %s
@@ -142,12 +126,12 @@ public class SupportTools {
                         - **Vai trò**: %s
                         - **Trạng thái**: %s
                         """,
-                user.getUsername(), user.getId(),
+                user.getUsername(), user.getUserId(),
                 user.getEmail(),
                 user.getUsername(),
                 user.getPhone() != null ? user.getPhone() : "N/A",
                 user.getAddress() != null ? user.getAddress() : "N/A",
-                user.getRoles().stream().map(r -> r.getName().name()).collect(Collectors.joining(", ")),
+                String.join(", ", user.getRole()),
                 user.getIsDeleted() ? "Đã xóa" : "Hoạt động");
     }
 }

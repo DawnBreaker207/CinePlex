@@ -1,21 +1,23 @@
 package com.dawn.booking.service;
 
-import com.dawn.booking.client.MovieClientBookingService;
 import com.dawn.booking.client.SeatClientService;
 import com.dawn.booking.client.ShowtimeClientService;
 import com.dawn.booking.client.UserClientService;
-import com.dawn.booking.client.impl.VoucherClientServiceImpl;
 import com.dawn.booking.dto.request.ReservationHoldSeatRequest;
 import com.dawn.booking.dto.request.ReservationInitRequest;
 import com.dawn.booking.dto.response.*;
 import com.dawn.booking.helper.ReservationNotificationHelper;
 import com.dawn.booking.model.Reservation;
 import com.dawn.booking.repository.ReservationRepository;
+import com.dawn.booking.service.ReservationRedisService;
 import com.dawn.booking.service.impl.ReservationServiceImpl;
+import com.dawn.catalog.api.CatalogModuleApi;
+import com.dawn.catalog.dto.response.VoucherCalculation;
 import com.dawn.common.core.constant.ReservationStatus;
 import com.dawn.common.core.constant.SeatStatus;
 import com.dawn.common.core.exception.wrapper.ResourceNotFoundException;
 import com.dawn.common.core.exception.wrapper.SeatUnavailableException;
+import com.dawn.common.core.service.AuditLogService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -47,13 +49,13 @@ class ReservationServiceImplTest {
     @Mock
     ShowtimeClientService showtimeService;
     @Mock
-    MovieClientBookingService movieService;
+    CatalogModuleApi catalogApi;
     @Mock
     ReservationNotificationHelper notificationHelper;
     @Mock
     ReservationRedisService reservationRedisService;
     @Mock
-    VoucherClientServiceImpl voucherClientService;
+    AuditLogService auditLogService;
 
     @InjectMocks
     ReservationServiceImpl service;
@@ -242,6 +244,7 @@ class ReservationServiceImplTest {
             when(reservationRepository.findById("RES-001")).thenReturn(Optional.empty());
             stubRedisData("RES-001", List.of(101L, 102L));
             doNothing().when(reservationRedisService).validateSeatLocks(any(), any());
+            when(reservationRedisService.tryAcquireProcessingLock("RES-001")).thenReturn(true);
 
             UserDTO user = buildUser(1L);
             when(userService.findById(1L)).thenReturn(user);
@@ -251,6 +254,7 @@ class ReservationServiceImplTest {
 
             ShowtimeDTO showtime = buildShowtime(10L);
             when(showtimeService.findById(10L)).thenReturn(showtime);
+            when(seatService.bookSeats(10L, List.of(101L, 102L), "RES-001")).thenReturn(2);
 
             Reservation saved = buildReservation("RES-001", true);
             when(reservationRepository.saveAndFlush(any())).thenReturn(saved);
@@ -258,8 +262,6 @@ class ReservationServiceImplTest {
             // Side effects — mock to prevent throws
             doNothing().when(notificationHelper).handleNotification(any(), any(), any());
             doNothing().when(reservationRedisService).cleanupRedisLocks(any(), any());
-            doNothing().when(seatService).saveAllSeat(any());
-            when(showtimeService.save(any())).thenReturn(showtime);
 
             service.confirmReservation("RES-001");
 
@@ -276,16 +278,16 @@ class ReservationServiceImplTest {
             when(reservationRepository.findById("RES-001")).thenReturn(Optional.empty());
             stubRedisData("RES-001", List.of(101L));
             doNothing().when(reservationRedisService).validateSeatLocks(any(), any());
+            when(reservationRedisService.tryAcquireProcessingLock("RES-001")).thenReturn(true);
 
             when(userService.findById(1L)).thenReturn(buildUser(1L));
             when(seatService.findByIdWithLock(anyList())).thenReturn(List.of(buildSeat(101L, 10L)));
             ShowtimeDTO showtime = buildShowtime(10L);
             when(showtimeService.findById(10L)).thenReturn(showtime);
+            when(seatService.bookSeats(10L, List.of(101L), "RES-001")).thenReturn(1);
 
             Reservation saved = buildReservation("RES-001", true);
             when(reservationRepository.saveAndFlush(any())).thenReturn(saved);
-            doNothing().when(seatService).saveAllSeat(any());
-            when(showtimeService.save(any())).thenReturn(showtime);
 
             // Email/notification throws
             doThrow(new RuntimeException("SMTP down"))
@@ -305,6 +307,7 @@ class ReservationServiceImplTest {
             when(reservationRepository.findById("RES-001")).thenReturn(Optional.empty());
             stubRedisData("RES-001", List.of(101L));
             doNothing().when(reservationRedisService).validateSeatLocks(any(), any());
+            when(reservationRedisService.tryAcquireProcessingLock("RES-001")).thenReturn(true);
 
             when(userService.findById(1L)).thenReturn(buildUser(1L));
 
@@ -313,6 +316,8 @@ class ReservationServiceImplTest {
             bookedSeat.setStatus(SeatStatus.BOOKED);
             when(seatService.findByIdWithLock(anyList())).thenReturn(List.of(bookedSeat));
             when(showtimeService.findById(10L)).thenReturn(buildShowtime(10L));
+            // CAS book returns 0 rows → unavailable
+            when(seatService.bookSeats(10L, List.of(101L), "RES-001")).thenReturn(0);
 
             assertThatThrownBy(() -> service.confirmReservation("RES-001"))
                     .isInstanceOf(SeatUnavailableException.class);
@@ -336,23 +341,23 @@ class ReservationServiceImplTest {
                     .build();
             when(reservationRedisService.getFromRedis("RES-001")).thenReturn(redisData);
             doNothing().when(reservationRedisService).validateSeatLocks(any(), any());
+            when(reservationRedisService.tryAcquireProcessingLock("RES-001")).thenReturn(true);
 
             when(userService.findById(1L)).thenReturn(buildUser(1L));
             when(seatService.findByIdWithLock(anyList())).thenReturn(List.of(buildSeat(101L, 10L)));
             ShowtimeDTO showtime = buildShowtime(10L); // price = 100_000
             when(showtimeService.findById(10L)).thenReturn(showtime);
+            when(seatService.bookSeats(10L, List.of(101L), "RES-001")).thenReturn(1);
 
-            VoucherDiscountDTO discount = VoucherDiscountDTO.builder()
+            VoucherCalculation discount = VoucherCalculation.builder()
                     .discountAmount(new BigDecimal("10000"))
                     .finalAmount(new BigDecimal("90000"))
                     .build();
-            when(voucherClientService.calculateVoucher(eq("DAWN10"), any())).thenReturn(discount);
-            doNothing().when(voucherClientService).useVoucher(eq("DAWN10"), eq(1L), anyString());
+            when(catalogApi.calculateVoucher(eq("DAWN10"), any())).thenReturn(discount);
+            doNothing().when(catalogApi).useVoucher(eq("DAWN10"), eq(1L), anyString());
 
             Reservation saved = buildReservation("RES-001", true);
             when(reservationRepository.saveAndFlush(any())).thenReturn(saved);
-            doNothing().when(seatService).saveAllSeat(any());
-            when(showtimeService.save(any())).thenReturn(showtime);
             doNothing().when(notificationHelper).handleNotification(any(), any(), any());
             doNothing().when(reservationRedisService).cleanupRedisLocks(any(), any());
 
@@ -374,25 +379,25 @@ class ReservationServiceImplTest {
                     .seatsIds(List.of(101L)).voucherCode("DAWN10").build();
             when(reservationRedisService.getFromRedis("RES-001")).thenReturn(redisData);
             doNothing().when(reservationRedisService).validateSeatLocks(any(), any());
+            when(reservationRedisService.tryAcquireProcessingLock("RES-001")).thenReturn(true);
 
             when(userService.findById(1L)).thenReturn(buildUser(1L));
             when(seatService.findByIdWithLock(anyList())).thenReturn(List.of(buildSeat(101L, 10L)));
             ShowtimeDTO showtime = buildShowtime(10L);
             when(showtimeService.findById(10L)).thenReturn(showtime);
-            when(voucherClientService.calculateVoucher(any(), any())).thenReturn(
-                    VoucherDiscountDTO.builder()
+            when(seatService.bookSeats(10L, List.of(101L), "RES-001")).thenReturn(1);
+            when(catalogApi.calculateVoucher(any(), any())).thenReturn(
+                    VoucherCalculation.builder()
                             .discountAmount(BigDecimal.ZERO)
                             .finalAmount(new BigDecimal("100000"))
                             .build());
 
             // useVoucher throws
             doThrow(new RuntimeException("Voucher service down"))
-                    .when(voucherClientService).useVoucher(anyString(), anyLong(), anyString());
+                    .when(catalogApi).useVoucher(anyString(), anyLong(), anyString());
 
             Reservation saved = buildReservation("RES-001", true);
             when(reservationRepository.saveAndFlush(any())).thenReturn(saved);
-            doNothing().when(seatService).saveAllSeat(any());
-            when(showtimeService.save(any())).thenReturn(showtime);
             doNothing().when(notificationHelper).handleNotification(any(), any(), any());
             doNothing().when(reservationRedisService).cleanupRedisLocks(any(), any());
 
@@ -409,6 +414,7 @@ class ReservationServiceImplTest {
                     .id("RES-001").userId(1L).showtimeId(10L).theaterId(5L)
                     .seatsIds(Collections.emptyList()).build();
             when(reservationRedisService.getFromRedis("RES-001")).thenReturn(redisData);
+            when(reservationRedisService.tryAcquireProcessingLock("RES-001")).thenReturn(true);
 
             assertThatThrownBy(() -> service.confirmReservation("RES-001"))
                     .isInstanceOf(IllegalStateException.class);
@@ -471,7 +477,7 @@ class ReservationServiceImplTest {
 
             service.cancelReservation("RES-001");
 
-            verify(voucherClientService).releaseVoucher(eq("DAWN10"), eq(1L));
+            verify(catalogApi).releaseVoucher(eq("DAWN10"), eq(1L));
         }
 
         @Test
@@ -485,7 +491,7 @@ class ReservationServiceImplTest {
             when(reservationRedisService.getFromRedis("RES-001")).thenReturn(redisData);
             when(seatService.findAllByShowtimeId(10L)).thenReturn(List.of(buildSeat(101L, 10L)));
             doThrow(new RuntimeException("Voucher service down"))
-                    .when(voucherClientService).releaseVoucher(anyString(), anyLong());
+                    .when(catalogApi).releaseVoucher(anyString(), anyLong());
 
             assertThatNoException().isThrownBy(() -> service.cancelReservation("RES-001"));
         }

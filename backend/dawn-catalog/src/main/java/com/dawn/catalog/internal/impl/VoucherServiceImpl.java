@@ -1,4 +1,4 @@
-package com.dawn.catalog.service.impl;
+package com.dawn.catalog.internal.impl;
 
 import com.dawn.catalog.constant.DiscountType;
 import com.dawn.catalog.dto.request.VoucherRequest;
@@ -10,7 +10,7 @@ import com.dawn.catalog.model.UserVoucher;
 import com.dawn.catalog.model.Voucher;
 import com.dawn.catalog.repository.UserVoucherRepository;
 import com.dawn.catalog.repository.VoucherRepository;
-import com.dawn.catalog.service.VoucherService;
+import com.dawn.catalog.internal.VoucherService;
 import com.dawn.common.core.constant.Message;
 import com.dawn.common.core.constant.UserVoucherStatus;
 import com.dawn.common.core.constant.VoucherStatus;

@@ -1,4 +1,4 @@
-package com.dawn.catalog.service.impl;
+package com.dawn.catalog.internal.impl;
 
 import com.dawn.catalog.constant.DiscountType;
 import com.dawn.catalog.dto.request.VoucherRequest;
@@ -7,7 +7,7 @@ import com.dawn.catalog.model.UserVoucher;
 import com.dawn.catalog.model.Voucher;
 import com.dawn.catalog.repository.UserVoucherRepository;
 import com.dawn.catalog.repository.VoucherRepository;
-import com.dawn.catalog.service.VoucherService;
+import com.dawn.catalog.internal.VoucherService;
 import com.dawn.common.core.constant.UserVoucherStatus;
 import com.dawn.common.core.constant.VoucherStatus;
 import com.dawn.common.core.exception.wrapper.InvalidRequestException;
@@ -255,7 +255,7 @@ class VoucherServiceImplTest {
             service.releaseVoucher("TEST10", 1L);
 
             verify(voucherRepository).releaseVoucher("TEST10");
-            verify(userVoucherRepository).markAsAvailable(1L, "TEST10");
+            verify(userVoucherRepository).updateStatusByUserIdAndCode(1L, "TEST10", UserVoucherStatus.AVAILABLE);
         }
     }
 

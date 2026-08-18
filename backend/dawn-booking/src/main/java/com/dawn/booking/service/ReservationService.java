@@ -1,6 +1,7 @@
 package com.dawn.booking.service;
 
 import com.dawn.booking.dto.request.*;
+import com.dawn.booking.dto.response.ReservationDetailResponse;
 import com.dawn.booking.dto.response.ReservationInitResponse;
 import com.dawn.booking.dto.response.ReservationResponse;
 import com.dawn.booking.dto.response.UserReservationResponse;
@@ -8,12 +9,16 @@ import com.dawn.booking.dto.response.VoucherDiscountDTO;
 import com.dawn.common.core.dto.response.ResponsePage;
 import org.springframework.data.domain.Pageable;
 
+import java.util.Optional;
+
 public interface ReservationService {
     ResponsePage<ReservationResponse> findAll(ReservationFilterRequest request, Pageable pageable);
 
     ResponsePage<UserReservationResponse> findByUser(ReservationUserRequest request, Pageable pageable);
 
     ReservationResponse findOne(String id);
+
+    Optional<ReservationDetailResponse> findReservationDetail(String id);
 
     ReservationInitResponse restoreReservation(String id);
 
@@ -26,6 +31,10 @@ public interface ReservationService {
     VoucherDiscountDTO applyVoucher(String reservationId, String code);
 
     void cancelReservation(String reservationId);
+
+    void failReservation(String reservationId);
+
+    void expireReservation(String reservationId);
 
     void forceCancelReservation(String reservationId);
 

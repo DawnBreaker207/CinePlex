@@ -3,6 +3,7 @@ package com.dawn.identity.service.impl;
 import com.dawn.common.core.constant.Message;
 import com.dawn.common.core.constant.URole;
 import com.dawn.common.core.dto.response.ResponsePage;
+import com.dawn.common.core.exception.wrapper.InvalidRequestException;
 import com.dawn.common.core.exception.wrapper.ResourceNotFoundException;
 import com.dawn.identity.dto.request.UserRequest;
 import com.dawn.identity.dto.response.UserResponse;
@@ -92,9 +93,27 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public List<UserResponse> searchUsers(String keyword) {
+        if (keyword == null || keyword.isBlank()) {
+            return List.of();
+        }
+        try {
+            Long id = Long.parseLong(keyword.trim());
+            return userRepository.findById(id)
+                    .map(user -> List.of(UserMappingHelper.map(user)))
+                    .orElseGet(List::of);
+        } catch (NumberFormatException e) {
+            return userRepository.searchByKeyword(keyword.trim())
+                    .stream()
+                    .map(UserMappingHelper::map)
+                    .toList();
+        }
+    }
+
+    @Override
     public boolean existsByRolesName(String roleName) {
         Role role = roleRepository
-                .findByName(URole.valueOf(roleName))
+                .findByName(parseRole(roleName))
                 .orElseThrow(() ->
                         new ResourceNotFoundException(Message.Exception.ROLE_NOT_FOUND));
         return userRepository.existsByRolesName(role.getName());
@@ -103,12 +122,20 @@ public class UserServiceImpl implements UserService {
     @Override
     public Role findByRoleName(String roleName) {
         Role role = roleRepository
-                .findByName(URole.valueOf(roleName))
+                .findByName(parseRole(roleName))
                 .orElseThrow(() ->
                         new ResourceNotFoundException(Message.Exception.ROLE_NOT_FOUND));
         return Role
                 .builder()
                 .name(role.getName())
                 .build();
+    }
+
+    private URole parseRole(String roleName) {
+        try {
+            return URole.valueOf(roleName);
+        } catch (IllegalArgumentException e) {
+            throw new InvalidRequestException(Message.Exception.ROLE_NOT_FOUND);
+        }
     }
 }
