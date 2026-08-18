@@ -7,29 +7,39 @@ import com.dawn.common.core.constant.RabbitMQConstants;
 import com.dawn.common.core.dto.event.PaymentCompletedEvent;
 import com.dawn.common.core.dto.event.PaymentFailedEvent;
 import com.dawn.common.core.exception.wrapper.ResourceNotFoundException;
+import com.dawn.common.core.service.AuditLogService;
 import com.dawn.payment.dto.request.PaymentRequest;
+import com.dawn.payment.dto.response.PaymentDetailDTO;
 import com.dawn.payment.dto.response.PaymentHandlerResponse;
 import com.dawn.payment.dto.response.PaymentResponse;
 import com.dawn.payment.handler.PaymentHandler;
+import com.dawn.payment.model.Outbox;
 import com.dawn.payment.model.Payment;
+import com.dawn.payment.repository.OutboxRepository;
 import com.dawn.payment.repository.PaymentRepository;
 import com.dawn.payment.service.PaymentService;
 import com.dawn.payment.service.ReservationClientService;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
 public class PaymentServiceImpl implements PaymentService {
+
+    private static final String OUTBOX_EVENT_COMPLETED = "RESERVATION_CONFIRMED";
 
     private final List<PaymentHandler> handlers;
 
@@ -38,6 +48,12 @@ public class PaymentServiceImpl implements PaymentService {
     private final ReservationClientService reservationClientService;
 
     private final RabbitTemplate rabbitTemplate;
+
+    private final OutboxRepository outboxRepository;
+
+    private final ObjectMapper objectMapper;
+
+    private final AuditLogService auditLogService;
 
     public PaymentResponse createPayment(PaymentRequest req, String ip) {
         PaymentHandler handler = findHandler(req.getPaymentType());
@@ -50,8 +66,8 @@ public class PaymentServiceImpl implements PaymentService {
                 .amount(BigDecimal.valueOf(req.getAmount()))
                 .method(checkPaymentMethod(req.getPaymentType()))
                 .status(PaymentStatus.PENDING)
-                .method(checkPaymentMethod(req.getPaymentType()))
                 .paymentIntentId(req.getReservationId())
+                .gatewayTxnRef(req.getReservationId())
                 .createdAt(Instant.now())
                 .build();
         paymentRepository.save(payment);
@@ -64,6 +80,7 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
+    @Transactional
     public PaymentHandlerResponse processCallback(String provider, Map<String, String> params) {
         PaymentHandler handler = findHandler(provider);
         String reservationId = handler.getId(params);
@@ -73,6 +90,16 @@ public class PaymentServiceImpl implements PaymentService {
                 .findByReservationId(reservationId)
                 .orElseThrow(() -> new ResourceNotFoundException(Message.Exception.PAYMENT_NOT_FOUND));
 
+        if (!handler.verifySignature(params)) {
+            log.warn("Invalid signature for callback of reservation {}", reservationId);
+            return PaymentHandlerResponse.builder()
+                    .reservationId(reservationId)
+                    .success(false)
+                    .message(Message.Exception.PAYMENT_INVALID_SIGNATURE)
+                    .build();
+        }
+
+        // Idempotency: already PAID (possibly from a duplicate webhook) -> return old result
         if (PaymentStatus.PAID.equals(existing.getStatus())) {
             return PaymentHandlerResponse.builder()
                     .reservationId(reservationId)
@@ -84,17 +111,28 @@ public class PaymentServiceImpl implements PaymentService {
             // Save payment first
             existing.setStatus(PaymentStatus.PAID);
             existing.setMethod(checkPaymentMethod(provider));
-            existing.setCreatedAt(Instant.now());
+            existing.setGatewayTxnRef(handler.getTxnRef(params));
+            existing.setPaidAt(Instant.now());
             paymentRepository.saveAndFlush(existing);
 
-            // Publish event
+            // Write outbox row in the same transaction; OutboxPublisher sends it
             PaymentCompletedEvent event = buildCompleteEvent(existing, provider);
-            rabbitTemplate.convertAndSend(
-                    RabbitMQConstants.EXCHANGE_PAYMENT,
-                    RabbitMQConstants.RK_PAYMENT_COMPLETED,
-                    event);
-            log.info("Published PaymentCompletedEvent for reservation: {}, eventId: {}",
+            String payload;
+            try {
+                payload = objectMapper.writeValueAsString(event);
+            } catch (JsonProcessingException e) {
+                throw new IllegalStateException("Failed to serialize payment event", e);
+            }
+            outboxRepository.save(Outbox.builder()
+                    .eventType(OUTBOX_EVENT_COMPLETED)
+                    .reservationId(reservationId)
+                    .payload(payload)
+                    .build());
+            log.info("Enqueued outbox event for reservation: {}, eventId: {}",
                     reservationId, event.eventId());
+            auditLogService.record("PAYMENT_PAID", "PAYMENT", reservationId,
+                    PaymentStatus.PENDING.name(), PaymentStatus.PAID.name(),
+                    "provider=" + provider + ", txn=" + existing.getGatewayTxnRef());
 
             return PaymentHandlerResponse.builder()
                     .reservationId(reservationId)
@@ -115,6 +153,8 @@ public class PaymentServiceImpl implements PaymentService {
                     RabbitMQConstants.RK_PAYMENT_FAILED,
                     failedEvent);
             log.info("Published PaymentFailedEvent for reservation: {}", reservationId);
+            auditLogService.record("PAYMENT_FAILED", "PAYMENT", reservationId, null,
+                    PaymentStatus.FAILED.name(), "provider=" + provider + ", reason=" + ex.getMessage());
 
             return PaymentHandlerResponse
                     .builder()
@@ -127,13 +167,10 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     public Boolean manualCheck(String provider, String id) {
-
-        PaymentHandler handler = findHandler(provider);
-        if (handler.queryTransactions(id)) {
-            log.info("Retry handler");
-            return true;
-        }
-        return false;
+        return paymentRepository
+                .findByReservationId(id)
+                .map(payment -> payment.getStatus() == PaymentStatus.PAID)
+                .orElse(false);
     }
 
     private PaymentHandler findHandler(String provider) {
@@ -142,6 +179,16 @@ public class PaymentServiceImpl implements PaymentService {
                 .filter(h -> h.supports(provider))
                 .findFirst()
                 .orElseThrow(() -> new ResourceNotFoundException(Message.Exception.PROVIDER_NOT_SUPPORTED));
+    }
+
+    @Override
+    public Optional<PaymentDetailDTO> findPaymentByReservationId(String reservationId) {
+        return paymentRepository.findByReservationId(reservationId)
+                .map(p -> PaymentDetailDTO.builder()
+                        .method(p.getMethod())
+                        .status(p.getStatus())
+                        .paymentIntentId(p.getPaymentIntentId())
+                        .build());
     }
 
     private PaymentMethod checkPaymentMethod(String provider) {

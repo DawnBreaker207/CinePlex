@@ -38,37 +38,3 @@ CREATE TABLE user_voucher (
     INDEX idx_uv_status (status),
     INDEX idx_uv_reservation (reservation_id)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
-
-CREATE TABLE article (
-    id         BIGINT PRIMARY KEY AUTO_INCREMENT,
-    title      VARCHAR(255) NOT NULL,
-    slug       VARCHAR(255) NOT NULL UNIQUE,
-    summary    TEXT,
-    thumbnail  VARCHAR(255),
-    content    LONGTEXT,
-    author_id  BIGINT,
-    status     ENUM('DRAFT','PUBLISHED','ARCHIVED') DEFAULT 'DRAFT',
-    type       ENUM('NEWS','PROMOTION','UNKNOWN')   DEFAULT 'UNKNOWN',
-    views      BIGINT   DEFAULT 0,
-    is_deleted BOOLEAN  DEFAULT FALSE,
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT fk_article_author FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE SET NULL
-) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
-
-CREATE TABLE showtime (
-    id         BIGINT PRIMARY KEY AUTO_INCREMENT,
-    movie_id   BIGINT NOT NULL,
-    room_id    BIGINT NOT NULL,
-    show_date  DATE NOT NULL,
-    show_time  TIME NOT NULL,
-    price      DECIMAL(10,2) NOT NULL DEFAULT 0.00,
-    vip_price  DECIMAL(10,2) NULL,
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT fk_showtime_movie FOREIGN KEY (movie_id) REFERENCES movie(id) ON DELETE CASCADE,
-    CONSTRAINT fk_showtime_room  FOREIGN KEY (room_id)   REFERENCES room(id)   ON DELETE CASCADE,
-    INDEX idx_showtime_movie_id (movie_id),
-    INDEX idx_showtime_room_id (room_id),
-    INDEX idx_showtime_date (show_date)
-) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;

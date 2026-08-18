@@ -2,12 +2,13 @@ CREATE TABLE reservation (
     id              VARCHAR(36) NOT NULL PRIMARY KEY,
     user_id         BIGINT NOT NULL,
     showtime_id     BIGINT NOT NULL,
-    status          ENUM('PENDING','CONFIRMED','CANCELED','REFUNDED') NOT NULL DEFAULT 'PENDING',
+    status          ENUM('PENDING','CONFIRMED','CANCELED','FAILED','EXPIRED','REFUNDED') NOT NULL DEFAULT 'PENDING',
     total_amount    DECIMAL(10,2) NOT NULL DEFAULT 0.00,
     voucher_code    VARCHAR(50) NULL,
     original_amount DECIMAL(10,2) DEFAULT 0,
     discount_amount DECIMAL(10,2) DEFAULT 0,
     expired_at      DATETIME NULL,
+    is_paid         BOOLEAN   DEFAULT FALSE,
     is_deleted      BOOLEAN   DEFAULT FALSE,
     created_at      DATETIME  NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at      DATETIME  NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -16,6 +17,24 @@ CREATE TABLE reservation (
     INDEX idx_reservation_user_id (user_id),
     INDEX idx_reservation_status (status),
     INDEX idx_reservation_showtime_id (showtime_id)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+
+CREATE TABLE seat_instance (
+    id               BIGINT PRIMARY KEY AUTO_INCREMENT,
+    showtime_id      BIGINT NOT NULL,
+    seat_template_id BIGINT NOT NULL,
+    status           ENUM('AVAILABLE','BOOKED','RESERVED') NOT NULL DEFAULT 'AVAILABLE',
+    reserved_until   DATETIME NULL,
+    reservation_id   VARCHAR(36) NULL,
+    price            DECIMAL(10,2) NOT NULL,
+    created_at       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_seat_instance_showtime  FOREIGN KEY (showtime_id)      REFERENCES showtime(id)      ON DELETE CASCADE,
+    CONSTRAINT fk_seat_instance_template  FOREIGN KEY (seat_template_id) REFERENCES seat_template(id) ON DELETE CASCADE,
+    CONSTRAINT fk_seat_instance_reservation FOREIGN KEY (reservation_id) REFERENCES reservation(id)   ON DELETE SET NULL,
+    UNIQUE KEY uk_seat_showtime (showtime_id, seat_template_id),
+    INDEX idx_seat_instance_reservation (reservation_id),
+    INDEX idx_seat_instance_showtime (showtime_id)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 CREATE TABLE ticket (
@@ -35,7 +54,7 @@ CREATE TABLE payment (
     id                BIGINT PRIMARY KEY AUTO_INCREMENT,
     reservation_id    VARCHAR(36) NOT NULL,
     payment_intent_id VARCHAR(255) NOT NULL,
-    gateway_txn_ref   VARCHAR(255) NULL,
+    gateway_txn_ref   VARCHAR(255) NOT NULL,
     gateway_response  JSON NULL,
     amount            DECIMAL(10,2) NOT NULL DEFAULT 0.00,
     method            ENUM('MOMO','VNPAY','ZALOPAY','UNKNOWN') NOT NULL,
@@ -43,6 +62,7 @@ CREATE TABLE payment (
     paid_at           DATETIME NULL,
     created_at        DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at        DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT uk_payment_txn UNIQUE (gateway_txn_ref),
     INDEX idx_payment_reservation (reservation_id),
     INDEX idx_payment_intent (payment_intent_id),
     INDEX idx_payment_status (status)
