@@ -21,7 +21,7 @@ public class PaymentNotificationListener {
             log.info("[Notification] Confirmation email sent for reservation: {}", event.reservationId());
         } catch (Exception e) {
             log.error("[Notification] Failed to send email for reservation {}: {}",
-                    event.reservationId(), e.getMessage());
+                    event.reservationId(), e.getMessage(), e);
             throw e;
         }
 

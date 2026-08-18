@@ -16,6 +16,7 @@ import com.dawn.common.core.constant.Message;
 import com.dawn.common.core.constant.SeatStatus;
 import com.dawn.common.core.exception.wrapper.InternalServiceException;
 import com.dawn.common.core.exception.wrapper.ResourceNotFoundException;
+import com.dawn.common.core.exception.wrapper.SeatUnavailableException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -183,6 +184,29 @@ public class SeatServiceImpl implements SeatService {
         }
 
         seatInstanceRepository.saveAll(existingSeats);
+    }
+
+    @Override
+    @Transactional
+    public int bookSeats(Long showtimeId, List<Long> seatIds, String reservationId) {
+        if (seatIds == null || seatIds.isEmpty()) {
+            throw new SeatUnavailableException(Message.Exception.SEAT_UNAVAILABLE);
+        }
+        int booked = seatInstanceRepository.bookSeats(showtimeId, seatIds, SeatStatus.BOOKED.name(), reservationId);
+        if (booked != seatIds.size()) {
+            log.warn("CAS book failed: expected {} seats, got {} for showtime {}", seatIds.size(), booked, showtimeId);
+            throw new SeatUnavailableException(Message.Exception.SEAT_UNAVAILABLE);
+        }
+        return booked;
+    }
+
+    @Override
+    @Transactional
+    public int unbookSeats(String reservationId, List<Long> seatIds) {
+        if (seatIds == null || seatIds.isEmpty()) {
+            return 0;
+        }
+        return seatInstanceRepository.unbookSeats(reservationId, seatIds);
     }
 
     @Override

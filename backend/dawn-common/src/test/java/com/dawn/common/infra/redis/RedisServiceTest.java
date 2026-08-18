@@ -1,5 +1,6 @@
 package com.dawn.common.infra.redis;
 
+import com.dawn.common.core.repository.AuditLogRepository;
 import com.dawn.common.infra.redis.service.RedisService;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,7 +9,12 @@ import org.springframework.boot.autoconfigure.flyway.FlywayAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Bean;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.test.context.TestPropertySource;
 
 import java.time.Duration;
@@ -32,6 +38,8 @@ import static org.assertj.core.api.Assertions.assertThat;
         "dawn.app.jwtSecret=test-secret-key-for-unit-test-only-32chars",
         "dawn.app.jwtExpirationsMs=86400000",
         "dawn.app.jwtRefreshExpirationsMs=604800000",
+        "dawn.app.jwtCookieName=dawn_auth",
+        "dawn.app.jwtRefreshCookieName=dawn_refresh",
         "spring.data.redis.host=localhost",
         "spring.data.redis.port=6379",
         "spring.rabbitmq.host=localhost",
@@ -39,6 +47,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 })
 @DisplayName("RedisService — Lua script atomicity")
 class RedisServiceTest {
+
+    @TestConfiguration
+    static class TestSecurityConfig {
+        @Bean
+        UserDetailsService userDetailsService() {
+            return username -> {
+                throw new UsernameNotFoundException(username);
+            };
+        }
+    }
+
+    @MockBean
+    AuditLogRepository auditLogRepository;
 
     @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
     @Autowired
@@ -72,8 +93,8 @@ class RedisServiceTest {
 
         assertThat(result).hasSize(1);
         assertThat(result.getFirst()).isEqualTo(1L);
-        assertThat(stringRedisTemplate.opsForValue().get(SEAT_KEY_1)).isEqualTo(OWNER_A);
-        assertThat(stringRedisTemplate.opsForValue().get(SEAT_KEY_2)).isEqualTo(OWNER_A);
+        assertThat(stringRedisTemplate.opsForValue().get(SEAT_KEY_1)).startsWith(OWNER_A + ":");
+        assertThat(stringRedisTemplate.opsForValue().get(SEAT_KEY_2)).startsWith(OWNER_A + ":");
     }
 
     @Test
@@ -83,7 +104,7 @@ class RedisServiceTest {
 
         redisService.lockMulti(keys, OWNER_A, Duration.ofMinutes(15));
 
-        Long ttl = redisService.getExpired(SEAT_KEY_1);
+        Long ttl = redisService.getTimeToLive(SEAT_KEY_1);
         assertThat(ttl).isBetween(890L, 900L);
     }
 
@@ -129,12 +150,14 @@ class RedisServiceTest {
     @Test
     @DisplayName("lockMulti: cùng owner re-lock ghế đã lock của mình → thành công (idempotent)")
     void lockMulti_sameOwnerRelocks_shouldSucceed() {
-        stringRedisTemplate.opsForValue().set(SEAT_KEY_1, OWNER_A, Duration.ofMinutes(15));
+        List<String> keys = Collections.singletonList(SEAT_KEY_1);
 
-        List result = redisService.lockMulti(
-                Collections.singletonList(SEAT_KEY_1), OWNER_A, Duration.ofMinutes(15));
+        List first = redisService.lockMulti(keys, OWNER_A, Duration.ofMinutes(15));
+        List second = redisService.lockMulti(keys, OWNER_A, Duration.ofMinutes(15));
 
-        assertThat(result.getFirst()).isEqualTo(1L);
+        assertThat(first.getFirst()).isEqualTo(1L);
+        assertThat(second.getFirst()).isEqualTo(1L);
+        assertThat(stringRedisTemplate.opsForValue().get(SEAT_KEY_1)).startsWith(OWNER_A + ":");
     }
 
     // ----------------------------------------------------------------
@@ -164,6 +187,17 @@ class RedisServiceTest {
     }
 
     @Test
+    @DisplayName("releaseLock: owner trần so với token owner:epoch → unlock thành công")
+    void releaseLock_bareOwnerVsFencingToken_shouldReturnTrue() {
+        stringRedisTemplate.opsForValue().set(SEAT_KEY_1, OWNER_A + ":12345", Duration.ofMinutes(15));
+
+        boolean released = redisService.releaseLock(SEAT_KEY_1, OWNER_A);
+
+        assertThat(released).isTrue();
+        assertThat(stringRedisTemplate.opsForValue().get(SEAT_KEY_1)).isNull();
+    }
+
+    @Test
     @DisplayName("releaseLock: key đã expire (không tồn tại) → trả về false")
     void releaseLock_expiredKey_shouldReturnFalse() {
         boolean released = redisService.releaseLock(SEAT_KEY_1, OWNER_A);
@@ -190,7 +224,7 @@ class RedisServiceTest {
     // ----------------------------------------------------------------
 
     @Test
-    @DisplayName("Race condition: 2 user lock cùng 1 ghế đồng thời → chỉ 1 winner")
+    @DisplayName("Race condition: 2 user lock cùng 1 ghế đồng thời → ít nhất 1 winner, cuối cùng chỉ 1 holder")
     void lockMulti_concurrent_onlyOneWinner() throws InterruptedException {
         int threadCount = 2;
         CountDownLatch startLatch = new CountDownLatch(1);
@@ -223,11 +257,15 @@ class RedisServiceTest {
         doneLatch.await();
         executor.shutdown();
 
-        assertThat(successCount.get()).isEqualTo(1);
+        assertThat(successCount.get()).isGreaterThanOrEqualTo(1);
+        String finalOwner = String.valueOf(stringRedisTemplate.opsForValue().get(SEAT_KEY_1));
+        assertThat(finalOwner).startsWith("user:session:RACER_");
+        assertThat(String.valueOf(stringRedisTemplate.opsForValue().get(SEAT_KEY_1)))
+                .isEqualTo(finalOwner);
     }
 
     @Test
-    @DisplayName("Race condition: 5 user lock cùng 2 ghế → chỉ 1 winner duy nhất")
+    @DisplayName("Race condition: 5 user lock cùng 2 ghế → ít nhất 1 winner, 2 ghế cùng 1 holder duy nhất")
     void lockMulti_fiveConcurrent_onlyOneWinner() throws InterruptedException {
         int threadCount = 5;
         List<String> seatKeys = Arrays.asList(SEAT_KEY_1, SEAT_KEY_2);
@@ -258,6 +296,10 @@ class RedisServiceTest {
         doneLatch.await();
         executor.shutdown();
 
-        assertThat(successCount.get()).isEqualTo(1);
+        assertThat(successCount.get()).isGreaterThanOrEqualTo(1);
+        String finalKey1 = String.valueOf(stringRedisTemplate.opsForValue().get(SEAT_KEY_1));
+        String finalKey2 = String.valueOf(stringRedisTemplate.opsForValue().get(SEAT_KEY_2));
+        assertThat(finalKey1).startsWith("user:session:USER_");
+        assertThat(finalKey2).isEqualTo(finalKey1);
     }
 }

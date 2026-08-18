@@ -15,11 +15,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -30,43 +33,43 @@ public class TheaterServiceImpl implements TheaterService {
     private final TheaterRepository theaterRepository;
     private final ShowtimeRepository showtimeRepository;
 
+    private Map<Long, List<Long>> showtimeIdsByTheater(List<Long> theaterIds) {
+        return showtimeRepository.findShowtimeByTheaterIds(theaterIds).stream()
+                .collect(Collectors.groupingBy(
+                        row -> (Long) row[0],
+                        Collectors.mapping(row -> (Long) row[1], Collectors.toList())));
+    }
+
+    private ResponsePage<TheaterResponse> mapPage(Page<Theater> page) {
+        List<Long> theaterIds = page.getContent().stream().map(Theater::getId).toList();
+        Map<Long, List<Long>> showtimeIdsByTheater = theaterIds.isEmpty()
+                ? Map.of()
+                : showtimeIdsByTheater(theaterIds);
+        return ResponsePage.of(page.map(theater ->
+                TheaterMappingHelper.map(theater, showtimeIdsByTheater.getOrDefault(theater.getId(), List.of()))));
+    }
+
     @Override
     @Cacheable(value = THEATER_CACHE)
     public ResponsePage<TheaterResponse> findAll(Pageable pageable) {
-
-        return ResponsePage.of(
-                theaterRepository
-                        .findAll(pageable)
-                        .map(theater -> {
-                            List<Long> showtimeIds = showtimeRepository.findShowtimeByTheaterId(theater.getId());
-                            return TheaterMappingHelper.map(theater, showtimeIds);
-                        })
-        );
+        return mapPage(theaterRepository.findAll(pageable));
     }
 
     @Override
     @Cacheable(value = THEATER_CACHE, key = "'location:' + #location")
     public ResponsePage<TheaterResponse> findByLocation(String location, Pageable pageable) {
         log.info("Search theater by location {}", location);
-        return ResponsePage.of(theaterRepository
-                .findByLocationContainingIgnoreCase(location, pageable)
-                .map(theater -> {
-                    List<Long> showtimeIds = showtimeRepository.findShowtimeByTheaterId(theater.getId());
-                    return TheaterMappingHelper.map(theater, showtimeIds);
-                })
-        );
+        return mapPage(theaterRepository.findByLocationContainingIgnoreCase(location, pageable));
     }
 
     @Override
     @Cacheable(value = THEATER_CACHE, key = "'id:' + #id")
     public TheaterResponse findOne(Long id) {
-
         return theaterRepository
                 .findById(id)
-                .map(theater -> {
-                    List<Long> showtimeId = showtimeRepository.findShowtimeByTheaterId(theater.getId());
-                    return TheaterMappingHelper.map(theater, showtimeId);
-                })
+                .map(theater -> TheaterMappingHelper.map(
+                        theater,
+                        showtimeRepository.findShowtimeByTheaterId(theater.getId())))
                 .orElseThrow(() -> new ResourceNotFoundException(Message.Exception.THEATER_NOT_FOUND));
     }
 
@@ -92,6 +95,7 @@ public class TheaterServiceImpl implements TheaterService {
     }
 
     @Override
+    @Transactional
     @CacheEvict(value = THEATER_CACHE, key = "'id:' + #id")
     public void remove(Long id) {
         theaterRepository

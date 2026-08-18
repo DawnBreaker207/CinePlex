@@ -126,6 +126,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
+    @Transactional
     public void changePassword(String email, String oldPassword, String newPassword) {
         User user = userRepository.findByEmail(email).orElseThrow(() -> new ResourceNotFoundException(Message.Exception.EMAIL_NOT_FOUND));
         if (!passwordEncoder.matches(oldPassword, user.getPassword())) {

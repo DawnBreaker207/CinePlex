@@ -32,10 +32,10 @@ public class PaymentCompletedListener {
         log.info("[Booking] PaymentFailedEvent received: reservationId={}, reason={}",
                 event.reservationId(), event.reason());
         try {
-            reservationService.cancelReservation(event.reservationId());
-            log.info("[Booking] Reservation {} cancelled successfully", event.reservationId());
+            reservationService.failReservation(event.reservationId());
+            log.info("[Booking] Reservation {} failed successfully", event.reservationId());
         } catch (Exception e) {
-            log.error("[Booking] Failed to cancel reservation {}: {}", event.reservationId(), e.getMessage());
+            log.error("[Booking] Failed to fail reservation {}: {}", event.reservationId(), e.getMessage());
             throw e;
         }
     }

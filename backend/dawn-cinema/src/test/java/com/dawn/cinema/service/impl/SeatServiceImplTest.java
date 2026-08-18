@@ -2,23 +2,26 @@ package com.dawn.cinema.service.impl;
 
 import com.dawn.cinema.dto.request.SeatRequest;
 import com.dawn.cinema.dto.response.SeatResponse;
-import com.dawn.cinema.helper.SeatMappingHelper;
-import com.dawn.cinema.model.Seat;
+import com.dawn.cinema.model.Room;
+import com.dawn.cinema.model.SeatInstance;
+import com.dawn.cinema.model.SeatTemplate;
 import com.dawn.cinema.model.Showtime;
-import com.dawn.cinema.model.Theater;
-import com.dawn.cinema.repository.SeatRepository;
+import com.dawn.cinema.repository.RoomRepository;
+import com.dawn.cinema.repository.SeatInstanceRepository;
+import com.dawn.cinema.repository.SeatTemplateRepository;
 import com.dawn.cinema.repository.ShowtimeRepository;
 import com.dawn.common.core.constant.SeatStatus;
 import com.dawn.common.core.exception.wrapper.ResourceNotFoundException;
+import com.dawn.common.core.exception.wrapper.SeatUnavailableException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -31,7 +34,13 @@ import static org.mockito.Mockito.*;
 class SeatServiceImplTest {
 
     @Mock
-    SeatRepository seatRepository;
+    SeatInstanceRepository seatInstanceRepository;
+
+    @Mock
+    SeatTemplateRepository seatTemplateRepository;
+
+    @Mock
+    RoomRepository roomRepository;
 
     @Mock
     ShowtimeRepository showtimeRepository;
@@ -39,65 +48,76 @@ class SeatServiceImplTest {
     @InjectMocks
     SeatServiceImpl service;
 
-    private Showtime createShowtime(Long id, Long theaterId, int capacity) {
-        Theater theater = Theater.builder().id(theaterId).capacity(capacity).build();
-        return Showtime.builder().id(id).theater(theater).totalSeats(capacity).availableSeats(capacity).build();
+    private SeatTemplate template(Long id) {
+        return SeatTemplate.builder().id(id).roomId(1L).rowLabel("A").seatNumber(1).seatType("STANDARD").build();
     }
 
-    private Seat createSeat(Long id, String number, SeatStatus status, Showtime showtime) {
-        return Seat.builder().id(id).seatNumber(number).status(status).showtime(showtime).build();
+    private SeatInstance seat(Long id, Long showtimeId, Long templateId, SeatStatus status) {
+        return SeatInstance.builder()
+                .id(id)
+                .showtimeId(showtimeId)
+                .seatTemplateId(templateId)
+                .status(status.name())
+                .price(new BigDecimal("100000"))
+                .build();
     }
 
     // ----------------------------------------------------------------
-    // findByIdWithLock
+    // bookSeats (CAS)
     // ----------------------------------------------------------------
 
     @Nested
-    @DisplayName("findByIdWithLock")
-    class FindByIdWithLock {
+    @DisplayName("bookSeats")
+    class BookSeats {
 
         @Test
-        @DisplayName("call repository with PESSIMISTIC_WRITE lock")
-        void findByIdWithLock_shouldCallRepository() {
-            Showtime showtime = createShowtime(10L, 1L, 100);
-            Seat seat = createSeat(1L, "A1", SeatStatus.AVAILABLE, showtime);
-            when(seatRepository.findByIdWithLock(List.of(1L))).thenReturn(List.of(seat));
+        @DisplayName("all rows matched → return count, no exception")
+        void allMatched_shouldReturnCount() {
+            when(seatInstanceRepository.bookSeats(10L, List.of(1L, 2L), "BOOKED", "RES-001")).thenReturn(2);
 
-            List<SeatResponse> results = service.findByIdWithLock(List.of(1L));
+            int booked = service.bookSeats(10L, List.of(1L, 2L), "RES-001");
 
-            assertThat(results).hasSize(1);
-            assertThat(results.getFirst().getSeatNumber()).isEqualTo("A1");
+            assertThat(booked).isEqualTo(2);
+        }
+
+        @Test
+        @DisplayName("row count mismatch → throw SeatUnavailableException")
+        void mismatch_shouldThrow() {
+            when(seatInstanceRepository.bookSeats(10L, List.of(1L, 2L), "BOOKED", "RES-001")).thenReturn(1);
+
+            assertThatThrownBy(() -> service.bookSeats(10L, List.of(1L, 2L), "RES-001"))
+                    .isInstanceOf(SeatUnavailableException.class);
+        }
+
+        @Test
+        @DisplayName("empty seat list → throw")
+        void emptySeats_shouldThrow() {
+            assertThatThrownBy(() -> service.bookSeats(10L, List.of(), "RES-001"))
+                    .isInstanceOf(SeatUnavailableException.class);
         }
     }
 
     // ----------------------------------------------------------------
-    // findAllByShowtimeId
+    // unbookSeats
     // ----------------------------------------------------------------
 
     @Nested
-    @DisplayName("findAllByShowtimeId")
-    class FindAllByShowtimeId {
+    @DisplayName("unbookSeats")
+    class UnbookSeats {
 
         @Test
-        @DisplayName("return list of seats")
-        void shouldReturnSeats() {
-            Showtime showtime = createShowtime(10L, 1L, 100);
-            Seat seat = createSeat(1L, "A1", SeatStatus.AVAILABLE, showtime);
-            when(seatRepository.findAllByShowtimeId(10L)).thenReturn(List.of(seat));
+        @DisplayName("delegates to repository and returns affected rows")
+        void shouldReturnAffectedRows() {
+            when(seatInstanceRepository.unbookSeats("RES-001", List.of(1L))).thenReturn(1);
 
-            List<SeatResponse> results = service.findAllByShowtimeId(10L);
-
-            assertThat(results).hasSize(1);
+            assertThat(service.unbookSeats("RES-001", List.of(1L))).isEqualTo(1);
         }
 
         @Test
-        @DisplayName("no seats → empty list")
-        void noSeats_shouldReturnEmpty() {
-            when(seatRepository.findAllByShowtimeId(10L)).thenReturn(List.of());
-
-            List<SeatResponse> results = service.findAllByShowtimeId(10L);
-
-            assertThat(results).isEmpty();
+        @DisplayName("empty seat list → 0, no repository call")
+        void emptySeats_shouldReturnZero() {
+            assertThat(service.unbookSeats("RES-001", List.of())).isZero();
+            verify(seatInstanceRepository, never()).unbookSeats(anyString(), anyList());
         }
     }
 
@@ -110,25 +130,23 @@ class SeatServiceImplTest {
     class SaveAllSeat {
 
         @Test
-        @DisplayName("update status to BOOKED")
-        void shouldUpdateSeatStatus() {
-            Showtime showtime = createShowtime(10L, 1L, 100);
-            Seat existing = Seat.builder().id(1L).seatNumber("A1").status(SeatStatus.AVAILABLE).reservationId(null).showtime(showtime).build();
-            when(seatRepository.findAllById(List.of(1L))).thenReturn(List.of(existing));
+        @DisplayName("update status + reservationId on existing seats")
+        void shouldUpdateSeats() {
+            SeatInstance existing = seat(1L, 10L, 5L, SeatStatus.AVAILABLE);
+            when(seatInstanceRepository.findAllById(List.of(1L))).thenReturn(List.of(existing));
 
-            SeatRequest req = SeatRequest.builder().id(1L).status(SeatStatus.BOOKED).reservationId("RES-001").build();
-            service.saveAllSeat(List.of(req));
+            service.saveAllSeat(List.of(SeatRequest.builder().id(1L).status(SeatStatus.BOOKED).reservationId("RES-001").build()));
 
-            assertThat(existing.getStatus()).isEqualTo(SeatStatus.BOOKED);
+            assertThat(existing.getStatus()).isEqualTo("BOOKED");
             assertThat(existing.getReservationId()).isEqualTo("RES-001");
-            verify(seatRepository).saveAll(List.of(existing));
+            verify(seatInstanceRepository).saveAll(List.of(existing));
         }
 
         @Test
-        @DisplayName("empty request → don't call repository")
+        @DisplayName("empty request → no repository call")
         void emptyRequest_shouldNotCallRepository() {
             service.saveAllSeat(List.of());
-            verify(seatRepository, never()).saveAll(any());
+            verify(seatInstanceRepository, never()).saveAll(any());
         }
     }
 
@@ -141,30 +159,33 @@ class SeatServiceImplTest {
     class GetByShowtime {
 
         @Test
-        @DisplayName("seats exist → return list")
+        @DisplayName("seats exist → return mapped list")
         void existingSeats_shouldReturn() {
-            Showtime showtime = createShowtime(10L, 1L, 100);
-            Seat seat = createSeat(1L, "A1", SeatStatus.AVAILABLE, showtime);
+            Showtime showtime = Showtime.builder().id(10L).roomId(1L).build();
             when(showtimeRepository.findById(10L)).thenReturn(Optional.of(showtime));
-            when(seatRepository.findByShowtime(showtime)).thenReturn(List.of(seat));
+            when(seatInstanceRepository.findAllByShowtimeId(10L)).thenReturn(List.of(seat(1L, 10L, 5L, SeatStatus.AVAILABLE)));
+            when(seatTemplateRepository.findByRoomId(1L)).thenReturn(List.of(template(5L)));
 
             List<SeatResponse> results = service.getByShowtime(10L);
 
             assertThat(results).hasSize(1);
-            verify(seatRepository, never()).saveAll(anyList());
+            assertThat(results.getFirst().getSeatNumber()).isEqualTo("A1");
         }
 
         @Test
-        @DisplayName("no seats yet → auto-create")
+        @DisplayName("no seats yet → auto-create from templates")
         void noSeats_shouldAutoCreate() {
-            Showtime showtime = createShowtime(10L, 1L, 100);
+            Showtime showtime = Showtime.builder().id(10L).roomId(1L).price(new BigDecimal("100000")).build();
             when(showtimeRepository.findById(10L)).thenReturn(Optional.of(showtime));
-            when(seatRepository.findByShowtime(showtime)).thenReturn(List.of());
-            when(seatRepository.saveAll(anyList())).thenAnswer(inv -> inv.getArgument(0));
+            when(seatInstanceRepository.findAllByShowtimeId(10L)).thenReturn(List.of());
+            when(roomRepository.findById(1L)).thenReturn(Optional.of(new Room()));
+            when(seatTemplateRepository.findByRoomId(1L)).thenReturn(List.of(template(5L)));
+            when(seatInstanceRepository.saveAll(anyList())).thenAnswer(inv -> inv.getArgument(0));
 
             List<SeatResponse> results = service.getByShowtime(10L);
 
             assertThat(results).isNotEmpty();
+            verify(seatInstanceRepository).saveAll(anyList());
         }
 
         @Test

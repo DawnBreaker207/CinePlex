@@ -13,5 +13,12 @@ public class InternalServiceException extends ApiException {
         super(HttpStatus.BAD_REQUEST, message);
     }
 
+    public InternalServiceException(String message, Throwable cause) {
+        super(HttpStatus.BAD_REQUEST, message, cause);
+    }
+
+    public InternalServiceException(HttpStatus status, String message) {
+        super(status, message);
+    }
 
 }

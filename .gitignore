@@ -3,3 +3,10 @@ data/
 .idea/
 infra/docker/tempo/tempo-data
 notes/
+.opencode/
+.playwright/
+.playwright-mcp/
+.impeccable/
+test-results/
+playwright-report/
+blob-report/

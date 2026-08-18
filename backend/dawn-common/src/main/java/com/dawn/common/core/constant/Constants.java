@@ -22,6 +22,7 @@ public final class Constants {
 
     // ==================== Magic Numbers ====================
     public static final int RESERVATION_HOLD_MINUTES = 15;
+    public static final int PROCESSING_LOCK_TTL_SECONDS = 5;
     public static final int DEFAULT_DASHBOARD_DAYS = 30;
     public static final int RANDOM_NUMBER_LENGTH = 8;
     public static final int BEARER_TOKEN_LENGTH = 7;

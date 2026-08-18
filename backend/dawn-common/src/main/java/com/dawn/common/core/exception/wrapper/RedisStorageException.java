@@ -12,4 +12,8 @@ public class RedisStorageException extends ApiException {
     public RedisStorageException(String message) {
         super(HttpStatus.INTERNAL_SERVER_ERROR, message);
     }
+
+    public RedisStorageException(String message, Throwable cause) {
+        super(HttpStatus.INTERNAL_SERVER_ERROR, message, cause);
+    }
 }

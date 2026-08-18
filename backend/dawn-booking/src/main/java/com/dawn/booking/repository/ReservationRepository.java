@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
+import java.util.List;
 
 @Repository
 public interface ReservationRepository extends JpaRepository<Reservation, String> {
@@ -31,5 +32,7 @@ public interface ReservationRepository extends JpaRepository<Reservation, String
     Page<Reservation> findAllWithFilter(ReservationFilterRequest reservation, Instant startDate, Instant endDate, Pageable pageable);
 
     Page<Reservation> findAllByUserIdAndReservationStatusOrderByCreatedAtDesc(Long userId, ReservationStatus status, Pageable pageable);
+
+    List<Reservation> findAllByReservationStatusAndExpiredAtBefore(ReservationStatus status, Instant expiredAt);
 }
 

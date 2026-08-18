@@ -12,11 +12,13 @@ import com.dawn.common.core.dto.response.ResponseObject;
 import com.dawn.common.core.dto.response.ResponsePage;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import lombok.experimental.FieldDefaults;
 import org.springframework.data.domain.Pageable;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -26,6 +28,7 @@ import java.util.List;
 @Tag(name = "Reservation", description = "Operations related to reservation")
 @RequiredArgsConstructor
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
+@Validated
 public class ReservationController {
 
     ReservationService reservationService;
@@ -70,14 +73,14 @@ public class ReservationController {
     @PostMapping("/init")
     @PreAuthorize("hasRole('USER')")
     @Operation(summary = "Init a reservation", description = "Create a reservation and return Id")
-    public ResponseObject<ReservationInitResponse> reservationInit(@RequestBody ReservationInitRequest reservation) {
+    public ResponseObject<ReservationInitResponse> reservationInit(@Valid @RequestBody ReservationInitRequest reservation) {
         return ResponseObject.success(reservationService.initReservation(reservation));
     }
 
     @PostMapping("/seatHold")
     @PreAuthorize("hasRole('USER')")
     @Operation(summary = "Choose and booking seat", description = "Selected seat place and booking it")
-    public ResponseObject<Void> reservationHoldSeat(@RequestBody ReservationHoldSeatRequest o) {
+    public ResponseObject<Void> reservationHoldSeat(@Valid @RequestBody ReservationHoldSeatRequest o) {
         reservationService.holdReservationSeats(o);
         return ResponseObject.success(null);
     }

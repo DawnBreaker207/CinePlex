@@ -18,6 +18,7 @@ public class RedisPublisher {
             log.info("Successfully publish event {} to channel {}", message.getClass().getSimpleName(), channel);
         } catch (Exception e) {
             log.error("Failed to publish message", e);
+            throw e;
         }
     }
 }

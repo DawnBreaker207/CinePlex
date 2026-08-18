@@ -39,6 +39,9 @@ public class Showtime extends AbstractMappedEntity {
     @Column(name = "show_time", nullable = false)
     private LocalTime showTime;
 
+    @Column(name = "end_time")
+    private LocalTime endTime;
+
     @Column(name = "price", nullable = false)
     private BigDecimal price;
 

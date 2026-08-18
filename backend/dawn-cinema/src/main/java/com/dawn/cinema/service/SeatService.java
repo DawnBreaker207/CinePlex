@@ -26,4 +26,8 @@ public interface SeatService {
     List<SeatResponse> findAllByReservationId(String reservationId);
 
     void saveAllSeat(List<SeatRequest> seatRequests);
+
+    int bookSeats(Long showtimeId, List<Long> seatIds, String reservationId);
+
+    int unbookSeats(String reservationId, List<Long> seatIds);
 }

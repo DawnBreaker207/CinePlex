@@ -50,12 +50,8 @@ public class DataInitializer implements ApplicationRunner {
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
-        try {
-            createAdminAccountIfNotExist();
-            createUserAccountIfNotExist();
-        } catch (Exception e) {
-            log.error("Error initializing admin account", e);
-        }
+        createAdminAccountIfNotExist();
+        createUserAccountIfNotExist();
     }
 
     //    Note: This just for demo, don't use this in production
@@ -85,7 +81,7 @@ public class DataInitializer implements ApplicationRunner {
         log.info("   DEMO ADMIN ACCOUNT CREATED");
         log.info("   Username: {}", adminUsername);
         log.info("   Email: {}", adminEmail);
-        log.info("   Password: {}", adminPassword);
+        log.info("   Password: {} (change it after first login)", "********");
         log.info("========================================");
     }
 
@@ -114,7 +110,7 @@ public class DataInitializer implements ApplicationRunner {
         log.info("   DEMO USER ACCOUNT CREATED");
         log.info("   Username: {}", userUsername);
         log.info("   Email: {}", userEmail);
-        log.info("   Password: {}", userPassword);
+        log.info("   Password: {} (change it after first login)", "********");
         log.info("========================================");
     }
 }

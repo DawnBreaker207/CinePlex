@@ -66,7 +66,7 @@ public class MomoHandler implements PaymentHandler {
     }
 
     @Override
-    public Boolean queryTransactions(String reservationId) {
-        return true;
+    public String getTxnRef(Map<String, String> params) {
+        return params.get("transId");
     }
 }

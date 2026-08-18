@@ -132,7 +132,7 @@ class ApiExceptionHandlerTest {
         ResponseEntity<ExceptionMessage> response = handler.handleIllegalException(ex);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(response.getBody().getMessage()).isEqualTo("Bad input");
+        assertThat(response.getBody().getMessage()).isEqualTo("Invalid request");
     }
 
     @Test

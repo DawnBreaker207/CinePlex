@@ -11,5 +11,5 @@ public interface PaymentHandler {
 
     String getId(Map<String, String> params);
 
-    Boolean queryTransactions(String reservationId);
+    String getTxnRef(Map<String, String> params);
 }

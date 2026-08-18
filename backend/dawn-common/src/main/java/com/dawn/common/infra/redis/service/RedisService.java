@@ -23,15 +23,16 @@ public class RedisService {
 
     private final RedisTemplate<String, Object> redisTemplate;
     private final StringRedisTemplate stringRedisTemplate;
-    private DefaultRedisScript<List> scriptLockMulti;
+    private DefaultRedisScript<List<Object>> scriptLockMulti;
 
     private DefaultRedisScript<Long> scriptDeleteIfEquals;
 
+    @SuppressWarnings({"unchecked", "rawtypes"})
     @PostConstruct
     public void initScript() {
         this.scriptLockMulti = new DefaultRedisScript<>();
         this.scriptLockMulti.setLocation(new ClassPathResource("script/lock_seat.lua"));
-        this.scriptLockMulti.setResultType(List.class);
+        this.scriptLockMulti.setResultType((Class) List.class);
 
         this.scriptDeleteIfEquals = new DefaultRedisScript<>();
         this.scriptDeleteIfEquals.setLocation(new ClassPathResource("script/unlock_seat.lua"));
@@ -68,7 +69,7 @@ public class RedisService {
         return redisTemplate.delete(key);
     }
 
-    public Long getExpired(String key) {
+    public Long getTimeToLive(String key) {
         return redisTemplate.getExpire(key, TimeUnit.SECONDS);
     }
 
@@ -92,16 +93,26 @@ public class RedisService {
         return redisTemplate.execute(script, keys, args);
     }
 
-    public List lockMulti(List<String> keys, String owner, Duration ttl) {
+    public List<Object> lockMulti(List<String> keys, String owner, Duration ttl) {
         if (keys == null || keys.isEmpty()) return Collections.singletonList(1L);
+        String token = owner + ":" + System.currentTimeMillis();
         try {
-            return stringRedisTemplate.execute(
+            List<Object> result = stringRedisTemplate.execute(
                     scriptLockMulti,
                     keys,
-                    owner,
+                    token,
                     String.valueOf(ttl.getSeconds()));
+            if (result != null && !result.isEmpty() && Long.valueOf(1L).equals(result.getFirst())) {
+                keys.forEach(key -> {
+                    Long ttlLeft = getTimeToLive(key);
+                    if (ttlLeft != null && ttlLeft < ttl.getSeconds() * 0.3) {
+                        log.warn("Lock {} sắp hết hạn, còn {}s, transaction chưa xong", key, ttlLeft);
+                    }
+                });
+            }
+            return result;
         } catch (Exception e) {
-            log.error("Redis error: {}", e.getMessage());
+            log.error("Redis error: {}", e.getMessage(), e);
             return Arrays.asList(0L, keys.getFirst(), "System_error");
         }
     }
@@ -116,7 +127,7 @@ public class RedisService {
                     expectedOwner);
             return Long.valueOf(1L).equals(result);
         } catch (Exception e) {
-            log.error("Redis error: {}", e.getMessage());
+            log.error("Redis error: {}", e.getMessage(), e);
             return false;
         }
     }

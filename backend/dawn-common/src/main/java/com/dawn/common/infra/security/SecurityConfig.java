@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -33,7 +34,7 @@ public class SecurityConfig {
     private final CorsConfig corsConfig;
 
     @Autowired(required = false)
-    private final LogoutHandler logoutHandler;
+    private LogoutHandler logoutHandler;
 
     private final AuthTokenFilter authTokenFilter;
 
@@ -83,13 +84,22 @@ public class SecurityConfig {
         config
                 .requestMatchers("/api/v1/auth/**").permitAll()
                 .requestMatchers("/api/v1/notification/**").permitAll()
-                .requestMatchers("/**").permitAll()
+                .requestMatchers("/api/v1/payment/**").permitAll()
+                .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+                .requestMatchers(HttpMethod.GET,
+                        "/api/v1/movie/**",
+                        "/api/v1/article/**",
+                        "/api/v1/theater/**",
+                        "/api/v1/showtime/**",
+                        "/api/v1/seats/**").permitAll()
                 .anyRequest().authenticated();
     }
 
     private void configLogout(LogoutConfigurer<HttpSecurity> config) {
+        if (logoutHandler != null) {
+            config.addLogoutHandler(logoutHandler);
+        }
         config.logoutUrl("/api/v1/auth/logout")
-                .addLogoutHandler(logoutHandler)
                 .logoutSuccessHandler(
                         (req, res, auth) ->
                                 res.setStatus(HttpServletResponse.SC_NO_CONTENT)

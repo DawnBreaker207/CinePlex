@@ -46,7 +46,7 @@ public class ReservationRedisService {
     }
 
     public Long getReservationTtl(String reservationId) {
-        return redisService.getExpired(RedisKeyHelper.reservationHoldKey(reservationId));
+        return redisService.getTimeToLive(RedisKeyHelper.reservationHoldKey(reservationId));
     }
 
     public Map<Object, Object> getReservationData(String reservationId) {
@@ -118,7 +118,7 @@ public class ReservationRedisService {
                 .map(RedisKeyHelper::seatLockKey)
                 .toList();
 
-        List result = redisService.lockMulti(keys, redisKey, HOLD_TIMEOUT);
+        List<Object> result = redisService.lockMulti(keys, redisKey, HOLD_TIMEOUT);
 
         if (result == null || result.isEmpty() || result.getFirst() == null) {
             log.error("Lua script returned null or empty result for reservation {}", redisKey);
@@ -175,7 +175,8 @@ public class ReservationRedisService {
                 log.warn("Lock expired for seat {} in reservation {}", seatId, reservationId);
             } else {
                 String lockOwnerStr = lockOwner.toString();
-                if (!lockOwnerStr.equals(redisKey)) {
+                // Lock value is now a fencing token "<owner>:<epoch>", compare against the base key
+                if (!lockOwnerStr.equals(redisKey) && !lockOwnerStr.startsWith(redisKey + ":")) {
                     stolenLocks.add(seatId);
                     log.warn("Lock stolen for seat {} in reservation {}, Current owner: {}", seatId, reservationId, lockOwner);
                 }
@@ -278,6 +279,16 @@ public class ReservationRedisService {
                 .build();
     }
 
+    //    Processing lock (short TTL, guards the DB write in confirmReservation)
+    public boolean tryAcquireProcessingLock(String reservationId) {
+        return redisService.setIfAbsent("processing:" + reservationId, reservationId,
+                Duration.ofSeconds(Constants.PROCESSING_LOCK_TTL_SECONDS));
+    }
+
+    public void releaseProcessingLock(String reservationId) {
+        redisService.delete("processing:" + reservationId);
+    }
+
     public List<Long> parseSeatIdsFromReservationData(Map<Object, Object> reservationData) {
         try {
             String currentSeatsJson = (String) reservationData.get(Constants.REDIS_SEAT_IDS);
@@ -327,6 +338,11 @@ public class ReservationRedisService {
                 Long seatId = showtimeSeatIds.get(i);
 
                 String reservationKey = value.toString();
+                // Strip optional fencing epoch suffix, then extract the reservation id after the last ":"
+                int lastColon = reservationKey.lastIndexOf(":");
+                if (lastColon >= 0 && reservationKey.substring(lastColon + 1).chars().allMatch(Character::isDigit)) {
+                    reservationKey = reservationKey.substring(0, lastColon);
+                }
                 String reservationId = reservationKey.substring(reservationKey.lastIndexOf(":") + 1);
 
                 seatState.add(SseDTO.builder().seatId(seatId).reservationId(reservationId).build());

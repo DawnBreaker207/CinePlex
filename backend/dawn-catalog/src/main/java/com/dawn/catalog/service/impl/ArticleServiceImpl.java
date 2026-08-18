@@ -8,6 +8,7 @@ import com.dawn.catalog.repository.ArticleRepository;
 import com.dawn.catalog.service.ArticleService;
 import com.dawn.common.core.dto.response.ResponsePage;
 import com.dawn.common.core.exception.wrapper.ResourceNotFoundException;
+import com.dawn.common.core.utils.SecurityUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -15,7 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-class ArticleServiceImpl implements ArticleService {
+public class ArticleServiceImpl implements ArticleService {
 
     private final ArticleRepository articleRepository;
 
@@ -39,7 +40,10 @@ class ArticleServiceImpl implements ArticleService {
     public ArticleResponse create(ArticleRequest req) {
         Article article = ArticleMappingHelper.map(req);
 
-        article.setAuthorId(1L);
+        Long authorId = SecurityUtils.getCurrentUserId();
+        if (authorId != null) {
+            article.setAuthorId(authorId);
+        }
         article.setSlug(generateSlug(article.getTitle()));
 
         return ArticleMappingHelper.map(articleRepository.save(article));
@@ -70,6 +74,8 @@ class ArticleServiceImpl implements ArticleService {
     }
 
     private String generateSlug(String title) {
-        return title.toLowerCase().replace(" ", "-");
+        return title.toLowerCase()
+                .replace(" ", "-")
+                .replaceAll("[^a-zA-Z0-9-]", "");
     }
 }

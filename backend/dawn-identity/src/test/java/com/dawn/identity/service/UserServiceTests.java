@@ -14,6 +14,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;
@@ -46,13 +47,14 @@ public class UserServiceTests {
     @Test
     public void findAll_GivenUserExist_WhenCalled_ThenReturnsUserList() {
         // Arrange
+        Pageable pageable = PageRequest.of(0, 10);
         when(userRepository
-                .findAll(Pageable.unpaged()))
-                .thenReturn(new PageImpl<>(List.of(user)));
+                .findAll(pageable))
+                .thenReturn(new PageImpl<>(List.of(user), pageable, 1));
 
         // Act
         List<UserResponse> result = userService
-                .findAll(Pageable.unpaged())
+                .findAll(pageable)
                 .getContent();
 
         // Assert
@@ -61,24 +63,25 @@ public class UserServiceTests {
         assertEquals(user.getUsername(), result.getFirst().getUsername());
         assertEquals(user.getEmail(), result.getFirst().getEmail());
         verify(userRepository, times(1))
-                .findAll();
+                .findAll(pageable);
     }
 
     @Test
     public void findAll_GivenNoUserExist_WhenCalled_ThenReturnsEmptyList() {
         // Arrange
+        Pageable pageable = PageRequest.of(0, 10);
         when(userRepository
-                .findAll())
-                .thenReturn(List.of());
+                .findAll(pageable))
+                .thenReturn(new PageImpl<>(List.of(), pageable, 0));
         List<UserResponse> result = userService
-                .findAll(Pageable.unpaged())
+                .findAll(pageable)
                 .getContent();
 
         // Act & Assert
         assertNotNull(result);
         assertTrue(result.isEmpty());
         verify(userRepository, times(1))
-                .findAll();
+                .findAll(pageable);
     }
 
     @Test
@@ -180,7 +183,8 @@ public class UserServiceTests {
         //  Assert
         assertNotNull(result);
         assertEquals("updatedUser", result.getUsername());
-        assertEquals("updated@gmail.com", result.getEmail());
+        assertEquals("updated@gmail.com", result.getAvatar());
+        assertEquals("test@gmail.com", result.getEmail());
         verify(userRepository, times(1))
                 .findById(1L);
         verify(userRepository, times(1))

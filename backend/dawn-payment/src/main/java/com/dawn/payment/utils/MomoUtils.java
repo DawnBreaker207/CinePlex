@@ -3,16 +3,17 @@ package com.dawn.payment.utils;
 import com.dawn.payment.config.payment.MomoConfig;
 import com.dawn.common.core.exception.wrapper.InternalServiceException;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
-@Component
 @Slf4j
-public class MomoUtils {
+public final class MomoUtils {
+
+    private MomoUtils() {
+    }
 
     public static String buildRawSignature(Map<String, String> params, String accessKey) {
         return String.format(

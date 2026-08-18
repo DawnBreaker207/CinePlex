@@ -26,6 +26,10 @@ public class Room extends AbstractMappedEntity {
     @Column(name = "name", nullable = false)
     private String name;
 
+    @Column(name = "room_type", nullable = false)
+    @Builder.Default
+    private String roomType = "2D";
+
     @Column(name = "total_seats", nullable = false)
     @Builder.Default
     private Integer totalSeats = 0;

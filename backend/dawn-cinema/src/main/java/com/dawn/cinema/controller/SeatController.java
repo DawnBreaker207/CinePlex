@@ -1,11 +1,14 @@
 package com.dawn.cinema.controller;
 
+import com.dawn.cinema.dto.request.SeatBookingRequest;
 import com.dawn.cinema.dto.request.SeatRequest;
+import com.dawn.cinema.dto.request.SeatUnbookingRequest;
 import com.dawn.cinema.dto.response.SeatResponse;
 import com.dawn.cinema.service.SeatService;
 import com.dawn.common.core.dto.response.ResponseObject;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -69,8 +72,18 @@ public class SeatController {
 
 
     @PostMapping("/saveAll")
-    public ResponseObject<Void> saveAllSeat(@RequestBody List<SeatRequest> seats) {
+    public ResponseObject<Void> saveAllSeat(@RequestBody @Valid List<SeatRequest> seats) {
         seatService.saveAllSeat(seats);
         return ResponseObject.deleted();
+    }
+
+    @PostMapping("/book")
+    public ResponseObject<Integer> bookSeats(@RequestBody @Valid SeatBookingRequest request) {
+        return ResponseObject.success(seatService.bookSeats(request.getShowtimeId(), request.getSeatIds(), request.getReservationId()));
+    }
+
+    @PostMapping("/unbook")
+    public ResponseObject<Integer> unbookSeats(@RequestBody @Valid SeatUnbookingRequest request) {
+        return ResponseObject.success(seatService.unbookSeats(request.getReservationId(), request.getSeatIds()));
     }
 }

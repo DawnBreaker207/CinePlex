@@ -15,7 +15,9 @@ import java.io.IOException;
 import java.util.Base64;
 
 @Slf4j
-public class BarcodeUtils {
+public final class BarcodeUtils {
+
+    private BarcodeUtils() {}
 
     public static String generateCode128(String text, int width, int height) {
         try {

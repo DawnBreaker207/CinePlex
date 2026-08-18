@@ -14,6 +14,8 @@ import java.util.Map;
 @Slf4j
 public class VNPayHandler implements PaymentHandler {
 
+    private static final long VND_MULTIPLIER = 100L;
+
     private final VNPayConfig VNPayConfig;
 
     @Override
@@ -24,7 +26,7 @@ public class VNPayHandler implements PaymentHandler {
     @Override
     public String createPaymentUrl(String reservationId, Integer totalAmount, String ipAddress) {
         Map<String, String> vnpParamsMap = VNPayConfig.getVNPayConfig();
-        long amount = totalAmount * 100L;
+        long amount = totalAmount * VND_MULTIPLIER;
 
         //  Config default bankCode
         //  This bank code is fixed, you can change it
@@ -62,7 +64,7 @@ public class VNPayHandler implements PaymentHandler {
     }
 
     @Override
-    public Boolean queryTransactions(String reservationId) {
-        return true;
+    public String getTxnRef(Map<String, String> params) {
+        return params.get("vnp_TransactionNo");
     }
 }

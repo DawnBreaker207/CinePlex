@@ -48,6 +48,10 @@ public class Reservation extends AbstractMappedEntity {
     @Column(name = "expired_at")
     private Instant expiredAt;
 
+    @Column(name = "is_paid", nullable = false)
+    @Builder.Default
+    private Boolean isPaid = false;
+
     @Column(name = "is_deleted", nullable = false)
     @Builder.Default
     private Boolean isDeleted = false;

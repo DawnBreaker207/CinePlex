@@ -22,6 +22,8 @@ public class Message {
         public static final String RESERVATION_PAST_SHOWTIME = "Cannot reserve seats for past showtime";
         public static final String RESERVATION_NOT_ENOUGH_SEATS = "Not enough available seats. Request: {0}, Available: {1}";
         public static final String RESERVATION_INVALID_DATA = "Invalid reservation data";
+        public static final String RESERVATION_INVALID_STATUS = "Reservation is not in a confirmable state";
+        public static final String RESERVATION_PROCESSING = "Reservation is being processed, please try again";
         public static final String RESERVATION_SEATS_NOT_FOUND_DB = "Some seats not found in database";
         public static final String SEAT_WRONG_SHOWTIME = "Seats {0} do not belong to the requested showtime";
         public static final String FAILED_STORE_SEAT = "Failed to store seat information. Please try again";
@@ -71,6 +73,7 @@ public class Message {
         public static final String PROVIDER_NOT_SUPPORTED = "Provider not supported";
         public static final String DASHBOARD_CAN_NOT_GET_DATA = "Can not get data dashboard";
         public static final String PAYMENT_INTERNAL_ERROR = "Internal Error";
+        public static final String PAYMENT_INVALID_SIGNATURE = "Invalid payment signature";
         public static final String CAN_NOT_FIND_USER_BY_USERNAME = "Can not find this user";
         public static final String USER_CANNOT_UPDATE_SELF = "You can't update yourself";
         public static final String PERMISSION_NOT_ENOUGH = "You permission not enough (Must higher than this person)";

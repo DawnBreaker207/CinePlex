@@ -79,56 +79,58 @@ public class ReportServiceImpl implements ReportService {
 
             // Load file
             InputStream reportStream = new ClassPathResource("/report.jrxml").getInputStream();
-            JasperReport jasperReport = JasperCompileManager.compileReport(reportStream);
-            log.info("report stream: {}", reportStream);
+            try (reportStream) {
+                JasperReport jasperReport = JasperCompileManager.compileReport(reportStream);
+                log.info("report stream: {}", reportStream);
 
-            // Fill report
-            JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, parameters, new JREmptyDataSource());
+                // Fill report
+                JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, parameters, new JREmptyDataSource());
 
-            // Export by format
-            byte[] reportBytes;
-            String filename;
-            String contentType;
+                // Export by format
+                byte[] reportBytes;
+                String filename;
+                String contentType;
 
-            if ("html".equalsIgnoreCase(reportFormat)) {
-                ByteArrayOutputStream out = new ByteArrayOutputStream();
-                HtmlExporter exporter = new HtmlExporter();
-                exporter.setExporterInput(new SimpleExporterInput(jasperPrint));
-                exporter.setExporterOutput(new SimpleHtmlExporterOutput(out));
-                exporter.exportReport();
-                reportBytes = out.toByteArray();
-                filename = "report.html";
-                contentType = "text/html";
-            } else if ("pdf".equalsIgnoreCase(reportFormat)) {
-                reportBytes = JasperExportManager.exportReportToPdf(jasperPrint);
-                filename = "report.pdf";
-                contentType = "application/pdf";
-            } else if ("excel".equalsIgnoreCase(reportFormat)) {
-                ByteArrayOutputStream out = new ByteArrayOutputStream();
-                JRXlsxExporter exporter = new JRXlsxExporter();
-                exporter.setExporterInput(new SimpleExporterInput(jasperPrint));
-                exporter.setExporterOutput(new SimpleOutputStreamExporterOutput(out));
+                if ("html".equalsIgnoreCase(reportFormat)) {
+                    ByteArrayOutputStream out = new ByteArrayOutputStream();
+                    HtmlExporter exporter = new HtmlExporter();
+                    exporter.setExporterInput(new SimpleExporterInput(jasperPrint));
+                    exporter.setExporterOutput(new SimpleHtmlExporterOutput(out));
+                    exporter.exportReport();
+                    reportBytes = out.toByteArray();
+                    filename = "report.html";
+                    contentType = "text/html";
+                } else if ("pdf".equalsIgnoreCase(reportFormat)) {
+                    reportBytes = JasperExportManager.exportReportToPdf(jasperPrint);
+                    filename = "report.pdf";
+                    contentType = "application/pdf";
+                } else if ("excel".equalsIgnoreCase(reportFormat)) {
+                    ByteArrayOutputStream out = new ByteArrayOutputStream();
+                    JRXlsxExporter exporter = new JRXlsxExporter();
+                    exporter.setExporterInput(new SimpleExporterInput(jasperPrint));
+                    exporter.setExporterOutput(new SimpleOutputStreamExporterOutput(out));
 
-                SimpleXlsxReportConfiguration config = new SimpleXlsxReportConfiguration();
-                config.setOnePagePerSheet(false);
-                config.setDetectCellType(true);
-                config.setCollapseRowSpan(false);
-                config.setIgnoreGraphics(false);
-                exporter.setConfiguration(config);
+                    SimpleXlsxReportConfiguration config = new SimpleXlsxReportConfiguration();
+                    config.setOnePagePerSheet(false);
+                    config.setDetectCellType(true);
+                    config.setCollapseRowSpan(false);
+                    config.setIgnoreGraphics(false);
+                    exporter.setConfiguration(config);
 
-                exporter.exportReport();
-                exporter.reset();
-                reportBytes = out.toByteArray();
-                filename = "report.xlsx";
-                contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-                out.close();
-            } else {
-                throw new IllegalArgumentException("Unsupported report format: " + reportFormat);
+                    exporter.exportReport();
+                    exporter.reset();
+                    reportBytes = out.toByteArray();
+                    filename = "report.xlsx";
+                    contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+                    out.close();
+                } else {
+                    throw new IllegalArgumentException("Unsupported report format: " + reportFormat);
+                }
+
+                return new ReportResponse(reportBytes, filename, contentType);
             }
-
-            return new ReportResponse(reportBytes, filename, contentType);
         } catch (JRException | IOException ex) {
-            throw new InternalServiceException(ex.getMessage());
+            throw new InternalServiceException("Failed to export report", ex);
         }
     }
 }

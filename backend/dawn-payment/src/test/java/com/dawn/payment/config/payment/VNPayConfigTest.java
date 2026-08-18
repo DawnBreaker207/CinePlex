@@ -38,7 +38,6 @@ class VNPayConfigTest {
                 .containsKey("vnp_Command")
                 .containsKey("vnp_TmnCode")
                 .containsKey("vnp_CurrCode")
-                .containsKey("vnp_TxnRef")
                 .containsKey("vnp_OrderInfo")
                 .containsKey("vnp_OrderType")
                 .containsKey("vnp_Locale")
@@ -48,11 +47,11 @@ class VNPayConfigTest {
     }
 
     @Test
-    @DisplayName("getVNPayConfig → vnp_TxnRef is 8-digit number")
-    void getVNPayConfig_txnRef_shouldBe8Digits() {
+    @DisplayName("getVNPayConfig → không set sẵn vnp_TxnRef (handler gán = reservationId)")
+    void getVNPayConfig_txnRef_shouldNotBeSetByConfig() {
         Map<String, String> params = config.getVNPayConfig();
 
-        assertThat(params.get("vnp_TxnRef")).matches("\\d{8}");
+        assertThat(params).doesNotContainKey("vnp_TxnRef");
     }
 
     @Test

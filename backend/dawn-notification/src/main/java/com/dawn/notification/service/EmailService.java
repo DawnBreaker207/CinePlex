@@ -50,7 +50,7 @@ public class EmailService {
             mailSender.send(messagePreparator);
             log.info("Email notification sent!");
         } catch (MailException ex) {
-            log.error("Exception occurred when sending email to {} with message: {}", event.to(), ex.getMessage());
+            log.error("Exception occurred when sending email to {} with message: {}", event.to(), ex.getMessage(), ex);
         }
 
     }
