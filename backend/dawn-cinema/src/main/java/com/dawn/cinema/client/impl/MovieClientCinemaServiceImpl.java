@@ -2,7 +2,7 @@ package com.dawn.cinema.client.impl;
 
 import com.dawn.cinema.client.MovieClientCinemaService;
 import com.dawn.cinema.dto.response.MovieDTO;
-import com.dawn.common.core.constant.Message;
+import com.dawn.common.core.constant.ErrorCode;
 import com.dawn.common.core.dto.response.ResponseObject;
 import com.dawn.common.core.exception.wrapper.InternalServiceException;
 import com.dawn.common.core.exception.wrapper.ResourceNotFoundException;
@@ -37,10 +37,10 @@ public class MovieClientCinemaServiceImpl implements MovieClientCinemaService {
                 .body(ids)
                 .retrieve()
                 .onStatus(HttpStatusCode::is4xxClientError, (req, res) -> {
-                    throw new ResourceNotFoundException(Message.Exception.MOVIE_NOT_FOUND);
+                    throw new ResourceNotFoundException(ErrorCode.MOVIE_NOT_FOUND.format());
                 })
                 .onStatus(HttpStatusCode::is5xxServerError, (req, res) -> {
-                    throw new InternalServiceException(Message.Exception.INTERNAL_SERVICE_ERROR);
+                    throw new InternalServiceException(ErrorCode.INTERNAL_SERVICE_ERROR.format());
                 })
                 .body(new ParameterizedTypeReference<>() {
                 });
@@ -58,10 +58,10 @@ public class MovieClientCinemaServiceImpl implements MovieClientCinemaService {
                 .get()
                 .uri(url + "/movie/{id}", id)
                 .retrieve().onStatus(HttpStatusCode::is4xxClientError, (req, res) -> {
-                    throw new ResourceNotFoundException(Message.Exception.MOVIE_NOT_FOUND);
+                    throw new ResourceNotFoundException(ErrorCode.MOVIE_NOT_FOUND.format());
                 })
                 .onStatus(HttpStatusCode::is5xxServerError, (req, res) -> {
-                    throw new InternalServiceException(Message.Exception.INTERNAL_SERVICE_ERROR);
+                    throw new InternalServiceException(ErrorCode.INTERNAL_SERVICE_ERROR.format());
                 })
                 .body(new ParameterizedTypeReference<>() {
                 });
@@ -69,6 +69,6 @@ public class MovieClientCinemaServiceImpl implements MovieClientCinemaService {
         if (response != null && response.getData() != null) {
             return response.getData();
         }
-        throw new ResourceNotFoundException(Message.Exception.MOVIE_NOT_FOUND);
+        throw new ResourceNotFoundException(ErrorCode.MOVIE_NOT_FOUND.format());
     }
 }

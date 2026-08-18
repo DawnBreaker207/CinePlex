@@ -10,7 +10,7 @@ import com.dawn.cinema.model.*;
 import com.dawn.cinema.repository.*;
 import com.dawn.cinema.service.ShowtimeService;
 import com.dawn.common.core.constant.Constants;
-import com.dawn.common.core.constant.Message;
+import com.dawn.common.core.constant.ErrorCode;
 import com.dawn.common.core.constant.SeatStatus;
 import com.dawn.common.core.dto.response.ResponsePage;
 import com.dawn.common.core.exception.wrapper.ResourceNotFoundException;
@@ -81,7 +81,7 @@ public class ShowtimeServiceImpl implements ShowtimeService {
         log.info("Fetching showtime for theater id: {}", req.getTheaterId());
         Theater theater = theaterRepository
                 .findById(req.getTheaterId())
-                .orElseThrow(() -> new ResourceNotFoundException(Message.Exception.THEATER_NOT_FOUND));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.THEATER_NOT_FOUND.format()));
         Page<Showtime> showtimePage = showtimeRepository
                 .findByTheater(theater.getId(), start, end, pageable);
         List<Long> movieIds = showtimePage.getContent()
@@ -164,9 +164,12 @@ public class ShowtimeServiceImpl implements ShowtimeService {
                 .map(showtime -> {
                     MovieDTO movie = movieService.findOne(showtime.getMovieId());
                     Theater theater = resolveTheater(showtime.getRoomId());
-                    return ShowtimeMappingHelper.map(showtime, movie, theater);
+                    ShowtimeResponse response = ShowtimeMappingHelper.map(showtime, movie, theater);
+                    response.setAvailableSeats(
+                            (int) seatInstanceRepository.findByShowtimeIdAndStatus(id, SeatStatus.AVAILABLE.name()).size());
+                    return response;
                 })
-                .orElseThrow(() -> new ResourceNotFoundException(Message.Exception.SHOWTIME_NOT_FOUND));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.SHOWTIME_NOT_FOUND.format()));
     }
 
     @Override
@@ -179,7 +182,7 @@ public class ShowtimeServiceImpl implements ShowtimeService {
 
         Theater theater = theaterRepository
                 .findById(showtimeRequest.getTheaterId())
-                .orElseThrow(() -> new ResourceNotFoundException(Message.Exception.THEATER_NOT_FOUND));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.THEATER_NOT_FOUND.format()));
 
         List<Room> rooms = roomRepository.findByTheaterId(theater.getId());
         if (rooms.isEmpty()) {
@@ -212,7 +215,7 @@ public class ShowtimeServiceImpl implements ShowtimeService {
         log.info("Updating showtime with id: {}", id);
         Showtime showtime = showtimeRepository
                 .findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException(Message.Exception.THEATER_NOT_FOUND));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.THEATER_NOT_FOUND.format()));
 
         MovieDTO movie = movieService
                 .findOne(showtimeDetails.getMovieId());
@@ -252,7 +255,7 @@ public class ShowtimeServiceImpl implements ShowtimeService {
         log.info("Deleting showtime with id: {}", id);
         Showtime showtime = showtimeRepository
                 .findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException(Message.Exception.SHOWTIME_NOT_FOUND));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.SHOWTIME_NOT_FOUND.format()));
 
         List<SeatInstance> seats = seatInstanceRepository.findAllByShowtimeId(id);
 

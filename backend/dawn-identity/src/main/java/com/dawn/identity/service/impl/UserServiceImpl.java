@@ -1,6 +1,6 @@
 package com.dawn.identity.service.impl;
 
-import com.dawn.common.core.constant.Message;
+import com.dawn.common.core.constant.ErrorCode;
 import com.dawn.common.core.constant.URole;
 import com.dawn.common.core.dto.response.ResponsePage;
 import com.dawn.common.core.exception.wrapper.InvalidRequestException;
@@ -56,7 +56,7 @@ public class UserServiceImpl implements UserService {
         return userRepository
                 .findById(id)
                 .map(UserMappingHelper::map)
-                .orElseThrow(() -> new ResourceNotFoundException(Message.Exception.USER_NOT_FOUND));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.USER_NOT_FOUND.format()));
     }
 
     @Override
@@ -65,7 +65,7 @@ public class UserServiceImpl implements UserService {
         return userRepository
                 .findByEmail(email)
                 .map(UserMappingHelper::map)
-                .orElseThrow(() -> new ResourceNotFoundException(Message.Exception.USER_NOT_FOUND));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.USER_NOT_FOUND.format()));
     }
 
 
@@ -75,7 +75,7 @@ public class UserServiceImpl implements UserService {
     public UserResponse update(Long id, UserRequest userDetails) {
         var user = userRepository
                 .findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException(Message.Exception.USER_NOT_FOUND));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.USER_NOT_FOUND.format()));
         user.setUsername(userDetails.getUsername());
         user.setAvatar(userDetails.getAvatar());
         return UserMappingHelper.map(userRepository.save(user));
@@ -87,8 +87,8 @@ public class UserServiceImpl implements UserService {
     public UserResponse updateStatus(Long id, Boolean status) {
         var user = userRepository
                 .findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException(Message.Exception.USER_NOT_FOUND));
-        user.setIsDeleted(status);
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.USER_NOT_FOUND.format()));
+        user.setIsActive(status);
         return UserMappingHelper.map(userRepository.save(user));
     }
 
@@ -115,7 +115,7 @@ public class UserServiceImpl implements UserService {
         Role role = roleRepository
                 .findByName(parseRole(roleName))
                 .orElseThrow(() ->
-                        new ResourceNotFoundException(Message.Exception.ROLE_NOT_FOUND));
+                        new ResourceNotFoundException(ErrorCode.ROLE_NOT_FOUND.format()));
         return userRepository.existsByRolesName(role.getName());
     }
 
@@ -124,7 +124,7 @@ public class UserServiceImpl implements UserService {
         Role role = roleRepository
                 .findByName(parseRole(roleName))
                 .orElseThrow(() ->
-                        new ResourceNotFoundException(Message.Exception.ROLE_NOT_FOUND));
+                        new ResourceNotFoundException(ErrorCode.ROLE_NOT_FOUND.format()));
         return Role
                 .builder()
                 .name(role.getName())
@@ -135,7 +135,7 @@ public class UserServiceImpl implements UserService {
         try {
             return URole.valueOf(roleName);
         } catch (IllegalArgumentException e) {
-            throw new InvalidRequestException(Message.Exception.ROLE_NOT_FOUND);
+            throw new InvalidRequestException(ErrorCode.ROLE_NOT_FOUND.format());
         }
     }
 }

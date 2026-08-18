@@ -1,6 +1,6 @@
 package com.dawn.identity.service.impl;
 
-import com.dawn.common.core.constant.Message;
+import com.dawn.common.core.constant.ErrorCode;
 import com.dawn.common.core.constant.URole;
 import com.dawn.common.core.exception.wrapper.PermissionDeniedException;
 import com.dawn.common.core.exception.wrapper.ResourceAlreadyExistedException;
@@ -49,38 +49,64 @@ public class AuthServiceImpl implements AuthService {
 
     private final RefreshTokenService refreshTokenService;
 
+    private final com.dawn.common.core.service.AuditLogService auditLogService;
+
     @Override
     @Transactional
     public void register(RegisterRequest newUser) {
 
-        userRepository
-                .findByEmail(newUser.getEmail())
-                .ifPresent(u -> {
-                    throw new ResourceAlreadyExistedException(Message.Exception.EMAIL_EXISTED);
-                });
+        User existing = null;
 
-        userRepository
-                .findByUsername(newUser.getUsername())
-                .ifPresent((u) -> {
-                    throw new ResourceAlreadyExistedException(Message.Exception.USERNAME_EXISTED);
-                });
+        var byEmail = userRepository.findByEmail(newUser.getEmail());
+        if (byEmail.isPresent()) {
+            if (byEmail.get().getIsActive()) {
+                throw new ResourceAlreadyExistedException(ErrorCode.EMAIL_EXISTED.format());
+            }
+            existing = byEmail.get();
+        }
 
-        User user = User
-                .builder()
-                .username(newUser.getUsername())
-                .email(newUser.getEmail())
-                .password(passwordEncoder.encode(newUser.getPassword()))
-                .build();
+        var byUsername = userRepository.findByUsername(newUser.getUsername());
+        if (byUsername.isPresent()) {
+            if (byUsername.get().getIsActive()) {
+                throw new ResourceAlreadyExistedException(ErrorCode.USERNAME_EXISTED.format());
+            }
+            if (existing != null && !existing.getId().equals(byUsername.get().getId())) {
+                throw new ResourceAlreadyExistedException(ErrorCode.EMAIL_EXISTED.format());
+            }
+            existing = byUsername.get();
+        }
 
         Role userRole = roleRepository
                 .findByName(URole.USER)
-                .orElseThrow(() -> new ResourceNotFoundException(Message.Exception.ROLE_NOT_FOUND));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.ROLE_NOT_FOUND.format()));
 
-        user.setRoles(Set.of(userRole));
+        if (existing == null) {
+            User user = User
+                    .builder()
+                    .username(newUser.getUsername())
+                    .email(newUser.getEmail())
+                    .password(passwordEncoder.encode(newUser.getPassword()))
+                    .build();
 
-        userRepository.save(user);
+            user.setRoles(Set.of(userRole));
 
-        log.info("User registered successfully: {}", newUser.getUsername());
+            userRepository.save(user);
+
+            log.info("User registered successfully: {}", newUser.getUsername());
+            return;
+        }
+
+        existing.setUsername(newUser.getUsername());
+        existing.setEmail(newUser.getEmail());
+        existing.setPassword(passwordEncoder.encode(newUser.getPassword()));
+        existing.setIsActive(true);
+        existing.getRoles().clear();
+        existing.getRoles().add(userRole);
+        userRepository.save(existing);
+
+        auditLogService.record("USER_REACTIVATED", "USER", existing.getId().toString(),
+                "INACTIVE", "ACTIVE", "username=" + newUser.getUsername());
+        log.info("User reactivated: {}", newUser.getUsername());
     }
 
     @Override
@@ -93,7 +119,7 @@ public class AuthServiceImpl implements AuthService {
                 ? userRepository
                 .findByEmail(identifier)
                 .orElseThrow(() ->
-                        new ResourceNotFoundException(Message.Exception.EMAIL_NOT_FOUND))
+                        new ResourceNotFoundException(ErrorCode.EMAIL_NOT_FOUND.format()))
                 .getEmail()
                 : identifier;
         Authentication authentication = authenticationManager
@@ -128,9 +154,9 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public void changePassword(String email, String oldPassword, String newPassword) {
-        User user = userRepository.findByEmail(email).orElseThrow(() -> new ResourceNotFoundException(Message.Exception.EMAIL_NOT_FOUND));
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new ResourceNotFoundException(ErrorCode.EMAIL_NOT_FOUND.format()));
         if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
-            throw new PermissionDeniedException(Message.Exception.PASSWORD_NOT_MATCH);
+            throw new PermissionDeniedException(ErrorCode.PASSWORD_NOT_MATCH.format());
         }
 
         user.setPassword(passwordEncoder.encode(newPassword));
@@ -141,7 +167,7 @@ public class AuthServiceImpl implements AuthService {
     @Transactional
     public TokenRefreshResponse refreshToken(String refreshToken) {
         if (refreshToken == null || refreshToken.isEmpty()) {
-            throw new ResourceNotFoundException(Message.Exception.REFRESH_TOKEN_EXPIRED);
+            throw new ResourceNotFoundException(ErrorCode.REFRESH_TOKEN_EXPIRED.format());
         }
         return refreshTokenService.findByToken(refreshToken)
                 .map(refreshTokenService::verifyExpiration)
@@ -153,6 +179,6 @@ public class AuthServiceImpl implements AuthService {
                             .accessToken(jwtCookie)
                             .build();
                 })
-                .orElseThrow(() -> new ResourceNotFoundException(Message.Exception.REFRESH_TOKEN_NOT_FOUND));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.REFRESH_TOKEN_NOT_FOUND.format()));
     }
 }

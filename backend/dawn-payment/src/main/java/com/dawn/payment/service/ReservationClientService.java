@@ -1,6 +1,6 @@
 package com.dawn.payment.service;
 
-import com.dawn.common.core.constant.Message;
+import com.dawn.common.core.constant.ErrorCode;
 import com.dawn.common.core.dto.response.ResponseObject;
 import com.dawn.common.core.exception.wrapper.InternalServiceException;
 import com.dawn.common.core.exception.wrapper.ResourceNotFoundException;
@@ -30,10 +30,10 @@ public class ReservationClientService {
                 .uri(url + "/reservation/confirm/{reservationId}", reservationId)
                 .retrieve()
                 .onStatus(HttpStatusCode::is4xxClientError, (req, res) -> {
-                    throw new ResourceNotFoundException(Message.Exception.RESERVATION_NOT_FOUND);
+                    throw new ResourceNotFoundException(ErrorCode.RESERVATION_NOT_FOUND.format());
                 })
                 .onStatus(HttpStatusCode::is5xxServerError, (req, res) -> {
-                    throw new InternalServiceException(Message.Exception.INTERNAL_SERVICE_ERROR);
+                    throw new InternalServiceException(ErrorCode.INTERNAL_SERVICE_ERROR.format());
                 })
                 .body(new ParameterizedTypeReference<>() {
                 });
@@ -41,7 +41,7 @@ public class ReservationClientService {
         if (response != null && response.getData() != null) {
             return response.getData();
         }
-        throw new ResourceNotFoundException(Message.Exception.RESERVATION_NOT_FOUND);
+        throw new ResourceNotFoundException(ErrorCode.RESERVATION_NOT_FOUND.format());
     }
 
     @Retry(name = "internal")
@@ -51,10 +51,10 @@ public class ReservationClientService {
                 .uri(url + "/reservation/{reservationId}/cancel", reservationId)
                 .retrieve()
                 .onStatus(HttpStatusCode::is4xxClientError, (req, res) -> {
-                    throw new ResourceNotFoundException(Message.Exception.RESERVATION_NOT_FOUND);
+                    throw new ResourceNotFoundException(ErrorCode.RESERVATION_NOT_FOUND.format());
                 })
                 .onStatus(HttpStatusCode::is5xxServerError, (req, res) -> {
-                    throw new InternalServiceException(Message.Exception.INTERNAL_SERVICE_ERROR);
+                    throw new InternalServiceException(ErrorCode.INTERNAL_SERVICE_ERROR.format());
                 })
                 .body(new ParameterizedTypeReference<>() {
                 });

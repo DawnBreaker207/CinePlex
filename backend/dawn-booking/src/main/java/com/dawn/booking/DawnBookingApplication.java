@@ -4,7 +4,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
-@SpringBootApplication(scanBasePackages = {"com.dawn.booking", "com.dawn.catalog.internal", "com.dawn.common"})
+@SpringBootApplication(scanBasePackages = {"com.dawn.booking", "com.dawn.catalog.internal", "com.dawn.cinema.internal", "com.dawn.identity.internal", "com.dawn.common"})
 @EnableScheduling
 public class DawnBookingApplication {
 

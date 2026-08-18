@@ -40,7 +40,7 @@ public class SeatTemplate extends AbstractMappedEntity {
     @Builder.Default
     private Integer posY = 0;
 
-    @Column(name = "is_deleted", nullable = false)
+    @Column(name = "is_active", nullable = false)
     @Builder.Default
-    private Boolean isDeleted = false;
+    private Boolean isActive = true;
 }

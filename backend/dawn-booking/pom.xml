@@ -28,6 +28,10 @@
             <artifactId>dawn-identity</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.dawn.backend</groupId>
+            <artifactId>dawn-cinema</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <scope>provided</scope>

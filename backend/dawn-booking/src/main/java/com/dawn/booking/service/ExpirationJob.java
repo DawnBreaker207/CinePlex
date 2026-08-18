@@ -17,7 +17,7 @@ import java.util.List;
 public class ExpirationJob {
 
     private final ReservationRepository reservationRepository;
-    private final ReservationService reservationService;
+    private final ReservationLifecycleService reservationService;
 
     @Scheduled(fixedDelayString = "${app.expiration.scan-interval-ms:60000}")
     public void expirePendingReservations() {

@@ -1,8 +1,7 @@
 package com.dawn.booking.service;
 
 import com.dawn.booking.dto.response.ReservationRedisDTO;
-import com.dawn.booking.dto.response.SeatDTO;
-import com.dawn.common.core.constant.SeatStatus;
+import com.dawn.cinema.dto.response.SeatResponse;import com.dawn.common.core.constant.SeatStatus;
 import com.dawn.common.core.exception.wrapper.RedisStorageException;
 import com.dawn.common.core.exception.wrapper.ReservationExpiredException;
 import com.dawn.common.core.exception.wrapper.SeatUnavailableException;
@@ -129,7 +128,7 @@ class ReservationRedisServiceTest {
         @DisplayName("lock success → return list of seatIds")
         void acquireSeatLock_success_shouldReturnSeatIds() {
             List<Long> seatIds = List.of(1L, 2L);
-            List<SeatDTO> seats = buildSeats(seatIds);
+            List<SeatResponse> seats = buildSeats(seatIds);
 
             when(redisService.lockMulti(anyList(), anyString(), any()))
                     .thenReturn(List.of(1L));
@@ -143,7 +142,7 @@ class ReservationRedisServiceTest {
         @DisplayName("lock fails — seat taken → throw SeatUnavailableException with seat number")
         void acquireSeatLock_seatTaken_shouldThrowWithSeatNumber() {
             List<Long> seatIds = List.of(1L, 2L);
-            List<SeatDTO> seats = buildSeats(seatIds);
+            List<SeatResponse> seats = buildSeats(seatIds);
             // seat:locked:2 is taken
             when(redisService.lockMulti(anyList(), anyString(), any()))
                     .thenReturn(Arrays.asList(0L, "seat:locked:2", "reservation:data:OTHER"));
@@ -158,7 +157,7 @@ class ReservationRedisServiceTest {
         @DisplayName("lockMulti returns null → throw SeatUnavailableException")
         void acquireSeatLock_nullResult_shouldThrow() {
             List<Long> seatIds = List.of(1L);
-            List<SeatDTO> seats = buildSeats(seatIds);
+            List<SeatResponse> seats = buildSeats(seatIds);
 
             when(redisService.lockMulti(anyList(), anyString(), any())).thenReturn(null);
 
@@ -235,7 +234,7 @@ class ReservationRedisServiceTest {
         @DisplayName("correct owner cleanup → delete all locks and reservation key")
         void cleanupRedisLocks_shouldDeleteAllLocksAndReservationKey() {
             String reservationId = "RES-001";
-            List<SeatDTO> seats = buildSeats(List.of(1L, 2L));
+            List<SeatResponse> seats = buildSeats(List.of(1L, 2L));
             String redisKey = RedisKeyHelper.reservationHoldKey(reservationId);
 
             when(redisService.releaseLock(any(), eq(redisKey))).thenReturn(true);
@@ -325,10 +324,10 @@ class ReservationRedisServiceTest {
     // Helper
     // ----------------------------------------------------------------
 
-    private List<SeatDTO> buildSeats(List<Long> seatIds) {
-        List<SeatDTO> seats = new ArrayList<>();
+    private List<SeatResponse> buildSeats(List<Long> seatIds) {
+        List<SeatResponse> seats = new ArrayList<>();
         for (Long id : seatIds) {
-            SeatDTO seat = SeatDTO.builder()
+            SeatResponse seat = SeatResponse.builder()
                     .id(id)
                     .seatNumber("A" + id)
                     .status(SeatStatus.AVAILABLE)

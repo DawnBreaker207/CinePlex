@@ -12,7 +12,7 @@ import com.dawn.cinema.repository.SeatInstanceRepository;
 import com.dawn.cinema.repository.SeatTemplateRepository;
 import com.dawn.cinema.repository.ShowtimeRepository;
 import com.dawn.cinema.service.SeatService;
-import com.dawn.common.core.constant.Message;
+import com.dawn.common.core.constant.ErrorCode;
 import com.dawn.common.core.constant.SeatStatus;
 import com.dawn.common.core.exception.wrapper.InternalServiceException;
 import com.dawn.common.core.exception.wrapper.ResourceNotFoundException;
@@ -46,7 +46,7 @@ public class SeatServiceImpl implements SeatService {
         log.info("Fetching seats for showtime id: {}", showtimeId);
         Showtime showtime = showtimeRepository
                 .findById(showtimeId)
-                .orElseThrow(() -> new ResourceNotFoundException(Message.Exception.SHOWTIME_NOT_FOUND));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.SHOWTIME_NOT_FOUND.format()));
 
         List<SeatInstance> seats = seatInstanceRepository.findAllByShowtimeId(showtimeId);
 
@@ -73,7 +73,7 @@ public class SeatServiceImpl implements SeatService {
 
         Showtime showtime = showtimeRepository
                 .findById(showtimeId)
-                .orElseThrow(() -> new ResourceNotFoundException(Message.Exception.THEATER_NOT_FOUND));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.THEATER_NOT_FOUND.format()));
 
         List<SeatInstance> allSeats = seatInstanceRepository.findAllByShowtimeId(showtimeId);
         if (allSeats.isEmpty()) {
@@ -190,12 +190,12 @@ public class SeatServiceImpl implements SeatService {
     @Transactional
     public int bookSeats(Long showtimeId, List<Long> seatIds, String reservationId) {
         if (seatIds == null || seatIds.isEmpty()) {
-            throw new SeatUnavailableException(Message.Exception.SEAT_UNAVAILABLE);
+            throw new SeatUnavailableException(ErrorCode.SEAT_UNAVAILABLE.format());
         }
         int booked = seatInstanceRepository.bookSeats(showtimeId, seatIds, SeatStatus.BOOKED.name(), reservationId);
         if (booked != seatIds.size()) {
             log.warn("CAS book failed: expected {} seats, got {} for showtime {}", seatIds.size(), booked, showtimeId);
-            throw new SeatUnavailableException(Message.Exception.SEAT_UNAVAILABLE);
+            throw new SeatUnavailableException(ErrorCode.SEAT_UNAVAILABLE.format());
         }
         return booked;
     }
@@ -253,12 +253,28 @@ public class SeatServiceImpl implements SeatService {
             return SeatResponse.builder()
                     .id(seatInstance.getId())
                     .showtimeId(seatInstance.getShowtimeId())
+                    .status(toSeatStatus(seatInstance.getStatus()))
+                    .reservationId(seatInstance.getReservationId())
                     .build();
         }
         return SeatResponse.builder()
                 .id(seatInstance.getId())
                 .showtimeId(seatInstance.getShowtimeId())
                 .seatNumber(template.getRowLabel() + template.getSeatNumber())
+                .status(toSeatStatus(seatInstance.getStatus()))
+                .reservationId(seatInstance.getReservationId())
                 .build();
+    }
+
+    private SeatStatus toSeatStatus(String status) {
+        if (status == null || status.isBlank()) {
+            return null;
+        }
+        try {
+            return SeatStatus.valueOf(status);
+        } catch (IllegalArgumentException e) {
+            log.warn("Unknown seat status '{}', mapping to AVAILABLE", status);
+            return SeatStatus.AVAILABLE;
+        }
     }
 }

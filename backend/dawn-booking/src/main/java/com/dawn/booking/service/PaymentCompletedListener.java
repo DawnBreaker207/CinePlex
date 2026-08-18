@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @RequiredArgsConstructor
 public class PaymentCompletedListener {
-    private final ReservationService reservationService;
+    private final ReservationLifecycleService reservationService;
 
     @RabbitListener(queues = RabbitMQConstants.QUEUE_BOOKING_PAYMENT_COMPLETED)
     public void onPaymentCompleted(PaymentCompletedEvent event) {

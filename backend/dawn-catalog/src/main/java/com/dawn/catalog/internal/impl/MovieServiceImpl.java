@@ -8,7 +8,7 @@
     import com.dawn.catalog.model.Movie;
     import com.dawn.catalog.repository.GenreRepository;
     import com.dawn.catalog.repository.MovieRepository;
-    import com.dawn.common.core.constant.Message;
+    import com.dawn.common.core.constant.ErrorCode;
     import com.dawn.common.core.dto.response.ResponsePage;
     import com.dawn.common.core.exception.wrapper.ResourceAlreadyExistedException;
     import com.dawn.common.core.exception.wrapper.ResourceNotFoundException;
@@ -62,7 +62,7 @@
             return movieRepository
                     .findById(id)
                     .map(MovieMappingHelper::map)
-                    .orElseThrow(() -> new ResourceNotFoundException(Message.Exception.MOVIE_NOT_FOUND));
+                    .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.MOVIE_NOT_FOUND.format()));
         }
 
         @Override
@@ -71,7 +71,7 @@
             return movieRepository
                     .findByFilmId(id)
                     .map(MovieMappingHelper::map)
-                    .orElseThrow(() -> new ResourceNotFoundException(Message.Exception.MOVIE_NOT_FOUND));
+                    .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.MOVIE_NOT_FOUND.format()));
         }
 
         @Override
@@ -84,7 +84,7 @@
             movieRepository
                     .findByFilmId(String.valueOf(m.getFilmId()))
                     .ifPresent((movie) -> {
-                        throw new ResourceAlreadyExistedException(Message.Exception.MOVIE_EXISTED);
+                        throw new ResourceAlreadyExistedException(ErrorCode.MOVIE_EXISTED.format());
                     });
             Set<Genre> genres = getOrCreateGenres(m.getGenres());
             Movie movie = MovieMappingHelper.map(m);
@@ -102,7 +102,7 @@
 
             Movie movie = movieRepository
                     .findById(id)
-                    .orElseThrow(() -> new ResourceNotFoundException(Message.Exception.MOVIE_NOT_FOUND));
+                    .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.MOVIE_NOT_FOUND.format()));
 
             Set<Genre> genres = getOrCreateGenres(movieDetails.getGenres());
 
@@ -131,7 +131,7 @@
         public void delete(Long id) {
             movieRepository
                     .findById(id)
-                    .orElseThrow(() -> new ResourceNotFoundException(Message.Exception.MOVIE_NOT_FOUND));
+                    .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.MOVIE_NOT_FOUND.format()));
 
             movieRepository.deleteById(id);
         }

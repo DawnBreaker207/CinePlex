@@ -26,7 +26,7 @@ public class Theater extends AbstractMappedEntity {
     @Column(name = "location", nullable = false)
     private String location;
 
-    @Column(name = "is_deleted", nullable = false)
+    @Column(name = "is_active", nullable = false)
     @Builder.Default
-    private Boolean isDeleted = false;
+    private Boolean isActive = true;
 }

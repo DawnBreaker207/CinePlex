@@ -1,6 +1,6 @@
 package com.dawn.ai.service;
 
-import com.dawn.booking.service.ReservationService;
+import com.dawn.booking.service.ReservationLifecycleService;
 import com.dawn.identity.dto.response.UserResponse;
 import com.dawn.identity.service.UserService;
 import com.dawn.payment.dto.response.PaymentDetailDTO;
@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 public class SupportTools {
 
     private final UserService userService;
-    private final ReservationService reservationService;
+    private final ReservationLifecycleService reservationService;
     private final PaymentService paymentService;
 
     @Tool("""
@@ -132,6 +132,6 @@ public class SupportTools {
                 user.getPhone() != null ? user.getPhone() : "N/A",
                 user.getAddress() != null ? user.getAddress() : "N/A",
                 String.join(", ", user.getRole()),
-                user.getIsDeleted() ? "Đã xóa" : "Hoạt động");
+                user.getIsActive() ? "Hoạt động" : "Đã xóa");
     }
 }

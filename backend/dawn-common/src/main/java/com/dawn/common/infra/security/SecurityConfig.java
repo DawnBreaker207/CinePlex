@@ -91,7 +91,8 @@ public class SecurityConfig {
                         "/api/v1/article/**",
                         "/api/v1/theater/**",
                         "/api/v1/showtime/**",
-                        "/api/v1/seats/**").permitAll()
+                        "/api/v1/seats/**",
+                        "/api/v1/rooms/**").permitAll()
                 .anyRequest().authenticated();
     }
 

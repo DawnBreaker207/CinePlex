@@ -1,6 +1,5 @@
 package com.dawn.identity.dto.request;
 
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -18,7 +17,7 @@ public class LoginRequest {
     private String identifier;
 
     @NotBlank(message = "Password is not mandatory")
-    @Min(value = 6, message = "Password is required 8 characters above")
+    @Size(min = 8, message = "Password is required 8 characters above")
     private String password;
 
 }

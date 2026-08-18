@@ -5,9 +5,12 @@ import com.dawn.booking.dto.request.ReservationHoldSeatRequest;
 import com.dawn.booking.dto.request.ReservationInitRequest;
 import com.dawn.booking.dto.request.ReservationUserRequest;
 import com.dawn.booking.dto.response.*;
+import com.dawn.booking.service.ReservationLifecycleService;
 import com.dawn.booking.service.ReservationRedisService;
-import com.dawn.booking.service.ReservationService;
-import com.dawn.booking.client.SeatClientService;
+import com.dawn.booking.service.SeatHoldService;
+import com.dawn.booking.service.VoucherApplicationService;
+import com.dawn.cinema.api.CinemaModuleApi;
+import com.dawn.cinema.dto.response.SeatResponse;
 import com.dawn.common.core.dto.response.ResponseObject;
 import com.dawn.common.core.dto.response.ResponsePage;
 import io.swagger.v3.oas.annotations.Operation;
@@ -31,12 +34,16 @@ import java.util.List;
 @Validated
 public class ReservationController {
 
-    ReservationService reservationService;
+    ReservationLifecycleService reservationService;
+
+    SeatHoldService seatHoldService;
+
+    VoucherApplicationService voucherApplicationService;
 
     ReservationRedisService redisService;
 
 
-    SeatClientService seatClientService;
+    CinemaModuleApi seatClientService;
     @GetMapping("")
     @PreAuthorize("hasRole('ADMIN') or hasRole('MODERATOR')")
     @Operation(summary = "Get all reservation with conditions", description = "Returns reservation with condition filters (Admin Only)")
@@ -60,28 +67,28 @@ public class ReservationController {
     @PostMapping("/{reservationId}/voucher")
     @Operation(summary = "Apply voucher", description = "Apply a voucher code to the current reservation session")
     public ResponseObject<VoucherDiscountDTO> applyVoucher(@PathVariable String reservationId, @RequestParam String code) {
-        return ResponseObject.success(reservationService.applyVoucher(reservationId, code));
+        return ResponseObject.success(voucherApplicationService.applyVoucher(reservationId, code));
     }
 
 
     @GetMapping("/{reservationId}/restore")
     @Operation(summary = "Restore a reservation", description = "Restore a reservation and return data")
     public ResponseObject<ReservationInitResponse> restoreReservation(@PathVariable String reservationId) {
-        return ResponseObject.success(reservationService.restoreReservation(reservationId));
+        return ResponseObject.success(seatHoldService.restoreReservation(reservationId));
     }
 
     @PostMapping("/init")
     @PreAuthorize("hasRole('USER')")
     @Operation(summary = "Init a reservation", description = "Create a reservation and return Id")
     public ResponseObject<ReservationInitResponse> reservationInit(@Valid @RequestBody ReservationInitRequest reservation) {
-        return ResponseObject.success(reservationService.initReservation(reservation));
+        return ResponseObject.success(seatHoldService.initReservation(reservation));
     }
 
     @PostMapping("/seatHold")
     @PreAuthorize("hasRole('USER')")
     @Operation(summary = "Choose and booking seat", description = "Selected seat place and booking it")
     public ResponseObject<Void> reservationHoldSeat(@Valid @RequestBody ReservationHoldSeatRequest o) {
-        reservationService.holdReservationSeats(o);
+        seatHoldService.holdReservationSeats(o);
         return ResponseObject.success(null);
     }
 
@@ -104,9 +111,9 @@ public class ReservationController {
     public List<SseDTO> getLockedSeats(@PathVariable Long showtimeId) {
 
         List<Long> allShowtimeSeatIds =  seatClientService
-                .findAllByShowtimeId(showtimeId)
+                .findSeatsByShowtime(showtimeId)
                 .stream()
-                .map(SeatDTO::getId)
+                .map(SeatResponse::getId)
                 .toList();
         return redisService.getLockedSeatsByShowtime(showtimeId, allShowtimeSeatIds);
     }

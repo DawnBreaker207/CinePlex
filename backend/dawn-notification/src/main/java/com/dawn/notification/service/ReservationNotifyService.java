@@ -1,6 +1,6 @@
 package com.dawn.notification.service;
 
-import com.dawn.common.core.constant.Message;
+import com.dawn.common.core.constant.ErrorCode;
 import com.dawn.common.core.exception.wrapper.ResourceNotFoundException;
 import com.dawn.notification.dto.SeatDTO;
 import lombok.RequiredArgsConstructor;
@@ -27,13 +27,13 @@ public class ReservationNotifyService {
         List<SeatDTO> response = restClient
                 .get()
                 .uri(url + "/reservation/showtimes/{showtimeId}/locked-seats", showtimeId).retrieve().onStatus(HttpStatusCode::is4xxClientError, (req, res) -> {
-                    throw new ResourceNotFoundException(Message.Exception.USER_NOT_FOUND);
+                    throw new ResourceNotFoundException(ErrorCode.USER_NOT_FOUND.format());
                 })
                 .body(new ParameterizedTypeReference<>() {
                 });
         if (response != null) {
             return response;
         }
-        throw new ResourceNotFoundException(Message.Exception.RESERVATION_NOT_FOUND);
+        throw new ResourceNotFoundException(ErrorCode.RESERVATION_NOT_FOUND.format());
     }
 }

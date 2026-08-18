@@ -6,11 +6,12 @@ CREATE TABLE users (
     avatar        VARCHAR(255),
     address       VARCHAR(255),
     phone         VARCHAR(50),
-    is_deleted    BOOLEAN   DEFAULT FALSE,
+    is_active    BOOLEAN   NOT NULL DEFAULT TRUE,
     created_at    DATETIME  NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at    DATETIME  NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_email (email),
-    INDEX idx_username (username)
+    INDEX idx_username (username),
+    INDEX idx_user_username_active (username, is_active)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 CREATE TABLE roles (

@@ -23,7 +23,7 @@ public interface TheaterMappingHelper {
                 .name(theater.getName())
                 .location(theater.getLocation())
                 .showtime(showtimeId)
-                .isDeleted(theater.getIsDeleted())
+                .isActive(theater.getIsActive())
                 .createdAt(theater.getCreatedAt())
                 .updatedAt(theater.getUpdatedAt())
                 .build();

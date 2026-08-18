@@ -1,6 +1,6 @@
 package com.dawn.payment.handler;
 
-import com.dawn.common.core.constant.Message;
+import com.dawn.common.core.constant.ErrorCode;
 import com.dawn.payment.config.payment.MomoConfig;
 import com.dawn.payment.utils.MomoUtils;
 import com.dawn.common.core.exception.wrapper.InternalServiceException;
@@ -48,7 +48,7 @@ public class MomoHandler implements PaymentHandler {
                 .body(new ParameterizedTypeReference<>() {
                 });
         if (response == null || response.get("payUrl") == null) {
-            throw new InternalServiceException(Message.Exception.MOMO_PAYMENT_FAILED);
+            throw new InternalServiceException(ErrorCode.MOMO_PAYMENT_FAILED.format());
         }
         return (String) response.get("payUrl");
     }

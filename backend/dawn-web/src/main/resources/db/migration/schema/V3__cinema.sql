@@ -2,11 +2,12 @@ CREATE TABLE theater (
     id         BIGINT PRIMARY KEY AUTO_INCREMENT,
     name       VARCHAR(255) NOT NULL UNIQUE,
     location   VARCHAR(255),
-    is_deleted BOOLEAN   DEFAULT FALSE,
+    is_active  BOOLEAN   NOT NULL DEFAULT TRUE,
     created_at DATETIME  NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME  NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_name (name),
-    INDEX idx_is_deleted (is_deleted)
+    INDEX idx_is_active (is_active),
+    INDEX idx_theater_name_active (name, is_active)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 CREATE TABLE room (
@@ -15,12 +16,13 @@ CREATE TABLE room (
     name        VARCHAR(100) NOT NULL,
     room_type   VARCHAR(20) NOT NULL DEFAULT '2D',
     total_seats INT NOT NULL DEFAULT 0,
-    is_deleted  BOOLEAN   DEFAULT FALSE,
+    is_active   BOOLEAN   NOT NULL DEFAULT TRUE,
     created_at  DATETIME  NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at  DATETIME  NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_room_theater FOREIGN KEY (theater_id) REFERENCES theater(id) ON DELETE CASCADE,
     UNIQUE KEY uk_room_theater_name (theater_id, name),
-    INDEX idx_room_theater_id (theater_id)
+    INDEX idx_room_theater_id (theater_id),
+    INDEX idx_room_theater_name_active (theater_id, name, is_active)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 CREATE TABLE seat_template (
@@ -31,12 +33,13 @@ CREATE TABLE seat_template (
     seat_type   ENUM('NORMAL','VIP','COUPLE','WHEELCHAIR') NOT NULL DEFAULT 'NORMAL',
     pos_x       INT NOT NULL DEFAULT 0 COMMENT 'Tọa độ X trên UI seat map',
     pos_y       INT NOT NULL DEFAULT 0 COMMENT 'Tọa độ Y trên UI seat map',
-    is_deleted  BOOLEAN   DEFAULT FALSE,
+    is_active   BOOLEAN   NOT NULL DEFAULT TRUE,
     created_at  DATETIME  NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at  DATETIME  NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_seat_template_room FOREIGN KEY (room_id) REFERENCES room(id) ON DELETE CASCADE,
     UNIQUE KEY uk_seat_room_position (room_id, row_label, seat_number),
-    INDEX idx_seat_template_room (room_id)
+    INDEX idx_seat_template_room (room_id),
+    INDEX idx_seat_room_position_active (room_id, row_label, seat_number, is_active)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 CREATE TABLE showtime (

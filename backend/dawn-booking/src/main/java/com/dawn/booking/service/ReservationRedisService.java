@@ -1,10 +1,10 @@
 package com.dawn.booking.service;
 
 import com.dawn.booking.dto.response.ReservationRedisDTO;
-import com.dawn.booking.dto.response.SeatDTO;
+import com.dawn.cinema.dto.response.SeatResponse;
 import com.dawn.booking.dto.response.SseDTO;
 import com.dawn.common.core.constant.Constants;
-import com.dawn.common.core.constant.Message;
+import com.dawn.common.core.constant.ErrorCode;
 import com.dawn.common.core.exception.wrapper.RedisStorageException;
 import com.dawn.common.core.exception.wrapper.ReservationExpiredException;
 import com.dawn.common.core.exception.wrapper.SeatUnavailableException;
@@ -108,11 +108,11 @@ public class ReservationRedisService {
             log.info("Successfully publish event {} to channel {}", event.get("event"), channel);
         } catch (Exception ex) {
             log.error("Failed to serialize event", ex);
-            throw new RedisStorageException(Message.Exception.FAILED_STORE_SEAT);
+            throw new RedisStorageException(ErrorCode.FAILED_STORE_SEAT.format());
         }
     }
 
-    public List<Long> acquireSeatLock(List<Long> seatIds, List<SeatDTO> seats, String redisKey) {
+    public List<Long> acquireSeatLock(List<Long> seatIds, List<SeatResponse> seats, String redisKey) {
         List<String> keys = seatIds
                 .stream()
                 .map(RedisKeyHelper::seatLockKey)
@@ -122,7 +122,7 @@ public class ReservationRedisService {
 
         if (result == null || result.isEmpty() || result.getFirst() == null) {
             log.error("Lua script returned null or empty result for reservation {}", redisKey);
-            throw new SeatUnavailableException(Message.Exception.FAILED_SEAT_LOCK);
+            throw new SeatUnavailableException(ErrorCode.FAILED_SEAT_LOCK.format());
         }
 
         Long status = Long.parseLong(result.getFirst().toString());
@@ -148,12 +148,12 @@ public class ReservationRedisService {
                     ? seats.stream()
                     .filter(s -> s.getId().equals(failedSeatId))
                     .findFirst()
-                    .map(SeatDTO::getSeatNumber)
+                    .map(SeatResponse::getSeatNumber)
                     .orElse(failedSeatIdStr)
                     : failedSeatIdStr;
 
             log.warn("Bulk lock failed! Seat {} ({}) is held by {}", failedSeatId, seatNumber, currentOwner);
-            throw new SeatUnavailableException(Message.format(Message.Exception.SEAT_HELD_BY_ANOTHER, seatNumber));
+            throw new SeatUnavailableException(ErrorCode.SEAT_HELD_BY_ANOTHER.format( seatNumber));
         }
     }
 
@@ -207,15 +207,15 @@ public class ReservationRedisService {
             return Long.parseLong(value);
         } catch (NumberFormatException e) {
             log.error("Invalid {} format in Redis: {}", fieldName, value);
-            throw new RedisStorageException(Message.format(Message.Exception.INVALID_REDIS_FORMAT, fieldName));
+            throw new RedisStorageException(ErrorCode.INVALID_REDIS_FORMAT.format( fieldName));
         }
     }
 
     //        Clean up Redis
-    public void cleanupRedisLocks(String reservationId, List<SeatDTO> seats) {
+    public void cleanupRedisLocks(String reservationId, List<SeatResponse> seats) {
         String redisKey = RedisKeyHelper.reservationHoldKey(reservationId);
         int deletedLocks = 0;
-        for (SeatDTO seat : seats) {
+        for (SeatResponse seat : seats) {
             Boolean deleted = deleteSeatLockIfOwner(seat.getId(), redisKey);
             if (deleted) {
                 deletedLocks++;
@@ -242,7 +242,7 @@ public class ReservationRedisService {
         Map<Object, Object> data = getReservationData(reservationId);
         log.info("Get from redis: {}", data);
         if (data == null || data.isEmpty()) {
-            throw new ReservationExpiredException(Message.Exception.RESERVATION_EXPIRED);
+            throw new ReservationExpiredException(ErrorCode.RESERVATION_EXPIRED.format());
         }
 
 
@@ -266,7 +266,7 @@ public class ReservationRedisService {
             }
         } catch (JsonProcessingException ex) {
             log.error("Error parsing seat IDs from Redis", ex);
-            throw new RedisStorageException(Message.Exception.INVALID_REDIS_DATA);
+            throw new RedisStorageException(ErrorCode.INVALID_REDIS_DATA.format());
         }
         return ReservationRedisDTO
                 .builder()
@@ -300,7 +300,7 @@ public class ReservationRedisService {
             });
         } catch (JsonProcessingException e) {
             log.error(e.getMessage());
-            throw new RedisStorageException(Message.Exception.INVALID_REDIS_DATA);
+            throw new RedisStorageException(ErrorCode.INVALID_REDIS_DATA.format());
         }
     }
 

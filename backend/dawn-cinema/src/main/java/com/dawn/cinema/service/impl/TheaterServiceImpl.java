@@ -7,7 +7,7 @@ import com.dawn.cinema.model.Theater;
 import com.dawn.cinema.repository.ShowtimeRepository;
 import com.dawn.cinema.repository.TheaterRepository;
 import com.dawn.cinema.service.TheaterService;
-import com.dawn.common.core.constant.Message;
+import com.dawn.common.core.constant.ErrorCode;
 import com.dawn.common.core.dto.response.ResponsePage;
 import com.dawn.common.core.exception.wrapper.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +32,7 @@ public class TheaterServiceImpl implements TheaterService {
 
     private final TheaterRepository theaterRepository;
     private final ShowtimeRepository showtimeRepository;
+    private final com.dawn.common.core.service.AuditLogService auditLogService;
 
     private Map<Long, List<Long>> showtimeIdsByTheater(List<Long> theaterIds) {
         return showtimeRepository.findShowtimeByTheaterIds(theaterIds).stream()
@@ -70,7 +71,7 @@ public class TheaterServiceImpl implements TheaterService {
                 .map(theater -> TheaterMappingHelper.map(
                         theater,
                         showtimeRepository.findShowtimeByTheaterId(theater.getId())))
-                .orElseThrow(() -> new ResourceNotFoundException(Message.Exception.THEATER_NOT_FOUND));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.THEATER_NOT_FOUND.format()));
     }
 
     @Override
@@ -78,6 +79,17 @@ public class TheaterServiceImpl implements TheaterService {
     @CachePut(value = THEATER_CACHE, key = "'id:' + #result.id")
     public TheaterResponse create(TheaterRequest request) {
         log.info("Add new theater: {}", request);
+        Theater existing = theaterRepository.findByName(request.getName());
+        if (existing != null && !existing.getIsActive()) {
+            existing.setName(request.getName());
+            existing.setLocation(request.getLocation());
+            existing.setIsActive(true);
+            Theater reactivated = theaterRepository.save(existing);
+            auditLogService.record("THEATER_REACTIVATED", "THEATER", reactivated.getId().toString(),
+                    "INACTIVE", "ACTIVE", "name=" + request.getName());
+            log.info("Theater reactivated: {}", request.getName());
+            return TheaterMappingHelper.map(reactivated, List.of());
+        }
         Theater theater = TheaterMappingHelper.map(request);
         return TheaterMappingHelper.map(theaterRepository.save(theater));
     }
@@ -88,7 +100,7 @@ public class TheaterServiceImpl implements TheaterService {
     public TheaterResponse update(Long id, TheaterRequest theaterDetails) {
         Theater theater = theaterRepository
                 .findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException(Message.Exception.THEATER_NOT_FOUND));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.THEATER_NOT_FOUND.format()));
         theater.setName(theaterDetails.getName());
         theater.setLocation(theaterDetails.getLocation());
         return TheaterMappingHelper.map(theaterRepository.save(theater));
@@ -100,7 +112,7 @@ public class TheaterServiceImpl implements TheaterService {
     public void remove(Long id) {
         theaterRepository
                 .findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException(Message.Exception.THEATER_NOT_FOUND));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.THEATER_NOT_FOUND.format()));
         theaterRepository.deleteById(id);
     }
 

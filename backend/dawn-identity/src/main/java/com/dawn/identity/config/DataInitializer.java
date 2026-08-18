@@ -1,6 +1,6 @@
 package com.dawn.identity.config;
 
-import com.dawn.common.core.constant.Message;
+import com.dawn.common.core.constant.ErrorCode;
 import com.dawn.common.core.constant.URole;
 import com.dawn.common.core.exception.wrapper.ResourceNotFoundException;
 import com.dawn.identity.model.Role;
@@ -64,7 +64,7 @@ public class DataInitializer implements ApplicationRunner {
         Role role = roleRepository
                 .findByName(URole.ADMIN)
                 .orElseThrow(() ->
-                        new ResourceNotFoundException(Message.Exception.ROLE_NOT_FOUND));
+                        new ResourceNotFoundException(ErrorCode.ROLE_NOT_FOUND.format()));
 
         User user = User
                 .builder()
@@ -72,7 +72,7 @@ public class DataInitializer implements ApplicationRunner {
                 .email(adminEmail)
                 .password(passwordEncoder.encode(adminPassword))
                 .roles(Set.of(role))
-                .isDeleted(false)
+                .isActive(true)
                 .build();
 
         userRepository.save(user);
@@ -94,7 +94,7 @@ public class DataInitializer implements ApplicationRunner {
         Role role = roleRepository
                 .findByName(URole.USER)
                 .orElseThrow(() ->
-                        new ResourceNotFoundException(Message.Exception.ROLE_NOT_FOUND));
+                        new ResourceNotFoundException(ErrorCode.ROLE_NOT_FOUND.format()));
 
         User user = User
                 .builder()
@@ -102,7 +102,7 @@ public class DataInitializer implements ApplicationRunner {
                 .email(userEmail)
                 .password(passwordEncoder.encode(userPassword))
                 .roles(Set.of(role))
-                .isDeleted(false)
+                .isActive(true)
                 .build();
         userRepository.save(user);
 

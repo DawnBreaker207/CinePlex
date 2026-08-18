@@ -1,6 +1,6 @@
 package com.dawn.payment.service.impl;
 
-import com.dawn.common.core.constant.Message;
+import com.dawn.common.core.constant.ErrorCode;
 import com.dawn.common.core.constant.PaymentMethod;
 import com.dawn.common.core.constant.PaymentStatus;
 import com.dawn.common.core.constant.RabbitMQConstants;
@@ -88,14 +88,14 @@ public class PaymentServiceImpl implements PaymentService {
         log.info("Handler payment: {}", handler);
         Payment existing = paymentRepository
                 .findByReservationId(reservationId)
-                .orElseThrow(() -> new ResourceNotFoundException(Message.Exception.PAYMENT_NOT_FOUND));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.PAYMENT_NOT_FOUND.format()));
 
         if (!handler.verifySignature(params)) {
             log.warn("Invalid signature for callback of reservation {}", reservationId);
             return PaymentHandlerResponse.builder()
                     .reservationId(reservationId)
                     .success(false)
-                    .message(Message.Exception.PAYMENT_INVALID_SIGNATURE)
+                    .message(ErrorCode.PAYMENT_INVALID_SIGNATURE.format())
                     .build();
         }
 
@@ -160,7 +160,7 @@ public class PaymentServiceImpl implements PaymentService {
                     .builder()
                     .reservationId(reservationId)
                     .success(false)
-                    .message(Message.Exception.PAYMENT_INTERNAL_ERROR)
+                    .message(ErrorCode.PAYMENT_INTERNAL_ERROR.format())
                     .build();
         }
     }
@@ -178,7 +178,7 @@ public class PaymentServiceImpl implements PaymentService {
                 .stream()
                 .filter(h -> h.supports(provider))
                 .findFirst()
-                .orElseThrow(() -> new ResourceNotFoundException(Message.Exception.PROVIDER_NOT_SUPPORTED));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.PROVIDER_NOT_SUPPORTED.format()));
     }
 
     @Override

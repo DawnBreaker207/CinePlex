@@ -11,7 +11,7 @@ import com.dawn.catalog.model.Voucher;
 import com.dawn.catalog.repository.UserVoucherRepository;
 import com.dawn.catalog.repository.VoucherRepository;
 import com.dawn.catalog.internal.VoucherService;
-import com.dawn.common.core.constant.Message;
+import com.dawn.common.core.constant.ErrorCode;
 import com.dawn.common.core.constant.UserVoucherStatus;
 import com.dawn.common.core.constant.VoucherStatus;
 import com.dawn.common.core.dto.response.ResponsePage;
@@ -51,7 +51,7 @@ public class VoucherServiceImpl implements VoucherService {
     public VoucherResponse findByCode(String code) {
         Voucher voucher = voucherRepository
                 .findByCode(code)
-                .orElseThrow(() -> new ResourceNotFoundException(Message.Exception.VOUCHER_NOT_FOUND));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.VOUCHER_NOT_FOUND.format()));
         return VoucherMappingHelper.map(voucher);
     }
 
@@ -59,7 +59,7 @@ public class VoucherServiceImpl implements VoucherService {
     @Transactional
     public VoucherResponse create(VoucherRequest req) {
         if (voucherRepository.findByCode(req.getCode()).isPresent()) {
-            throw new ResourceAlreadyExistedException(Message.Exception.VOUCHER_ALREADY_EXISTED);
+            throw new ResourceAlreadyExistedException(ErrorCode.VOUCHER_ALREADY_EXISTED.format());
         }
         Voucher voucher = VoucherMappingHelper.map(req);
         return VoucherMappingHelper.map(voucherRepository.save(voucher));
@@ -70,11 +70,11 @@ public class VoucherServiceImpl implements VoucherService {
     public VoucherResponse update(Long id, VoucherRequest req) {
         Voucher existedVoucher = voucherRepository
                 .findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException(Message.Exception.VOUCHER_NOT_FOUND));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.VOUCHER_NOT_FOUND.format()));
 
         if (!existedVoucher.getCode().equals(req.getCode())
                 && voucherRepository.findByCode(req.getCode()).isPresent()) {
-            throw new ResourceAlreadyExistedException(Message.Exception.VOUCHER_ALREADY_EXISTED);
+            throw new ResourceAlreadyExistedException(ErrorCode.VOUCHER_ALREADY_EXISTED.format());
         }
 
         existedVoucher.setName(req.getName());
@@ -100,7 +100,7 @@ public class VoucherServiceImpl implements VoucherService {
     public void delete(Long id) {
         Voucher voucher = voucherRepository
                 .findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException(Message.Exception.VOUCHER_NOT_FOUND));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.VOUCHER_NOT_FOUND.format()));
         voucherRepository.delete(voucher);
     }
 
@@ -110,14 +110,14 @@ public class VoucherServiceImpl implements VoucherService {
         log.info("Using voucher: {} for user: {}", code, userId);
 
         Voucher voucher = voucherRepository.findByCode(code)
-                .orElseThrow(() -> new ResourceNotFoundException(Message.Exception.VOUCHER_NOT_FOUND));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.VOUCHER_NOT_FOUND.format()));
 
         Instant now = Instant.now();
         validateVoucherBasic(voucher, now);
 
         int updated = voucherRepository.useVoucher(code, Instant.now());
         if (updated == 0) {
-            throw new InvalidRequestException(Message.Exception.VOUCHER_CONFLICT);
+            throw new InvalidRequestException(ErrorCode.VOUCHER_CONFLICT.format());
         }
 
         userVoucherRepository.findByUserIdAndCodeAndStatus(userId, code, UserVoucherStatus.AVAILABLE)
@@ -142,7 +142,7 @@ public class VoucherServiceImpl implements VoucherService {
         log.info("Calculate voucher with code: {} and total: {}", code, total);
         Voucher voucher = voucherRepository
                 .findByCode(code)
-                .orElseThrow(() -> new ResourceNotFoundException(Message.Exception.VOUCHER_NOT_FOUND));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.VOUCHER_NOT_FOUND.format()));
 
         validateVoucher(voucher, total);
         BigDecimal discountAmount = computeDiscount(voucher, total);
@@ -163,24 +163,24 @@ public class VoucherServiceImpl implements VoucherService {
         log.info("Claiming voucher: {} for user: {}", code, userId);
 
         Voucher voucher = voucherRepository.findByCode(code)
-                .orElseThrow(() -> new ResourceNotFoundException(Message.Exception.VOUCHER_NOT_FOUND));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.VOUCHER_NOT_FOUND.format()));
 
         Instant now = Instant.now();
         validateVoucherBasic(voucher, now);
 
         if (voucher.getQuantityUsed() >= voucher.getQuantityTotal()) {
-            throw new InvalidRequestException(Message.Exception.VOUCHER_OUT_OF_STOCK);
+            throw new InvalidRequestException(ErrorCode.VOUCHER_OUT_OF_STOCK.format());
         }
 
         long claimed = userVoucherRepository.countByUserIdAndVoucherIdAndStatus(
                 userId, voucher.getId(), UserVoucherStatus.AVAILABLE);
         if (claimed >= voucher.getMaxPerUser()) {
-            throw new InvalidRequestException(Message.Exception.VOUCHER_MAX_PER_USER);
+            throw new InvalidRequestException(ErrorCode.VOUCHER_MAX_PER_USER.format());
         }
 
         int updated = voucherRepository.useVoucher(code, now);
         if (updated == 0) {
-            throw new InvalidRequestException(Message.Exception.VOUCHER_CONFLICT);
+            throw new InvalidRequestException(ErrorCode.VOUCHER_CONFLICT.format());
         }
 
         UserVoucher uv = UserVoucher.builder()
@@ -214,32 +214,32 @@ public class VoucherServiceImpl implements VoucherService {
 
     private void validateVoucherBasic(Voucher voucher, Instant now) {
         if (voucher.getStatus() != VoucherStatus.ACTIVE) {
-            throw new InvalidRequestException(Message.Exception.VOUCHER_INACTIVE);
+            throw new InvalidRequestException(ErrorCode.VOUCHER_INACTIVE.format());
         }
         if (now.isBefore(voucher.getStartAt())) {
-            throw new InvalidRequestException(Message.Exception.VOUCHER_NOT_STARTED);
+            throw new InvalidRequestException(ErrorCode.VOUCHER_NOT_STARTED.format());
         }
         if (now.isAfter(voucher.getEndAt())) {
-            throw new InvalidRequestException(Message.Exception.VOUCHER_EXPIRED);
+            throw new InvalidRequestException(ErrorCode.VOUCHER_EXPIRED.format());
         }
     }
 
     private void validateVoucher(Voucher voucher, BigDecimal value) {
         Instant now = Instant.now();
         if (voucher.getStatus() != VoucherStatus.ACTIVE) {
-            throw new InvalidRequestException(Message.Exception.VOUCHER_INACTIVE);
+            throw new InvalidRequestException(ErrorCode.VOUCHER_INACTIVE.format());
         }
         if (now.isBefore(voucher.getStartAt())) {
-            throw new InvalidRequestException(Message.Exception.VOUCHER_NOT_STARTED);
+            throw new InvalidRequestException(ErrorCode.VOUCHER_NOT_STARTED.format());
         }
         if (now.isAfter(voucher.getEndAt())) {
-            throw new InvalidRequestException(Message.Exception.VOUCHER_EXPIRED);
+            throw new InvalidRequestException(ErrorCode.VOUCHER_EXPIRED.format());
         }
         if (voucher.getQuantityUsed() >= voucher.getQuantityTotal()) {
-            throw new InvalidRequestException(Message.Exception.VOUCHER_OUT_OF_STOCK);
+            throw new InvalidRequestException(ErrorCode.VOUCHER_OUT_OF_STOCK.format());
         }
         if (value.compareTo(voucher.getMinOrderValue()) < 0) {
-            throw new InvalidRequestException(Message.Exception.MIN_ORDER_NOT_MET);
+            throw new InvalidRequestException(ErrorCode.MIN_ORDER_NOT_MET.format());
         }
     }
 

@@ -5,7 +5,7 @@ import com.dawn.report.dto.response.*;
 import com.dawn.report.repository.DashboardRepository;
 import com.dawn.report.service.DashboardService;
 import com.dawn.common.core.constant.Constants;
-import com.dawn.common.core.constant.Message;
+import com.dawn.common.core.constant.ErrorCode;
 import com.dawn.common.core.exception.wrapper.InternalServiceException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -44,11 +44,11 @@ public class DashboardServiceImpl implements DashboardService {
                     .build();
         } catch (ExecutionException e) {
             log.error("Error in dashboard: {}", e.getMessage(), e);
-            throw new InternalServiceException(Message.Exception.DASHBOARD_CAN_NOT_GET_DATA, e.getCause());
+            throw new InternalServiceException(ErrorCode.DASHBOARD_CAN_NOT_GET_DATA.format(), e.getCause());
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             log.error("Error in dashboard: {}", e.getMessage(), e);
-            throw new InternalServiceException(Message.Exception.DASHBOARD_CAN_NOT_GET_DATA, e);
+            throw new InternalServiceException(ErrorCode.DASHBOARD_CAN_NOT_GET_DATA.format(), e);
         }
     }
 

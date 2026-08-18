@@ -30,5 +30,5 @@ public class UserResponse extends BaseResponse {
 
     private Set<String> role;
 
-    private Boolean isDeleted;
+    private Boolean isActive;
 }

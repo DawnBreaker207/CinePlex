@@ -1,4 +1,4 @@
-package com.dawn.catalog.service;
+package com.dawn.catalog.internal;
 
 import com.dawn.catalog.dto.request.MovieRequest;
 import com.dawn.catalog.dto.response.MovieResponse;

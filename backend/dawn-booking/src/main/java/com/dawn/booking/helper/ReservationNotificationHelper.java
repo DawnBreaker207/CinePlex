@@ -4,9 +4,12 @@ import com.dawn.booking.dto.response.*;
 import com.dawn.booking.model.Reservation;
 import com.dawn.common.core.constant.Constants;
 import com.dawn.booking.service.ReservationRedisService;
-import com.dawn.booking.client.UserClientService;
 import com.dawn.catalog.api.CatalogModuleApi;
 import com.dawn.catalog.dto.response.MovieResponse;
+import com.dawn.cinema.dto.response.SeatResponse;
+import com.dawn.cinema.dto.response.ShowtimeResponse;
+import com.dawn.identity.api.IdentityModuleApi;
+import com.dawn.identity.dto.response.UserResponse;
 import com.dawn.common.core.constant.RabbitMQConstants;
 import com.dawn.common.core.dto.event.BookingCompleteEvent;
 import lombok.AccessLevel;
@@ -34,19 +37,19 @@ public class ReservationNotificationHelper {
 
     CatalogModuleApi catalogApi;
 
-    UserClientService userService;
+    IdentityModuleApi userService;
 
     ReservationRedisService reservationRedisService;
 
-    public void handleNotification(Reservation reservation, ShowtimeDTO showtime, List<SeatDTO> seats) {
+    public void handleNotification(Reservation reservation, ShowtimeResponse showtime, List<SeatResponse> seats) {
         try {
 
-            UserDTO user = userService.findById(reservation.getUserId());
+            UserResponse user = userService.findUserById(reservation.getUserId());
             log.info("Get user from reservation: {}", user);
             log.info("Get showtime from reservation: {}", showtime);
             MovieResponse movie = catalogApi.findMovieById(showtime.getMovieId());
             log.info("Get movie from reservation: {}", movie);
-            String seatNumbers = seats.stream().map(SeatDTO::getSeatNumber).collect(Collectors.joining(","));
+            String seatNumbers = seats.stream().map(SeatResponse::getSeatNumber).collect(Collectors.joining(","));
 
             String paymentTimeStr = LocalDateTime
                     .ofInstant(reservation.getCreatedAt(), ZoneId.of("Asia/Ho_Chi_Minh"))
