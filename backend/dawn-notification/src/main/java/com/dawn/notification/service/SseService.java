@@ -1,9 +1,9 @@
 package com.dawn.notification.service;
 
 import com.dawn.common.core.constant.Constants;
-import com.dawn.notification.dto.SeatDTO;
-import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -12,7 +12,6 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -21,113 +20,76 @@ import java.util.concurrent.Executors;
 @Slf4j
 public class SseService {
 
-    private final Map<String, Map<String, SseEmitter>> emitters = new ConcurrentHashMap<>();
+    private static final int BROADCAST_THREADS = 8;
+
+    private final SseConnectionRegistry registry;
+
+    private final List<SseSubscriptionListener> subscriptionListeners;
 
     private final ObjectMapper objectMapper;
 
-    private final ReservationNotifyService reservationNotifyService;
+    private final ExecutorService executor = Executors.newFixedThreadPool(BROADCAST_THREADS);
 
-    private final ExecutorService executor = Executors.newCachedThreadPool();
+    @PreDestroy
+    public void shutdown() {
+        executor.shutdownNow();
+        log.info("SSE executor shut down");
+    }
 
     public SseEmitter subscribe(String channel, String clientId) {
         SseEmitter emitter = new SseEmitter(Constants.SSE_EMITTER_TIMEOUT_MS);
 
-        emitter.onCompletion(() -> removeEmitter(channel, clientId));
-        emitter.onTimeout(() -> removeEmitter(channel, clientId));
-        emitter.onError((e) -> removeEmitter(channel, clientId));
+        emitter.onCompletion(() -> registry.remove(channel, clientId, emitter));
+        emitter.onTimeout(() -> registry.remove(channel, clientId, emitter));
+        emitter.onError((e) -> registry.remove(channel, clientId, emitter));
+
+        registry.subscribe(channel, clientId, emitter);
+        log.info("Client [{}] subscribed to [{}]", clientId, channel);
+
         try {
-            emitters.computeIfAbsent(channel, c -> new ConcurrentHashMap<>()).put(clientId, emitter);
-            log.info("Client [{}] subscribed to [{}]", clientId, channel);
-
             emitter.send(SseEmitter.event().name(Constants.SSE_CONNECTED).data("connected"));
-
-            if (channel.startsWith("channel:showtime:")) {
-                executor.execute(() -> sendCurrentSeatState(emitter, channel, clientId));
-            }
-            log.info("Subscribe to channel {}", emitter);
-            return emitter;
-
         } catch (IOException e) {
             log.error("Failed to subscribe client [{}] to [{}]", clientId, channel, e);
-            removeEmitter(channel, clientId);
+            registry.remove(channel, clientId, emitter);
             emitter.completeWithError(e);
             return emitter;
         }
+
+        subscriptionListeners.forEach(listener ->
+                executor.execute(() -> listener.onSubscribed(emitter, channel, clientId)));
+
+        return emitter;
     }
 
-    private void removeEmitter(String channel, String clientId) {
-        Map<String, SseEmitter> channelEmitters = emitters.get(channel);
-        if (channelEmitters != null) {
-            channelEmitters.remove(clientId);
-            if (channelEmitters.isEmpty()) {
-                emitters.remove(channel);
-                log.info("All clients disconnected from [{}]", channel);
-            }
-        } else {
-            log.info("Client [{}] disconnected from [{}]", clientId, channel);
-        }
-    }
-
-
-    private void sendCurrentSeatState(SseEmitter emitter, String channel, String clientId) {
-        try {
-            String[] parts = channel.split(":");
-            Long showtimeId = Long.valueOf(parts[2]);
-            log.debug("Fetching snapshot for showtime {}", showtimeId);
-
-            List<SeatDTO> lockedSeats = reservationNotifyService.getLockedSeats(showtimeId);
-
-            Map<String, Object> initialState = Map.of(
-                    Constants.SSE_FIELD_EVENT, Constants.SSE_SEAT_STATE_INIT,
-                    Constants.SSE_FIELD_SHOWTIME_ID, showtimeId,
-                    Constants.SSE_FIELD_SEAT_IDS, lockedSeats
-            );
-
-            String messageJson = objectMapper.writeValueAsString(initialState);
-            emitter.send(SseEmitter.event().name(Constants.SSE_SEAT_STATE_INIT).data(messageJson));
-            log.info("Sent initial seat state to new client, {} seats hold", lockedSeats);
-        } catch (Exception e) {
-            log.debug("Emitter disconnected before receiving initial state.");
-            log.error("Failed to fetch/send initial seat state for channel {}", channel, e);
-            removeEmitter(channel, clientId);
-            emitter.completeWithError(e);
-        }
-    }
-
-    public void broadcastToChannel(String channel, String message) {
-        Map<String, SseEmitter> channelEmitters = emitters.get(channel);
+    public void broadcastToChannel(String channel, String eventName, Object payload) {
+        Map<String, SseEmitter> channelEmitters = registry.getAll(channel);
         if (channelEmitters == null || channelEmitters.isEmpty()) return;
-        log.info("Broadcasting to [{}] clients in channel [{}]", channelEmitters.size(), channel);
-        log.debug("Message content [{}]", message);
 
-        String eventName = extractEventName(message);
-        log.info("Event name extracted: {}", eventName);
-        channelEmitters.forEach((clientId, emitter) -> {
-            try {
-                emitter.send(SseEmitter
-                        .event()
-                        .name(eventName)
-                        .data(message));
-                log.info("Broadcast send event [{}] to client [{}] in channel [{}]", eventName, clientId, emitter);
-            } catch (IOException e) {
-                log.debug("Client [{}] disconnected during broadcast. Cleaning up.", clientId);
-                removeEmitter(channel, clientId);
-            }
+        log.info("Broadcasting event [{}] to [{}] clients in channel [{}]", eventName, channelEmitters.size(), channel);
+
+        executor.execute(() -> {
+            String payloadJson = serialize(payload);
+            if (payloadJson == null) return;
+
+            channelEmitters.forEach((clientId, emitter) -> {
+                try {
+                    emitter.send(SseEmitter.event().name(eventName).data(payloadJson));
+                    log.info("Broadcast send event [{}] to client [{}] in channel [{}]", eventName, clientId, emitter);
+                } catch (IOException e) {
+                    log.debug("Client [{}] disconnected during broadcast. Cleaning up.", clientId);
+                    registry.remove(channel, clientId, emitter);
+                }
+            });
         });
     }
 
-    private String extractEventName(String messageJson) {
+    private String serialize(Object payload) {
+        if (payload instanceof String s) return s;
         try {
-            log.info("Parsing event from: {}", messageJson);
-            JsonNode node = objectMapper.readTree(messageJson);
-            String eventName = node.has(Constants.SSE_FIELD_EVENT) ? node.get(Constants.SSE_FIELD_EVENT).asText() : "message";
-            log.info("Extracted event name [{}]", eventName);
-            return eventName;
-        } catch (Exception e) {
-            log.warn("Cannot parse event name from message", e);
-            return "message";
+            return objectMapper.writeValueAsString(payload);
+        } catch (JsonProcessingException e) {
+            log.error("Failed to serialize broadcast payload", e);
+            return null;
         }
     }
-
-
 }
