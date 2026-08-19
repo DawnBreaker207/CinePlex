@@ -90,7 +90,19 @@ class SeatServiceImplTest {
         }
 
         @Test
-        @DisplayName("empty seat list → throw")
+        @DisplayName("partial CAS match - release booked rows, throw")
+        void partialMatch_shouldUnbookAndThrow() {
+            when(seatInstanceRepository.bookSeats(10L, List.of(1L, 2L), "BOOKED", 1L)).thenReturn(1);
+            when(seatInstanceRepository.unbookSeats(1L, List.of(1L, 2L))).thenReturn(1);
+
+            assertThatThrownBy(() -> service.bookSeats(10L, List.of(1L, 2L), 1L))
+                    .isInstanceOf(SeatUnavailableException.class);
+
+            verify(seatInstanceRepository).unbookSeats(1L, List.of(1L, 2L));
+        }
+
+        @Test
+        @DisplayName("empty seat list  throw")
         void emptySeats_shouldThrow() {
             assertThatThrownBy(() -> service.bookSeats(10L, List.of(), 1L))
                     .isInstanceOf(SeatUnavailableException.class);

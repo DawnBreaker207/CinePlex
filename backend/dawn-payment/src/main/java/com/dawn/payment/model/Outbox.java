@@ -23,6 +23,10 @@ public class Outbox {
     @Column(name = "id")
     private Long id;
 
+    @Version
+    @Column(name = "version")
+    private Long version;
+
     @Column(name = "event_type", nullable = false)
     private String eventType;
 

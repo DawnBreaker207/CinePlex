@@ -5,6 +5,7 @@ import com.dawn.booking.repository.ReservationRepository;
 import com.dawn.common.core.constant.ReservationStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -30,6 +31,9 @@ public class ExpirationJob {
         for (Reservation reservation : expired) {
             try {
                 reservationService.expireReservation(reservation.getReservationCode());
+            } catch (ObjectOptimisticLockingFailureException e) {
+                // Another node (or a concurrent confirm) already transitioned this reservation
+                log.info("Reservation {} expired concurrently, skipping", reservation.getReservationCode());
             } catch (Exception e) {
                 log.error("Failed to expire reservation {}", reservation.getId(), e);
             }

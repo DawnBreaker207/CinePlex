@@ -194,7 +194,10 @@ public class SeatServiceImpl implements SeatService {
         }
         int booked = seatInstanceRepository.bookSeats(showtimeId, seatIds, SeatStatus.BOOKED.name(), reservationId);
         if (booked != seatIds.size()) {
-            log.warn("CAS book failed: expected {} seats, got {} for showtime {}", seatIds.size(), booked, showtimeId);
+            // CAS matched only some rows; release the ones we just booked so no seat leaks
+            int released = seatInstanceRepository.unbookSeats(reservationId, seatIds);
+            log.warn("CAS book failed: expected {} seats, got {} for showtime {}; released {}",
+                    seatIds.size(), booked, showtimeId, released);
             throw new SeatUnavailableException(ErrorCode.SEAT_UNAVAILABLE.format());
         }
         return booked;

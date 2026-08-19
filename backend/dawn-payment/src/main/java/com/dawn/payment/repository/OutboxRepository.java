@@ -10,5 +10,7 @@ public interface OutboxRepository extends JpaRepository<Outbox, Long> {
 
     List<Outbox> findTop100ByStatusOrderByCreatedAtAsc(String status);
 
+    boolean existsByEventTypeAndReservationId(String eventType, String reservationId);
+
     List<Outbox> findByStatusInAndUpdatedAtBefore(List<String> statuses, Instant cutoff);
 }

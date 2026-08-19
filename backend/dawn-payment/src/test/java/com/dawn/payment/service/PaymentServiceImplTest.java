@@ -185,6 +185,26 @@ class PaymentServiceImplTest {
             verify(paymentRepository, never()).saveAndFlush(any());
             verify(outboxRepository, never()).save(any());
         }
+
+        @Test
+        @DisplayName("outbox row da ton tai - payment PENDING nhung event da enqueue -> khong save lai")
+        void processCallback_outboxAlreadyEnqueued_shouldSkipOutboxSave() {
+            Map<String, String> params = Map.of("vnp_TxnRef", RES_ID);
+            when(vnpayHandler.getId(params)).thenReturn(RES_ID);
+            when(vnpayHandler.verifySignature(params)).thenReturn(true);
+            when(vnpayHandler.getTxnRef(params)).thenReturn("TXN-123");
+
+            Payment pending = buildPayment(RES_ID, PaymentStatus.PENDING, PaymentMethod.VNPAY);
+            when(paymentRepository.findByReservationId(RES_ID)).thenReturn(Optional.of(pending));
+            when(paymentRepository.saveAndFlush(any())).thenReturn(pending);
+            when(outboxRepository.existsByEventTypeAndReservationId(anyString(), eq(RES_ID))).thenReturn(true);
+
+            PaymentHandlerResponse response = service.processCallback(VNPAY, params);
+
+            assertThat(response.isSuccess()).isTrue();
+            verify(paymentRepository).saveAndFlush(any());
+            verify(outboxRepository, never()).save(any(Outbox.class));
+        }
     }
 
     // ----------------------------------------------------------------

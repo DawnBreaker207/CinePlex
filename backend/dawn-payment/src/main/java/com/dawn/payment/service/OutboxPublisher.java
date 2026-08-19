@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -44,6 +45,9 @@ public class OutboxPublisher {
                 auditLogService.record("OUTBOX_PUBLISHED", "OUTBOX", String.valueOf(outbox.getId()), null, "SENT",
                         "reservationId=" + outbox.getReservationId());
                 log.info("Outbox {} published for reservation {}", outbox.getId(), outbox.getReservationId());
+            } catch (ObjectOptimisticLockingFailureException e) {
+                // Another publisher instance already claimed this row; do not bump attempts
+                log.info("Outbox {} already claimed by another publisher, skipping", outbox.getId());
             } catch (Exception e) {
                 outbox.setAttempts(outbox.getAttempts() + 1);
                 outbox.setLastError(e.getMessage());

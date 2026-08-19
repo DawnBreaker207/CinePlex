@@ -28,6 +28,10 @@ public class Payment extends AbstractMappedEntity {
     @Column(name = "id")
     private Long id;
 
+    @Version
+    @Column(name = "version")
+    private Long version;
+
     @Column(name = "reservation_id", nullable = false)
     private String reservationId;
 

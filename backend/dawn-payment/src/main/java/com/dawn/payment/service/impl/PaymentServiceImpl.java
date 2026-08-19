@@ -123,13 +123,18 @@ public class PaymentServiceImpl implements PaymentService {
             } catch (JsonProcessingException e) {
                 throw new IllegalStateException("Failed to serialize payment event", e);
             }
-            outboxRepository.save(Outbox.builder()
-                    .eventType(OUTBOX_EVENT_COMPLETED)
-                    .reservationId(reservationId)
-                    .payload(payload)
-                    .build());
-            log.info("Enqueued outbox event for reservation: {}, eventId: {}",
-                    reservationId, event.eventId());
+            // Idempotency: a concurrent callback may have enqueued this event already
+            if (outboxRepository.existsByEventTypeAndReservationId(OUTBOX_EVENT_COMPLETED, reservationId)) {
+                log.info("Outbox event already enqueued for reservation {}, skipping", reservationId);
+            } else {
+                outboxRepository.save(Outbox.builder()
+                        .eventType(OUTBOX_EVENT_COMPLETED)
+                        .reservationId(reservationId)
+                        .payload(payload)
+                        .build());
+                log.info("Enqueued outbox event for reservation: {}, eventId: {}",
+                        reservationId, event.eventId());
+            }
             auditLogService.record("PAYMENT_PAID", "PAYMENT", reservationId,
                     PaymentStatus.PENDING.name(), PaymentStatus.PAID.name(),
                     "provider=" + provider + ", txn=" + existing.getGatewayTxnRef());
