@@ -11,13 +11,16 @@ import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
-public interface ReservationRepository extends JpaRepository<Reservation, String> {
+public interface ReservationRepository extends JpaRepository<Reservation, Long> {
+
+    Optional<Reservation> findByReservationCode(String reservationCode);
     @Query(value = """
               SELECT DISTINCT r FROM Reservation AS r
                    WHERE
-                         (:#{#reservation.getQuery()} IS NULL OR r.id LIKE CONCAT('%', :#{#reservation.getQuery()}, '%') )
+                         (:#{#reservation.getQuery()} IS NULL OR r.reservationCode LIKE CONCAT('%', :#{#reservation.getQuery()}, '%') )
                          AND (:#{#reservation.getReservationStatus()} IS NULL OR r.reservationStatus = :#{#reservation.getReservationStatus()})
                          AND (
                             :#{#reservation.getStartDate()} IS NULL

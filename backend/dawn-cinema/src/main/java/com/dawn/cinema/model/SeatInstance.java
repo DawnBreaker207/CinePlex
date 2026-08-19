@@ -40,7 +40,7 @@ public class SeatInstance extends AbstractMappedEntity {
     private Instant reservedUntil;
 
     @Column(name = "reservation_id")
-    private String reservationId;
+    private Long reservationId;
 
     @Column(name = "price", nullable = false)
     private BigDecimal price;

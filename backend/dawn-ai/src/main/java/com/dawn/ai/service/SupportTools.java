@@ -58,7 +58,7 @@ public class SupportTools {
         var paymentOpt = paymentService.findPaymentByReservationId(reservationId);
 
         StringBuilder sb = new StringBuilder();
-        sb.append("**Reservation**: ").append(r.getId()).append("\n");
+        sb.append("**Reservation**: ").append(r.getReservationCode()).append("\n");
         sb.append("- **Trạng thái**: ").append(r.getReservationStatus()).append("\n");
         sb.append("- **User ID**: ").append(r.getUserId()).append("\n");
         sb.append("- **Suất chiếu ID**: ").append(r.getShowtimeId()).append("\n");

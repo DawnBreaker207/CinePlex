@@ -16,7 +16,7 @@ public interface ReservationMappingHelper {
         return
                 ReservationResponse
                         .builder()
-                        .id(reservation.getId())
+                        .reservationCode(reservation.getReservationCode())
                         .user(user)
                         .showtime(showtime)
                         .reservationStatus(reservation.getReservationStatus())
@@ -39,7 +39,7 @@ public interface ReservationMappingHelper {
             final ShowtimeResponse showtime,
             final List<SeatResponse> seats) {
         return UserReservationResponse.builder()
-                .reservationId(reservation.getId())
+                .reservationCode(reservation.getReservationCode())
                 .movieTitle(movie.getTitle())
                 .moviePoster(movie.getPoster())
                 .showtime(showtime.getId())

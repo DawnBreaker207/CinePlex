@@ -39,12 +39,12 @@ public class CinemaModuleApiImpl implements CinemaModuleApi {
     }
 
     @Override
-    public List<SeatResponse> findSeatsByReservationIds(List<String> reservationIds) {
+    public List<SeatResponse> findSeatsByReservationIds(List<Long> reservationIds) {
         return seatService.findAllByReservationIds(reservationIds);
     }
 
     @Override
-    public List<SeatResponse> findSeatsByReservationId(String reservationId) {
+    public List<SeatResponse> findSeatsByReservationId(Long reservationId) {
         return seatService.findAllByReservationId(reservationId);
     }
 
@@ -54,12 +54,12 @@ public class CinemaModuleApiImpl implements CinemaModuleApi {
     }
 
     @Override
-    public int bookSeats(Long showtimeId, List<Long> seatIds, String reservationId) {
+    public int bookSeats(Long showtimeId, List<Long> seatIds, Long reservationId) {
         return seatService.bookSeats(showtimeId, seatIds, reservationId);
     }
 
     @Override
-    public int unbookSeats(String reservationId, List<Long> seatIds) {
+    public int unbookSeats(Long reservationId, List<Long> seatIds) {
         return seatService.unbookSeats(reservationId, seatIds);
     }
 }

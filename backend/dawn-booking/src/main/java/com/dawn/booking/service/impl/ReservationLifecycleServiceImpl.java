@@ -99,11 +99,11 @@ public class ReservationLifecycleServiceImpl implements ReservationLifecycleServ
                 .stream()
                 .collect(Collectors.toMap(MovieResponse::getId, s -> s));
 
-        List<String> reservationIds = reservations.stream()
+        List<Long> reservationIds = reservations.stream()
                 .map(Reservation::getId)
                 .toList();
 
-        Map<String, List<SeatResponse>> seatMap = cinemaApi.findSeatsByReservationIds(reservationIds)
+        Map<Long, List<SeatResponse>> seatMap = cinemaApi.findSeatsByReservationIds(reservationIds)
                 .stream()
                 .filter(item -> item.getReservationId() != null)
                 .collect(Collectors.groupingBy(SeatResponse::getReservationId));
@@ -150,11 +150,11 @@ public class ReservationLifecycleServiceImpl implements ReservationLifecycleServ
                 .stream()
                 .collect(Collectors.toMap(UserResponse::getUserId, s -> s));
 
-        List<String> reservationIds = reservations.stream()
+        List<Long> reservationIds = reservations.stream()
                 .map(Reservation::getId)
                 .toList();
 
-        Map<String, List<SeatResponse>> seatMap = cinemaApi.findSeatsByReservationIds(reservationIds)
+        Map<Long, List<SeatResponse>> seatMap = cinemaApi.findSeatsByReservationIds(reservationIds)
                 .stream()
                 .filter(s -> s.getReservationId() != null)
                 .collect(Collectors.groupingBy(SeatResponse::getReservationId));
@@ -168,9 +168,9 @@ public class ReservationLifecycleServiceImpl implements ReservationLifecycleServ
     }
 
     @Override
-    public ReservationResponse findOne(String id) {
+    public ReservationResponse findOne(String reservationCode) {
         Reservation reservation = reservationRepository
-                .findById(id)
+                .findByReservationCode(reservationCode)
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.RESERVATION_NOT_FOUND.format()));
 
         List<SeatResponse> seats = cinemaApi.findSeatsByReservationId(reservation.getId());
@@ -180,10 +180,10 @@ public class ReservationLifecycleServiceImpl implements ReservationLifecycleServ
     }
 
     @Override
-    public Optional<ReservationDetailResponse> findReservationDetail(String id) {
-        return reservationRepository.findById(id)
+    public Optional<ReservationDetailResponse> findReservationDetail(String reservationCode) {
+        return reservationRepository.findByReservationCode(reservationCode)
                 .map(r -> ReservationDetailResponse.builder()
-                        .id(r.getId())
+                        .reservationCode(r.getReservationCode())
                         .userId(r.getUserId())
                         .showtimeId(r.getShowtimeId())
                         .reservationStatus(r.getReservationStatus())
@@ -206,13 +206,13 @@ public class ReservationLifecycleServiceImpl implements ReservationLifecycleServ
     public ReservationResponse confirmReservation(String reservationId) {
 
         // Idempotency + state guard
-        Optional<Reservation> existing = reservationRepository.findById(reservationId);
+        Optional<Reservation> existing = reservationRepository.findByReservationCode(reservationId);
         if (existing.isPresent()) {
             ReservationStatus status = existing.get().getReservationStatus();
             if (status == ReservationStatus.CONFIRMED) {
                 log.info("Reservation {} already confirmed, returning existing", reservationId);
                 Reservation r = existing.get();
-                List<SeatResponse> seats = cinemaApi.findSeatsByReservationId(reservationId);
+                List<SeatResponse> seats = cinemaApi.findSeatsByReservationId(r.getId());
                 ShowtimeResponse showtime = cinemaApi.findShowtimeById(r.getShowtimeId());
                 UserResponse user = identityApi.findUserById(r.getUserId());
                 return ReservationMappingHelper.map(r, user, showtime, seats);
@@ -250,8 +250,20 @@ public class ReservationLifecycleServiceImpl implements ReservationLifecycleServ
             //        Create reservation to save
             ShowtimeResponse showtime = cinemaApi.findShowtimeById(cachedData.getShowtimeId());
 
-            //  CAS book seats in DB (atomic, no load-modify-save race)
-            int booked = cinemaApi.bookSeats(showtime.getId(), seatIds, reservationId);
+            //  Persist PENDING row first: seat_instance/ticket FK reference reservation.id (BIGINT)
+            Reservation pending = existing
+                    .filter(r -> r.getReservationStatus() == ReservationStatus.PENDING)
+                    .orElseGet(() -> reservationRepository.save(Reservation.builder()
+                            .reservationCode(cachedData.getId())
+                            .userId(cachedData.getUserId())
+                            .showtimeId(showtime.getId())
+                            .reservationStatus(ReservationStatus.PENDING)
+                            .totalAmount(BigDecimal.ZERO)
+                            .isDeleted(false)
+                            .build()));
+
+            //  CAS book seats in DB (atomic, no load-modify-save race); failure rolls back the PENDING row
+            int booked = cinemaApi.bookSeats(showtime.getId(), seatIds, pending.getId());
             if (booked != seatIds.size()) {
                 log.warn("CAS book failed for reservation {}: booked {}/{} seats", reservationId, booked, seatIds.size());
                 throw new SeatUnavailableException(ErrorCode.SEAT_UNAVAILABLE.format());
@@ -271,34 +283,14 @@ public class ReservationLifecycleServiceImpl implements ReservationLifecycleServ
             log.info("Calculated total amount: {} for {} seats", total, seatEntities.size());
 
 
-            // Commit reseration
-            Reservation reservation = Reservation
-                    .builder()
-                    .id(reservationId)
-                    .userId(user.getUserId())
-                    .showtimeId(showtime.getId())
-                    .reservationStatus(ReservationStatus.CONFIRMED)
-                    .originalAmount(originalAmount)
-                    .discountAmount(discountAmount)
-                    .totalAmount(total)
-                    .voucherCode(voucherCode)
-                    .isPaid(true)
-                    .isDeleted(false)
-                    .build();
-
-            Reservation savedReservation;
-            try {
-                savedReservation = reservationRepository.saveAndFlush(reservation);
-            } catch (Exception e) {
-                // Seats were booked remotely; compensate before rethrowing
-                log.error("Failed to save reservation {}, compensating seat booking", reservationId, e);
-                try {
-                    cinemaApi.unbookSeats(reservationId, seatIds);
-                } catch (Exception ex) {
-                    log.error("Compensation failed for reservation {}: {}", reservationId, ex.getMessage());
-                }
-                throw e;
-            }
+            // Commit reservation
+            pending.setReservationStatus(ReservationStatus.CONFIRMED);
+            pending.setOriginalAmount(originalAmount);
+            pending.setDiscountAmount(discountAmount);
+            pending.setTotalAmount(total);
+            pending.setVoucherCode(voucherCode);
+            pending.setIsPaid(true);
+            Reservation savedReservation = reservationRepository.saveAndFlush(pending);
 
             // Update side effect
             try {
@@ -320,7 +312,7 @@ public class ReservationLifecycleServiceImpl implements ReservationLifecycleServ
             AuditLogContext.set("showtimeId", showtime.getId());
             AuditLogContext.set("seats", seatIds);
             AuditLogContext.set("total", total);
-            log.info("Successfully confirmed reservation: {} with {} seats", reservation.getId(), seatEntities.size());
+            log.info("Successfully confirmed reservation: {} with {} seats", savedReservation.getReservationCode(), seatEntities.size());
             return ReservationMappingHelper.map(savedReservation, user, showtime, seatEntities);
         } finally {
             reservationRedisService.releaseProcessingLock(reservationId);
@@ -333,7 +325,7 @@ public class ReservationLifecycleServiceImpl implements ReservationLifecycleServ
             metadata = "'seats=' + #audit['seats']")
     public void cancelReservation(String reservationId) {
         //  User-initiated cancel on a paid reservation must be explicit, not a silent no-op
-        reservationRepository.findById(reservationId)
+        reservationRepository.findByReservationCode(reservationId)
                 .filter(r -> r.getReservationStatus() == ReservationStatus.CONFIRMED)
                 .ifPresent(r -> {
                     throw new ApiException(HttpStatus.CONFLICT, ErrorCode.RESERVATION_INVALID_STATUS.format());
@@ -361,7 +353,7 @@ public class ReservationLifecycleServiceImpl implements ReservationLifecycleServ
         ReservationStatus newStatus = action.targetStatus();
         log.info("Releasing reservation {} as {}", reservationId, newStatus);
 
-        Optional<Reservation> existing = reservationRepository.findById(reservationId);
+        Optional<Reservation> existing = reservationRepository.findByReservationCode(reservationId);
         if (existing.isPresent()
                 && !ReservationStateMachine.canTransition(existing.get().getReservationStatus(), action)) {
             log.warn("Reservation {} already in final state {}, skipping release", reservationId,
@@ -390,7 +382,7 @@ public class ReservationLifecycleServiceImpl implements ReservationLifecycleServ
         //  Defensive CAS release of DB seats (idempotent)
         if (seatIds != null && !seatIds.isEmpty()) {
             try {
-                cinemaApi.unbookSeats(reservationId, seatIds);
+                cinemaApi.unbookSeats(existing.map(Reservation::getId).orElse(null), seatIds);
             } catch (Exception e) {
                 log.warn("Failed to unbook seats for reservation {}: {}", reservationId, e.getMessage());
             }
@@ -408,7 +400,7 @@ public class ReservationLifecycleServiceImpl implements ReservationLifecycleServ
             log.info("Calculated total amount: {} for {} seats", total, seatCount);
             Reservation reservation = Reservation
                     .builder()
-                    .id(reservationId)
+                    .reservationCode(reservationId)
                     .userId(cachedData.getUserId())
                     .showtimeId(cachedData.getShowtimeId())
                     .reservationStatus(newStatus)
@@ -454,7 +446,7 @@ public class ReservationLifecycleServiceImpl implements ReservationLifecycleServ
             fromState = "#audit['fromState']", toState = "'CANCELED'", metadata = "'force cancel'")
     public void forceCancelReservation(String reservationId) {
         log.info("Force cancel reservation: {}", reservationId);
-        Optional<Reservation> existing = reservationRepository.findById(reservationId);
+        Optional<Reservation> existing = reservationRepository.findByReservationCode(reservationId);
         String fromStatus = existing.map(r -> r.getReservationStatus().name()).orElse(null);
         AuditLogContext.set("fromState", fromStatus);
         ReservationRedisDTO cachedData = null;
@@ -474,7 +466,7 @@ public class ReservationLifecycleServiceImpl implements ReservationLifecycleServ
                 List<Long> seatIds = cachedData.getSeatsIds();
                 if (seatIds != null && !seatIds.isEmpty()) {
                     reservationRedisService.deleteSeatLocks(seatIds, reservationId);
-                    cinemaApi.unbookSeats(reservationId, seatIds);
+                    cinemaApi.unbookSeats(existing.map(Reservation::getId).orElse(null), seatIds);
                 }
                 reservationRedisService.deleteReservation(reservationId);
             }

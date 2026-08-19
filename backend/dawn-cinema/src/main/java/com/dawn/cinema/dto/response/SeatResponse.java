@@ -23,6 +23,6 @@ public class SeatResponse extends BaseResponse {
 
     private SeatStatus status;
 
-    private String reservationId;
+    private Long reservationId;
 
 }

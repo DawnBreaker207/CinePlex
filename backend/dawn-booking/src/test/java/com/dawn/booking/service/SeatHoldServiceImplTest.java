@@ -84,11 +84,11 @@ class SeatHoldServiceImplTest {
             verify(reservationRedisService).saveReservationInit(
                     reservationIdCaptor.capture(), anyMap(), any());
 
-            assertThat(response.getReservationId()).isNotBlank();
+            assertThat(response.getReservationCode()).isNotBlank();
             assertThat(response.getShowtimeId()).isEqualTo(10L);
             assertThat(response.getTtl()).isEqualTo(900L); // 15 phút
             assertThat(response.getExpiredAt()).isNotNull();
-            assertThat(response.getReservationId()).isEqualTo(reservationIdCaptor.getValue());
+            assertThat(response.getReservationCode()).isEqualTo(reservationIdCaptor.getValue());
         }
     }
 
@@ -215,7 +215,7 @@ class SeatHoldServiceImplTest {
                     .thenReturn(Collections.emptyList());
             when(cinemaApi.findSeatsByShowtime(10L)).thenReturn(
                     List.of(ReservationTestData.buildSeat(101L, 10L), ReservationTestData.buildSeat(102L, 10L)));
-            when(reservationRepository.findById("RES-001"))
+            when(reservationRepository.findByReservationCode("RES-001"))
                     .thenReturn(Optional.of(ReservationTestData.buildReservation("RES-001", true)));
 
             assertThatThrownBy(() -> service.holdReservationSeats(request))

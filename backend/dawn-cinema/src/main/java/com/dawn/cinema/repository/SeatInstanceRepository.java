@@ -16,9 +16,9 @@ public interface SeatInstanceRepository extends JpaRepository<SeatInstance, Long
 
     List<SeatInstance> findAllByShowtimeId(Long showtimeId);
 
-    List<SeatInstance> findAllByReservationId(String reservationId);
+    List<SeatInstance> findAllByReservationId(Long reservationId);
 
-    List<SeatInstance> findAllByReservationIdIn(List<String> ids);
+    List<SeatInstance> findAllByReservationIdIn(List<Long> ids);
 
     List<SeatInstance> findByShowtimeIdAndStatus(Long showtimeId, String status);
 
@@ -32,11 +32,11 @@ public interface SeatInstanceRepository extends JpaRepository<SeatInstance, Long
     int bookSeats(@Param("showtimeId") Long showtimeId,
                   @Param("seatIds") List<Long> seatIds,
                   @Param("status") String status,
-                  @Param("reservationId") String reservationId);
+                  @Param("reservationId") Long reservationId);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE SeatInstance s SET s.status = 'AVAILABLE', s.reservationId = NULL " +
             "WHERE s.reservationId = :reservationId AND s.id IN :seatIds AND s.status = 'BOOKED'")
-    int unbookSeats(@Param("reservationId") String reservationId,
+    int unbookSeats(@Param("reservationId") Long reservationId,
                     @Param("seatIds") List<Long> seatIds);
 }

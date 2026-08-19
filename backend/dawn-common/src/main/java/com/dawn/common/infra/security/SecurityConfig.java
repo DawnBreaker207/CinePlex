@@ -86,6 +86,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/notification/**").permitAll()
                 .requestMatchers("/api/v1/payment/**").permitAll()
                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/v1/movie/batch").permitAll()
                 .requestMatchers(HttpMethod.GET,
                         "/api/v1/movie/**",
                         "/api/v1/article/**",

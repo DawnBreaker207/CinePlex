@@ -21,13 +21,13 @@ public interface SeatService {
 
     List<SeatResponse> findAllByShowtimeId(Long showtimeId);
 
-    List<SeatResponse> findAllByReservationIds(List<String> ids);
+    List<SeatResponse> findAllByReservationIds(List<Long> ids);
 
-    List<SeatResponse> findAllByReservationId(String reservationId);
+    List<SeatResponse> findAllByReservationId(Long reservationId);
 
     void saveAllSeat(List<SeatRequest> seatRequests);
 
-    int bookSeats(Long showtimeId, List<Long> seatIds, String reservationId);
+    int bookSeats(Long showtimeId, List<Long> seatIds, Long reservationId);
 
-    int unbookSeats(String reservationId, List<Long> seatIds);
+    int unbookSeats(Long reservationId, List<Long> seatIds);
 }

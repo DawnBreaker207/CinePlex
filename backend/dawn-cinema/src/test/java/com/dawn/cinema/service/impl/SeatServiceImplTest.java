@@ -73,9 +73,9 @@ class SeatServiceImplTest {
         @Test
         @DisplayName("all rows matched → return count, no exception")
         void allMatched_shouldReturnCount() {
-            when(seatInstanceRepository.bookSeats(10L, List.of(1L, 2L), "BOOKED", "RES-001")).thenReturn(2);
+            when(seatInstanceRepository.bookSeats(10L, List.of(1L, 2L), "BOOKED", 1L)).thenReturn(2);
 
-            int booked = service.bookSeats(10L, List.of(1L, 2L), "RES-001");
+            int booked = service.bookSeats(10L, List.of(1L, 2L), 1L);
 
             assertThat(booked).isEqualTo(2);
         }
@@ -83,16 +83,16 @@ class SeatServiceImplTest {
         @Test
         @DisplayName("row count mismatch → throw SeatUnavailableException")
         void mismatch_shouldThrow() {
-            when(seatInstanceRepository.bookSeats(10L, List.of(1L, 2L), "BOOKED", "RES-001")).thenReturn(1);
+            when(seatInstanceRepository.bookSeats(10L, List.of(1L, 2L), "BOOKED", 1L)).thenReturn(1);
 
-            assertThatThrownBy(() -> service.bookSeats(10L, List.of(1L, 2L), "RES-001"))
+            assertThatThrownBy(() -> service.bookSeats(10L, List.of(1L, 2L), 1L))
                     .isInstanceOf(SeatUnavailableException.class);
         }
 
         @Test
         @DisplayName("empty seat list → throw")
         void emptySeats_shouldThrow() {
-            assertThatThrownBy(() -> service.bookSeats(10L, List.of(), "RES-001"))
+            assertThatThrownBy(() -> service.bookSeats(10L, List.of(), 1L))
                     .isInstanceOf(SeatUnavailableException.class);
         }
     }
@@ -108,16 +108,16 @@ class SeatServiceImplTest {
         @Test
         @DisplayName("delegates to repository and returns affected rows")
         void shouldReturnAffectedRows() {
-            when(seatInstanceRepository.unbookSeats("RES-001", List.of(1L))).thenReturn(1);
+            when(seatInstanceRepository.unbookSeats(1L, List.of(1L))).thenReturn(1);
 
-            assertThat(service.unbookSeats("RES-001", List.of(1L))).isEqualTo(1);
+            assertThat(service.unbookSeats(1L, List.of(1L))).isEqualTo(1);
         }
 
         @Test
         @DisplayName("empty seat list → 0, no repository call")
         void emptySeats_shouldReturnZero() {
-            assertThat(service.unbookSeats("RES-001", List.of())).isZero();
-            verify(seatInstanceRepository, never()).unbookSeats(anyString(), anyList());
+            assertThat(service.unbookSeats(1L, List.of())).isZero();
+            verify(seatInstanceRepository, never()).unbookSeats(anyLong(), anyList());
         }
     }
 
@@ -135,10 +135,10 @@ class SeatServiceImplTest {
             SeatInstance existing = seat(1L, 10L, 5L, SeatStatus.AVAILABLE);
             when(seatInstanceRepository.findAllById(List.of(1L))).thenReturn(List.of(existing));
 
-            service.saveAllSeat(List.of(SeatRequest.builder().id(1L).status(SeatStatus.BOOKED).reservationId("RES-001").build()));
+            service.saveAllSeat(List.of(SeatRequest.builder().id(1L).status(SeatStatus.BOOKED).reservationId(1L).build()));
 
             assertThat(existing.getStatus()).isEqualTo("BOOKED");
-            assertThat(existing.getReservationId()).isEqualTo("RES-001");
+            assertThat(existing.getReservationId()).isEqualTo(1L);
             verify(seatInstanceRepository).saveAll(List.of(existing));
         }
 

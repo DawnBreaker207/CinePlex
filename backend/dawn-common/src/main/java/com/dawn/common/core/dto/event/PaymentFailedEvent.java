@@ -7,7 +7,7 @@ import java.time.Instant;
 @Builder
 public record PaymentFailedEvent(
         String eventId,
-        String reservationId,
+        String reservationCode,
         String reason,
         Instant failedAt) {
 }

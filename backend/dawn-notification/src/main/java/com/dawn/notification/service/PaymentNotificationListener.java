@@ -15,13 +15,13 @@ public class PaymentNotificationListener {
 
     @RabbitListener(queues = RabbitMQConstants.QUEUE_NOTIFICATION_RESERVATION_COMPLETED)
     public void handleBookingComplete(BookingCompleteEvent event) {
-        log.info("Received booking event for: {}", event.reservationId());
+        log.info("Received booking event for: {}", event.reservationCode());
         try {
             emailService.sendReservationEmail(event);
-            log.info("[Notification] Confirmation email sent for reservation: {}", event.reservationId());
+            log.info("[Notification] Confirmation email sent for reservation: {}", event.reservationCode());
         } catch (Exception e) {
             log.error("[Notification] Failed to send email for reservation {}: {}",
-                    event.reservationId(), e.getMessage(), e);
+                    event.reservationCode(), e.getMessage(), e);
             throw e;
         }
 

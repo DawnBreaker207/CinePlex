@@ -15,13 +15,13 @@ public interface CinemaModuleApi {
 
     List<SeatResponse> findSeatsByShowtime(Long showtimeId);
 
-    List<SeatResponse> findSeatsByReservationIds(List<String> reservationIds);
+    List<SeatResponse> findSeatsByReservationIds(List<Long> reservationIds);
 
-    List<SeatResponse> findSeatsByReservationId(String reservationId);
+    List<SeatResponse> findSeatsByReservationId(Long reservationId);
 
     List<SeatResponse> findSeatsByIdWithLock(List<Long> seatIds);
 
-    int bookSeats(Long showtimeId, List<Long> seatIds, String reservationId);
+    int bookSeats(Long showtimeId, List<Long> seatIds, Long reservationId);
 
-    int unbookSeats(String reservationId, List<Long> seatIds);
+    int unbookSeats(Long reservationId, List<Long> seatIds);
 }

@@ -63,7 +63,7 @@ public class ReservationNotificationHelper {
                     .builder()
                     .to(user.getEmail())
                     .name(user.getUsername())
-                    .reservationId(reservation.getId())
+                    .reservationCode(reservation.getReservationCode())
                     .movieName(movie.getTitle())
                     .theaterName(showtime.getTheaterName())
                     .showtimeSession(showtimeStr)

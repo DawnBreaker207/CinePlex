@@ -10,7 +10,7 @@ import java.util.List;
 @Builder
 public record PaymentCompletedEvent(
         String eventId,
-        String reservationId,
+        String reservationCode,
         Long userId,
         Long theaterId,
         List<Long> seatIds,

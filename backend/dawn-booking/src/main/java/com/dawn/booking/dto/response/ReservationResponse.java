@@ -18,7 +18,7 @@ import java.util.List;
 @SuperBuilder
 @EqualsAndHashCode(callSuper = true)
 public class ReservationResponse extends BaseResponse {
-    private String id;
+    private String reservationCode;
 
     private UserResponse user;
 

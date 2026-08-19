@@ -95,7 +95,7 @@ public class SeatServiceImpl implements SeatService {
     }
 
     @Override
-    public List<SeatResponse> findAllByReservationIds(List<String> ids) {
+    public List<SeatResponse> findAllByReservationIds(List<Long> ids) {
         if (ids == null || ids.isEmpty()) return List.of();
         log.info("Batch fetching {} seats", ids.size());
         List<SeatInstance> seatInstances = seatInstanceRepository.findAllByReservationIdIn(ids);
@@ -153,7 +153,7 @@ public class SeatServiceImpl implements SeatService {
     }
 
     @Override
-    public List<SeatResponse> findAllByReservationId(String reservationId) {
+    public List<SeatResponse> findAllByReservationId(Long reservationId) {
         List<SeatInstance> seatInstances = seatInstanceRepository.findAllByReservationId(reservationId);
         if (seatInstances.isEmpty()) return List.of();
         Long showtimeId = seatInstances.getFirst().getShowtimeId();
@@ -188,7 +188,7 @@ public class SeatServiceImpl implements SeatService {
 
     @Override
     @Transactional
-    public int bookSeats(Long showtimeId, List<Long> seatIds, String reservationId) {
+    public int bookSeats(Long showtimeId, List<Long> seatIds, Long reservationId) {
         if (seatIds == null || seatIds.isEmpty()) {
             throw new SeatUnavailableException(ErrorCode.SEAT_UNAVAILABLE.format());
         }
@@ -202,7 +202,7 @@ public class SeatServiceImpl implements SeatService {
 
     @Override
     @Transactional
-    public int unbookSeats(String reservationId, List<Long> seatIds) {
+    public int unbookSeats(Long reservationId, List<Long> seatIds) {
         if (seatIds == null || seatIds.isEmpty()) {
             return 0;
         }

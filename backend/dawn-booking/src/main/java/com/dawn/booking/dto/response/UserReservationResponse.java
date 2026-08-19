@@ -14,7 +14,7 @@ import java.util.List;
 @NoArgsConstructor
 @SuperBuilder
 public class UserReservationResponse {
-    private String reservationId;
+    private String reservationCode;
 
     private String moviePoster;
 

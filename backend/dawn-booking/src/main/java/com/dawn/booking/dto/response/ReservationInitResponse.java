@@ -13,7 +13,7 @@ import java.time.Instant;
 @SuperBuilder
 public class ReservationInitResponse {
 
-    private String reservationId;
+    private String reservationCode;
 
     private Long showtimeId;
 

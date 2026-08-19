@@ -1,7 +1,7 @@
 CREATE TABLE outbox (
     id             BIGINT PRIMARY KEY AUTO_INCREMENT,
     event_type     VARCHAR(50) NOT NULL,
-    reservation_id VARCHAR(36) NOT NULL,
+    reservation_id VARCHAR(20) NOT NULL,
     payload        TEXT,
     status         VARCHAR(20) NOT NULL DEFAULT 'PENDING',
     attempts       INT NOT NULL DEFAULT 0,

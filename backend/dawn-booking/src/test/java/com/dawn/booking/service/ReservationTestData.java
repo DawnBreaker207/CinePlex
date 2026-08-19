@@ -42,9 +42,10 @@ public class ReservationTestData {
                 .build();
     }
 
-    public static Reservation buildReservation(String id, boolean isPaid) {
+    public static Reservation buildReservation(String reservationCode, boolean isPaid) {
         return Reservation.builder()
-                .id(id)
+                .id(1L)
+                .reservationCode(reservationCode)
                 .userId(1L)
                 .showtimeId(10L)
                 .reservationStatus(isPaid ? ReservationStatus.CONFIRMED : ReservationStatus.CANCELED)

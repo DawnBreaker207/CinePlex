@@ -76,7 +76,7 @@ public class SeatHoldServiceImpl implements SeatHoldService {
         Instant expiredAt = Instant.now().plusSeconds(ttl);
 
         return ReservationInitResponse.builder()
-                .reservationId(reservationId)
+                .reservationCode(reservationId)
                 .showtimeId(Long.valueOf(showtimeIdStr))
                 .ttl(ttl)
                 .expiredAt(expiredAt)
@@ -87,7 +87,7 @@ public class SeatHoldServiceImpl implements SeatHoldService {
     public ReservationInitResponse initReservation(ReservationInitRequest o) {
         log.info("Initializing reservation for user {} at showtime {}", o.getUserId(), o.getShowtimeId());
 
-        String reservationId = ReservationUtils.generateReservationId();
+        String reservationId = ReservationUtils.generateReservationCode();
         ShowtimeResponse showtime = cinemaApi.findShowtimeById(o.getShowtimeId());
         //        Create essential value to save on redis
         Map<String, String> initialData = Map.of(
@@ -109,7 +109,7 @@ public class SeatHoldServiceImpl implements SeatHoldService {
                 HOLD_TIMEOUT.toSeconds());
 
         return ReservationInitResponse.builder()
-                .reservationId(reservationId)
+                .reservationCode(reservationId)
                 .showtimeId(o.getShowtimeId())
                 .ttl(HOLD_TIMEOUT.toSeconds())
                 .expiredAt(Instant.now().plusSeconds(HOLD_TIMEOUT.toSeconds()))
@@ -163,22 +163,23 @@ public class SeatHoldServiceImpl implements SeatHoldService {
             reservationRedisService.updateReservationSeats(reservationId, seatIds);
 
             //  Guard: never overwrite a row that already left PENDING (e.g. confirmed during this hold)
-            reservationRepository.findById(reservationId)
+            reservationRepository.findByReservationCode(reservationId)
                     .filter(r -> r.getReservationStatus() != ReservationStatus.PENDING)
                     .ifPresent(r -> {
                         throw new ApiException(HttpStatus.CONFLICT, ErrorCode.RESERVATION_INVALID_STATUS.format());
                     });
 
             //        Upsert PENDING reservation row so ExpirationJob can track the hold
-            reservationRepository.save(Reservation.builder()
-                    .id(reservationId)
-                    .userId(userId)
-                    .showtimeId(showtimeId)
-                    .reservationStatus(ReservationStatus.PENDING)
-                    .totalAmount(java.math.BigDecimal.ZERO)
-                    .expiredAt(Instant.now().plus(HOLD_TIMEOUT))
-                    .isDeleted(false)
-                    .build());
+            reservationRepository.findByReservationCode(reservationId)
+                    .orElseGet(() -> reservationRepository.save(Reservation.builder()
+                            .reservationCode(reservationId)
+                            .userId(userId)
+                            .showtimeId(showtimeId)
+                            .reservationStatus(ReservationStatus.PENDING)
+                            .totalAmount(java.math.BigDecimal.ZERO)
+                            .expiredAt(Instant.now().plus(HOLD_TIMEOUT))
+                            .isDeleted(false)
+                            .build()));
 
             reservationNotificationHelper.sendSeatHold(showtimeId, userId, allShowtimeSeatIds);
             log.info("Successfully hold {} seats with user id {} for reservation {}: {} ", seatIds.size(), userId, reservationId, seatIds);

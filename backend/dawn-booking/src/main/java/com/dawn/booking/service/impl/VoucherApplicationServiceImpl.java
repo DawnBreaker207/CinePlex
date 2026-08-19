@@ -66,7 +66,7 @@ public class VoucherApplicationServiceImpl implements VoucherApplicationService 
             try {
                 catalogApi.releaseVoucher(voucherCode, voucherUserId);
             } catch (Exception e) {
-                log.warn("Failed to release voucher for reservation {}", existing.map(Reservation::getId).orElse("?"));
+                log.warn("Failed to release voucher for reservation {}", existing.map(Reservation::getReservationCode).orElse("?"));
             }
         }
     }

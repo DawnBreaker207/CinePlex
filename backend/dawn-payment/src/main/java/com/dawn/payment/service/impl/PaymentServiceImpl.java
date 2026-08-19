@@ -143,7 +143,7 @@ public class PaymentServiceImpl implements PaymentService {
             PaymentFailedEvent failedEvent = PaymentFailedEvent
                     .builder()
                     .eventId(UUID.randomUUID().toString())
-                    .reservationId(reservationId)
+                    .reservationCode(reservationId)
                     .reason(ex.getMessage())
                     .failedAt(Instant.now())
                     .build();
@@ -207,7 +207,7 @@ public class PaymentServiceImpl implements PaymentService {
     private PaymentCompletedEvent buildCompleteEvent(Payment payment, String provider) {
         return PaymentCompletedEvent.builder()
                 .eventId(UUID.randomUUID().toString())
-                .reservationId(payment.getReservationId())
+                .reservationCode(payment.getReservationId())
                 .amount(payment.getAmount())
                 .method(checkPaymentMethod(provider))
                 .paidAt(Instant.now())

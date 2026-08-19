@@ -29,7 +29,7 @@ public class ExpirationJob {
         log.info("Found {} expired PENDING reservations to release", expired.size());
         for (Reservation reservation : expired) {
             try {
-                reservationService.expireReservation(reservation.getId());
+                reservationService.expireReservation(reservation.getReservationCode());
             } catch (Exception e) {
                 log.error("Failed to expire reservation {}", reservation.getId(), e);
             }

@@ -23,7 +23,7 @@ public class EmailService {
 
     public void sendReservationEmail(BookingCompleteEvent event) {
         log.info("Got message from reservation");
-        String barcodeBase64 = BarcodeUtils.generateCode128(event.reservationId(), 300, 100);
+        String barcodeBase64 = BarcodeUtils.generateCode128(event.reservationCode(), 300, 100);
 
         MimeMessagePreparator messagePreparator = mimeMessage -> {
             MimeMessageHelper messageHelper = new MimeMessageHelper(mimeMessage, true);
@@ -33,7 +33,7 @@ public class EmailService {
 
             Context context = new Context();
             context.setVariable("name", event.name());
-            context.setVariable("reservationId", event.reservationId());
+            context.setVariable("reservationId", event.reservationCode());
             context.setVariable("movieName", event.movieName());
             context.setVariable("theaterName", event.theaterName());
             context.setVariable("showtimeSession", event.showtimeSession());

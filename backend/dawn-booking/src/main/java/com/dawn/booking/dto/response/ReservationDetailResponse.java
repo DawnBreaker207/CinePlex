@@ -13,7 +13,7 @@ import java.math.BigDecimal;
 @SuperBuilder
 @EqualsAndHashCode(callSuper = true)
 public class ReservationDetailResponse extends BaseResponse {
-    private String id;
+    private String reservationCode;
 
     private Long userId;
 

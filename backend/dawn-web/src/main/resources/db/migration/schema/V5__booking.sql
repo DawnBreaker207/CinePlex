@@ -1,5 +1,6 @@
 CREATE TABLE reservation (
-    id              VARCHAR(36) NOT NULL PRIMARY KEY,
+    id              BIGINT PRIMARY KEY AUTO_INCREMENT,
+    reservation_code VARCHAR(20) NOT NULL,
     user_id         BIGINT NOT NULL,
     showtime_id     BIGINT NOT NULL,
     status          ENUM('PENDING','CONFIRMED','CANCELED','FAILED','EXPIRED','REFUNDED') NOT NULL DEFAULT 'PENDING',
@@ -14,6 +15,7 @@ CREATE TABLE reservation (
     updated_at      DATETIME  NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_reservation_user     FOREIGN KEY (user_id)     REFERENCES users(id)    ON DELETE CASCADE,
     CONSTRAINT fk_reservation_showtime FOREIGN KEY (showtime_id) REFERENCES showtime(id) ON DELETE CASCADE,
+    UNIQUE KEY uk_reservation_code (reservation_code),
     INDEX idx_reservation_user_id (user_id),
     INDEX idx_reservation_status (status),
     INDEX idx_reservation_showtime_id (showtime_id)
@@ -25,7 +27,7 @@ CREATE TABLE seat_instance (
     seat_template_id BIGINT NOT NULL,
     status           ENUM('AVAILABLE','BOOKED','RESERVED') NOT NULL DEFAULT 'AVAILABLE',
     reserved_until   DATETIME NULL,
-    reservation_id   VARCHAR(36) NULL,
+    reservation_id   BIGINT NULL,
     price            DECIMAL(10,2) NOT NULL,
     created_at       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -39,7 +41,7 @@ CREATE TABLE seat_instance (
 
 CREATE TABLE ticket (
     id               BIGINT PRIMARY KEY AUTO_INCREMENT,
-    reservation_id   VARCHAR(36) NOT NULL,
+    reservation_id   BIGINT NOT NULL,
     seat_instance_id BIGINT NOT NULL,
     ticket_type      ENUM('NORMAL','VIP','COUPLE') NOT NULL DEFAULT 'NORMAL',
     price            DECIMAL(10,2) NOT NULL,
@@ -52,7 +54,7 @@ CREATE TABLE ticket (
 
 CREATE TABLE payment (
     id                BIGINT PRIMARY KEY AUTO_INCREMENT,
-    reservation_id    VARCHAR(36) NOT NULL,
+    reservation_id    VARCHAR(20) NOT NULL,
     payment_intent_id VARCHAR(255) NOT NULL,
     gateway_txn_ref   VARCHAR(255) NOT NULL,
     gateway_response  JSON NULL,

@@ -20,8 +20,12 @@ import java.time.Instant;
 @EqualsAndHashCode(callSuper = true)
 public class Reservation extends AbstractMappedEntity {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false, updatable = false)
-    private String id;
+    private Long id;
+
+    @Column(name = "reservation_code", nullable = false, unique = true, length = 20)
+    private String reservationCode;
 
     @Column(name = "user_id", nullable = false)
     private Long userId;

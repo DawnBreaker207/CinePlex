@@ -18,7 +18,7 @@ public class SeatRequest {
 
     private Long showtimeId;
 
-    private String reservationId;
+    private Long reservationId;
 
     private SeatStatus status;
 }
