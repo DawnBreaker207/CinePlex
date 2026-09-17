@@ -3,14 +3,14 @@ package com.dawn.payment.service;
 import com.dawn.common.core.constant.PaymentMethod;
 import com.dawn.common.core.constant.PaymentStatus;
 import com.dawn.common.core.exception.wrapper.ResourceNotFoundException;
+import com.dawn.common.core.outbox.Outbox;
+import com.dawn.common.core.outbox.OutboxRepository;
 import com.dawn.common.core.service.AuditLogService;
 import com.dawn.payment.dto.request.PaymentRequest;
 import com.dawn.payment.dto.response.PaymentHandlerResponse;
 import com.dawn.payment.dto.response.PaymentResponse;
 import com.dawn.payment.handler.PaymentHandler;
-import com.dawn.payment.model.Outbox;
 import com.dawn.payment.model.Payment;
-import com.dawn.payment.repository.OutboxRepository;
 import com.dawn.payment.repository.PaymentRepository;
 import com.dawn.payment.service.impl.PaymentServiceImpl;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -22,7 +22,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -42,13 +41,9 @@ class PaymentServiceImplTest {
     @Mock
     PaymentRepository paymentRepository;
     @Mock
-    ReservationClientService reservationClientService;
-    @Mock
     PaymentHandler vnpayHandler;
     @Mock
     PaymentHandler momoHandler;
-    @Mock
-    RabbitTemplate rabbitTemplate;
     @Mock
     OutboxRepository outboxRepository;
     @Mock
@@ -72,16 +67,11 @@ class PaymentServiceImplTest {
         service = new PaymentServiceImpl(
                 List.of(vnpayHandler, momoHandler),
                 paymentRepository,
-                reservationClientService,
-                rabbitTemplate,
                 outboxRepository,
                 objectMapper,
                 auditLogService);
     }
 
-    // ----------------------------------------------------------------
-    // createPayment
-    // ----------------------------------------------------------------
 
     @Nested
     @DisplayName("createPayment")
@@ -123,6 +113,24 @@ class PaymentServiceImplTest {
         }
 
         @Test
+        @DisplayName("txnRef được sinh unique dạng CP{ts}-{hex}, KHÔNG dùng reservationId")
+        void createPayment_shouldGenerateUniqueTxnRef() {
+            when(vnpayHandler.createPaymentUrl(any(), anyInt(), anyString()))
+                    .thenReturn("https://vnpay.test/pay");
+
+            service.createPayment(buildRequest(VNPAY, 100_000), "127.0.0.1");
+            service.createPayment(buildRequest(VNPAY, 100_000), "127.0.0.1");
+
+            ArgumentCaptor<Payment> captor = ArgumentCaptor.forClass(Payment.class);
+            verify(paymentRepository, times(2)).save(captor.capture());
+
+            Payment first = captor.getAllValues().get(0);
+            Payment second = captor.getAllValues().get(1);
+            assertThat(first.getGatewayTxnRef()).startsWith("CP").isNotEqualTo(RES_ID);
+            assertThat(second.getGatewayTxnRef()).startsWith("CP").isNotEqualTo(first.getGatewayTxnRef());
+        }
+
+        @Test
         @DisplayName("provider không hợp lệ → throw ResourceNotFoundException")
         void createPayment_unknownProvider_shouldThrow() {
             PaymentRequest req = buildRequest("UNKNOWN_PAY", 100_000);
@@ -142,9 +150,7 @@ class PaymentServiceImplTest {
         }
     }
 
-    // ----------------------------------------------------------------
     // processCallback — idempotency
-    // ----------------------------------------------------------------
 
     @Nested
     @DisplayName("processCallback — idempotency")
@@ -187,6 +193,44 @@ class PaymentServiceImplTest {
         }
 
         @Test
+        @DisplayName("PAID rồi nhưng callback khác amount → vẫn success + audit CONFLICT")
+        void processCallback_contradictoryAmount_shouldAuditConflict() {
+            Map<String, String> params = Map.of("vnp_TxnRef", RES_ID);
+            when(vnpayHandler.getId(params)).thenReturn(RES_ID);
+            when(vnpayHandler.verifySignature(params)).thenReturn(true);
+            when(vnpayHandler.getAmount(params)).thenReturn(new BigDecimal("200000"));
+            when(vnpayHandler.getTxnRef(params)).thenReturn("TXN-999");
+
+            Payment paid = buildPayment(RES_ID, PaymentStatus.PAID, PaymentMethod.VNPAY);
+            when(paymentRepository.findByReservationId(RES_ID)).thenReturn(Optional.of(paid));
+
+            PaymentHandlerResponse response = service.processCallback(VNPAY, params);
+
+            assertThat(response.isSuccess()).isTrue();
+            verify(auditLogService).record(eq("PAYMENT_CALLBACK_CONFLICT"),
+                    any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
+        }
+
+        @Test
+        @DisplayName("PAID + callback khớp số liệu → success, không audit CONFLICT")
+        void processCallback_consistentDuplicate_shouldNotAudit() {
+            Map<String, String> params = Map.of("vnp_TxnRef", RES_ID);
+            when(vnpayHandler.getId(params)).thenReturn(RES_ID);
+            when(vnpayHandler.verifySignature(params)).thenReturn(true);
+            when(vnpayHandler.getAmount(params)).thenReturn(new BigDecimal("100000"));
+            when(vnpayHandler.getTxnRef(params)).thenReturn(null);
+
+            Payment paid = buildPayment(RES_ID, PaymentStatus.PAID, PaymentMethod.VNPAY);
+            when(paymentRepository.findByReservationId(RES_ID)).thenReturn(Optional.of(paid));
+
+            PaymentHandlerResponse response = service.processCallback(VNPAY, params);
+
+            assertThat(response.isSuccess()).isTrue();
+            verify(auditLogService, never()).record(eq("PAYMENT_CALLBACK_CONFLICT"),
+                    any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
+        }
+
+        @Test
         @DisplayName("outbox row da ton tai - payment PENDING nhung event da enqueue -> khong save lai")
         void processCallback_outboxAlreadyEnqueued_shouldSkipOutboxSave() {
             Map<String, String> params = Map.of("vnp_TxnRef", RES_ID);
@@ -197,7 +241,7 @@ class PaymentServiceImplTest {
             Payment pending = buildPayment(RES_ID, PaymentStatus.PENDING, PaymentMethod.VNPAY);
             when(paymentRepository.findByReservationId(RES_ID)).thenReturn(Optional.of(pending));
             when(paymentRepository.saveAndFlush(any())).thenReturn(pending);
-            when(outboxRepository.existsByEventTypeAndReservationId(anyString(), eq(RES_ID))).thenReturn(true);
+            when(outboxRepository.existsByEventTypeAndAggregateId(anyString(), eq(RES_ID))).thenReturn(true);
 
             PaymentHandlerResponse response = service.processCallback(VNPAY, params);
 
@@ -207,9 +251,7 @@ class PaymentServiceImplTest {
         }
     }
 
-    // ----------------------------------------------------------------
     // processCallback — happy path
-    // ----------------------------------------------------------------
 
     @Nested
     @DisplayName("processCallback — happy path")
@@ -232,15 +274,12 @@ class PaymentServiceImplTest {
             assertThat(response.isSuccess()).isTrue();
             assertThat(response.getReservationId()).isEqualTo(RES_ID);
 
-            // Verify payment được lưu với trạng thái PAID
             ArgumentCaptor<Payment> captor = ArgumentCaptor.forClass(Payment.class);
             verify(paymentRepository).saveAndFlush(captor.capture());
             assertThat(captor.getValue().getStatus()).isEqualTo(PaymentStatus.PAID);
             assertThat(captor.getValue().getGatewayTxnRef()).isEqualTo("TXN-123");
 
-            // Verify outbox được ghi, KHÔNG publish trực tiếp
             verify(outboxRepository).save(any(Outbox.class));
-            verify(rabbitTemplate, never()).convertAndSend(anyString(), anyString(), any(Object.class));
         }
 
         @Test
@@ -263,9 +302,7 @@ class PaymentServiceImplTest {
         }
     }
 
-    // ----------------------------------------------------------------
     // processCallback — failure path
-    // ----------------------------------------------------------------
 
     @Nested
     @DisplayName("processCallback — failure path")
@@ -300,6 +337,26 @@ class PaymentServiceImplTest {
         }
 
         @Test
+        @DisplayName("amount từ gateway lệch → FAILED/AMOUNT_MISMATCH, success=false")
+        void processCallback_amountMismatch_shouldFailPayment() {
+            Map<String, String> params = Map.of("vnp_TxnRef", RES_ID);
+            when(vnpayHandler.getId(params)).thenReturn(RES_ID);
+            when(vnpayHandler.verifySignature(params)).thenReturn(true);
+            when(vnpayHandler.getAmount(params)).thenReturn(new BigDecimal("99999"));
+
+            Payment pending = buildPayment(RES_ID, PaymentStatus.PENDING, PaymentMethod.VNPAY);
+            when(paymentRepository.findByReservationId(RES_ID)).thenReturn(Optional.of(pending));
+
+            PaymentHandlerResponse response = service.processCallback(VNPAY, params);
+
+            assertThat(response.isSuccess()).isFalse();
+            assertThat(pending.getStatus()).isEqualTo(PaymentStatus.FAILED);
+            assertThat(pending.getStatusReason()).isEqualTo("AMOUNT_MISMATCH");
+            verify(paymentRepository).save(pending);
+            verify(outboxRepository, never()).save(any());
+        }
+
+        @Test
         @DisplayName("saveAndFlush throw → publish PaymentFailedEvent, trả về success=false")
         void processCallback_saveThrows_shouldPublishFailedEvent() {
             Map<String, String> params = Map.of("vnp_TxnRef", RES_ID);
@@ -317,15 +374,10 @@ class PaymentServiceImplTest {
             assertThat(response.isSuccess()).isFalse();
             assertThat(response.getMessage()).isEqualTo("Internal Error");
 
-            // Verify PaymentFailedEvent được publish
-            verify(rabbitTemplate).convertAndSend(anyString(), anyString(), any(Object.class));
-            verify(outboxRepository, never()).save(any());
+            verify(outboxRepository).save(any(Outbox.class));
         }
     }
 
-    // ----------------------------------------------------------------
-    // manualCheck
-    // ----------------------------------------------------------------
 
     @Nested
     @DisplayName("manualCheck")
@@ -364,9 +416,6 @@ class PaymentServiceImplTest {
         }
     }
 
-    // ----------------------------------------------------------------
-    // checkPaymentMethod (via createPayment)
-    // ----------------------------------------------------------------
 
     @Nested
     @DisplayName("checkPaymentMethod")
@@ -395,12 +444,9 @@ class PaymentServiceImplTest {
             when(weirdHandler.createPaymentUrl(any(), anyInt(), any()))
                     .thenReturn("https://weird.test");
 
-            // FIX: truyền đủ 7 tham số
             PaymentServiceImpl svcWithWeird = new PaymentServiceImpl(
                     List.of(vnpayHandler, momoHandler, weirdHandler),
                     paymentRepository,
-                    reservationClientService,
-                    rabbitTemplate,
                     outboxRepository,
                     objectMapper,
                     auditLogService);
@@ -414,9 +460,6 @@ class PaymentServiceImplTest {
         }
     }
 
-    // ----------------------------------------------------------------
-    // Helpers
-    // ----------------------------------------------------------------
 
     private PaymentRequest buildRequest(String type, int amount) {
         PaymentRequest req = new PaymentRequest();
