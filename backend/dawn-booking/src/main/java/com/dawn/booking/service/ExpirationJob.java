@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
@@ -18,22 +19,24 @@ import java.util.List;
 public class ExpirationJob {
 
     private final ReservationRepository reservationRepository;
-    private final ReservationLifecycleService reservationService;
+    private final ReservationService reservationService;
 
     @Scheduled(fixedDelayString = "${app.expiration.scan-interval-ms:60000}")
+    @Transactional
     public void expirePendingReservations() {
+        //  SKIP LOCKED: each expired row is locked for this job run; other nodes skip it
         List<Reservation> expired = reservationRepository
-                .findAllByReservationStatusAndExpiredAtBefore(ReservationStatus.PENDING, Instant.now());
+                .findExpiredLockedSkipped(ReservationStatus.PENDING, Instant.now());
         if (expired.isEmpty()) {
             return;
         }
-        log.info("Found {} expired PENDING reservations to release", expired.size());
+        log.debug("Found {} expired PENDING reservations to release", expired.size());
         for (Reservation reservation : expired) {
             try {
-                reservationService.expireReservation(reservation.getReservationCode());
+                reservationService.expire(reservation.getReservationCode());
             } catch (ObjectOptimisticLockingFailureException e) {
                 // Another node (or a concurrent confirm) already transitioned this reservation
-                log.info("Reservation {} expired concurrently, skipping", reservation.getReservationCode());
+                log.debug("Reservation {} expired concurrently, skipping", reservation.getReservationCode());
             } catch (Exception e) {
                 log.error("Failed to expire reservation {}", reservation.getId(), e);
             }
