@@ -1,10 +1,10 @@
 -- Demo data: users, movie, vouchers, article, showtime, seat_instance
-INSERT IGNORE INTO users (username, email, password, phone, address) VALUES
-    ('user1', 'user1@test.com', '$2a$10$C1bS4xucP8o829h4md3mhuUNj6K5Yfa/e073as662wfKMsPpxu7Bq', '0123456789', 'Hà Nội'),
-    ('user2', 'user2@test.com', '$2a$10$C1bS4xucP8o829h4md3mhuUNj6K5Yfa/e073as662wfKMsPpxu7Bq', '0123456790', 'Hồ Chí Minh'),
-    ('user3', 'user3@test.com', '$2a$10$C1bS4xucP8o829h4md3mhuUNj6K5Yfa/e073as662wfKMsPpxu7Bq', '0123456791', 'Đà Nẵng'),
-    ('user4', 'user4@test.com', '$2a$10$C1bS4xucP8o829h4md3mhuUNj6K5Yfa/e073as662wfKMsPpxu7Bq', '0123456792', 'Hải Phòng'),
-    ('user5', 'user5@test.com', '$2a$10$C1bS4xucP8o829h4md3mhuUNj6K5Yfa/e073as662wfKMsPpxu7Bq', '0123456793', 'Cần Thơ');
+INSERT IGNORE INTO users (username, email, password, phone, address, email_verified) VALUES
+    ('user1', 'user1@test.com', '$2a$10$C1bS4xucP8o829h4md3mhuUNj6K5Yfa/e073as662wfKMsPpxu7Bq', '0123456789', 'Hà Nội', TRUE),
+    ('user2', 'user2@test.com', '$2a$10$C1bS4xucP8o829h4md3mhuUNj6K5Yfa/e073as662wfKMsPpxu7Bq', '0123456790', 'Hồ Chí Minh', TRUE),
+    ('user3', 'user3@test.com', '$2a$10$C1bS4xucP8o829h4md3mhuUNj6K5Yfa/e073as662wfKMsPpxu7Bq', '0123456791', 'Đà Nẵng', TRUE),
+    ('user4', 'user4@test.com', '$2a$10$C1bS4xucP8o829h4md3mhuUNj6K5Yfa/e073as662wfKMsPpxu7Bq', '0123456792', 'Hải Phòng', TRUE),
+    ('user5', 'user5@test.com', '$2a$10$C1bS4xucP8o829h4md3mhuUNj6K5Yfa/e073as662wfKMsPpxu7Bq', '0123456793', 'Cần Thơ', TRUE);
 
 INSERT IGNORE INTO user_role (user_id, role_id)
 SELECT u.id, r.id FROM users u, roles r WHERE u.username = 'user1' AND r.name = 'USER';
