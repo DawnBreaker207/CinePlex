@@ -8,6 +8,7 @@ import {
   Voucher,
   VoucherCalculate,
   VoucherRequest,
+  UserVoucher,
 } from '@domain/voucher/model/voucher.model';
 
 @Injectable({
@@ -71,6 +72,26 @@ export class VoucherService {
         map((res) => res.data),
         catchError(this.handleError<VoucherCalculate>('voucher')),
       );
+  }
+
+  claimVoucher(code: string) {
+    return this.http
+      .post<ApiRes<UserVoucher>>(
+        `${this.URL}/claim`,
+        null,
+        { params: new HttpParams().set('code', code) },
+      )
+      .pipe(
+        map((res) => res.data),
+        catchError(this.handleError<UserVoucher>('voucher')),
+      );
+  }
+
+  getUserVouchers() {
+    return this.http.get<ApiRes<UserVoucher[]>>(`${this.URL}/user`).pipe(
+      map((res) => res.data ?? []),
+      catchError(this.handleError<UserVoucher[]>('voucher')),
+    );
   }
   private handleError<T>(operation = 'operation') {
     return (error: unknown): Observable<T> => {

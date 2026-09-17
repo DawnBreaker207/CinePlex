@@ -7,7 +7,7 @@ import {
 import { NgxEchartsDirective } from 'ngx-echarts';
 import type { EChartsCoreOption } from 'echarts/core';
 import { NzIconModule } from 'ng-zorro-antd/icon';
-import { RevenuePoint } from '@domain/dashboard/models/dashboard.model';
+import { RevenuePoint, DailyForecast } from '@domain/dashboard/models/dashboard.model';
 import { TranslatePipe } from '@ngx-translate/core';
 import { CHART_COLORS } from '@shared/utils/colors';
 import dayjs from 'dayjs';
@@ -20,6 +20,7 @@ import dayjs from 'dayjs';
 })
 export class RevenueChartComponent {
   revenues = input<RevenuePoint[]>([]);
+  forecast = input<DailyForecast[]>([]);
   granularity = input<'day' | 'week' | 'month'>('day');
 
   private readonly grouped = computed(() => {
@@ -54,12 +55,24 @@ export class RevenueChartComponent {
 
   options = computed<EChartsCoreOption>(() => {
     const points = this.grouped();
-    const date = points.map((p) => p.label);
+    const forecastPoints = this.forecast().map((f) => ({
+      label: dayjs(f.date).format('DD/MM'),
+      value: f.projectedRevenue,
+    }));
+    const date = [
+      ...points.map((p) => p.label),
+      ...forecastPoints.map((p) => p.label),
+    ];
     const revenue = points.map((p) => p.value);
     const primary = CHART_COLORS.primary();
+    const gold = '#e0ac52';
     return {
       tooltip: {
         trigger: 'axis',
+      },
+      legend: {
+        show: forecastPoints.length > 0,
+        data: ['Revenue', 'Forecast'],
       },
       grid: {
         left: '3%',
@@ -125,6 +138,19 @@ export class RevenueChartComponent {
             width: 3,
           },
         },
+        ...(forecastPoints.length > 0
+          ? [
+              {
+                name: 'Forecast',
+                type: 'line' as const,
+                data: [...revenue.map(() => null), ...forecastPoints.map((p) => p.value)],
+                smooth: true,
+                showSymbol: false,
+                itemStyle: { color: gold },
+                lineStyle: { width: 2, type: 'dashed' as const, color: gold },
+              },
+            ]
+          : []),
       ],
     };
   });

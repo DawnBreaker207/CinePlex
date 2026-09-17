@@ -58,7 +58,13 @@ export const HEADER_COLUMNS = {
   ],
 };
 
-export const HEADERS = [{ name: marker('common.movies'), path: '/movies' }];
+export const HEADERS = [
+  { name: marker('nav.showtimes'), path: '/showtimes' },
+  { name: marker('common.movies'), path: '/movies' },
+  { name: marker('nav.theaters'), path: '/theaters' },
+  { name: marker('nav.pricing'), path: '/pricing' },
+  { name: marker('nav.news'), path: '/news' },
+];
 
 export const PROFILE_MENU = [
   {
@@ -86,6 +92,8 @@ export const RESERVATION_STATUS_LABELS: Record<ReservationStatus, string> = {
   CONFIRMED: marker('status.confirmed'),
   CANCELED: marker('status.cancelled'),
   PENDING: marker('status.pending'),
+  FAILED: marker('status.failed'),
+  EXPIRED: marker('status.expired'),
   REFUNDED: marker('status.refunded'),
 };
 
@@ -93,5 +101,7 @@ export const RESERVATION_STATUS = [
   { value: 'CONFIRMED', label: RESERVATION_STATUS_LABELS.CONFIRMED },
   { value: 'CANCELED', label: RESERVATION_STATUS_LABELS.CANCELED },
   { value: 'PENDING', label: RESERVATION_STATUS_LABELS.PENDING },
+  { value: 'FAILED', label: RESERVATION_STATUS_LABELS.FAILED },
+  { value: 'EXPIRED', label: RESERVATION_STATUS_LABELS.EXPIRED },
   { value: 'REFUNDED', label: RESERVATION_STATUS_LABELS.REFUNDED },
 ];

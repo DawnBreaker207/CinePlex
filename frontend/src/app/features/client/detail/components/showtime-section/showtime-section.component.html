@@ -37,7 +37,14 @@
             <div class="flex flex-wrap gap-3">
               @for (show of cinema.showtimes; track show.time) {
                 <div
-                  class="group relative w-[112px] cursor-pointer overflow-hidden rounded-lg border border-slate-300 bg-white p-3 text-center transition-all hover:border-[var(--color-primary)]"
+                  class="group relative w-[112px] overflow-hidden rounded-lg border bg-white p-3 text-center transition-all"
+                  [ngClass]="
+                    show.availableSeats <= 0
+                      ? 'cursor-not-allowed border-slate-200 opacity-50'
+                      : show.availableSeats < 5
+                        ? 'cursor-pointer border-[var(--color-gold)] hover:shadow-sm'
+                        : 'cursor-pointer border-slate-300 hover:border-[var(--color-primary)]'
+                  "
                 >
                   <div
                     class="text-lg font-bold text-slate-900 group-hover:text-[var(--color-primary)]"
@@ -45,7 +52,16 @@
                     {{ show.time }}
                   </div>
                   <div class="flex items-center gap-1.5 mt-1">
-                    <div class="h-1.5 w-1.5 rounded-full bg-emerald-500"></div>
+                    <div
+                      class="h-1.5 w-1.5 rounded-full"
+                      [ngClass]="
+                        show.availableSeats <= 0
+                          ? 'bg-slate-300'
+                          : show.availableSeats < 5
+                            ? 'bg-[var(--color-gold)]'
+                            : 'bg-emerald-500'
+                      "
+                    ></div>
                     <span
                       class="text-[10px] font-medium text-slate-500 group-hover:text-[var(--color-primary)]"
                     >

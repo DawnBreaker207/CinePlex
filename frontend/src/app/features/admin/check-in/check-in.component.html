@@ -8,7 +8,7 @@
           {{ 'checkin.subtitle' | translate }}
         </p>
 
-        <div class="mt-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-[#1a202c]">
+        <div class="mt-6 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-[#161a20]">
           <div class="flex gap-2">
             <nz-input-group nzPrefixIcon="scan" class="flex-1">
               <input
@@ -34,7 +34,7 @@
         </div>
 
         @if (error(); as msg) {
-          <div class="mt-4 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-[#1a202c]">
+          <div class="mt-4 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-[#161a20]">
             <nz-result nzStatus="warning" [nzSubTitle]="msg">
             </nz-result>
           </div>

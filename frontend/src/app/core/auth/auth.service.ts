@@ -41,6 +41,28 @@ export class AuthService {
     );
   }
 
+  verifyEmail(token: string) {
+    return this.http
+      .get<ApiRes<string>>(`${this.URL}/verify-email`, { params: { token } })
+      .pipe(
+        map((res) => res.data),
+        catchError(this.handleError<string>('verifyEmail')),
+      );
+  }
+
+  resendVerification(email: string) {
+    return this.http
+      .post<ApiRes<string>>(
+        `${this.URL}/resend-verification`,
+        null,
+        { params: { email } },
+      )
+      .pipe(
+        map((res) => res.data),
+        catchError(this.handleError<string>('resendVerification')),
+      );
+  }
+
   login(request: LoginRequest) {
     return this.http.post<ApiRes<Jwt>>(`${this.URL}/login`, request).pipe(
       map((res) => res?.data),

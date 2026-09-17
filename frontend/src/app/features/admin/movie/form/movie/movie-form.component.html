@@ -226,12 +226,33 @@
               [readOnly]="mode === 'view'"
               maxlength="500"
             />
+            @if (mode !== 'view') {
+              <div class="mt-2 flex items-center gap-2">
+                <input
+                  #posterFile
+                  type="file"
+                  accept="image/*"
+                  class="hidden"
+                  (change)="onPosterFile($event)"
+                />
+                <button
+                  nz-button
+                  nzType="default"
+                  class="rounded-lg"
+                  [nzLoading]="uploading()"
+                  (click)="posterFile.click()"
+                >
+                  <nz-icon nzType="upload" />
+                  {{ "common.upload" | translate }}
+                </button>
+              </div>
+            }
           </nz-form-control>
         </nz-form-item>
 
         <!-- POSTER PREVIEW BOX -->
         <div
-          class="w-full aspect-[2/3] bg-white dark:bg-[#1a202c] rounded-2xl border-2 border-dashed border-gray-300 relative overflow-hidden flex items-center justify-center group shadow-md transition-[box-shadow,border-color] hover:shadow-xl hover:border-primary/40"
+          class="w-full aspect-[2/3] bg-white dark:bg-[#161a20] rounded-2xl border-2 border-dashed border-gray-300 relative overflow-hidden flex items-center justify-center group shadow-md transition-[box-shadow,border-color] hover:shadow-xl hover:border-primary/40"
         >
           <!-- LOGIC HIỂN THỊ ẢNH THÔNG MINH -->
           @if (form.get("poster")?.value) {

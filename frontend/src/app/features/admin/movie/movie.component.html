@@ -37,7 +37,7 @@
       @let results = searchResults();
       @if (results.length > 0) {
         <div
-          class="absolute z-50 top-full mt-1 w-full bg-white dark:bg-[#1a202c] border rounded shadow max-h-72 overflow-y-auto"
+          class="absolute z-50 top-full mt-1 w-full bg-white dark:bg-[#161a20] border rounded shadow max-h-72 overflow-y-auto"
         >
           <nz-list
             [nzDataSource]="results"
@@ -107,7 +107,7 @@
   @let pag = pagination();
   <app-loading [isLoading]="loading()">
     <div
-      class="bg-white dark:bg-[#1a202c] rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-6 overflow-x-auto"
+      class="bg-white dark:bg-[#161a20] rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-6 overflow-x-auto"
     >
       <nz-table
         [nzData]="movies()"

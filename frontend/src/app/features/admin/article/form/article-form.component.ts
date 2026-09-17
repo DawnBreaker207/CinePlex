@@ -2,6 +2,7 @@ import {
   Component,
   inject,
   OnInit,
+  signal,
   ChangeDetectionStrategy,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -26,6 +27,7 @@ import {
 } from '@domain/article/models/article.model';
 import { TranslatePipe } from '@ngx-translate/core';
 import { quillConfig } from '@core/config/quill.config';
+import { UploadService } from '@core/services/upload/upload.service';
 import { NZ_DRAWER_DATA, NzDrawerRef } from 'ng-zorro-antd/drawer';
 import { ArticleStore } from '@domain/article/data-access/article.store';
 
@@ -51,12 +53,14 @@ export class ArticleFormComponent implements OnInit {
   protected readonly quillConfig = quillConfig;
   private drawerRef = inject(NzDrawerRef);
   private articleStore = inject(ArticleStore);
+  private uploadService = inject(UploadService);
   readonly nzData = inject<{ article: Article | null; isEditMode: boolean }>(
     NZ_DRAWER_DATA,
   );
   protected readonly ArticleType = ArticleType;
   protected readonly ArticleStatus = ArticleStatus;
   isLoading = this.articleStore.saving;
+  readonly uploading = signal(false);
   form!: FormGroup<{
     title: FormControl<string>;
     thumbnail: FormControl<string>;
@@ -83,6 +87,19 @@ export class ArticleFormComponent implements OnInit {
   }
   close() {
     this.drawerRef.close();
+  }
+
+  onThumbnailFile(event: Event) {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+    this.uploading.set(true);
+    this.uploadService.uploadAssets(file).subscribe({
+      next: (url) => {
+        this.form.controls.thumbnail.setValue(url);
+        this.uploading.set(false);
+      },
+      error: () => this.uploading.set(false),
+    });
   }
 
   submit() {

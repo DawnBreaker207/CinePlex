@@ -125,8 +125,10 @@
                 {{ "confirm.applied" | translate }} {{ calc.code }}
               </p>
               <p class="text-xs text-success/80 m-0">
+                {{ calc.originalAmount | currency: "VND" }} →
                 {{ "confirm.discount" | translate }}
-                {{ calc.discountAmount | currency: "VND" }}
+                {{ calc.discountAmount | currency: "VND" }} →
+                <strong>{{ calc.finalAmount | currency: "VND" }}</strong>
               </p>
             </div>
           </div>

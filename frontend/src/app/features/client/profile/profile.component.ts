@@ -3,6 +3,7 @@ import {
   HostListener,
   inject,
   OnInit,
+  signal,
   ChangeDetectionStrategy,
 } from '@angular/core';
 import { CommonModule, DOCUMENT } from '@angular/common';
@@ -24,10 +25,12 @@ import { NzSkeletonModule } from 'ng-zorro-antd/skeleton';
 import { NzTooltipModule } from 'ng-zorro-antd/tooltip';
 import { BookingHistoryComponent } from '@features/client/profile/booking-history/booking-history.component';
 import { InfoComponent } from '@features/client/profile/info/info.component';
+import { UserVouchersComponent } from '@features/client/profile/user-vouchers/user-vouchers.component';
 import { UserStore } from '@domain/user/data-access/user.store';
 import { Store } from '@ngrx/store';
 import { selectUserId } from '@core/auth/auth.selectors';
 import { ReservationStore } from '@domain/reservation/data-access/reservation.store';
+import { ReservationStatus } from '@core/constants/enum';
 import { TranslatePipe } from '@ngx-translate/core';
 
 @Component({
@@ -54,6 +57,7 @@ import { TranslatePipe } from '@ngx-translate/core';
     NzTooltipModule,
     BookingHistoryComponent,
     InfoComponent,
+    UserVouchersComponent,
     TranslatePipe,
   ],
   templateUrl: './profile.component.html',
@@ -66,6 +70,7 @@ export class ProfileComponent implements OnInit {
   readonly reservationStore = inject(ReservationStore);
   private document = inject(DOCUMENT);
   tabPosition: NzTabPosition = 'left';
+  readonly ticketStatus = signal<ReservationStatus>('CONFIRMED');
 
   ngOnInit() {
     this.checkScreenSize();
@@ -73,8 +78,23 @@ export class ProfileComponent implements OnInit {
 
     if (userId !== undefined && userId !== null) {
       this.userStore.loadUser(userId);
-      this.reservationStore.loadReservationProfile(userId);
+      this.loadTickets();
     }
+  }
+
+  loadTickets() {
+    const userId = this.store.selectSignal(selectUserId)();
+    if (userId !== undefined && userId !== null) {
+      this.reservationStore.loadReservationProfile({
+        id: userId,
+        status: this.ticketStatus(),
+      });
+    }
+  }
+
+  onTicketStatus(status: ReservationStatus) {
+    this.ticketStatus.set(status);
+    this.loadTickets();
   }
 
   @HostListener('window:resize')

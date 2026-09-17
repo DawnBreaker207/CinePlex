@@ -9,6 +9,8 @@ import { ArticleComponent } from '@features/admin/article/article.component';
 import { AdminLayoutComponent } from '../../layout/admin-layout/admin-layout.component';
 import { VoucherListComponent } from '@features/admin/voucher/pages/voucher-list/voucher-list.component';
 import { CheckInComponent } from '@features/admin/check-in/check-in.component';
+import { AuditComponent } from '@features/admin/audit/audit.component';
+import { RoomsComponent } from '@features/admin/theater/rooms/rooms.component';
 
 export const ADMIN_ROUTES: Routes = [
   {
@@ -34,6 +36,11 @@ export const ADMIN_ROUTES: Routes = [
         path: 'theater',
         title: 'admin.theater',
         component: TheaterComponent,
+      },
+      {
+        path: 'theater/:theaterId/rooms',
+        title: 'admin.room.title',
+        component: RoomsComponent,
       },
       {
         path: 'showtime',
@@ -64,6 +71,11 @@ export const ADMIN_ROUTES: Routes = [
         path: 'voucher',
         title: 'admin.voucher',
         component: VoucherListComponent,
+      },
+      {
+        path: 'audit-logs',
+        title: 'admin.audit.title',
+        component: AuditComponent,
       },
     ],
   },

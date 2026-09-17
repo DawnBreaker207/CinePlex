@@ -3,6 +3,7 @@ import {
   ReservationFilter,
   ReservationProfile,
 } from '@domain/reservation/models/reservation.model';
+import { ReservationStatus } from '@core/constants/enum';
 import { Pagination } from '@core/models/common.model';
 import { errorMessage } from '@shared/utils/error.helper';
 import { patchState, signalStore, withMethods, withState } from '@ngrx/signals';
@@ -73,11 +74,11 @@ export const ReservationStore = signalStore(
           ),
         ),
       ),
-      loadReservationProfile: rxMethod<number>(
+      loadReservationProfile: rxMethod<{ id: number; status: ReservationStatus }>(
         pipe(
           tap(() => patchState(store, { loading: true, error: null })),
-          switchMap((id) =>
-            reservationService.getUserReservation(id).pipe(
+          switchMap(({ id, status }) =>
+            reservationService.getUserReservation(id, status).pipe(
               tapResponse({
                 next: ({ content }) =>
                   patchState(store, {

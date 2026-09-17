@@ -1,6 +1,6 @@
-<div class="mt-6 w-full bg-[url('/assets/bg-slider.png')] bg-repeat-x">
+<div class="w-full bg-black bg-[url('/assets/bg-slider.png')] bg-repeat bg-center py-6">
   <div
-    class="mx-auto max-w-5xl overflow-hidden rounded-xl border border-slate-700 bg-black shadow-2xl"
+    class="mx-auto w-full max-w-5xl overflow-hidden rounded-xl border border-slate-700 bg-black shadow-2xl"
   >
     <nz-carousel
       nzAutoPlay
@@ -41,7 +41,7 @@
                   <button
                     nz-button
                     nzType="primary"
-                    class="flex h-10 items-center gap-2 rounded-lg border-none bg-[var(--color-primary)] px-5 text-sm font-semibold text-white hover:bg-[#C53030]"
+                    class="flex h-10 items-center gap-2 rounded-lg border-none bg-[var(--color-primary)] px-5 text-sm font-semibold text-white hover:bg-[var(--color-primary-dark)]"
                   >
                     <nz-icon nzType="barcode" />
                     {{ "detail.bookNow" | translate }}

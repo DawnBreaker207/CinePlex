@@ -6,6 +6,7 @@
     <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
       <nz-steps nzType="navigation" nzSize="small" [nzCurrent]="index()">
         <nz-step [nzTitle]="'reservation.stepSeat' | translate" nzIcon="table"></nz-step>
+        <nz-step [nzTitle]="'reservation.stepCombo' | translate" nzIcon="shopping"></nz-step>
         <nz-step [nzTitle]="'reservation.stepConfirm' | translate" nzIcon="solution"></nz-step>
       </nz-steps>
     </div>
@@ -27,6 +28,9 @@
                 }
               }
               @case (1) {
+                <app-combo (next)="onComboNext()" />
+              }
+              @case (2) {
                 <app-confirm />
               }
             }
@@ -51,7 +55,53 @@
             />
           </div>
         </nz-sider>
-      </nz-layout>
+        </nz-layout>
+      </div>
+    </nz-content>
+
+  <!-- MOBILE BOTTOM BAR -->
+  <div
+    class="lg:hidden sticky bottom-0 z-40 border-t border-gray-200 bg-white px-4 py-3"
+  >
+    <div class="flex items-center justify-between gap-3">
+      <div>
+        <p class="text-xs text-gray-500">{{ "reservation.total" | translate }}</p>
+        <p class="text-xl font-black text-primary">
+          {{ seatStore.totalPrice() | currency: "VND" }}
+        </p>
+      </div>
+      @if (index() === 0) {
+        <button
+          nz-button
+          nzType="primary"
+          class="h-11 rounded-xl font-bold"
+          [disabled]="seatStore.selectSeatsCount() === 0 || reservationStore.holdingSeats()"
+          [nzLoading]="reservationStore.holdingSeats()"
+          (click)="onConfirm()"
+        >
+          {{ "reservation.holdSeat" | translate }}
+        </button>
+      } @else if (index() === 1) {
+        <button
+          nz-button
+          nzType="primary"
+          class="h-11 rounded-xl font-bold"
+          (click)="onComboNext()"
+        >
+          {{ "reservation.comboContinue" | translate }}
+        </button>
+      } @else {
+        <button
+          nz-button
+          nzType="primary"
+          class="h-11 rounded-xl font-bold"
+          [disabled]="reservationStore.submittingPayment()"
+          [nzLoading]="reservationStore.submittingPayment()"
+          (click)="onPay()"
+        >
+          {{ "reservation.payNow" | translate }}
+        </button>
+      }
     </div>
-  </nz-content>
+  </div>
 </nz-layout>

@@ -19,6 +19,9 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { TicketStubComponent } from '@shared/components/ticket-stub/ticket-stub.component';
 import { selectSelectedShowtime } from '@domain/showtime/data-access/showtime.selectors';
 import { DatePipe } from '@angular/common';
+import { PaymentService } from '@domain/payment/data-access/payment.service';
+import { ToastService } from '@core/services/toast/toast.service';
+import { environment } from '@env/environment';
 
 @Component({
   selector: 'app-payment-result',
@@ -42,6 +45,8 @@ export class PaymentResultComponent implements OnInit {
 private translate = inject(TranslateService);
 
   readonly reservationStore = inject(ReservationStore);
+  private paymentService = inject(PaymentService);
+  private toast = inject(ToastService);
   readonly params = toSignal(this.route.queryParams);
   readonly showtime = toSignal(this.store.select(selectSelectedShowtime));
 
@@ -49,6 +54,8 @@ private translate = inject(TranslateService);
   errorMessage = signal<string>('');
   countdown = signal(10);
   reservationCode = signal<string>('');
+  autoRedirect = signal(true);
+  rechecking = signal(false);
 
   private intervalId: ReturnType<typeof setInterval> | null = null;
 
@@ -103,9 +110,55 @@ private translate = inject(TranslateService);
     this.router.navigate(['/home']);
   }
 
+  cancelAutoRedirect() {
+    this.autoRedirect.set(false);
+    if (this.intervalId) clearInterval(this.intervalId);
+  }
+
+  recheck() {
+    const code = this.reservationCode();
+    const last = this.storageService.getItem<{
+      provider: string;
+      reservationId: string;
+    }>('lastPayment');
+    if (!code || this.rechecking()) return;
+    if (environment.useMock || !last) {
+      this.applySuccess(code);
+      return;
+    }
+    this.rechecking.set(true);
+    this.paymentService
+      .reCheck(last.provider.toLowerCase(), last.reservationId)
+      .subscribe({
+        next: (state) => {
+          this.rechecking.set(false);
+          if (state === 'PAID') {
+            this.applySuccess(code);
+          } else {
+            this.toast.createNotification({
+              type: 'info',
+              title: this.translate.instant('reservation.recheck'),
+              message: this.translate.instant('reservation.stillPending'),
+              position: 'top',
+            });
+          }
+        },
+        error: () => this.rechecking.set(false),
+      });
+  }
+
+  private applySuccess(code: string) {
+    this.status.set('success');
+    this.errorMessage.set('');
+    this.reservationStore.confirm(code);
+    this.storageService.removeItem('reservationState');
+    this.startCountDown();
+  }
+
   startCountDown() {
     if (this.intervalId) clearInterval(this.intervalId);
     this.intervalId = setInterval(() => {
+      if (!this.autoRedirect()) return;
       this.countdown.update((val) => val - 1);
       if (this.countdown() <= 0) {
         this.goHome();

@@ -40,25 +40,53 @@
             {{ "profile.bookingHistory" | translate }}
           </div>
         </ng-template>
+        <div class="flex gap-2 px-6 pt-4">
+          <button
+            nz-button
+            [nzType]="ticketStatus() === 'PENDING' ? 'primary' : 'default'"
+            nzSize="small"
+            (click)="onTicketStatus('PENDING')"
+          >
+            <nz-icon nzType="clock-circle" />
+            {{ "status.pending" | translate }}
+          </button>
+          <button
+            nz-button
+            [nzType]="ticketStatus() === 'CONFIRMED' ? 'primary' : 'default'"
+            nzSize="small"
+            (click)="onTicketStatus('CONFIRMED')"
+          >
+            <nz-icon nzType="check-circle" />
+            {{ "status.confirmed" | translate }}
+          </button>
+          <button
+            nz-button
+            [nzType]="ticketStatus() === 'CANCELED' ? 'primary' : 'default'"
+            nzSize="small"
+            (click)="onTicketStatus('CANCELED')"
+          >
+            <nz-icon nzType="close-circle" />
+            {{ "status.cancelled" | translate }}
+          </button>
+        </div>
         @if (reservationStore.reservationProfile(); as tickets) {
           <app-booking-history [tickets]="tickets" />
         }
       </nz-tab>
 
       <!-- MEMBERS -->
-      <nz-tab [nzTitle]="memberTitle">
+      <nz-tab [nzTitle]="memberTitle" [nzDisabled]="true">
         <ng-template #memberTitle>
-          <div class="flex items-center gap-2 px-2">
+          <div
+            class="flex items-center gap-2 px-2"
+            nz-tooltip
+            [nzTooltipTitle]="'profile.comingSoon' | translate"
+          >
             <nz-icon nzType="crown" nzTheme="outline" />
             {{ "profile.member" | translate }}
+            <nz-tag nzColor="default">{{ "profile.soon" | translate }}</nz-tag>
           </div>
         </ng-template>
-        <div class="p-12 text-center">
-          <nz-empty [nzNotFoundContent]="null"></nz-empty>
-          <p class="text-gray-500">
-            {{ "profile.comingSoon" | translate }}
-          </p>
-        </div>
       </nz-tab>
 
       <!-- VOUCHER -->
@@ -69,28 +97,22 @@
             {{ "profile.voucher" | translate }}
           </div>
         </ng-template>
-        <div class="p-12 text-center">
-          <nz-empty [nzNotFoundContent]="null"></nz-empty>
-          <p class="text-gray-500">
-            {{ "profile.comingSoon" | translate }}
-          </p>
-        </div>
+        <app-user-vouchers />
       </nz-tab>
 
       <!-- SETTINGS -->
-      <nz-tab [nzTitle]="settingTitle">
+      <nz-tab [nzTitle]="settingTitle" [nzDisabled]="true">
         <ng-template #settingTitle>
-          <div class="flex items-center gap-2 px-2">
+          <div
+            class="flex items-center gap-2 px-2"
+            nz-tooltip
+            [nzTooltipTitle]="'profile.comingSoon' | translate"
+          >
             <nz-icon nzType="setting" />
             {{ "profile.settings" | translate }}
+            <nz-tag nzColor="default">{{ "profile.soon" | translate }}</nz-tag>
           </div>
         </ng-template>
-        <div class="p-12 text-center">
-          <nz-empty [nzNotFoundContent]="null"></nz-empty>
-          <p class="text-gray-500">
-            {{ "profile.comingSoon" | translate }}
-          </p>
-        </div>
       </nz-tab>
     </nz-tabs>
   </div>

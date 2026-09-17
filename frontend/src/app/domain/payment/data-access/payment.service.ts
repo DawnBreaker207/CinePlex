@@ -25,6 +25,15 @@ export class PaymentService {
       );
   }
 
+  reCheck(provider: string, id: string) {
+    return this.http
+      .post<ApiRes<string>>(`${this.URL}/re-check/${provider}/${id}`, {})
+      .pipe(
+        map((res) => res.data),
+        catchError(this.handleError<string>('Re-check payment')),
+      );
+  }
+
   private handleError<T>(operation = 'operation') {
     return (error: unknown): Observable<T> => {
       console.error(`${operation} failed: ${error}`);

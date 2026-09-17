@@ -152,13 +152,15 @@ export const ReservationStore = signalStore(
             switchMap((req) =>
               reservationService.initReservation(req).pipe(
                 tapResponse({
-                  next: ({ reservationId, ttl, expiredAt }) => {
+                  next: (res) => {
+                    const reservationId =
+                      res.reservationCode ?? res.reservationId;
                     patchState(store, {
                       reservationId: reservationId,
                       currentTTL: {
                         reservationId: reservationId,
-                        ttl: ttl,
-                        expiredAt: new Date(expiredAt),
+                        ttl: res.ttl,
+                        expiredAt: new Date(res.expiredAt),
                       },
                       saving: false,
                       loading: false,
@@ -171,7 +173,7 @@ export const ReservationStore = signalStore(
                       theaterId: req.theaterId,
                     });
 
-                    startCountdown(ttl);
+                    startCountdown(res.ttl);
 
                     router.navigate([
                       `/reservation/${reservationId}/${req.showtimeId}`,
@@ -220,15 +222,29 @@ export const ReservationStore = signalStore(
           api.holdSeat({ reservation: payload });
         },
         //
-        pay: (radioValue: string) => {
+        pay: (radioValue: string, voucherCode?: string) => {
           const resId = store.reservationId();
           const total = seatStore.totalPrice();
           const count = seatStore.selectSeatsCount();
           if (!resId || !total || !count) return;
 
           patchState(store, { paymentError: null, submittingPayment: true });
+          storageService.setItem('lastPayment', {
+            provider: toPaymentMethod(radioValue),
+            reservationId: resId,
+          });
 
-          const api = store as unknown as { confirm: (reservationId: string) => void };
+          const fail = (err: unknown) =>
+            patchState(store, {
+              submittingPayment: false,
+              paymentError:
+                errorMessage(err) ||
+                translate.instant('reservation.paymentFailed'),
+            });
+
+          const api = store as unknown as {
+            confirm: (reservationId: string) => void;
+          };
           const doPayment = (paymentUrl: string) => {
             if (environment.useMock) {
               api.confirm(resId);
@@ -239,23 +255,22 @@ export const ReservationStore = signalStore(
               document.defaultView?.open(paymentUrl, '_self');
             }
           };
+          const startPayment = () =>
+            paymentService
+              .createPayment({
+                reservationId: resId,
+                amount: total,
+                paymentType: toPaymentMethod(radioValue),
+              })
+              .subscribe({ next: doPayment, error: fail });
 
-          paymentService
-            .createPayment({
-              reservationId: resId,
-              amount: total,
-              paymentType: toPaymentMethod(radioValue),
-            })
-            .subscribe({
-              next: doPayment,
-              error: (err) => {
-                patchState(store, {
-                  submittingPayment: false,
-                  paymentError:
-                    err?.message || translate.instant('reservation.paymentFailed'),
-                });
-              },
-            });
+          if (voucherCode) {
+            reservationService
+              .applyVoucher(resId, voucherCode)
+              .subscribe({ next: () => startPayment(), error: fail });
+          } else {
+            startPayment();
+          }
         },
         //
         holdSeat: rxMethod<{ reservation: ReservationRequest }>(
@@ -306,18 +321,20 @@ export const ReservationStore = signalStore(
             switchMap(({ reservationId }) =>
               reservationService.restoreReservation(reservationId).pipe(
                 tapResponse({
-                  next: ({ reservationId, ttl, expiredAt }) => {
+                  next: (res) => {
+                    const reservationId =
+                      res.reservationCode ?? res.reservationId;
                     patchState(store, {
                       reservationId: reservationId,
                       currentTTL: {
                         reservationId: reservationId,
-                        ttl: ttl,
-                        expiredAt: new Date(expiredAt),
+                        ttl: res.ttl,
+                        expiredAt: new Date(res.expiredAt),
                       },
                       saving: false,
                       loading: false,
                     });
-                    startCountdown(ttl);
+                    startCountdown(res.ttl);
                   },
                   error: (err) => {
                     storageService.removeItem('reservationState');

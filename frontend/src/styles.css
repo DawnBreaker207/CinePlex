@@ -18,6 +18,9 @@
   --color-info: #2563eb;
   --color-danger: #dc2626;
   --color-text-secondary: #6b6b6b;
+  --color-card-hover: #efece8;
+  --color-text-faint: #a8a29e;
+  --color-focus: #5ec8ff;
 
   --font-sans: "Manrope", sans-serif;
   --font-mono: "JetBrains Mono", monospace;
@@ -39,35 +42,38 @@
 }
 
 .dark {
-  --color-primary: #ff4d5e;
+  --color-primary: #ff3b52;
   --color-primary-dark: #ff6b7a;
   --color-primary-light: #2d1515;
-  --color-gold: #e8bf64;
+  --color-gold: #e0ac52;
   --color-muted: #a0aec0;
   --color-border: #2d3748;
-  --color-bg: #0f1114;
+  --color-bg: #0b0d10;
   --color-surface: #edf2f7;
-  --color-surface-card: #1a202c;
+  --color-surface-card: #161a20;
   --color-text-secondary: #a0aec0;
+  --color-card-hover: #1b2028;
+  --color-text-faint: #5f656d;
+  --color-focus: #5ec8ff;
   --color-success: #48bb78;
   --color-warning: #ecc94b;
   --color-info: #63b3ed;
   --color-danger: #fc8181;
 }
 .dark body {
-  background-color: #0f1114;
+  background-color: #0b0d10;
   color: #edf2f7;
 }
 .dark .ant-input,
 .dark .ant-input-affix-wrapper,
 .dark .ant-select-selector,
 .dark .ant-picker {
-  background-color: #1a202c !important;
+  background-color: #161a20 !important;
   color: #edf2f7 !important;
   border-color: #2d3748 !important;
 }
 .dark .ant-layout {
-  background-color: #0f1114 !important;
+  background-color: #0b0d10 !important;
 }
 .dark .ant-table {
   background: transparent;
@@ -87,7 +93,7 @@
 .dark .ant-modal-content,
 .dark .ant-modal-header,
 .dark .ant-drawer-content {
-  background-color: #1a202c !important;
+  background-color: #161a20 !important;
 }
 .dark .ant-modal-title,
 .dark .ant-modal-body,
@@ -98,13 +104,13 @@
 .dark .ant-pagination-prev,
 .dark .ant-pagination-next,
 .dark .ant-select-dropdown {
-  background-color: #1a202c !important;
+  background-color: #161a20 !important;
 }
 .dark .ant-pagination-item a {
   color: #a0aec0 !important;
 }
 .dark .ant-pagination-item-active a {
-  color: #ff4d5e !important;
+  color: #ff3b52 !important;
 }
 .dark .ant-select-dropdown .ant-select-item {
   color: #edf2f7 !important;
@@ -143,7 +149,7 @@
   color: var(--color-primary, #e53e3e) !important;
 }
 .dark .ant-layout-sider-trigger {
-  background-color: #1a202c !important;
+  background-color: #161a20 !important;
   color: #9ca3af !important;
   border-top-color: #2d3748 !important;
 }
@@ -197,10 +203,10 @@
 .dark .ant-table-cell-fix-right,
 .dark .ant-table-cell-fix-left-first,
 .dark .ant-table-cell-fix-left {
-  background-color: #1a202c !important;
+  background-color: #161a20 !important;
 }
 .dark ::-webkit-scrollbar-track {
-  background: #1a202c;
+  background: #161a20;
 }
 .dark ::-webkit-scrollbar-thumb {
   background: #4a5568;
@@ -217,7 +223,7 @@
 /* Client dark fallbacks for utility classes that predate dark: variants */
 .dark [data-theme="client"] .bg-white,
 .dark [data-theme="client"] .bg-gray-50 {
-  background-color: #1a202c;
+  background-color: #161a20;
 }
 .dark [data-theme="client"] .bg-gray-100 {
   background-color: #232b36;
@@ -257,7 +263,7 @@
 
 /* Dark fallbacks for ng-zorro modals (mount in body, outside client scope) */
 .dark .ant-modal-content {
-  background-color: #1a202c;
+  background-color: #161a20;
 }
 .dark .ant-modal-mask {
   background-color: rgba(0, 0, 0, 0.6);
@@ -301,6 +307,11 @@
 
 body {
   font-family: var(--font-sans);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
 }
 
 /* Ng-Zorro reset */
@@ -402,7 +413,7 @@ h6 {
     margin-bottom: 16px;
   }
   .dark .dashboard-tabs .ant-tabs-nav {
-    background-color: #0f1114;
+    background-color: #0b0d10;
     border-bottom-color: #1f2937;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   }
@@ -523,12 +534,12 @@ h6 {
   color: #6b7280;
 }
 .dark .ant-picker-dropdown .ant-picker-panel-container {
-  background: #1a202c;
+  background: #161a20;
   border: 1px solid #1f2937;
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45);
 }
 .dark .ant-picker-dropdown .ant-picker-panel {
-  background: #1a202c;
+  background: #161a20;
 }
 .dark .ant-picker-dropdown .ant-picker-header {
   color: #e5e7eb;
@@ -566,11 +577,11 @@ h6 {
 .dark .ant-picker-dropdown .ant-picker-footer,
 .dark .ant-picker-dropdown .ant-picker-footer-extra,
 .dark .ant-picker-dropdown .ant-picker-footer-extra div {
-  background: #1a202c;
+  background: #161a20;
   border-top-color: #1f2937;
 }
 .dark .ant-picker-dropdown .ant-picker-time-panel-column {
-  background: #1a202c;
+  background: #161a20;
 }
 .dark
   .ant-picker-dropdown
@@ -610,7 +621,7 @@ h6 {
 
 /* Dashboard tables: dark mode sync */
 .dark .dashboard-tabs .ant-card {
-  background: #1a202c;
+  background: #161a20;
   border-color: #1f2937;
 }
 .dark .dashboard-tabs .ant-table-thead > tr > th {

@@ -38,3 +38,10 @@ export interface DashboardSummary {
   theaters: TopTheater[];
   payments: PaymentDistribution[];
 }
+
+export interface DailyForecast {
+  date: Date;
+  dayOfWeek: string;
+  projectedRevenue: number;
+  sampleDays: number;
+}

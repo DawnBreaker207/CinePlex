@@ -12,4 +12,6 @@ export class SeatIconComponent {
   size = input<number | string>(24);
 
   className = input<string>('');
+
+  outline = input(false);
 }

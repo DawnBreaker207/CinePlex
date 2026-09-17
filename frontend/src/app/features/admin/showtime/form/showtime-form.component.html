@@ -61,7 +61,7 @@
           @let results = searchResults();
           @if (results.length > 0) {
             <div
-              class="absolute z-[1000] top-12 left-0 w-full bg-white dark:bg-[#1a202c] border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl max-h-80 overflow-y-auto animate-fade-in"
+              class="absolute z-[1000] top-12 left-0 w-full bg-white dark:bg-[#161a20] border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl max-h-80 overflow-y-auto animate-fade-in"
             >
               <ul class="py-2 m-0 list-none">
                 @for (movie of searchResults(); track movie.id) {
@@ -153,6 +153,33 @@
           >
             @for (theater of theaters(); track theater.id) {
               <nz-option [nzLabel]="theater.name" [nzValue]="theater.id">
+              </nz-option>
+            }
+          </nz-select>
+        </nz-form-control>
+      </nz-form-item>
+
+      <nz-form-item>
+        <nz-form-label class="font-semibold"
+          >{{ "common.room" | translate }}
+        </nz-form-label>
+        <nz-form-control>
+          <nz-select
+            formControlName="roomId"
+            [nzDisabled]="mode === 'view' || rooms().length === 0"
+            [nzPlaceHolder]="
+              rooms().length === 0
+                ? ('showtime.form.selectTheaterFirst' | translate)
+                : ('common.room' | translate)
+            "
+            class="rounded-lg h-10 w-full"
+            (ngModelChange)="onRoomChange($event)"
+          >
+            @for (room of rooms(); track room.id) {
+              <nz-option
+                [nzLabel]="room.name + ' • ' + room.roomType"
+                [nzValue]="room.id"
+              >
               </nz-option>
             }
           </nz-select>

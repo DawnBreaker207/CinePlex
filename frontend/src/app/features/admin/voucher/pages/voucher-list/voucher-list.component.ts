@@ -1,9 +1,11 @@
 import {
   Component,
+  DestroyRef,
   inject,
   OnInit,
   ChangeDetectionStrategy,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HEADER_COLUMNS } from '@core/constants/column';
 import {
   NzTableModule,
@@ -59,6 +61,7 @@ NzToolTipModule,
 export class VoucherListComponent implements OnInit {
   readonly voucherStore = inject(VoucherStore);
   private modalService = inject(NzModalService);
+  private destroyRef = inject(DestroyRef);
 private translate = inject(TranslateService);
   headerColumn = HEADER_COLUMNS.VOUCHER;
   readonly ICON_COLORS = ICON_COLORS;
@@ -82,7 +85,7 @@ private translate = inject(TranslateService);
       nzContent: FormVoucherComponent,
       nzTitle: undefined,
       nzClosable: true,
-      nzWidth: 1200,
+      nzWidth: 900,
       nzKeyboard: true,
       nzData: {
         mode: mode,
@@ -91,7 +94,7 @@ private translate = inject(TranslateService);
       nzFooter: undefined,
     });
 
-    modal.afterClose.subscribe((result) => {
+    modal.afterClose.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((result) => {
       if (result) {
         this.loadVouchers();
       }

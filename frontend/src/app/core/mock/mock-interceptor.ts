@@ -205,6 +205,14 @@ export function mockInterceptor(
     return ok('Tài khoản đã được tạo thành công');
   }
 
+  if (url.includes('/auth/verify-email') && method === 'GET') {
+    return ok('Email verified');
+  }
+
+  if (url.includes('/auth/resend-verification') && method === 'POST') {
+    return ok(null);
+  }
+
   if (url.includes('/auth/logout') && method === 'POST') {
     revokeRefreshChain(readRefreshToken());
     clearRefreshCookie();
@@ -283,6 +291,65 @@ export function mockInterceptor(
   if (url.match(/\/theater\/\d+$/) && method === 'GET') {
     const id = num(url.split('/').pop());
     return ok(MOCK_THEATERS.find((t) => t.id === id) || null);
+  }
+
+  if (url.match(/\/rooms\/theaters\/\d+$/) && method === 'GET') {
+    const theaterId = num(url.match(/theaters\/(\d+)/)?.[1]);
+    return ok([
+      {
+        id: theaterId * 10 + 1,
+        theaterId,
+        name: 'P1',
+        roomType: '2D',
+        totalSeats: 50,
+        seatCount: 50,
+      },
+      {
+        id: theaterId * 10 + 2,
+        theaterId,
+        name: 'P2',
+        roomType: '3D',
+        totalSeats: 60,
+        seatCount: 60,
+      },
+    ]);
+  }
+
+  if (url.match(/\/rooms\/theaters\/\d+$/) && method === 'POST') {
+    const theaterId = num(url.match(/theaters\/(\d+)/)?.[1]);
+    return ok({ id: Date.now(), theaterId, ...(req.body as MockBody) });
+  }
+
+  if (url.match(/\/rooms\/\d+$/) && (method === 'PUT' || method === 'DELETE')) {
+    return ok(null);
+  }
+
+  if (url.match(/\/rooms\/\d+\/seats$/) && method === 'GET') {
+    const roomId = num(url.match(/rooms\/(\d+)/)?.[1]);
+    const seats = [];
+    for (const row of ['A', 'B', 'C']) {
+      for (let i = 1; i <= 8; i++) {
+        seats.push({
+          id: roomId * 1000 + row.charCodeAt(0) * 100 + i,
+          roomId,
+          rowLabel: row,
+          seatNumber: i,
+          seatType: row === 'C' ? 'VIP' : 'NORMAL',
+          posX: i,
+          posY: row.charCodeAt(0) - 65,
+        });
+      }
+    }
+    return ok(seats);
+  }
+
+  if (url.match(/\/rooms\/\d+\/layout$/) && method === 'PUT') {
+    return ok(
+      ((req.body as unknown[]) ?? []).map((s, i) => ({
+        ...(s as MockBody),
+        id: Date.now() + i,
+      })),
+    );
   }
 
   if (url.includes('/theater') && method === 'POST') {
@@ -403,6 +470,7 @@ export function mockInterceptor(
     const { showtimeId } = req.body as MockBody;
     const reservationId = `res-${Math.floor(1000 + Math.random() * 9000)}`;
     return ok({
+      reservationCode: reservationId,
       reservationId,
       showtimeId,
       ttl: 600,
@@ -412,6 +480,16 @@ export function mockInterceptor(
 
   if (url.includes('/reservation/seatHold') && method === 'POST') {
     return ok(null);
+  }
+
+  if (url.match(/\/reservation\/.+?\/voucher/) && method === 'POST') {
+    const code = params.get('code') || '';
+    return ok({
+      code,
+      originalAmount: 0,
+      discountAmount: 0,
+      finalAmount: 0,
+    });
   }
 
   if (url.includes('/reservation/me') && method === 'GET') {
@@ -424,6 +502,7 @@ export function mockInterceptor(
 
   if (url.match(/\/reservation\/.+?\/restore/) && method === 'GET') {
     return ok({
+      reservationCode: 'res-002',
       reservationId: 'res-002',
       showtimeId: 101,
       ttl: 600,
@@ -527,9 +606,55 @@ export function mockInterceptor(
   /* ---------------------------- VOUCHER ---------------------------- */
   if (url.includes('/voucher/calculate') && method === 'GET') {
     const code = params.get('code') || '';
-    const result = VOUCHER_CALCULATIONS[code];
-    if (!result) return fail('Mã giảm giá không hợp lệ', 400);
-    return ok(result);
+    const total = num(params.get('total'));
+    const found = VOUCHER_CALCULATIONS[code] as {
+      code: string;
+      discountAmount: number;
+    } | null;
+    if (!found) return fail('Mã giảm giá không hợp lệ', 400);
+    const discount = Math.min(found.discountAmount, total);
+    return ok({
+      code: found.code,
+      originalAmount: total,
+      discountAmount: discount,
+      finalAmount: total - discount,
+    });
+  }
+
+  if (url.includes('/voucher/user') && method === 'GET') {
+    return ok([
+      {
+        id: 1,
+        code: 'WELCOME10',
+        voucherName: 'Chào mừng thành viên mới',
+        discountType: 'FIXED',
+        discountValue: 10000,
+        maxDiscountAmount: 10000,
+        minOrderValue: 100000,
+        status: 'AVAILABLE',
+        expiredAt: new Date(Date.now() + 30 * 86400000),
+      },
+    ]);
+  }
+
+  if (url.includes('/voucher/claim') && method === 'POST') {
+    const code = params.get('code') || 'WELCOME10';
+    return ok({
+      id: Date.now(),
+      code,
+      voucherName: code,
+      discountType: 'FIXED',
+      discountValue: 10000,
+      maxDiscountAmount: 10000,
+      minOrderValue: 0,
+      status: 'AVAILABLE',
+      expiredAt: new Date(Date.now() + 30 * 86400000),
+    });
+  }
+
+  /* ---------------------------- AUDIT ---------------------------- */
+  if (url.includes('/audit-logs') && method === 'GET') {
+    return paginate([]);
   }
 
   if (url.match(/\/voucher\/\d+$/) && method === 'GET') {

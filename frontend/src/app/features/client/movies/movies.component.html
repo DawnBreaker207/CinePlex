@@ -1,31 +1,46 @@
 <div class="max-w-5xl mx-auto px-4 sm:px-6 py-8">
-  <div
-    class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6"
-  >
+  <div class="flex flex-col gap-4 mb-6">
     <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">
       {{ "home.movieList" | translate }}
     </h1>
-    <div class="w-full sm:w-[280px]">
-      <nz-input-group nzPrefixIcon="search" class="rounded-lg">
-        <input
-          nz-input
-          [placeholder]="'home.searchMovie' | translate"
-          [ngModel]="search()"
-          (ngModelChange)="search.set($event)"
-          maxlength="255"
+    <div class="flex flex-col sm:flex-row gap-3 sm:items-center">
+      <nz-tabset
+        class="flex-1"
+        [nzSelectedIndex]="tabIndex()"
+        (nzSelectedIndexChange)="tabIndex.set($event)"
+      >
+        <nz-tab [nzTitle]="tabTitles().all" />
+        <nz-tab [nzTitle]="tabTitles().now" />
+        <nz-tab [nzTitle]="tabTitles().upcoming" />
+      </nz-tabset>
+      <div class="w-full sm:w-[220px]">
+        <nz-input-group nzPrefixIcon="search" class="rounded-lg">
+          <input
+            nz-input
+            [placeholder]="'home.searchMovie' | translate"
+            [ngModel]="search()"
+            (ngModelChange)="search.set($event)"
+            maxlength="255"
+          />
+        </nz-input-group>
+      </div>
+      <nz-select
+        class="w-full sm:w-[160px]"
+        [ngModel]="sort()"
+        (ngModelChange)="sort.set($event)"
+        [ariaLabel]="'movies.sort' | translate"
+      >
+        <nz-option
+          nzValue="newest"
+          [nzLabel]="'movies.sortNewest' | translate"
         />
-      </nz-input-group>
+        <nz-option
+          nzValue="oldest"
+          [nzLabel]="'movies.sortOldest' | translate"
+        />
+      </nz-select>
     </div>
   </div>
-
-  <nz-tabset
-    [nzSelectedIndex]="tabIndex()"
-    (nzSelectedIndexChange)="tabIndex.set($event)"
-  >
-    <nz-tab [nzTitle]="tabTitles().all" />
-    <nz-tab [nzTitle]="tabTitles().now" />
-    <nz-tab [nzTitle]="tabTitles().upcoming" />
-  </nz-tabset>
 
   @if (loading()) {
     <div nz-row [nzGutter]="[16, 24]" class="mt-8">
@@ -44,15 +59,15 @@
     <div class="mt-16 text-center">
       <nz-empty [nzNotFoundContent]="'home.noMatch' | translate">
         <div nz-row [nzJustify]="'center'" class="mt-4">
-          <button nz-button nzType="primary" routerLink="/home">
-            {{ "reservation.backHome" | translate }}
+          <button nz-button nzType="primary" (click)="clearFilter()">
+            {{ "movies.clearFilter" | translate }}
           </button>
         </div>
       </nz-empty>
     </div>
   } @else {
     <div nz-row [nzGutter]="[16, 24]" class="mt-8">
-      @for (movie of filtered(); track movie.id) {
+      @for (movie of visible(); track movie.id) {
         <div nz-col [nzXs]="12" [nzSm]="8" [nzMd]="6" [nzLg]="4">
           <app-movie-item
             [movie]="movie"
@@ -62,5 +77,12 @@
         </div>
       }
     </div>
+    @if (visible().length < filtered().length) {
+      <div class="mt-8 text-center">
+        <button nz-button nzType="default" (click)="maybeGrow()">
+          {{ "movies.showMore" | translate }} ({{ filtered().length - visible().length }})
+        </button>
+      </div>
+    }
   }
 </div>

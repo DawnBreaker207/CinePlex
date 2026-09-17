@@ -36,6 +36,8 @@ import {
   timeFormatDay,
 } from '@shared/utils/date.helper';
 import { MovieActions } from '@domain/movie/data-access/movie.actions';
+import { RoomService } from '@domain/theater/data-access/room.service';
+import { Room } from '@domain/theater/models/room.model';
 import { TranslatePipe } from '@ngx-translate/core';
 import {
   debouncedSearch,
@@ -66,6 +68,7 @@ import {
 export class FormShowtimeComponent implements OnInit {
   private fb = inject(NonNullableFormBuilder);
   private modelRef = inject(NzModalRef);
+  private roomService = inject(RoomService);
   private store = inject(Store);
   private actions$ = inject(Actions);
   private destroyRef = inject(DestroyRef);
@@ -77,12 +80,14 @@ export class FormShowtimeComponent implements OnInit {
     movieId: FormControl<number | null>;
     moviePosterUrl: FormControl<string>;
     theaterId: FormControl<number | null>;
+    roomId: FormControl<number | null>;
     showDate: FormControl<Date | null>;
     showTime: FormControl<Date | null>;
     price: FormControl<number | null>;
     totalSeats: FormControl<number | null>;
   }>;
   searchCtrl = this.fb.control('');
+  readonly rooms = signal<Room[]>([]);
 
   theaters = this.store.selectSignal(selectAllTheaters);
   searchMovie = this.store.selectSignal(selectAllMovies);
@@ -154,6 +159,7 @@ export class FormShowtimeComponent implements OnInit {
       movieId: [null as number | null, Validators.required],
       moviePosterUrl: [''],
       theaterId: [null as number | null, Validators.required],
+      roomId: [null as number | null],
 
       showDate: [null as Date | null, Validators.required],
       showTime: [null as Date | null, Validators.required],
@@ -164,9 +170,30 @@ export class FormShowtimeComponent implements OnInit {
         [Validators.required, Validators.min(1)],
       ],
     });
+    this.form.controls.theaterId.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((theaterId) => this.loadRooms(theaterId));
+  }
+
+  loadRooms(theaterId: number | null) {
+    this.rooms.set([]);
+    this.form.controls.roomId.setValue(null, { emitEvent: false });
+    if (!theaterId) return;
+    this.roomService.getByTheater(theaterId).subscribe({
+      next: (rooms) => this.rooms.set(rooms),
+      error: () => this.rooms.set([]),
+    });
+  }
+
+  onRoomChange(roomId: number | null) {
+    const room = this.rooms().find((r) => r.id === roomId);
+    if (room?.totalSeats) {
+      this.form.controls.totalSeats.setValue(room.totalSeats);
+    }
   }
 
   private patchFormValue(showtime: Showtime) {
+    this.loadRooms(showtime.theaterId);
     this.form.patchValue({
       // Theater
       theaterId: showtime.theaterId,
@@ -189,7 +216,7 @@ export class FormShowtimeComponent implements OnInit {
     }
 
     this.submitting.set(true);
-    const { showDate, showTime, ...rest } = this.form.getRawValue();
+    const { showDate, showTime, roomId: _roomId, ...rest } = this.form.getRawValue();
     const showtimeData = {
       ...rest,
       showDate: showDate ? formatDate(showDate) : null,

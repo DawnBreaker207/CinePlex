@@ -1,6 +1,7 @@
 import {
   DashboardMetrics,
   DashboardQuery,
+  DailyForecast,
   PaymentDistribution,
   RevenuePoint,
   TopMovie,
@@ -16,6 +17,7 @@ import {
 } from '@ngrx/signals';
 import { computed, inject } from '@angular/core';
 import { getMockSummary, Operation } from '@features/admin/dashboard/mocks/dashboard.mock';
+import { DashboardService } from '@domain/dashboard/data-access/dashboard.service';
 import { SocketService } from '@core/services/socket/socket.service';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { catchError, finalize, from, of, pipe, switchMap, tap } from 'rxjs';
@@ -32,6 +34,7 @@ export interface DashboardState {
   metrics: DashboardMetrics | null;
   previousMetrics: DashboardMetrics | null;
   revenues: RevenuePoint[];
+  forecast: DailyForecast[];
   payments: PaymentDistribution[];
   theaters: TopTheater[];
   movies: TopMovie[];
@@ -92,6 +95,7 @@ export const initialState: DashboardState = {
   metrics: null,
   previousMetrics: null,
   revenues: [],
+  forecast: [],
   movies: [],
   theaters: [],
   payments: [],
@@ -121,39 +125,76 @@ export const DashboardStore = signalStore(
   withMethods(
     (
       store,
+      dashboardService = inject(DashboardService),
       socketService = inject(SocketService),
       translate = inject(TranslateService),
     ) => {
+      const applySummary = (summary: {
+        metrics: DashboardMetrics;
+        revenues: RevenuePoint[];
+        movies: TopMovie[];
+        theaters: TopTheater[];
+        payments: PaymentDistribution[];
+      }) =>
+        patchState(store, (s) => ({
+          previousMetrics: s.metrics,
+          metrics: summary.metrics,
+          revenues: summary.revenues ?? [],
+          movies: summary.movies ?? [],
+          theaters: summary.theaters ?? [],
+          payments: summary.payments ?? [],
+        }));
+
+      const loadMock = () =>
+        from(getMockSummary(store.getFilterPayload())).pipe(
+          tap(
+            ({
+              metrics,
+              previousMetrics,
+              revenues,
+              movies,
+              theaters,
+              payments,
+              operations,
+            }) =>
+              patchState(store, {
+                metrics: metrics,
+                previousMetrics: previousMetrics,
+                revenues: revenues,
+                movies: movies,
+                theaters: theaters,
+                payments: payments,
+                operations: operations,
+              }),
+          ),
+        );
+
       const loadSummary = rxMethod<void>(
         pipe(
-          tap(() => patchState(store, { isLoading: true })),
+          tap(() => patchState(store, { isLoading: true, error: null })),
           switchMap(() =>
-            from(getMockSummary(store.getFilterPayload())).pipe(
-              tap(
-                ({
-                  metrics,
-                  previousMetrics,
-                  revenues,
-                  movies,
-                  theaters,
-                  payments,
-                  operations,
-                }) =>
-                  patchState(store, {
-                    metrics: metrics,
-                    previousMetrics: previousMetrics,
-                    revenues: revenues,
-                    movies: movies,
-                    theaters: theaters,
-                    payments: payments,
-                    operations: operations,
-                  }),
-              ),
+            dashboardService.getSummary(store.getFilterPayload()).pipe(
+              tap((summary) => {
+                applySummary(summary);
+                patchState(store, { operations: [] });
+              }),
+              catchError(() => loadMock()),
               catchError(() => {
                 patchState(store, { error: translate.instant('dashboard.loadFailed') });
                 return of(null);
               }),
               finalize(() => patchState(store, { isLoading: false })),
+            ),
+          ),
+        ),
+      );
+
+      const loadForecast = rxMethod<void>(
+        pipe(
+          switchMap(() =>
+            dashboardService.getForecast(7).pipe(
+              tap((forecast) => patchState(store, { forecast })),
+              catchError(() => of(null)),
             ),
           ),
         ),
@@ -186,6 +227,7 @@ export const DashboardStore = signalStore(
             loadSummary();
           }
         },
+        loadForecast,
         listenRealtime: rxMethod<void>(
           pipe(
             switchMap(() =>
@@ -205,6 +247,7 @@ export const DashboardStore = signalStore(
   withHooks({
     onInit(store) {
       store.loadSummary();
+      store.loadForecast();
       store.listenRealtime();
     },
   }),

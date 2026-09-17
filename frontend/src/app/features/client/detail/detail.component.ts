@@ -29,6 +29,7 @@ import { ShowtimeActions } from '@domain/showtime/data-access/showtime.actions';
 import { TheaterActions } from '@domain/theater/data-access/theater.actions';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzButtonModule } from 'ng-zorro-antd/button';
+import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
 import { TranslatePipe } from '@ngx-translate/core';
 import dayjs from 'dayjs';
 import {
@@ -60,6 +61,7 @@ interface Review {
     TranslatePipe,
     NzIconModule,
     NzButtonModule,
+    NzToolTipModule,
     DetailHeaderComponent,
     ShowtimeSectionComponent,
   ],

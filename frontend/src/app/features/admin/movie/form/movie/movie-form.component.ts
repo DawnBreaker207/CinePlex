@@ -49,6 +49,7 @@ import { MovieActions } from '@domain/movie/data-access/movie.actions';
 import { Movie, MovieRequest } from '@domain/movie/models/movie.model';
 import { FormMovieAPIComponent } from '@features/admin/movie/form/api/api-form.component';
 import { NzSpinModule } from 'ng-zorro-antd/spin';
+import { UploadService } from '@core/services/upload/upload.service';
 import { TranslatePipe } from '@ngx-translate/core';
 import {
   disableForm,
@@ -86,6 +87,7 @@ export class FormMovieComponent implements OnInit {
   private actions$ = inject(Actions);
   private modelRef = inject(NzModalRef);
   private movieService = inject(MovieService);
+  private uploadService = inject(UploadService);
   private modalService = inject(NzModalService);
   private destroyRef = inject(DestroyRef);
 
@@ -118,6 +120,7 @@ export class FormMovieComponent implements OnInit {
   readonly error = toSignal(this.error$, { initialValue: null });
 
   readonly submitting = signal(false);
+  readonly uploading = signal(false);
   private initialFormValue: MovieRequest | null = null;
 
   ngOnInit() {
@@ -194,6 +197,19 @@ export class FormMovieComponent implements OnInit {
       releaseDate: movie.releaseDate,
       imdbId: movie.imdbId,
       filmId: movie.filmId,
+    });
+  }
+
+  onPosterFile(event: Event) {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+    this.uploading.set(true);
+    this.uploadService.uploadAssets(file).subscribe({
+      next: (url) => {
+        this.form.controls.poster.setValue(url);
+        this.uploading.set(false);
+      },
+      error: () => this.uploading.set(false),
     });
   }
 

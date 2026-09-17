@@ -14,6 +14,7 @@ import {
   Voucher,
   VoucherCalculate,
   VoucherRequest,
+  UserVoucher,
 } from '@domain/voucher/model/voucher.model';
 import { VoucherService } from '@domain/voucher/data-access/voucher.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -23,6 +24,7 @@ export interface VoucherState {
   vouchers: Voucher[];
   selectVoucher: Voucher | null;
   calculateResult: VoucherCalculate | null;
+  userVouchers: UserVoucher[];
   pagination: Pagination | null;
   loading: boolean;
   loadingDetails: boolean;
@@ -33,6 +35,7 @@ export const initialState: VoucherState = {
   vouchers: [],
   selectVoucher: null,
   calculateResult: null,
+  userVouchers: [],
   pagination: null,
   loading: false,
   loadingDetails: false,
@@ -204,6 +207,41 @@ export const VoucherStore = signalStore(
                 const msg = typeof error === 'string' ? error : errorMessage(error) || translate.instant('voucher.invalidCode');
                 patchState(store, { error: msg });
               },
+            }),
+          ),
+        ),
+      ),
+    ),
+    //
+    loadUserVouchers: rxMethod<void>(
+      pipe(
+        tap(() => patchState(store, { loading: true, error: null })),
+        switchMap(() =>
+          voucherService.getUserVouchers().pipe(
+            finalize(() => patchState(store, { loading: false })),
+            tapResponse({
+              next: (userVouchers) => patchState(store, { userVouchers }),
+              error: (error) =>
+                patchState(store, { error: errorMessage(error) }),
+            }),
+          ),
+        ),
+      ),
+    ),
+    //
+    claimVoucher: rxMethod<string>(
+      pipe(
+        tap(() => patchState(store, { saving: true, error: null })),
+        switchMap((code) =>
+          voucherService.claimVoucher(code).pipe(
+            finalize(() => patchState(store, { saving: false })),
+            tapResponse({
+              next: (claimed) =>
+                patchState(store, (s) => ({
+                  userVouchers: [claimed, ...s.userVouchers],
+                })),
+              error: (error) =>
+                patchState(store, { error: errorMessage(error) }),
             }),
           ),
         ),

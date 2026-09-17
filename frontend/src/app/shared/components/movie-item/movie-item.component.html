@@ -51,6 +51,12 @@
       class="truncate text-xs text-slate-500"
       [title]="movie().genres.join(', ')"
     >
+      @if (movie().rating !== undefined && movie().rating !== null) {
+        <span class="font-semibold text-[var(--color-gold)]"
+          >★ {{ movie().rating }}</span
+        >
+        ·
+      }
       {{
         movie().genres.join(", ") ||
           ("movie.genreUpdating" | translate)
@@ -60,7 +66,7 @@
       nz-button
       nzBlock
       nzType="primary"
-      class="rounded-lg border-none bg-[var(--color-primary)] text-white hover:bg-[#C53030]"
+      class="rounded-lg border-none bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-dark)]"
       (click)="onSelectMovie(movie().id)"
     >
       {{ "common.bookTicket" | translate }}

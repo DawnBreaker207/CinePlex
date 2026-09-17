@@ -1,13 +1,17 @@
 import {
   Component,
   computed,
+  DestroyRef,
+  effect,
   inject,
   OnInit,
   signal,
   ChangeDetectionStrategy,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { fromEvent, throttleTime } from 'rxjs';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzButtonModule } from 'ng-zorro-antd/button';
@@ -16,6 +20,7 @@ import { NzTabsModule } from 'ng-zorro-antd/tabs';
 import { NzGridModule } from 'ng-zorro-antd/grid';
 import { NzEmptyModule } from 'ng-zorro-antd/empty';
 import { NzSkeletonModule } from 'ng-zorro-antd/skeleton';
+import { NzSelectModule } from 'ng-zorro-antd/select';
 import { MovieItemComponent } from '@shared/components/movie-item/movie-item.component';
 import {
   selectAllMovies,
@@ -29,7 +34,6 @@ import { Movie } from '@domain/movie/models/movie.model';
   selector: 'app-movies',
   imports: [
     FormsModule,
-    RouterLink,
     TranslatePipe,
     NzInputModule,
     NzButtonModule,
@@ -38,6 +42,7 @@ import { Movie } from '@domain/movie/models/movie.model';
     NzGridModule,
     NzEmptyModule,
     NzSkeletonModule,
+    NzSelectModule,
     MovieItemComponent,
   ],
   templateUrl: './movies.component.html',
@@ -54,6 +59,9 @@ export class MoviesComponent implements OnInit {
 
   readonly search = signal('');
   readonly tabIndex = signal(0);
+  readonly sort = signal<'newest' | 'oldest'>('newest');
+  readonly visibleCount = signal(18);
+  private destroyRef = inject(DestroyRef);
 
   readonly tabTitles = computed(() => {
     const total = this.allMovies().length;
@@ -73,8 +81,9 @@ export class MoviesComponent implements OnInit {
     const movies = this.allMovies();
     const q = this.search().toLowerCase().trim();
     const tab = this.tabIndex();
+    const sort = this.sort();
 
-    return movies.filter((m) => {
+    const list = movies.filter((m) => {
       if (tab === 1 && dayjs(m.releaseDate).isAfter(dayjs(), 'day'))
         return false;
       if (tab === 2 && !dayjs(m.releaseDate).isAfter(dayjs(), 'day'))
@@ -82,15 +91,56 @@ export class MoviesComponent implements OnInit {
       if (q && !m.title.toLowerCase().includes(q)) return false;
       return true;
     });
+    return [...list].sort((a, b) => {
+      const diff =
+        dayjs(a.releaseDate).valueOf() - dayjs(b.releaseDate).valueOf();
+      return sort === 'newest' ? -diff : diff;
+    });
   });
 
+  readonly visible = computed(() =>
+    this.filtered().slice(0, this.visibleCount()),
+  );
+
+  constructor() {
+    effect(
+      () => {
+        this.search();
+        this.tabIndex();
+        this.sort();
+        this.visibleCount.set(18);
+      },
+      { allowSignalWrites: true },
+    );
+  }
+
   ngOnInit() {
-    this.route.queryParams.subscribe((params) => {
-      const tab = params['tab'];
-      if (tab === 'now') this.tabIndex.set(1);
-      else if (tab === 'upcoming') this.tabIndex.set(2);
-      else this.tabIndex.set(0);
-    });
+    this.route.queryParams
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((params) => {
+        const tab = params['tab'];
+        if (tab === 'now') this.tabIndex.set(1);
+        else if (tab === 'upcoming') this.tabIndex.set(2);
+        else this.tabIndex.set(0);
+      });
+    fromEvent(window, 'scroll')
+      .pipe(throttleTime(200), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.maybeGrow());
+  }
+
+  maybeGrow() {
+    const nearBottom =
+      window.innerHeight + window.scrollY >=
+      document.body.scrollHeight - 600;
+    if (nearBottom && this.visibleCount() < this.filtered().length) {
+      this.visibleCount.update((n) => n + 12);
+    }
+  }
+
+  clearFilter() {
+    this.search.set('');
+    this.tabIndex.set(0);
+    this.sort.set('newest');
   }
 
   isNowShowing(movie: Movie) {

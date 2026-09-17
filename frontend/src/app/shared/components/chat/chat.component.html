@@ -1,6 +1,6 @@
 @if (isOpen()) {
   <div
-    class="fixed bottom-[90px] right-4 sm:right-6 z-50 flex flex-col w-[calc(100vw-2rem)] sm:w-[360px] h-[520px] max-h-[80vh] bg-white dark:bg-[#1a202c] rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 overflow-hidden font-sans animate-fade-in-up"
+    class="fixed bottom-[90px] right-4 sm:right-6 z-50 flex flex-col w-[calc(100vw-2rem)] sm:w-[360px] h-[520px] max-h-[80vh] bg-white dark:bg-[#161a20] rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 overflow-hidden font-sans animate-fade-in-up"
   >
     <!-- HEADER -->
     <div
@@ -10,7 +10,7 @@
         <div class="relative">
           <nz-avatar
             nzIcon="user"
-            class="bg-white! dark:bg-[#1a202c]! text-primary! shadow-sm"
+            class="bg-white! dark:bg-[#161a20]! text-primary! shadow-sm"
             [nzSize]="36"
           ></nz-avatar>
           <span
@@ -66,7 +66,7 @@
               [class]="
                 msg.sender === 'user'
                   ? 'bg-primary text-white rounded-2xl rounded-tr-none'
-                  : 'bg-white dark:bg-[#1a202c] text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-600 rounded-2xl rounded-tl-none'
+                  : 'bg-white dark:bg-[#161a20] text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-600 rounded-2xl rounded-tl-none'
               "
             >
               @if (msg.sender === "user") {
@@ -98,7 +98,7 @@
               [nzSize]="28"
             ></nz-avatar>
             <div
-              class="bg-white dark:bg-[#1a202c] border border-gray-200 dark:border-gray-600 rounded-2xl rounded-tl-none px-4 py-3 shadow-sm flex items-center gap-1 h-10"
+              class="bg-white dark:bg-[#161a20] border border-gray-200 dark:border-gray-600 rounded-2xl rounded-tl-none px-4 py-3 shadow-sm flex items-center gap-1 h-10"
             >
               <div class="typing-dot bg-primary/50"></div>
               <div class="typing-dot bg-primary/50"></div>
@@ -111,10 +111,10 @@
 
     <!-- FOOTER -->
     <div
-      class="shrink-0 bg-white dark:bg-[#1a202c] p-3 border-t border-gray-100 dark:border-gray-700"
+      class="shrink-0 bg-white dark:bg-[#161a20] p-3 border-t border-gray-100 dark:border-gray-700"
     >
       <div
-        class="flex items-center gap-2 bg-gray-100 dark:bg-gray-700 rounded-full border border-transparent focus-within:bg-white dark:focus-within:bg-[#1a202c] focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 transition-[background-color,border-color,box-shadow]"
+        class="flex items-center gap-2 bg-gray-100 dark:bg-gray-700 rounded-full border border-transparent focus-within:bg-white dark:focus-within:bg-[#161a20] focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 transition-[background-color,border-color,box-shadow]"
       >
         <input
           type="text"

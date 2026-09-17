@@ -220,6 +220,43 @@ export const MOCK_MOVIES = [
     updatedAt: ago(1),
     isDeleted: false,
   },
+  {
+    id: 6,
+    title: 'Mưa Đỏ',
+    originalTitle: 'Mua Do',
+    poster: 'https://image.tmdb.org/t/p/w500/5YF6oEfPGR5GJbkYp4TYiF9Lp3U.jpg',
+    backdrop: 'https://image.tmdb.org/t/p/w1280/2xLk2HJXU0CzVJwKkEEgvn82X9K.jpg',
+    overview:
+      'Câu chuyện cảm động về tình đồng đội trong chiến dịch lịch sử.',
+    duration: 125,
+    releaseDate: '2026-10-02',
+    language: 'Tiếng Việt',
+    country: 'Việt Nam',
+    genres: ['Chiến tranh', 'Tâm lý'],
+    imdbId: 'tt30000001',
+    filmId: 'MD-2026',
+    createdAt: ago(5),
+    updatedAt: ago(1),
+    isDeleted: false,
+  },
+  {
+    id: 7,
+    title: 'Siêu Lừa Gặp Siêu Lầy',
+    originalTitle: 'Sieu Lua Gap Sieu Lay',
+    poster: 'https://image.tmdb.org/t/p/w500/7nGf6YVcs3rA7nTfBisT6VfGzXs.jpg',
+    backdrop: 'https://image.tmdb.org/t/p/w1280/lF1pBAFxnQ2JrMD3IkIln1IFMJs.jpg',
+    overview: 'Phi vụ lừa đảo dở khóc dở cười của bộ đôi hoàn cảnh.',
+    duration: 110,
+    releaseDate: '2026-10-16',
+    language: 'Tiếng Việt',
+    country: 'Việt Nam',
+    genres: ['Hài hước'],
+    imdbId: 'tt30000002',
+    filmId: 'SL-2026',
+    createdAt: ago(3),
+    updatedAt: ago(1),
+    isDeleted: false,
+  },
 ];
 
 function generateSeats(showtimeId: number) {
@@ -516,18 +553,21 @@ export const MOCK_VOUCHERS = [
 export const VOUCHER_CALCULATIONS: Record<string, unknown> = {
   WELCOME10: {
     code: 'WELCOME10',
+    originalAmount: 0,
     discountAmount: 10000,
-    finalAMount: 0,
+    finalAmount: 0,
   },
   CINEPLEX20: {
     code: 'CINEPLEX20',
+    originalAmount: 0,
     discountAmount: 20000,
-    finalAMount: 0,
+    finalAmount: 0,
   },
   NEWUSER: {
     code: 'NEWUSER',
+    originalAmount: 0,
     discountAmount: 15000,
-    finalAMount: 0,
+    finalAmount: 0,
   },
 };
 

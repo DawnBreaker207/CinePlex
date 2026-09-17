@@ -132,7 +132,8 @@
       [nzLoading]="holdingSeats() || paymentLoading()"
     >
       @if (index() === steps().length - 1) {
-        {{ "reservation.payNow" | translate }}
+        {{ "reservation.payNow" | translate }} &middot;
+        {{ seatStore.totalPrice() | currency: "VND" }}
       } @else {
         {{ "reservation.holdSeat" | translate }}
         <nz-icon nzType="arrow-right" />

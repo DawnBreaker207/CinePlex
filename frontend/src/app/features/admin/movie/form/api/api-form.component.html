@@ -30,7 +30,7 @@
         <div class="space-y-3">
           @for (movie of searchResults(); track movie.id) {
             <div
-              class="flex gap-4 p-3 rounded-xl border border-gray-100 dark:border-gray-700 hover:bg-primary-light hover:border-primary/30 bg-white dark:bg-[#1a202c] cursor-pointer transition-colors group"
+              class="flex gap-4 p-3 rounded-xl border border-gray-100 dark:border-gray-700 hover:bg-primary-light hover:border-primary/30 bg-white dark:bg-[#161a20] cursor-pointer transition-colors group"
               (click)="selectMovie(movie)"
               (keyup.enter)="selectMovie(movie)"
               tabindex="0"

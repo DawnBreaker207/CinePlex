@@ -36,6 +36,23 @@
           [placeholder]="'admin.article.imagePlaceholder' | translate"
           maxlength="500"
         />
+        <input
+          #thumbFile
+          type="file"
+          accept="image/*"
+          class="hidden"
+          (change)="onThumbnailFile($event)"
+        />
+        <button
+          nz-button
+          nzType="default"
+          class="rounded-lg mt-2"
+          [nzLoading]="uploading()"
+          (click)="thumbFile.click()"
+        >
+          <nz-icon nzType="upload" />
+          {{ "common.upload" | translate }}
+        </button>
         @if (form.get("thumbnail")?.value) {
           <img
             [src]="form.get('thumbnail')?.value"
@@ -123,7 +140,7 @@
 
   <!-- FOOTER -->
   <div
-    class="absolute bottom-0 left-0 w-full bg-white dark:bg-[#1a202c] border-t border-gray-200 dark:border-gray-700 p-4 flex justify-end gap-3 z-50 shadow-md"
+    class="absolute bottom-0 left-0 w-full bg-white dark:bg-[#161a20] border-t border-gray-200 dark:border-gray-700 p-4 flex justify-end gap-3 z-50 shadow-md"
   >
     <button nz-button nzType="default" (click)="close()">
       {{ "common.cancel" | translate }}

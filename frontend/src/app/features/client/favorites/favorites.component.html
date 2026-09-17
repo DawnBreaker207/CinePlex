@@ -9,7 +9,7 @@
           <div nz-row [nzGutter]="[16, 16]">
             @for (movie of movies; track movie.id) {
               <div nz-col [nzXs]="24" [nzSm]="12" [nzMd]="8" [nzLg]="6">
-                <div class="group overflow-hidden rounded-xl border border-border bg-white dark:bg-[#1a202c]">
+                <div class="group overflow-hidden rounded-xl border border-border bg-white dark:bg-[#161a20]">
                   <a [routerLink]="['/movie/detail', movie.id]" class="block h-44 bg-gray-100">
                     <img
                       [src]="movie.backdrop || movie.poster"
@@ -43,7 +43,7 @@
             }
           </div>
         } @else {
-          <div class="flex flex-col items-center justify-center rounded-2xl border border-border bg-white py-16 dark:bg-[#1a202c]">
+          <div class="flex flex-col items-center justify-center rounded-2xl border border-border bg-white py-16 dark:bg-[#161a20]">
             <nz-empty [nzNotFoundContent]="'favorites.empty' | translate" />
             <a nz-button nzType="primary" routerLink="/movies" class="mt-2">
               {{ 'favorites.browse' | translate }}

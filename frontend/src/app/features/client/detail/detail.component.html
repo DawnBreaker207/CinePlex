@@ -91,7 +91,10 @@
                   nz-button
                   nzBlock
                   nzType="dashed"
-                  class="border-slate-300 text-slate-500 hover:border-[#E53E3E] hover:text-[#E53E3E]"
+                  disabled
+                  nz-tooltip
+                  [nzTooltipTitle]="'detail.reviewComingSoon' | translate"
+                  class="border-slate-300 text-slate-500"
                 >
                   {{ "detail.writeReview" | translate }}
                 </button>

@@ -6,6 +6,7 @@ import {
   DashboardMetrics,
   DashboardQuery,
   DashboardSummary,
+  DailyForecast,
   PaymentDistribution,
   RevenuePoint,
   TopMovie,
@@ -130,6 +131,18 @@ export class DashboardService {
             'Dashboard payment distribution',
           ),
         ),
+      );
+  }
+
+  getForecast(days = 7) {
+    const params = new HttpParams().set('days', days.toString());
+    return this.http
+      .get<ApiRes<DailyForecast[]>>(`${environment.apiUrl}/ai/forecast/revenue`, {
+        params,
+      })
+      .pipe(
+        map((res) => res.data ?? []),
+        catchError(this.handleError<DailyForecast[]>('Revenue forecast')),
       );
   }
 

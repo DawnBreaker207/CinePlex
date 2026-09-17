@@ -8,11 +8,13 @@ import {
 } from '@ngrx/signals';
 import { computed, inject } from '@angular/core';
 import { SeatService } from '@domain/seat/data-access/seat.service';
+import { ReservationService } from '@domain/reservation/data-access/reservation.service';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { EMPTY, pipe, switchMap, tap, catchError } from 'rxjs';
 import { tapResponse } from '@ngrx/operators';
 import { SeatStatus } from '@core/constants/enum';
 import { SseEvent, SseService } from '@core/services/sse/sse.service';
+import { ToastService } from '@core/services/toast/toast.service';
 import { errorMessage } from '@shared/utils/error.helper';
 import { Store } from '@ngrx/store';
 import { selectSelectedShowtime } from '@domain/showtime/data-access/showtime.selectors';
@@ -76,8 +78,10 @@ export const SeatStore = signalStore(
     (
       store,
       seatService = inject(SeatService),
+      reservationService = inject(ReservationService),
       sseService = inject(SseService),
       translate = inject(TranslateService),
+      toast = inject(ToastService),
     ) => ({
       loadSeats: rxMethod<{ showtimeId: number }>(
         pipe(
@@ -139,6 +143,24 @@ export const SeatStore = signalStore(
                 patchState(store, { seats, loading: false }),
               ),
               switchMap(() =>
+                reservationService.getLockedSeats(showtimeId).pipe(
+                  tap((locked) => {
+                    if (!locked.length) return;
+                    patchState(store, (state) => ({
+                      seats: state.seats.map((s) =>
+                        locked.some(
+                          (l) =>
+                            Number(l.seatId) === s.id &&
+                            l.reservationId !== reservationId,
+                        ) && s.status === 'AVAILABLE'
+                          ? { ...s, status: 'HOLD' as SeatStatus }
+                          : s,
+                      ),
+                    }));
+                  }),
+                ),
+              ),
+              switchMap(() =>
                 sseService.connect(showtimeId, userId).pipe(
                   tap({
                     next: (res: SseEvent) => {
@@ -153,6 +175,18 @@ export const SeatStore = signalStore(
                         const isMyUpdate =
                           holdData.length > 0 &&
                           holdData[0].reservationId === reservationId;
+                        const stolen = store
+                          .seats()
+                          .filter(
+                            (s) =>
+                              s.status === 'SELECTED' &&
+                              holdData.some(
+                                (h) =>
+                                  Number(h.seatId) === s.id &&
+                                  h.reservationId !== reservationId,
+                              ),
+                          )
+                          .map((s) => s.seatNumber);
                         patchState(store, (state) => ({
                           seats: state.seats.map((s) => {
                             const match = holdData.find(
@@ -180,6 +214,17 @@ export const SeatStore = signalStore(
                             return s;
                           }),
                         }));
+                        if (stolen.length > 0) {
+                          toast.createNotification({
+                            type: 'warning',
+                            title: translate.instant('reservation.seatStolenTitle'),
+                            message: translate.instant(
+                              'reservation.seatStolen',
+                              { seats: stolen.join(', ') },
+                            ),
+                            position: 'top',
+                          });
+                        }
                       } else if (res.event === 'SEAT_RELEASE') {
                         const releaseIds = (
                           res.data as { seatIds?: number[] }
@@ -218,6 +263,20 @@ export const SeatStore = signalStore(
 
       toggleSeat(seat: Seat) {
         if (seat.status === 'BOOKED' || seat.status === 'HOLD') return;
+        if (seat.status !== 'SELECTED') {
+          const count = store
+            .seats()
+            .filter((s) => s.status === 'SELECTED').length;
+          if (count >= 8) {
+            toast.createNotification({
+              type: 'warning',
+              title: translate.instant('reservation.maxSeatsTitle'),
+              message: translate.instant('reservation.maxSeats'),
+              position: 'top',
+            });
+            return;
+          }
+        }
         patchState(store, (state) => ({
           seats: state.seats.map((s) =>
             s.id === seat.id

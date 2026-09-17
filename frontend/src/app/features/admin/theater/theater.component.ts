@@ -15,6 +15,7 @@ import { NzSpaceComponent } from 'ng-zorro-antd/space';
 import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
 import { NzTableModule, NzTableQueryParams } from 'ng-zorro-antd/table';
 import { Store } from '@ngrx/store';
+import { Router } from '@angular/router';
 import { NzAlertComponent } from 'ng-zorro-antd/alert';
 import {
   selectAllTheaters,
@@ -52,7 +53,8 @@ ReactiveFormsModule,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TheaterComponent {
-private modalService = inject(NzModalService);
+  private modalService = inject(NzModalService);
+  private router = inject(Router);
 private store = inject(Store);
 private translate = inject(TranslateService);
   private fb = inject(NonNullableFormBuilder);
@@ -102,6 +104,10 @@ private translate = inject(TranslateService);
     this.store.dispatch(
       TheaterActions.loadTheaters({ page: pageIndex - 1, size: pageSize }),
     );
+  }
+
+  goRooms(id: number) {
+    this.router.navigate(['/admin/theater', id, 'rooms']);
   }
 
   onDelete(id: number) {

@@ -15,7 +15,7 @@
 
   <!--  FILTER -->
   <div
-    class="bg-white dark:bg-[#1a202c] rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-5 mb-6"
+    class="bg-white dark:bg-[#161a20] rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-5 mb-6"
   >
     <form [formGroup]="form" (submit)="onSubmit()">
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
@@ -130,7 +130,7 @@
   <app-loading [isLoading]="reservationStore.loading()">
     @if (reservationStore.reservations(); as reservations) {
       <div
-        class="bg-white dark:bg-[#1a202c] rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-6 overflow-x-auto"
+        class="bg-white dark:bg-[#161a20] rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-6 overflow-x-auto"
       >
         <nz-table
           [nzData]="reservations"

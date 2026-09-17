@@ -24,7 +24,9 @@ import { TheaterActions } from '@domain/theater/data-access/theater.actions';
 import { ShowtimeActions } from '@domain/showtime/data-access/showtime.actions';
 import { SeatComponent } from '@features/client/reservation/components/seat/seat.component';
 import { DetailFilmComponent } from '@features/client/reservation/components/detail-film/detail-film.component';
+import { CurrencyPipe } from '@angular/common';
 import { ConfirmComponent } from '@features/client/reservation/components/confirm/confirm.component';
+import { ComboComponent } from '@features/client/reservation/components/combo/combo.component';
 import { SeatStore } from '@features/client/reservation/components/seat/seat.store';
 import { ReservationStore } from '@features/client/reservation/reservation.store';
 import { ReservationRequest } from '@domain/reservation/models/reservation.model';
@@ -42,7 +44,9 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
     SeatComponent,
     DetailFilmComponent,
     ConfirmComponent,
+    ComboComponent,
     TranslatePipe,
+    CurrencyPipe,
     ],
   templateUrl: './reservation.component.html',
   styleUrl: './reservation.component.css',
@@ -67,7 +71,7 @@ export class ReservationComponent implements OnInit {
   readonly user = this.store.selectSignal(selectJwt);
   readonly theater = this.store.selectSignal(selectSelectedTheater);
   index = signal(0);
-  steps = signal([0, 1]);
+  steps = signal([0, 1, 2]);
 
   @HostListener('window:beforeunload', ['$event'])
   onBeforeUnload(event: BeforeUnloadEvent) {
@@ -115,6 +119,10 @@ export class ReservationComponent implements OnInit {
     }
   }
 
+  onComboNext() {
+    this.index.set(2);
+  }
+
   onConfirm() {
     if (this.reservationStore.holdingSeats()) return;
     this.reservationStore.holdSeats();
@@ -131,7 +139,10 @@ export class ReservationComponent implements OnInit {
       nzOkText: this.translate.instant('reservation.payNow'),
       nzCancelText: this.translate.instant('common.cancel'),
       nzOnOk: () => {
-        this.reservationStore.pay(this.confirmComponent().radioValue);
+        this.reservationStore.pay(
+          this.confirmComponent().radioValue,
+          this.confirmComponent().appliedVoucher()?.code || undefined,
+        );
       },
     });
   }
