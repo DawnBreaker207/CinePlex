@@ -1,6 +1,8 @@
+-- Reference data: roles, genre, theater, room, seat_template
 INSERT IGNORE INTO roles (name) VALUES
     ('USER'),
-    ('MODERATOR'),
+    ('STAFF'),
+    ('MANAGER'),
     ('ADMIN');
 
 INSERT IGNORE INTO genre (name) VALUES

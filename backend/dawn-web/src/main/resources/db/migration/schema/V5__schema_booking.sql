@@ -1,26 +1,35 @@
+-- Booking: reservation, seat_instance, ticket, payment
 CREATE TABLE reservation (
-    id              BIGINT PRIMARY KEY AUTO_INCREMENT,
+    id               BIGINT PRIMARY KEY AUTO_INCREMENT,
     reservation_code VARCHAR(20) NOT NULL,
-    user_id         BIGINT NOT NULL,
-    showtime_id     BIGINT NOT NULL,
-    status          ENUM('PENDING','CONFIRMED','CANCELED','FAILED','EXPIRED','REFUNDED') NOT NULL DEFAULT 'PENDING',
-    total_amount    DECIMAL(10,2) NOT NULL DEFAULT 0.00,
-    voucher_code    VARCHAR(50) NULL,
-    original_amount DECIMAL(10,2) DEFAULT 0,
-    discount_amount DECIMAL(10,2) DEFAULT 0,
-    expired_at      DATETIME NULL,
-    is_paid         BOOLEAN   DEFAULT FALSE,
-    is_deleted      BOOLEAN   DEFAULT FALSE,
-    created_at      DATETIME  NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at      DATETIME  NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    idempotency_key  VARCHAR(64) NULL,
+    user_id          BIGINT NOT NULL,
+    showtime_id      BIGINT NOT NULL,
+    status           ENUM('PENDING','CONFIRMED','CANCELED','FAILED','EXPIRED','REFUNDED') NOT NULL DEFAULT 'PENDING',
+    total_amount     DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    voucher_code     VARCHAR(50) NULL,
+    original_amount  DECIMAL(10,2) DEFAULT 0,
+    discount_amount  DECIMAL(10,2) DEFAULT 0,
+    expired_at       DATETIME NULL,
+    is_paid          BOOLEAN   DEFAULT FALSE,
+    is_deleted       BOOLEAN   DEFAULT FALSE,
+    created_at       DATETIME  NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at       DATETIME  NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    version          BIGINT    NOT NULL DEFAULT 0,
     CONSTRAINT fk_reservation_user     FOREIGN KEY (user_id)     REFERENCES users(id)    ON DELETE CASCADE,
     CONSTRAINT fk_reservation_showtime FOREIGN KEY (showtime_id) REFERENCES showtime(id) ON DELETE CASCADE,
     UNIQUE KEY uk_reservation_code (reservation_code),
+    UNIQUE KEY ux_reservation_idem (idempotency_key),
     INDEX idx_reservation_user_id (user_id),
     INDEX idx_reservation_status (status),
-    INDEX idx_reservation_showtime_id (showtime_id)
+    INDEX idx_reservation_showtime_id (showtime_id),
+    CONSTRAINT ck_reservation_paid_status CHECK (
+        (status = 'CONFIRMED' AND is_paid = 1) OR (status <> 'CONFIRMED' AND is_paid = 0)
+    )
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
+-- NOTE: no coherence CHECK on seat_instance on purpose: MySQL forbids CHECK
+-- on FK columns, so the FK + app layer enforce that invariant instead.
 CREATE TABLE seat_instance (
     id               BIGINT PRIMARY KEY AUTO_INCREMENT,
     showtime_id      BIGINT NOT NULL,
@@ -31,6 +40,7 @@ CREATE TABLE seat_instance (
     price            DECIMAL(10,2) NOT NULL,
     created_at       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    version          BIGINT   NOT NULL DEFAULT 0,
     CONSTRAINT fk_seat_instance_showtime  FOREIGN KEY (showtime_id)      REFERENCES showtime(id)      ON DELETE CASCADE,
     CONSTRAINT fk_seat_instance_template  FOREIGN KEY (seat_template_id) REFERENCES seat_template(id) ON DELETE CASCADE,
     CONSTRAINT fk_seat_instance_reservation FOREIGN KEY (reservation_id) REFERENCES reservation(id)   ON DELETE SET NULL,
@@ -54,18 +64,25 @@ CREATE TABLE ticket (
 
 CREATE TABLE payment (
     id                BIGINT PRIMARY KEY AUTO_INCREMENT,
-    reservation_id    VARCHAR(20) NOT NULL,
+    reservation_code  VARCHAR(20) NOT NULL,
     payment_intent_id VARCHAR(255) NOT NULL,
     gateway_txn_ref   VARCHAR(255) NOT NULL,
     gateway_response  JSON NULL,
     amount            DECIMAL(10,2) NOT NULL DEFAULT 0.00,
     method            ENUM('MOMO','VNPAY','ZALOPAY','UNKNOWN') NOT NULL,
     status            ENUM('PENDING','PAID','FAILED','CANCELED','REFUNDED') NOT NULL DEFAULT 'PENDING',
+    status_reason     VARCHAR(255) NULL,
+    last_error        TEXT NULL,
+    checked_at        DATETIME NULL,
     paid_at           DATETIME NULL,
     created_at        DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at        DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT uk_payment_txn UNIQUE (gateway_txn_ref),
-    INDEX idx_payment_reservation (reservation_id),
+    version           BIGINT NOT NULL DEFAULT 0,
+    UNIQUE KEY uk_payment_txn (gateway_txn_ref),
+    INDEX idx_payment_reservation_code (reservation_code),
     INDEX idx_payment_intent (payment_intent_id),
-    INDEX idx_payment_status (status)
+    INDEX idx_payment_status (status),
+    CONSTRAINT ck_payment_paid_at CHECK (
+        (status = 'PAID' AND paid_at IS NOT NULL) OR (status <> 'PAID' AND paid_at IS NULL)
+    )
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;

@@ -1,3 +1,4 @@
+-- Cinema: theater, room, seat_template, showtime
 CREATE TABLE theater (
     id         BIGINT PRIMARY KEY AUTO_INCREMENT,
     name       VARCHAR(255) NOT NULL UNIQUE,
@@ -28,11 +29,11 @@ CREATE TABLE room (
 CREATE TABLE seat_template (
     id          BIGINT PRIMARY KEY AUTO_INCREMENT,
     room_id     BIGINT NOT NULL,
-    row_label   VARCHAR(5)  NOT NULL COMMENT 'Hàng ghế: A, B, C...',
-    seat_number INT         NOT NULL COMMENT 'Số ghế trong hàng: 1, 2, 3...',
+    row_label   VARCHAR(5)  NOT NULL COMMENT 'Seat row: A, B, C...',
+    seat_number INT         NOT NULL COMMENT 'Seat number in row',
     seat_type   ENUM('NORMAL','VIP','COUPLE','WHEELCHAIR') NOT NULL DEFAULT 'NORMAL',
-    pos_x       INT NOT NULL DEFAULT 0 COMMENT 'Tọa độ X trên UI seat map',
-    pos_y       INT NOT NULL DEFAULT 0 COMMENT 'Tọa độ Y trên UI seat map',
+    pos_x       INT NOT NULL DEFAULT 0 COMMENT 'X on UI seat map',
+    pos_y       INT NOT NULL DEFAULT 0 COMMENT 'Y on UI seat map',
     is_active   BOOLEAN   NOT NULL DEFAULT TRUE,
     created_at  DATETIME  NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at  DATETIME  NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

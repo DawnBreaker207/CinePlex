@@ -1,3 +1,4 @@
+-- Demo data: users, movie, vouchers, article, showtime, seat_instance
 INSERT IGNORE INTO users (username, email, password, phone, address) VALUES
     ('user1', 'user1@test.com', '$2a$10$C1bS4xucP8o829h4md3mhuUNj6K5Yfa/e073as662wfKMsPpxu7Bq', '0123456789', 'Hà Nội'),
     ('user2', 'user2@test.com', '$2a$10$C1bS4xucP8o829h4md3mhuUNj6K5Yfa/e073as662wfKMsPpxu7Bq', '0123456790', 'Hồ Chí Minh'),
@@ -7,16 +8,12 @@ INSERT IGNORE INTO users (username, email, password, phone, address) VALUES
 
 INSERT IGNORE INTO user_role (user_id, role_id)
 SELECT u.id, r.id FROM users u, roles r WHERE u.username = 'user1' AND r.name = 'USER';
-
 INSERT IGNORE INTO user_role (user_id, role_id)
 SELECT u.id, r.id FROM users u, roles r WHERE u.username = 'user2' AND r.name = 'USER';
-
 INSERT IGNORE INTO user_role (user_id, role_id)
 SELECT u.id, r.id FROM users u, roles r WHERE u.username = 'user3' AND r.name = 'USER';
-
 INSERT IGNORE INTO user_role (user_id, role_id)
 SELECT u.id, r.id FROM users u, roles r WHERE u.username = 'user4' AND r.name = 'USER';
-
 INSERT IGNORE INTO user_role (user_id, role_id)
 SELECT u.id, r.id FROM users u, roles r WHERE u.username = 'user5' AND r.name = 'USER';
 
@@ -24,7 +21,7 @@ INSERT IGNORE INTO movie (id, title, original_title, duration, release_date, lan
     (1, 'Siêu nhân', 'Superman', 143, '2025-07-11', 'en', 'https://www.youtube.com/watch?v=example1', 'C13'),
     (2, 'Hành trình thuần hóa rồng', 'How to Train Your Dragon', 104, '2025-06-13', 'en', 'https://www.youtube.com/watch?v=example2', 'P'),
     (3, 'Cướp biển Caribbean', 'Pirates of the Caribbean', 143, '2025-05-24', 'en', 'https://www.youtube.com/watch?v=example3', 'C13'),
-    (4, 'V for Vandetta', 'V for Vendetta', 132, '2025-03-17', 'en', 'https://www.youtube.com/watch?v=example4', 'C16'),
+    (4, 'V for Vendetta', 'V for Vendetta', 132, '2025-03-17', 'en', 'https://www.youtube.com/watch?v=example4', 'C16'),
     (5, 'Biệt đội siêu anh hùng: Hồi kết', 'Avengers: Endgame', 181, '2025-04-26', 'en', 'https://www.youtube.com/watch?v=example5', 'C13'),
     (6, 'Người sắt', 'Iron Man', 126, '2025-05-02', 'en', 'https://www.youtube.com/watch?v=example6', 'C13'),
     (7, 'Người dơi: Khởi đầu', 'Batman Begins', 140, '2025-06-15', 'en', 'https://www.youtube.com/watch?v=example7', 'C13'),

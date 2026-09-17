@@ -1,3 +1,4 @@
+-- Marketing: vouchers, user_voucher
 CREATE TABLE vouchers (
     id                  BIGINT PRIMARY KEY AUTO_INCREMENT,
     name                VARCHAR(255) NOT NULL,
@@ -23,18 +24,18 @@ CREATE TABLE vouchers (
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 
 CREATE TABLE user_voucher (
-    id             BIGINT PRIMARY KEY AUTO_INCREMENT,
-    user_id        BIGINT NOT NULL,
-    voucher_id     BIGINT NOT NULL,
-    code           VARCHAR(50) NOT NULL,
-    status         ENUM('AVAILABLE','USED','EXPIRED') NOT NULL DEFAULT 'AVAILABLE',
-    claimed_at     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    used_at        DATETIME NULL,
-    reservation_id VARCHAR(36) NULL,
-    expired_at     DATETIME NOT NULL,
+    id               BIGINT PRIMARY KEY AUTO_INCREMENT,
+    user_id          BIGINT NOT NULL,
+    voucher_id       BIGINT NOT NULL,
+    code             VARCHAR(50) NOT NULL,
+    status           ENUM('AVAILABLE','USED','EXPIRED') NOT NULL DEFAULT 'AVAILABLE',
+    claimed_at       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    used_at          DATETIME NULL,
+    reservation_code VARCHAR(20) NULL,
+    expired_at       DATETIME NOT NULL,
     CONSTRAINT fk_uv_user    FOREIGN KEY (user_id)    REFERENCES users(id)    ON DELETE CASCADE,
     CONSTRAINT fk_uv_voucher FOREIGN KEY (voucher_id) REFERENCES vouchers(id) ON DELETE CASCADE,
     INDEX idx_uv_user (user_id),
     INDEX idx_uv_status (status),
-    INDEX idx_uv_reservation (reservation_id)
+    INDEX idx_uv_reservation_code (reservation_code)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;

@@ -1,3 +1,4 @@
+-- Auth & RBAC: users, roles, user_role, refresh_token
 CREATE TABLE users (
     id            BIGINT PRIMARY KEY AUTO_INCREMENT,
     username      VARCHAR(255) NOT NULL UNIQUE,
@@ -6,7 +7,7 @@ CREATE TABLE users (
     avatar        VARCHAR(255),
     address       VARCHAR(255),
     phone         VARCHAR(50),
-    is_active    BOOLEAN   NOT NULL DEFAULT TRUE,
+    is_active     BOOLEAN   NOT NULL DEFAULT TRUE,
     created_at    DATETIME  NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at    DATETIME  NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_email (email),
@@ -16,7 +17,7 @@ CREATE TABLE users (
 
 CREATE TABLE roles (
     id         BIGINT PRIMARY KEY AUTO_INCREMENT,
-    name       ENUM('USER','MODERATOR','ADMIN') NOT NULL UNIQUE,
+    name        ENUM('USER','STAFF','MANAGER','ADMIN') NOT NULL UNIQUE,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
