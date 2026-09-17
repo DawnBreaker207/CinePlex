@@ -30,6 +30,18 @@ public class AuthController {
         return ResponseObject.success("");
     }
 
+    @GetMapping("/verify-email")
+    public ResponseObject<String> verifyEmail(@RequestParam String token) {
+        authService.verifyEmail(token);
+        return ResponseObject.success("Email verified");
+    }
+
+    @PostMapping("/resend-verification")
+    public ResponseObject<String> resendVerification(@RequestParam String email) {
+        authService.resendVerification(email);
+        return ResponseObject.success("");
+    }
+
     @PostMapping("/login")
     public ResponseObject<JwtResponse> login(@Valid @RequestBody LoginRequest user) {
         JwtResponse jwt = authService.login(user);

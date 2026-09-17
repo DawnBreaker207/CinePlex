@@ -10,6 +10,10 @@ public interface AuthService {
 
     void register(RegisterRequest newUser);
 
+    void verifyEmail(String token);
+
+    void resendVerification(String email);
+
     JwtResponse login(LoginRequest user);
 
     TokenRefreshResponse refreshToken(String refreshToken);
