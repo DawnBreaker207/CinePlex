@@ -26,7 +26,6 @@ public class RedisSubscriber implements MessageListener {
     public void onMessage(Message message, byte[] pattern) {
         String channel = new String(message.getChannel(), StandardCharsets.UTF_8);
         String body = new String(message.getBody(), StandardCharsets.UTF_8);
-        log.info("Receive message from channel:{}, body:{}", channel, body);
         try {
             JsonNode node = objectMapper.readTree(body);
             String eventName = node.has(Constants.SSE_FIELD_EVENT)

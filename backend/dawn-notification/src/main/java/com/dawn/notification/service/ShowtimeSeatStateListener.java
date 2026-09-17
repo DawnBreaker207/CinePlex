@@ -1,7 +1,8 @@
 package com.dawn.notification.service;
 
+import com.dawn.booking.api.BookingModuleApi;
+import com.dawn.booking.dto.response.SseDTO;
 import com.dawn.common.core.constant.Constants;
-import com.dawn.notification.dto.SeatDTO;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +19,7 @@ public class ShowtimeSeatStateListener implements SseSubscriptionListener {
 
     private static final String SHOWTIME_CHANNEL_PREFIX = "channel:showtime:";
 
-    private final ReservationNotifyService reservationNotifyService;
+    private final BookingModuleApi bookingApi;
     private final SseConnectionRegistry registry;
     private final ObjectMapper objectMapper;
 
@@ -32,7 +33,7 @@ public class ShowtimeSeatStateListener implements SseSubscriptionListener {
             Long showtimeId = Long.valueOf(channel.substring(SHOWTIME_CHANNEL_PREFIX.length()));
             log.debug("Fetching snapshot for showtime {}", showtimeId);
 
-            List<SeatDTO> lockedSeats = reservationNotifyService.getLockedSeats(showtimeId);
+            List<SseDTO> lockedSeats = bookingApi.findLockedSeatsByShowtime(showtimeId);
 
             Map<String, Object> initialState = Map.of(
                     Constants.SSE_FIELD_EVENT, Constants.SSE_SEAT_STATE_INIT,
