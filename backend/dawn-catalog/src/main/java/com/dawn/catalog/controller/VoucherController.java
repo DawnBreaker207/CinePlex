@@ -5,8 +5,10 @@ import com.dawn.catalog.dto.response.UserVoucherResponse;
 import com.dawn.catalog.dto.response.VoucherCalculation;
 import com.dawn.catalog.dto.response.VoucherResponse;
 import com.dawn.catalog.internal.VoucherService;
+import com.dawn.common.core.constant.security.AuthorizationExpressions;
 import com.dawn.common.core.dto.response.ResponseObject;
 import com.dawn.common.core.dto.response.ResponsePage;
+import com.dawn.common.infra.security.SecurityPolicy;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -25,6 +27,7 @@ import java.util.List;
 public class VoucherController {
 
     private final VoucherService voucherService;
+    private final SecurityPolicy securityPolicy;
 
     @GetMapping
     @Operation(summary = "Get all vouchers")
@@ -47,14 +50,14 @@ public class VoucherController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize(AuthorizationExpressions.CAN_MANAGE_PRICING)
     @Operation(summary = "Create new voucher")
     public ResponseObject<VoucherResponse> create(@RequestBody @Valid VoucherRequest req) {
         return ResponseObject.created(voucherService.create(req));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize(AuthorizationExpressions.CAN_MANAGE_PRICING)
     @Operation(summary = "Update existing voucher")
     public ResponseObject<VoucherResponse> update(@PathVariable Long id, @RequestBody @Valid VoucherRequest req) {
         return ResponseObject.success(voucherService.update(id, req));
@@ -63,22 +66,19 @@ public class VoucherController {
     @PostMapping("/use")
     public ResponseObject<Void> useVoucher(
             @RequestParam String code,
-            @RequestParam Long userId,
             @RequestParam String reservationId) {
-        voucherService.useVoucher(code, userId, reservationId);
+        voucherService.useVoucher(code, securityPolicy.requireAuthenticated(), reservationId);
         return ResponseObject.success(null);
     }
 
     @PostMapping("/release")
-    public ResponseObject<Void> releaseVoucher(
-            @RequestParam String code,
-            @RequestParam Long userId) {
-        voucherService.releaseVoucher(code, userId);
+    public ResponseObject<Void> releaseVoucher(@RequestParam String code) {
+        voucherService.releaseVoucher(code, securityPolicy.requireAuthenticated());
         return ResponseObject.success(null);
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize(AuthorizationExpressions.CAN_MANAGE_PRICING)
     @Operation(summary = "Delete voucher")
     public ResponseObject<Void> delete(@PathVariable Long id) {
         voucherService.delete(id);
@@ -87,15 +87,13 @@ public class VoucherController {
 
     @PostMapping("/claim")
     @Operation(summary = "Claim a voucher for current user")
-    public ResponseObject<UserVoucherResponse> claimVoucher(
-            @RequestParam String code,
-            @RequestParam Long userId) {
-        return ResponseObject.success(voucherService.claimVoucher(code, userId));
+    public ResponseObject<UserVoucherResponse> claimVoucher(@RequestParam String code) {
+        return ResponseObject.success(voucherService.claimVoucher(code, securityPolicy.requireAuthenticated()));
     }
 
-    @GetMapping("/user/{userId}")
-    @Operation(summary = "Get all vouchers claimed by a user")
-    public ResponseObject<List<UserVoucherResponse>> getUserVouchers(@PathVariable Long userId) {
-        return ResponseObject.success(voucherService.getUserVouchers(userId));
+    @GetMapping("/user")
+    @Operation(summary = "Get all vouchers claimed by the current user")
+    public ResponseObject<List<UserVoucherResponse>> getUserVouchers() {
+        return ResponseObject.success(voucherService.getUserVouchers(securityPolicy.requireAuthenticated()));
     }
 }

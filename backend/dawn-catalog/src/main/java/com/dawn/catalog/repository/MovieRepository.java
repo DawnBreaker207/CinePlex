@@ -22,7 +22,7 @@ public interface MovieRepository extends JpaRepository<Movie, Long> {
                 (:#{#movie.title} IS NULL OR m.title LIKE CONCAT ('%' , :#{#movie.title}, '%'))
                 AND (:#{#movie.duration} IS NULL OR m.duration  = :#{#movie.duration})
                 AND (:#{#movie.releaseDate} IS NULL OR m.release_date = :#{#movie.releaseDate})
-                AND ( m.is_deleted = false OR m.is_deleted IS NULL)
+                AND m.is_active = true
             ORDER BY id ASC
             """, nativeQuery = true)
     Page<Movie> findAllWithFilter(@Param("movie") MovieRequest movie, Pageable pageable);

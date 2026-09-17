@@ -37,5 +37,5 @@ public class ArticleResponse extends BaseResponse {
 
     private Long views;
 
-    private Boolean isDeleted;
+    private Boolean isActive;
 }

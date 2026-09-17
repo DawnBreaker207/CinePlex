@@ -11,7 +11,9 @@ import com.dawn.catalog.model.Voucher;
 import com.dawn.catalog.repository.UserVoucherRepository;
 import com.dawn.catalog.repository.VoucherRepository;
 import com.dawn.catalog.internal.VoucherService;
+import com.dawn.common.core.annotation.AuditLog;
 import com.dawn.common.core.constant.ErrorCode;
+import com.dawn.common.core.constant.LogConstant;
 import com.dawn.common.core.constant.UserVoucherStatus;
 import com.dawn.common.core.constant.VoucherStatus;
 import com.dawn.common.core.dto.response.ResponsePage;
@@ -57,6 +59,8 @@ public class VoucherServiceImpl implements VoucherService {
 
     @Override
     @Transactional
+    @AuditLog(action = LogConstant.Action.VOUCHER_CREATE, entity = LogConstant.Entity.VOUCHER,
+            metadata = "'code=' + #req.code")
     public VoucherResponse create(VoucherRequest req) {
         if (voucherRepository.findByCode(req.getCode()).isPresent()) {
             throw new ResourceAlreadyExistedException(ErrorCode.VOUCHER_ALREADY_EXISTED.format());
@@ -67,6 +71,8 @@ public class VoucherServiceImpl implements VoucherService {
 
     @Override
     @Transactional
+    @AuditLog(action = LogConstant.Action.VOUCHER_UPDATE, entity = LogConstant.Entity.VOUCHER,
+            entityId = "#id", entityClass = Voucher.class, metadata = "'code=' + #req.code")
     public VoucherResponse update(Long id, VoucherRequest req) {
         Voucher existedVoucher = voucherRepository
                 .findById(id)
@@ -97,6 +103,8 @@ public class VoucherServiceImpl implements VoucherService {
 
     @Override
     @Transactional
+    @AuditLog(action = LogConstant.Action.VOUCHER_DELETE, entity = LogConstant.Entity.VOUCHER,
+            entityId = "#id", entityClass = Voucher.class)
     public void delete(Long id) {
         Voucher voucher = voucherRepository
                 .findById(id)

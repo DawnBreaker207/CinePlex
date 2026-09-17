@@ -42,7 +42,7 @@ public class UserVoucher extends AbstractMappedEntity {
     @Column(name = "used_at")
     private Instant usedAt;
 
-    @Column(name = "reservation_id", length = 50)
+    @Column(name = "reservation_code", length = 20)
     private String reservationId;
 
     @Column(name = "expired_at", nullable = false)

@@ -12,6 +12,7 @@
     import com.dawn.common.core.dto.response.ResponsePage;
     import com.dawn.common.core.exception.wrapper.ResourceAlreadyExistedException;
     import com.dawn.common.core.exception.wrapper.ResourceNotFoundException;
+    import com.dawn.common.core.service.AuditLogService;
     import lombok.RequiredArgsConstructor;
     import lombok.extern.slf4j.Slf4j;
     import org.springframework.cache.annotation.CacheEvict;
@@ -25,6 +26,7 @@
     import java.util.HashSet;
     import java.util.List;
     import java.util.Map;
+    import java.util.Optional;
     import java.util.Set;
     import java.util.stream.Collectors;
 
@@ -36,6 +38,7 @@
         public static final String CACHE_LIST = "movie_list";
         private final MovieRepository movieRepository;
         private final GenreRepository genreRepository;
+        private final AuditLogService auditLogService;
 
 
         @Override
@@ -81,14 +84,36 @@
                 evict = {@CacheEvict(value = CACHE_LIST, allEntries = true)}
         )
         public MovieResponse create(MovieRequest m) {
-            movieRepository
-                    .findByFilmId(String.valueOf(m.getFilmId()))
-                    .ifPresent((movie) -> {
-                        throw new ResourceAlreadyExistedException(ErrorCode.MOVIE_EXISTED.format());
-                    });
+            Optional<Movie> existing = movieRepository.findByFilmId(String.valueOf(m.getFilmId()));
+            if (existing.isPresent() && existing.get().getIsActive()) {
+                throw new ResourceAlreadyExistedException(ErrorCode.MOVIE_EXISTED.format());
+            }
             Set<Genre> genres = getOrCreateGenres(m.getGenres());
-            Movie movie = MovieMappingHelper.map(m);
-            movie.setGenres(genres);
+            Movie movie;
+            if (existing.isPresent()) {
+                // Reactivate soft-deleted movie with the same filmId; created_at is preserved
+                movie = existing.get();
+                movie.setTitle(m.getTitle());
+                movie.setOriginalTitle(m.getOriginalTitle());
+                movie.setPoster(m.getPoster());
+                movie.setBackdrop(m.getBackdrop());
+                movie.setOverview(m.getOverview());
+                movie.setDuration(m.getDuration());
+                movie.setReleaseDate(m.getReleaseDate());
+                movie.setImdbId(m.getImdbId());
+                movie.setFilmId(m.getFilmId());
+                movie.setLanguage(m.getLanguage());
+                movie.setCountry(m.getCountry());
+                movie.setIsActive(true);
+                movie.setGenres(genres);
+                auditLogService.record("MOVIE_REACTIVATED", "MOVIE", movie.getId().toString(), null,
+                        "INACTIVE", "ACTIVE", "filmId=" + m.getFilmId(),
+                        "SUCCESS", AuditLogService.clientIp(), null, null);
+                log.info("Movie reactivated: filmId={}", m.getFilmId());
+            } else {
+                movie = MovieMappingHelper.map(m);
+                movie.setGenres(genres);
+            }
             return MovieMappingHelper.map(movieRepository.save(movie));
         }
 

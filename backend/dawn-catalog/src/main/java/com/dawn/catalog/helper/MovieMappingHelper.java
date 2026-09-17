@@ -44,7 +44,7 @@ public interface MovieMappingHelper {
                 .filmId(m.getFilmId())
                 .language(m.getLanguage())
                 .country(m.getCountry())
-                .isDeleted(m.getIsDeleted())
+                .isActive(m.getIsActive())
                 .createdAt(m.getCreatedAt())
                 .updatedAt(m.getUpdatedAt())
                 .build();
