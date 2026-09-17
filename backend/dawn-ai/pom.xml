@@ -35,6 +35,16 @@
             <artifactId>dawn-payment</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>com.dawn.backend</groupId>
+            <artifactId>dawn-catalog</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.dawn.backend</groupId>
+            <artifactId>dawn-reporting</artifactId>
+        </dependency>
+
     </dependencies>
 
 </project>
