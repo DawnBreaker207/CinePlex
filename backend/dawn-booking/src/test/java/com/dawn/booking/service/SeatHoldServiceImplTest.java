@@ -17,6 +17,7 @@ import com.dawn.common.core.constant.SeatStatus;
 import com.dawn.common.core.exception.ApiException;
 import com.dawn.common.core.exception.wrapper.SeatUnavailableException;
 import com.dawn.common.core.service.AuditLogService;
+import com.dawn.common.infra.redis.service.VelocityGuard;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -51,15 +52,21 @@ class SeatHoldServiceImplTest {
     ReservationRedisService reservationRedisService;
     @Mock
     AuditLogService auditLogService;
+    @Mock
+    VelocityGuard velocityGuard;
 
     @InjectMocks
     SeatHoldServiceImpl service;
 
     @BeforeEach
     void setUpProxy() {
+        lenient().when(velocityGuard.tryAcquire(anyString(), anyInt(), any())).thenReturn(true);
         AspectJProxyFactory factory = new AspectJProxyFactory(service);
         factory.setProxyTargetClass(true);
-        factory.addAspect(new AuditLogAspect(auditLogService));
+        factory.addAspect(new AuditLogAspect(auditLogService,
+                new com.fasterxml.jackson.databind.ObjectMapper(),
+                new com.dawn.common.core.aspect.AuditMessageBuilder(new com.fasterxml.jackson.databind.ObjectMapper()),
+                null));
         service = (SeatHoldServiceImpl) factory.getProxy();
     }
 
@@ -86,15 +93,77 @@ class SeatHoldServiceImplTest {
 
             assertThat(response.getReservationCode()).isNotBlank();
             assertThat(response.getShowtimeId()).isEqualTo(10L);
-            assertThat(response.getTtl()).isEqualTo(900L); // 15 phút
+            assertThat(response.getTtl()).isEqualTo(900L); // 15 minutes
             assertThat(response.getExpiredAt()).isNotNull();
             assertThat(response.getReservationCode()).isEqualTo(reservationIdCaptor.getValue());
+        }
+
+        @Test
+        @DisplayName("velocity exceeded → 429 Too Many Requests")
+        void initReservation_velocityExceeded_shouldThrow429() {
+            ReservationInitRequest request = ReservationInitRequest.builder()
+                    .userId(1L)
+                    .showtimeId(10L)
+                    .theaterId(5L)
+                    .build();
+
+            when(velocityGuard.tryAcquire(anyString(), anyInt(), any())).thenReturn(false);
+
+            assertThatThrownBy(() -> service.initReservation(request))
+                    .isInstanceOf(ApiException.class)
+                    .hasMessageContaining("Too many hold attempts")
+                    .matches(e -> ((ApiException) e).getStatus() == org.springframework.http.HttpStatus.TOO_MANY_REQUESTS);
+            verify(reservationRedisService, never()).saveReservationInit(any(), any(), any());
+        }
+
+        @Test
+        @DisplayName("cùng idempotencyKey → replay reservation code cũ, KHÔNG tạo mới")
+        void initReservation_sameIdempotencyKey_shouldReplayExistingCode() {
+            ReservationInitRequest request = ReservationInitRequest.builder()
+                    .userId(1L)
+                    .showtimeId(10L)
+                    .theaterId(5L)
+                    .idempotencyKey("IDEM-123")
+                    .build();
+
+            when(reservationRepository.findByIdempotencyKey("IDEM-123"))
+                    .thenReturn(Optional.of(ReservationTestData.buildReservation("CP-REPLAY", false)));
+            when(reservationRedisService.getReservationTtl("CP-REPLAY")).thenReturn(500L);
+
+            ReservationInitResponse response = service.initReservation(request);
+
+            assertThat(response.getReservationCode()).isEqualTo("CP-REPLAY");
+            assertThat(response.getTtl()).isEqualTo(500L);
+            verify(reservationRedisService, never()).saveReservationInit(any(), any(), any());
+        }
+
+        @Test
+        @DisplayName("cùng idempotencyKey nhưng index hết hạn → tạo mới")
+        void initReservation_staleIdempotencyIndex_shouldGenerateNew() {
+            ReservationInitRequest request = ReservationInitRequest.builder()
+                    .userId(1L)
+                    .showtimeId(10L)
+                    .theaterId(5L)
+                    .idempotencyKey("IDEM-EXPIRED")
+                    .build();
+
+            when(reservationRepository.findByIdempotencyKey("IDEM-EXPIRED"))
+                    .thenReturn(Optional.empty());
+            when(reservationRedisService.getReservationIdByIdempotencyKey("IDEM-EXPIRED"))
+                    .thenReturn("CP-OLD");
+            when(reservationRedisService.getReservationTtl("CP-OLD")).thenReturn(-1L);
+            when(cinemaApi.findShowtimeById(10L)).thenReturn(ReservationTestData.buildShowtime(10L));
+
+            ReservationInitResponse response = service.initReservation(request);
+
+            assertThat(response.getReservationCode()).isNotEqualTo("CP-OLD").isNotBlank();
+            assertThat(response.getTtl()).isEqualTo(900L);
         }
     }
 
     @Nested
-    @DisplayName("holdReservationSeats")
-    class HoldReservationSeats {
+    @DisplayName("holdSeats")
+    class HoldSeats {
 
         @Test
         @DisplayName("hold success → acquireSeatLock and updateReservationSeats are called")
@@ -109,12 +178,12 @@ class SeatHoldServiceImplTest {
             when(cinemaApi.findSeatsByShowtime(10L)).thenReturn(
                     List.of(ReservationTestData.buildSeat(101L, 10L), ReservationTestData.buildSeat(102L, 10L)));
 
-            service.holdReservationSeats(request);
+            service.holdSeats(request);
 
             verify(reservationRedisService).acquireSeatLock(eq(List.of(101L, 102L)), anyList(), anyString());
             verify(reservationRedisService).updateReservationSeats(eq("RES-001"), eq(List.of(101L, 102L)));
-            verify(auditLogService).record(eq("RESERVATION_HOLD"), eq("RESERVATION"), eq("RES-001"), isNull(),
-                    eq("PENDING"), eq("showtimeId=10, seats=101,102"));
+            verify(auditLogService).record(eq("RESERVATION_HOLD"), eq("RESERVATION"), anyString(), isNull(),
+                    isNull(), eq("PENDING"), anyString(), eq("SUCCESS"), anyString(), isNull(), isNull());
         }
 
         @Test
@@ -130,7 +199,7 @@ class SeatHoldServiceImplTest {
             SeatResponse wrongSeat = ReservationTestData.buildSeat(101L, 99L);
             when(cinemaApi.findSeatsByIds(anyList())).thenReturn(List.of(wrongSeat));
 
-            assertThatThrownBy(() -> service.holdReservationSeats(request))
+            assertThatThrownBy(() -> service.holdSeats(request))
                     .isInstanceOf(SeatUnavailableException.class)
                     .hasMessageContaining("do not belong");
         }
@@ -149,7 +218,7 @@ class SeatHoldServiceImplTest {
             bookedSeat.setStatus(SeatStatus.BOOKED);
             when(cinemaApi.findSeatsByIds(anyList())).thenReturn(List.of(bookedSeat));
 
-            assertThatThrownBy(() -> service.holdReservationSeats(request))
+            assertThatThrownBy(() -> service.holdSeats(request))
                     .isInstanceOf(SeatUnavailableException.class);
         }
 
@@ -163,7 +232,7 @@ class SeatHoldServiceImplTest {
             pastShowtime.setShowDate(LocalDate.now().minusDays(1));
             when(cinemaApi.findShowtimeById(10L)).thenReturn(pastShowtime);
 
-            assertThatThrownBy(() -> service.holdReservationSeats(request))
+            assertThatThrownBy(() -> service.holdSeats(request))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("past showtime");
         }
@@ -178,7 +247,7 @@ class SeatHoldServiceImplTest {
             showtime.setAvailableSeats(1);
             when(cinemaApi.findShowtimeById(10L)).thenReturn(showtime);
 
-            assertThatThrownBy(() -> service.holdReservationSeats(request))
+            assertThatThrownBy(() -> service.holdSeats(request))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("Not enough available seats");
         }
@@ -198,7 +267,7 @@ class SeatHoldServiceImplTest {
             when(reservationRedisService.acquireSeatLock(anyList(), anyList(), anyString()))
                     .thenThrow(new SeatUnavailableException("Seat taken"));
 
-            assertThatThrownBy(() -> service.holdReservationSeats(request))
+            assertThatThrownBy(() -> service.holdSeats(request))
                     .isInstanceOf(SeatUnavailableException.class);
 
             verify(reservationRedisService, never()).updateReservationSeats(any(), any());
@@ -218,16 +287,13 @@ class SeatHoldServiceImplTest {
             when(reservationRepository.findByReservationCode("RES-001"))
                     .thenReturn(Optional.of(ReservationTestData.buildReservation("RES-001", true)));
 
-            assertThatThrownBy(() -> service.holdReservationSeats(request))
+            assertThatThrownBy(() -> service.holdSeats(request))
                     .isInstanceOf(ApiException.class);
 
             verify(reservationRepository, never()).save(any());
         }
     }
 
-    // ----------------------------------------------------------------
-    // Helpers
-    // ----------------------------------------------------------------
 
     private void stubValidReservationData(String reservationId, Long userId, Long showtimeId) {
         Map<Object, Object> data = new HashMap<>();
