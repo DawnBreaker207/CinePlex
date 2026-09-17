@@ -6,6 +6,7 @@ import com.dawn.cinema.service.SeatService;
 import com.dawn.common.core.dto.response.ResponseObject;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -35,31 +36,11 @@ public class SeatController {
         return ResponseObject.success(seatService.getAvailableSeatByShowtime(showtimeId));
     }
 
-    @PostMapping("/reservation/batch-by-reservations")
-    public ResponseObject<List<SeatResponse>> findAllByReservationIds(@RequestBody List<String> ids) {
-        return ResponseObject.success(seatService.findAllByReservationIds(ids));
-    }
-
     @PostMapping("/showtime/{showtimeId}/create")
     @Operation(summary = "Create seat for a showtime", description = "Manually create seats for a specific showtime (Admin only)")
     public ResponseObject<List<SeatResponse>> createSeatsForShowtime(@PathVariable Long showtimeId) {
         log.info("Manually creating seats for showtime id: {}", showtimeId);
         return ResponseObject.success(seatService.getAvailableSeatByShowtime(showtimeId));
-    }
-
-    @PostMapping("/locks")
-    public ResponseObject<List<SeatResponse>> findSeatByIdWithLock(@RequestBody List<Long> seatIds) {
-        return ResponseObject.success(seatService.findByIdWithLock(seatIds));
-    }
-
-    @PostMapping("/all/id")
-    public ResponseObject<List<SeatResponse>> findAllSeatById(@RequestBody List<Long> seatIds) {
-        return ResponseObject.success(seatService.findAllById(seatIds));
-    }
-
-    @GetMapping("/reservation/{reservationId}")
-    public ResponseObject<List<SeatResponse>> findAllSeatByReservationId(@PathVariable String reservationId) {
-        return ResponseObject.success(seatService.findAllByReservationId(reservationId));
     }
 
     @GetMapping("/reservation/showtime/{showtimeId}")
@@ -69,7 +50,7 @@ public class SeatController {
 
 
     @PostMapping("/saveAll")
-    public ResponseObject<Void> saveAllSeat(@RequestBody List<SeatRequest> seats) {
+    public ResponseObject<Void> saveAllSeat(@RequestBody @Valid List<SeatRequest> seats) {
         seatService.saveAllSeat(seats);
         return ResponseObject.deleted();
     }

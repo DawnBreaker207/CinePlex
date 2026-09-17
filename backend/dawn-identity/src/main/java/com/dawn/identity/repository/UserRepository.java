@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -34,4 +35,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
             WHERE r.name = :roleName
             """)
     boolean existsByRolesName(URole roleName);
+
+    @Query("""
+            SELECT COUNT(DISTINCT u)
+            FROM User AS u JOIN u.roles AS r
+            WHERE r.name IN :roleNames AND u.isActive = :active
+            """)
+    long countByRolesNameInAndActive(@Param("roleNames") Collection<URole> roleNames,
+            @Param("active") boolean active);
 }

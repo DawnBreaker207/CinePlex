@@ -3,10 +3,16 @@ package com.dawn.common.core.exception;
 import com.dawn.common.core.exception.payload.ExceptionMessage;
 import io.github.resilience4j.ratelimiter.RequestNotPermitted;
 import jakarta.validation.ConstraintViolationException;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.transaction.TransactionSystemException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -15,14 +21,21 @@ import java.time.ZonedDateTime;
 
 @RestControllerAdvice
 @Slf4j
+@RequiredArgsConstructor
 public class ApiExceptionHandler {
 
     private static final HttpStatus DEFAULT_STATUS = HttpStatus.BAD_REQUEST;
 
+    private final MessageSource messageSource;
+
     @ExceptionHandler(ApiException.class)
     public ResponseEntity<ExceptionMessage> handleApiRequestException(ApiException e) {
-        log.info("**ApiExceptionHandler controller, handler API request**");
-        return buildResponse(e.getStatus(), e.getMessage());
+        String message = e.getMessage();
+        if (e.getErrorCode() != null) {
+            message = messageSource.getMessage(e.getErrorCode().code(), e.getArgs(), e.getMessage(),
+                    LocaleContextHolder.getLocale());
+        }
+        return buildResponse(e.getStatus(), message, e.getErrorCode() != null ? e.getErrorCode().code() : null);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -48,41 +61,62 @@ public class ApiExceptionHandler {
 
     @ExceptionHandler({IllegalArgumentException.class, IllegalStateException.class})
     public ResponseEntity<ExceptionMessage> handleIllegalException(final Exception ex) {
-        log.warn("Invalid argument: {}", ex.getMessage());
-        String errorMsg = ex.getMessage();
-        return buildResponse(DEFAULT_STATUS, errorMsg);
+        log.warn("Invalid argument", ex);
+        return buildResponse(DEFAULT_STATUS, "Invalid request");
     }
 
-    //  403 Error
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ExceptionMessage> handleNotReadableException(final Exception ex) {
+        log.warn("Malformed request body", ex);
+        return buildResponse(DEFAULT_STATUS, "Malformed request body");
+    }
+
+    //  DB constraint violation → 409 Conflict
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ExceptionMessage> handleDataIntegrityViolation(final Exception ex) {
+        log.warn("Data integrity violation", ex);
+        return buildResponse(HttpStatus.CONFLICT, "Data conflict, please check your request");
+    }
+
+    //  Transaction rollback on commit → 400
+    @ExceptionHandler(TransactionSystemException.class)
+    public ResponseEntity<ExceptionMessage> handleTransactionSystemException(final Exception ex) {
+        log.warn("Transaction error", ex);
+        return buildResponse(HttpStatus.BAD_REQUEST, "Transaction failed, please retry");
+    }
+
     @ExceptionHandler({AccessDeniedException.class})
     public ResponseEntity<ExceptionMessage> handleAccessDeniedException(final Exception ex) {
-        log.warn("Access denied: {}", ex.getMessage());
+        log.warn("Access denied", ex);
         String errorMsg = "You don't have permission to access this resource";
         return buildResponse(HttpStatus.FORBIDDEN, errorMsg);
     }
 
-    //  429 Error
     @ExceptionHandler({RequestNotPermitted.class})
     public ResponseEntity<ExceptionMessage> handleRateLimitException(final Exception ex) {
-        log.warn("Too many request: {}", ex.getMessage());
+        log.warn("Too many request", ex);
         String errorMsg = "Rate limit exceeded, please try again later";
         return buildResponse(HttpStatus.TOO_MANY_REQUESTS, errorMsg);
     }
 
-    //  500 Error
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ExceptionMessage> handleAllException(final Exception ex) {
-        log.warn("Unhandled exception: {}", ex.getMessage());
+        log.warn("Unhandled exception", ex);
         String errorMsg = "Internal server error";
         return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, errorMsg);
     }
 
     private ResponseEntity<ExceptionMessage> buildResponse(HttpStatus status, String message) {
+        return buildResponse(status, message, null);
+    }
+
+    private ResponseEntity<ExceptionMessage> buildResponse(HttpStatus status, String message, String code) {
         ExceptionMessage response = ExceptionMessage
                 .builder()
                 .timestamp(ZonedDateTime.now())
                 .status(status.value())
                 .message(message)
+                .code(code)
                 .build();
         return new ResponseEntity<>(response, status);
     }

@@ -33,6 +33,10 @@ public class SeatInstance extends AbstractMappedEntity {
     @Column(name = "seat_template_id", nullable = false)
     private Long seatTemplateId;
 
+    @Version
+    @Column(name = "version")
+    private Long version;
+
     @Column(name = "status", nullable = false)
     private String status;
 
@@ -40,7 +44,7 @@ public class SeatInstance extends AbstractMappedEntity {
     private Instant reservedUntil;
 
     @Column(name = "reservation_id")
-    private String reservationId;
+    private Long reservationId;
 
     @Column(name = "price", nullable = false)
     private BigDecimal price;

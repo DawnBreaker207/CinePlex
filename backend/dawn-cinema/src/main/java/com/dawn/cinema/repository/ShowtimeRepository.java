@@ -20,6 +20,9 @@ public interface ShowtimeRepository extends JpaRepository<Showtime, Long> {
     @Query("SELECT s.id FROM Showtime s JOIN Room r ON s.roomId = r.id WHERE r.theaterId = :theaterId")
     List<Long> findShowtimeByTheaterId(@Param("theaterId") Long theaterId);
 
+    @Query("SELECT r.theaterId, s.id FROM Showtime s JOIN Room r ON s.roomId = r.id WHERE r.theaterId IN :theaterIds")
+    List<Object[]> findShowtimeByTheaterIds(@Param("theaterIds") List<Long> theaterIds);
+
     @Query(value = """
                SELECT s FROM Showtime s
                JOIN Room r ON s.roomId = r.id

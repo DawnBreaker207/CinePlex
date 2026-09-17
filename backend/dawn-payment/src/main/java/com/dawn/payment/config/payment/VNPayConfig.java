@@ -43,7 +43,6 @@ public class VNPayConfig {
         vnpParamsMap.put("vnp_Command", this.vnp_Command);
         vnpParamsMap.put("vnp_TmnCode", this.vnp_TmnCode);
         vnpParamsMap.put("vnp_CurrCode", "VND");
-        vnpParamsMap.put("vnp_TxnRef", VNPayUtils.getRandomNumber(Constants.RANDOM_NUMBER_LENGTH));
         vnpParamsMap.put("vnp_OrderInfo", "Thanh toan don hang:" + VNPayUtils.getRandomNumber(Constants.RANDOM_NUMBER_LENGTH));
         vnpParamsMap.put("vnp_OrderType", this.vnp_OrderType);
         vnpParamsMap.put("vnp_Locale", "vn");

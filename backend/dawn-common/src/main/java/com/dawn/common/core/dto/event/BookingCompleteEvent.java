@@ -9,7 +9,7 @@ import java.io.Serializable;
 public record BookingCompleteEvent(
         String to,
         String name,
-        String reservationId,
+        String reservationCode,
         String movieName,
         String theaterName,
         String showtimeSession,

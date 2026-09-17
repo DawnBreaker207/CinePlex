@@ -6,6 +6,8 @@ public class RabbitMQConstants {
     public static final String EXCHANGE_NOTIFICATION = "notification.exchange";
     public static final String RK_NOTIFICATION_RESERVATION_COMPLETED = "notification.booking.completed";
     public static final String QUEUE_NOTIFICATION_RESERVATION_COMPLETED = "notification.booking.completed";
+    public static final String RK_NOTIFICATION_EMAIL_VERIFICATION = "notification.email.verification";
+    public static final String QUEUE_NOTIFICATION_EMAIL_VERIFICATION = "notification.email.verification";
 
     // Dashboard Flow
     public static final String RK_DASHBOARD_REFRESH = "dashboard.refresh";
@@ -23,8 +25,4 @@ public class RabbitMQConstants {
     public static final String QUEUE_BOOKING_PAYMENT_COMPLETED_DLQ = "booking.payment.completed.dlq";
     public static final String QUEUE_BOOKING_PAYMENT_FAILED = "booking.payment.failed";
     public static final String QUEUE_BOOKING_PAYMENT_FAILED_DLQ = "booking.payment.failed.dlq";
-
-    // Reporting
-    public static final String QUEUE_REPORTING_PAYMENT_COMPLETED = "reporting.payment.completed";
-    public static final String QUEUE_REPORTING_PAYMENT_COMPLETED_DLQ = "reporting.payment.completed.dlq";
 }

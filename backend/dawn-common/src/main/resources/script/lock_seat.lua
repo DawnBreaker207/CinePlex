@@ -1,7 +1,13 @@
 for i, key in ipairs(KEYS) do
-    local currentOwner = redis.call('GET', key)
-    if currentOwner and currentOwner ~= ARGV[1] then
-        return { 0, key, currentOwner }
+    local current = redis.call('GET', key)
+    if current then
+        local curOwner, curEpoch = string.match(current, '^(.*):(%d+)$')
+        local myOwner, myEpoch = string.match(ARGV[1], '^(.*):(%d+)$')
+        local sameOwner = curOwner and myOwner and curOwner == myOwner
+        local newer = myEpoch and curEpoch and tonumber(myEpoch) > tonumber(curEpoch)
+        if not (sameOwner or newer) then
+            return { 0, key, current }
+        end
     end
 end
 

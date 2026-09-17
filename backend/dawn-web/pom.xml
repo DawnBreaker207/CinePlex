@@ -55,6 +55,12 @@
             <groupId>com.dawn.backend</groupId>
             <artifactId>dawn-ai</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.tngtech.archunit</groupId>
+            <artifactId>archunit-junit5</artifactId>
+            <version>1.4.0</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>

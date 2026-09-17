@@ -1,5 +1,6 @@
 package com.dawn.identity.dto.request;
 
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -11,6 +12,7 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 public class UserRequest {
 
+    @NotBlank(message = "Username is required")
     private String username;
 
     private String avatar;

@@ -1,5 +1,6 @@
 package com.dawn.common.core.exception.wrapper;
 
+import com.dawn.common.core.constant.ErrorCode;
 import com.dawn.common.core.exception.ApiException;
 import org.springframework.http.HttpStatus;
 
@@ -13,5 +14,8 @@ public class InvalidRequestException extends ApiException {
         super(HttpStatus.BAD_REQUEST, message);
     }
 
+    public InvalidRequestException(ErrorCode errorCode, Object... args) {
+        super(errorCode, args);
+    }
 
 }

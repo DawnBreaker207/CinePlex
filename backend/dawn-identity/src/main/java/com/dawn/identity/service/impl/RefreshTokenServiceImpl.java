@@ -1,6 +1,6 @@
 package com.dawn.identity.service.impl;
 
-import com.dawn.common.core.constant.Message;
+import com.dawn.common.core.constant.ErrorCode;
 import com.dawn.common.core.exception.wrapper.RefreshTokenExpiredException;
 import com.dawn.common.core.exception.wrapper.RefreshTokenNotFoundException;
 import com.dawn.common.core.exception.wrapper.ResourceNotFoundException;
@@ -35,7 +35,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     public RefreshToken createRefreshToken(Long userId) {
         User user = userRepository
                 .findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException(Message.Exception.USER_NOT_FOUND));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.USER_NOT_FOUND.format()));
 
         refreshTokenRepository.deleteByUser(user);
 
@@ -53,14 +53,14 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
         return Optional
                 .ofNullable(refreshTokenRepository
                         .findByToken(token)
-                        .orElseThrow(() -> new RefreshTokenNotFoundException(Message.Exception.REFRESH_TOKEN_NOT_FOUND)));
+                        .orElseThrow(() -> new RefreshTokenNotFoundException(ErrorCode.REFRESH_TOKEN_NOT_FOUND.format())));
     }
 
     @Override
     public RefreshToken verifyExpiration(RefreshToken token) {
         if (token.getExpiryDate().isBefore(Instant.now())) {
             refreshTokenRepository.deleteByToken(token.getToken());
-            throw new RefreshTokenExpiredException(Message.Exception.REFRESH_TOKEN_EXPIRED);
+            throw new RefreshTokenExpiredException(ErrorCode.REFRESH_TOKEN_EXPIRED.format());
         }
         return token;
     }

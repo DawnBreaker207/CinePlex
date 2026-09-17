@@ -1,6 +1,7 @@
 package com.dawn.payment.utils;
 
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -10,10 +11,13 @@ import java.util.Map;
 import java.util.Random;
 import java.util.stream.Collectors;
 
-public class VNPayUtils {
+@Slf4j
+public final class VNPayUtils {
+
+    private VNPayUtils() {}
+
     public static String hmacSHA512(final String key, final String data) {
         try {
-
             if (key == null || data == null) {
                 throw new NullPointerException();
             }
@@ -30,21 +34,22 @@ public class VNPayUtils {
             return sb.toString();
 
         } catch (Exception ex) {
-            return "";
+            log.error("HMAC SHA512 computation failed", ex);
+            throw new IllegalStateException("HMAC SHA512 computation failed", ex);
         }
     }
 
     public static String getIpAddress(HttpServletRequest request) {
-        String ipAdress;
         try {
-            ipAdress = request.getHeader("X-FORWARDED-FOR");
+            String ipAdress = request.getHeader("X-FORWARDED-FOR");
             if (ipAdress == null) {
                 ipAdress = request.getRemoteAddr();
             }
+            return ipAdress;
         } catch (Exception e) {
-            ipAdress = "Invalid IP:" + e.getMessage();
+            log.error("Failed to resolve client IP", e);
+            return "0.0.0.0";
         }
-        return ipAdress;
     }
 
     public static String getRandomNumber(int len) {

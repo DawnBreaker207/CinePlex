@@ -1,6 +1,6 @@
 package com.dawn.payment.handler;
 
-import com.dawn.common.core.constant.Message;
+import com.dawn.common.core.constant.ErrorCode;
 import com.dawn.payment.config.payment.MomoConfig;
 import com.dawn.payment.utils.MomoUtils;
 import com.dawn.common.core.exception.wrapper.InternalServiceException;
@@ -11,6 +11,7 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
+import java.math.BigDecimal;
 import java.util.Map;
 import java.util.UUID;
 
@@ -48,7 +49,7 @@ public class MomoHandler implements PaymentHandler {
                 .body(new ParameterizedTypeReference<>() {
                 });
         if (response == null || response.get("payUrl") == null) {
-            throw new InternalServiceException(Message.Exception.MOMO_PAYMENT_FAILED);
+            throw new InternalServiceException(ErrorCode.MOMO_PAYMENT_FAILED.format());
         }
         return (String) response.get("payUrl");
     }
@@ -66,7 +67,20 @@ public class MomoHandler implements PaymentHandler {
     }
 
     @Override
-    public Boolean queryTransactions(String reservationId) {
-        return true;
+    public String getTxnRef(Map<String, String> params) {
+        return params.get("transId");
+    }
+
+    @Override
+    public BigDecimal getAmount(Map<String, String> params) {
+        String amount = params.get("amount");
+        if (amount == null || amount.isBlank()) {
+            return null;
+        }
+        try {
+            return new BigDecimal(amount);
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 }

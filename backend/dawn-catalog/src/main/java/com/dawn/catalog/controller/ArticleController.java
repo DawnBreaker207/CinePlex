@@ -3,11 +3,13 @@ package com.dawn.catalog.controller;
 import com.dawn.catalog.dto.request.ArticleRequest;
 import com.dawn.catalog.dto.response.ArticleResponse;
 import com.dawn.catalog.service.ArticleService;
+import com.dawn.common.core.constant.security.AuthorizationExpressions;
 import com.dawn.common.core.dto.response.ResponseObject;
 import com.dawn.common.core.dto.response.ResponsePage;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -27,16 +29,19 @@ public class ArticleController {
     }
 
     @PostMapping("")
+    @PreAuthorize(AuthorizationExpressions.CAN_MANAGE_CONTENT)
     public ResponseObject<ArticleResponse> create(@Valid @RequestBody ArticleRequest req) {
         return ResponseObject.created(articleService.create(req));
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize(AuthorizationExpressions.CAN_MANAGE_CONTENT)
     public ResponseObject<ArticleResponse> update(@PathVariable Long id, @Valid @RequestBody ArticleRequest req) {
         return ResponseObject.success(articleService.update(id, req));
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize(AuthorizationExpressions.CAN_MANAGE_CONTENT)
     public ResponseObject<Void> delete(@PathVariable Long id) {
         articleService.delete(id);
         return ResponseObject.deleted();

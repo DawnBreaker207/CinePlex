@@ -45,5 +45,5 @@ public class MovieResponse extends BaseResponse {
 
     private String filmId;
 
-    private Boolean isDeleted;
+    private Boolean isActive;
 }

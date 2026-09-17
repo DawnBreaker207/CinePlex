@@ -25,7 +25,7 @@ public interface UserMappingHelper {
                         .map(role -> role.getName().name())
                         .collect(Collectors.toSet())
                 )
-                .isDeleted(u.getIsDeleted())
+                .isActive(u.getIsActive())
                 .build();
     }
 

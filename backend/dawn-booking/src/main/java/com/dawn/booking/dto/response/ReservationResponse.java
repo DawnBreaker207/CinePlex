@@ -1,7 +1,9 @@
 package com.dawn.booking.dto.response;
 
+import com.dawn.cinema.dto.response.ShowtimeResponse;
 import com.dawn.common.core.constant.ReservationStatus;
 import com.dawn.common.core.dto.response.BaseResponse;
+import com.dawn.identity.dto.response.UserResponse;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
@@ -16,11 +18,11 @@ import java.util.List;
 @SuperBuilder
 @EqualsAndHashCode(callSuper = true)
 public class ReservationResponse extends BaseResponse {
-    private String id;
+    private String reservationCode;
 
-    private UserDTO user;
+    private UserResponse user;
 
-    private ShowtimeDTO showtime;
+    private ShowtimeResponse showtime;
 
     private ReservationStatus reservationStatus;
 

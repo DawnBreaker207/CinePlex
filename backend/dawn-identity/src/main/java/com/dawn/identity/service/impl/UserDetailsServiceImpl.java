@@ -1,6 +1,6 @@
 package com.dawn.identity.service.impl;
 
-import com.dawn.common.core.constant.Message;
+import com.dawn.common.core.constant.ErrorCode;
 import com.dawn.common.core.exception.wrapper.ResourceNotFoundException;
 import com.dawn.identity.model.User;
 import com.dawn.identity.model.UserDetailsImpl;
@@ -21,11 +21,11 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         if (input.contains("@")) {
             user = userRepository
                     .findByEmail(input)
-                    .orElseThrow(() -> new ResourceNotFoundException(Message.Exception.EMAIL_NOT_FOUND));
+                    .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.EMAIL_NOT_FOUND.format()));
         } else {
             user = userRepository
                     .findByUsername(input)
-                    .orElseThrow(() -> new ResourceNotFoundException(Message.Exception.USERNAME_NOT_FOUND));
+                    .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.USERNAME_NOT_FOUND.format()));
         }
         return UserDetailsImpl.build(user);
     }

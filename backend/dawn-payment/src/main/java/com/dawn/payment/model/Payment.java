@@ -28,7 +28,11 @@ public class Payment extends AbstractMappedEntity {
     @Column(name = "id")
     private Long id;
 
-    @Column(name = "reservation_id", nullable = false)
+    @Version
+    @Column(name = "version")
+    private Long version;
+
+    @Column(name = "reservation_code", nullable = false)
     private String reservationId;
 
     @Column(name = "payment_intent_id", nullable = false)
@@ -53,5 +57,14 @@ public class Payment extends AbstractMappedEntity {
 
     @Column(name = "paid_at")
     private Instant paidAt;
+
+    @Column(name = "status_reason")
+    private String statusReason;
+
+    @Column(name = "last_error")
+    private String lastError;
+
+    @Column(name = "checked_at")
+    private Instant checkedAt;
 
 }

@@ -23,7 +23,7 @@ public class TheaterResponse extends BaseResponse {
 
     private Integer capacity;
 
-    private Boolean isDeleted;
+    private Boolean isActive;
 
     @Builder.Default
     private List<Long> showtime = new ArrayList<>();

@@ -20,8 +20,19 @@ import java.time.Instant;
 @EqualsAndHashCode(callSuper = true)
 public class Reservation extends AbstractMappedEntity {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false, updatable = false)
-    private String id;
+    private Long id;
+
+    @Column(name = "reservation_code", nullable = false, unique = true, length = 20)
+    private String reservationCode;
+
+    @Column(name = "idempotency_key", unique = true, length = 64)
+    private String idempotencyKey;
+
+    @Version
+    @Column(name = "version")
+    private Long version;
 
     @Column(name = "user_id", nullable = false)
     private Long userId;
@@ -47,6 +58,10 @@ public class Reservation extends AbstractMappedEntity {
 
     @Column(name = "expired_at")
     private Instant expiredAt;
+
+    @Column(name = "is_paid", nullable = false)
+    @Builder.Default
+    private Boolean isPaid = false;
 
     @Column(name = "is_deleted", nullable = false)
     @Builder.Default

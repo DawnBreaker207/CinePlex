@@ -5,7 +5,7 @@ import com.dawn.report.dto.response.*;
 import com.dawn.report.repository.DashboardRepository;
 import com.dawn.report.service.DashboardService;
 import com.dawn.common.core.constant.Constants;
-import com.dawn.common.core.constant.Message;
+import com.dawn.common.core.constant.ErrorCode;
 import com.dawn.common.core.exception.wrapper.InternalServiceException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 @Service
 @RequiredArgsConstructor
@@ -24,15 +25,15 @@ public class DashboardServiceImpl implements DashboardService {
 
     @Override
     public DashboardResponse getSummary(DashboardFilterRequest req) {
-
-        CompletableFuture<MetricsResponse> metrics = CompletableFuture.supplyAsync(() -> getMetrics(req));
-        CompletableFuture<List<RevenuePointResponse>> revenue = CompletableFuture.supplyAsync(() -> getRevenueOverTime(req));
-        CompletableFuture<List<TopMovieResponse>> topMovie = CompletableFuture.supplyAsync(() -> getTopMovies(req));
-        CompletableFuture<List<TopTheaterResponse>> topTheater = CompletableFuture.supplyAsync(() -> getTopTheaters(req));
-        CompletableFuture<List<PaymentDistribution>> paymentDistribution = CompletableFuture.supplyAsync(() -> getPaymentDistribution(req));
-
-        CompletableFuture.allOf(metrics, revenue, topMovie, topTheater, paymentDistribution).join();
         try {
+            CompletableFuture<MetricsResponse> metrics = CompletableFuture.supplyAsync(() -> getMetrics(req));
+            CompletableFuture<List<RevenuePointResponse>> revenue = CompletableFuture.supplyAsync(() -> getRevenueOverTime(req));
+            CompletableFuture<List<TopMovieResponse>> topMovie = CompletableFuture.supplyAsync(() -> getTopMovies(req));
+            CompletableFuture<List<TopTheaterResponse>> topTheater = CompletableFuture.supplyAsync(() -> getTopTheaters(req));
+            CompletableFuture<List<PaymentDistribution>> paymentDistribution = CompletableFuture.supplyAsync(() -> getPaymentDistribution(req));
+
+            CompletableFuture.allOf(metrics, revenue, topMovie, topTheater, paymentDistribution).join();
+
             return DashboardResponse
                     .builder()
                     .metrics(metrics.get())
@@ -41,11 +42,14 @@ public class DashboardServiceImpl implements DashboardService {
                     .theaters(topTheater.get())
                     .payments(paymentDistribution.get())
                     .build();
-        } catch (Exception e) {
-            log.error("Error in dashboard: {}", e.getMessage());
-            throw new InternalServiceException(Message.Exception.DASHBOARD_CAN_NOT_GET_DATA);
+        } catch (ExecutionException e) {
+            log.error("Error in dashboard: {}", e.getMessage(), e);
+            throw new InternalServiceException(ErrorCode.DASHBOARD_CAN_NOT_GET_DATA.format(), e.getCause());
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.error("Error in dashboard: {}", e.getMessage(), e);
+            throw new InternalServiceException(ErrorCode.DASHBOARD_CAN_NOT_GET_DATA.format(), e);
         }
-
     }
 
     @Override

@@ -23,4 +23,6 @@ public class ExceptionMessage implements Serializable {
 
     private final String message;
 
+    private final String code;
+
 }

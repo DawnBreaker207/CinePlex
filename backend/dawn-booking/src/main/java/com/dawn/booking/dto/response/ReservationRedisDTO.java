@@ -24,6 +24,8 @@ public class ReservationRedisDTO {
 
     private String voucherCode;
 
+    private String idempotencyKey;
+
     private String price;
 
     @Builder.Default

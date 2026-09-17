@@ -10,16 +10,16 @@ import java.util.List;
 
 @Component
 public class CorsConfig {
-    public final String[] ALLOWED_DOMAINS = {
+    private static final List<String> ALLOWED_DOMAINS = List.of(
             "http://localhost:3000",
             "http://localhost:4200",
-            "http://localhost:5173"};
+            "http://localhost:5173");
 
     @Bean
     public UrlBasedCorsConfigurationSource config() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
-        config.setAllowedOriginPatterns(List.of("*"));
+        config.setAllowedOrigins(ALLOWED_DOMAINS);
 
         config.setAllowedHeaders(Arrays.asList(
                 "Authorization",

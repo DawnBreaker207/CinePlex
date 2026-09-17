@@ -30,7 +30,7 @@ public interface ArticleMappingHelper {
                 .status(req.getStatus())
                 .type(req.getType())
                 .views(req.getViews())
-                .isDeleted(req.getIsDeleted())
+                .isActive(req.getIsActive())
                 .createdAt(req.getCreatedAt())
                 .updatedAt(req.getUpdatedAt())
                 .build();

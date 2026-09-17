@@ -76,7 +76,7 @@ public class Movie extends AbstractMappedEntity {
     @Column(name = "age_rating")
     private String ageRating;
 
-    @Column(name = "is_deleted", nullable = false)
+    @Column(name = "is_active", nullable = false)
     @Builder.Default
-    private Boolean isDeleted = false;
+    private Boolean isActive = true;
 }

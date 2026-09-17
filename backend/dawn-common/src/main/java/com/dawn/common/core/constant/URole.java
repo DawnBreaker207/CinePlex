@@ -7,8 +7,10 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum URole {
     USER(1),
-    MODERATOR(2),
-    ADMIN(3);
+    STAFF(2),
+    MANAGER(3),
+    ADMIN(4),
+    OWNER(5);
 
     private final int level;
 }

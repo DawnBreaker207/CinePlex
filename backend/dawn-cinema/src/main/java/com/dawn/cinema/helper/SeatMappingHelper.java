@@ -25,6 +25,7 @@ public interface SeatMappingHelper {
                 .id(seatInstance.getId())
                 .showtimeId(seatInstance.getShowtimeId())
                 .seatNumber(template.getRowLabel() + template.getSeatNumber())
+                .price(seatInstance.getPrice())
                 .build();
     }
 }

@@ -27,12 +27,9 @@ class ApiExceptionHandlerTest {
 
     @BeforeEach
     void setUp() {
-        handler = new ApiExceptionHandler();
+        handler = new ApiExceptionHandler(new org.springframework.context.support.StaticMessageSource());
     }
 
-    // ----------------------------------------------------------------
-    // ApiException (wrapper exceptions)
-    // ----------------------------------------------------------------
 
     @Test
     @DisplayName("ResourceNotFoundException → 404")
@@ -68,9 +65,6 @@ class ApiExceptionHandlerTest {
         assertThat(response.getBody().getMessage()).isEqualTo("Not allowed");
     }
 
-    // ----------------------------------------------------------------
-    // Validation
-    // ----------------------------------------------------------------
 
     @Test
     @DisplayName("MethodArgumentNotValidException → 400 với field error message")
@@ -104,9 +98,6 @@ class ApiExceptionHandlerTest {
         assertThat(response.getBody().getMessage()).isEqualTo("Invalid request");
     }
 
-    // ----------------------------------------------------------------
-    // Access control
-    // ----------------------------------------------------------------
 
     @Test
     @DisplayName("AccessDeniedException → 403")
@@ -120,9 +111,6 @@ class ApiExceptionHandlerTest {
                 .isEqualTo("You don't have permission to access this resource");
     }
 
-    // ----------------------------------------------------------------
-    // Illegal argument / state
-    // ----------------------------------------------------------------
 
     @Test
     @DisplayName("IllegalArgumentException → 400")
@@ -132,7 +120,7 @@ class ApiExceptionHandlerTest {
         ResponseEntity<ExceptionMessage> response = handler.handleIllegalException(ex);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(response.getBody().getMessage()).isEqualTo("Bad input");
+        assertThat(response.getBody().getMessage()).isEqualTo("Invalid request");
     }
 
     @Test
@@ -145,9 +133,6 @@ class ApiExceptionHandlerTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
     }
 
-    // ----------------------------------------------------------------
-    // Fallback 500
-    // ----------------------------------------------------------------
 
     @Test
     @DisplayName("Exception generic → 500")
@@ -160,9 +145,6 @@ class ApiExceptionHandlerTest {
         assertThat(response.getBody().getMessage()).isEqualTo("Internal server error");
     }
 
-    // ----------------------------------------------------------------
-    // Response body shape
-    // ----------------------------------------------------------------
 
     @Test
     @DisplayName("Response body luôn có timestamp, status, message")

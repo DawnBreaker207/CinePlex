@@ -16,26 +16,26 @@ public class PaymentCompletedListener {
 
     @RabbitListener(queues = RabbitMQConstants.QUEUE_BOOKING_PAYMENT_COMPLETED)
     public void onPaymentCompleted(PaymentCompletedEvent event) {
-        log.info("[Booking] PaymentCompletedEvent received: reservationId={}, eventId={}",
-                event.reservationId(), event.eventId());
+        log.debug("[Booking] PaymentCompletedEvent received: reservationCode={}, eventId={}",
+                event.reservationCode(), event.eventId());
         try {
-            reservationService.confirmReservation(event.reservationId());
-            log.info("[Booking] Reservation {} confirmed successfully", event.reservationId());
+            reservationService.confirm(event.reservationCode());
+            log.debug("[Booking] Reservation {} confirmed successfully", event.reservationCode());
         } catch (Exception e) {
-            log.error("[Booking] Failed to confirm reservation {}: {}", event.reservationId(), e.getMessage());
+            log.error("[Booking] Failed to confirm reservation {}: {}", event.reservationCode(), e.getMessage());
             throw e;
         }
     }
 
     @RabbitListener(queues = RabbitMQConstants.QUEUE_BOOKING_PAYMENT_FAILED)
     public void onPaymentFailed(PaymentFailedEvent event) {
-        log.info("[Booking] PaymentFailedEvent received: reservationId={}, reason={}",
-                event.reservationId(), event.reason());
+        log.debug("[Booking] PaymentFailedEvent received: reservationCode={}, reason={}",
+                event.reservationCode(), event.reason());
         try {
-            reservationService.cancelReservation(event.reservationId());
-            log.info("[Booking] Reservation {} cancelled successfully", event.reservationId());
+            reservationService.fail(event.reservationCode());
+            log.debug("[Booking] Reservation {} failed successfully", event.reservationCode());
         } catch (Exception e) {
-            log.error("[Booking] Failed to cancel reservation {}: {}", event.reservationId(), e.getMessage());
+            log.error("[Booking] Failed to fail reservation {}: {}", event.reservationCode(), e.getMessage());
             throw e;
         }
     }

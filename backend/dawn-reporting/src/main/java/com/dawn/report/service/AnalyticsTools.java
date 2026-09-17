@@ -38,6 +38,7 @@ public class AnalyticsTools {
                     metrics.getActiveTheaters(),
                     metrics.getSeatUtilization());
         } catch (Exception e) {
+            log.error("Failed to get metrics", e);
             return "Lỗi khi lấy dữ liệu: " + e.getMessage();
         }
     }

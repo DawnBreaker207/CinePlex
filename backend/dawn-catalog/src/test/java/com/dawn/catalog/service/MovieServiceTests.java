@@ -1,4 +1,4 @@
-package com.dawn.catalog.service;
+package com.dawn.catalog.internal;
 
 import com.dawn.catalog.dto.request.MovieRequest;
 import com.dawn.catalog.dto.response.MovieResponse;
@@ -7,7 +7,7 @@ import com.dawn.catalog.model.Genre;
 import com.dawn.catalog.model.Movie;
 import com.dawn.catalog.repository.GenreRepository;
 import com.dawn.catalog.repository.MovieRepository;
-import com.dawn.catalog.service.impl.MovieServiceImpl;
+import com.dawn.catalog.internal.impl.MovieServiceImpl;
 import com.dawn.common.core.exception.wrapper.ResourceAlreadyExistedException;
 import com.dawn.common.core.exception.wrapper.ResourceNotFoundException;
 import org.junit.jupiter.api.AfterEach;
@@ -21,6 +21,7 @@ import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 
@@ -76,6 +77,7 @@ public class MovieServiceTests {
                 .language("en")
                 .imdbId("tt1375666")
                 .genres(Set.of(actionGenre, dramaGenre))
+                .isActive(true)
                 .build();
 
         movieRequest = MovieRequest.builder()
@@ -99,65 +101,75 @@ public class MovieServiceTests {
 
     @Test
     void findAll_GivenFilteredMovie_WhenCalled_ThenReturnMovieList() {
-        // Arrange
+        Pageable pageable = PageRequest.of(0, 10);
         MovieRequest filter = MovieRequest
                 .builder()
                 .title("Inception")
                 .build();
+        MovieResponse dto = MovieResponse
+                .builder()
+                .id(1L)
+                .title("Inception")
+                .build();
+        mappingHelperMock
+                .when(() -> MovieMappingHelper.map(movie))
+                .thenReturn(dto);
 
         when(movieRepository
-                .findAllWithFilter(filter, Pageable.unpaged()))
-                .thenReturn(new PageImpl<>(List.of(movie)));
+                .findAllWithFilter(filter, pageable))
+                .thenReturn(new PageImpl<>(List.of(movie), pageable, 1));
 
-        // Act
         List<MovieResponse> result = movieService
-                .findAll(filter, Pageable.unpaged())
+                .findAll(filter, pageable)
                 .getContent();
 
-        // Assert
         assertNotNull(result);
         assertEquals(1, result.size());
         assertEquals(movie.getId(), result.getFirst().getId());
         assertEquals(filter.getTitle(), result.getFirst().getTitle());
 
-        verify(movieRepository, times(1)).findAll();
+        verify(movieRepository, times(1)).findAllWithFilter(filter, pageable);
     }
 
     @Test
     void findAll_GivenInvalidFilteredMovie_WhenCalled_ThenReturnEmptyList() {
-        // Arrange
+        Pageable pageable = PageRequest.of(0, 10);
         MovieRequest filter = MovieRequest
                 .builder()
                 .build();
         when(movieRepository
-                .findAllWithFilter(filter, Pageable.unpaged()))
-                .thenReturn(new PageImpl<>(Collections.emptyList()));
+                .findAllWithFilter(filter, pageable))
+                .thenReturn(new PageImpl<>(Collections.emptyList(), pageable, 0));
 
-        // Act
         List<MovieResponse> result = movieService
-                .findAll(filter, Pageable.unpaged())
+                .findAll(filter, pageable)
                 .getContent();
 
-        // Assert
         assertNotNull(result);
         assertTrue(result.isEmpty());
 
         verify(movieRepository, times(1))
-                .findAllWithFilter(filter, Pageable.unpaged());
+                .findAllWithFilter(filter, pageable);
     }
 
     @Test
     void findOne_GivenValidId_WhenFound_ThenReturnMovieDto() {
-        // Arrange
         when(movieRepository
                 .findById(1L))
                 .thenReturn(Optional.of(movie));
+        MovieResponse dto = MovieResponse
+                .builder()
+                .id(1L)
+                .title("Inception")
+                .filmId("12345")
+                .build();
+        mappingHelperMock
+                .when(() -> MovieMappingHelper.map(movie))
+                .thenReturn(dto);
 
-        // Act
         MovieResponse result = movieService
                 .findById(1L);
 
-        // Assert
         assertNotNull(result);
         assertEquals(1, result.getId());
         assertEquals("Inception", result.getTitle());
@@ -169,12 +181,10 @@ public class MovieServiceTests {
 
     @Test
     void findOne_GivenNullId_WhenNotFound_ThenThrowResourceNotFoundException() {
-        // Arrange
         when(movieRepository
                 .findById(null))
                 .thenReturn(Optional.of(movie));
 
-        // Act & Assert
         ResourceNotFoundException exception = assertThrows(
                 ResourceNotFoundException.class,
                 () -> movieService.findById(null));
@@ -186,12 +196,10 @@ public class MovieServiceTests {
 
     @Test
     void findOne_GivenInvalidId_WhenNotFound_ThenThrowResourceNotFoundException() {
-        // Arrange
         when(movieRepository
                 .findById(999L))
                 .thenReturn(Optional.of(movie));
 
-        // Act & Assert
         ResourceNotFoundException exception = assertThrows(
                 ResourceNotFoundException.class,
                 () -> movieService.findById(999L));
@@ -203,7 +211,6 @@ public class MovieServiceTests {
 
     @Test
     void findByMovieId_GivenValidId_WhenFound_ThenReturnMovieDto() {
-        // Arrange
         when(movieRepository
                 .findByFilmId("12345"))
                 .thenReturn(Optional.of(movie));
@@ -216,11 +223,9 @@ public class MovieServiceTests {
                 .when(() -> MovieMappingHelper.map(movie))
                 .thenReturn(dto);
 
-        // Act
         MovieResponse result = movieService
                 .findByMovieId("12345");
 
-        // Assert
         assertNotNull(result);
         assertEquals("12345", result.getFilmId());
         verify(movieRepository, times(1))
@@ -229,12 +234,10 @@ public class MovieServiceTests {
 
     @Test
     void findByMovieId_GivenInvalidId_WhenNotFound_ThenThrowResourceNotFoundException() {
-        // Arrange
         when(movieRepository
                 .findByFilmId("99999"))
                 .thenReturn(Optional.of(movie));
 
-        // Act & Assert
         ResourceNotFoundException exception = assertThrows(
                 ResourceNotFoundException.class,
                 () -> movieService.findByMovieId("99999"));
@@ -246,10 +249,9 @@ public class MovieServiceTests {
 
     @Test
     void create_GivenNewGenres_WhenSuccess_ThenReturnMovieWithGenresSaved() {
-        // Arrange
         when(movieRepository
                 .findByFilmId("12345"))
-                .thenReturn(Optional.of(movie));
+                .thenReturn(Optional.empty());
         when(genreRepository
                 .findAll())
                 .thenReturn(List.of(actionGenre));
@@ -280,14 +282,12 @@ public class MovieServiceTests {
                 .filmId("12345")
                 .build();
         mappingHelperMock
-                .when(() -> MovieMappingHelper.map(movieRequest))
+                .when(() -> MovieMappingHelper.map(savedMovie))
                 .thenReturn(dto);
 
-        // Act
         MovieResponse result = movieService
                 .create(movieRequest);
 
-        // Assert
         assertNotNull(result);
         assertEquals(1L, result.getId());
         verify(movieRepository, times(1))
@@ -300,12 +300,10 @@ public class MovieServiceTests {
 
     @Test
     void create_GivenDuplicatedFilmId_WhenExists_ThenThrowResourceAlreadyExistedException() {
-        // Arrange
         when(movieRepository
                 .findByFilmId("12345"))
                 .thenReturn(Optional.of(movie));
 
-        // Act & Assert
         assertThrows(
                 ResourceAlreadyExistedException.class,
                 () -> movieService.create(movieRequest));
@@ -320,7 +318,6 @@ public class MovieServiceTests {
 
     @Test
     void update_GivenValidIdAndNewGenres_WhenSuccess_ThenMovieUpdatedWithGenres() {
-        // Arrange
         MovieRequest updateDto = MovieRequest
                 .builder()
                 .title("Update title")
@@ -356,11 +353,9 @@ public class MovieServiceTests {
                 .when(() -> MovieMappingHelper.map(savedMovie))
                 .thenReturn(dto);
 
-        // Act
         MovieResponse result = movieService
                 .update(1L, updateDto);
 
-        // Assert
         assertNotNull(result);
         assertEquals("Update title", result.getTitle());
         verify(movieRepository, times(1))
@@ -373,12 +368,10 @@ public class MovieServiceTests {
 
     @Test
     void update_GivenInvalidId_WhenMovieNotFound_ThenThrowResourceNotFoundException() {
-        // Arrange
         when(movieRepository
-                .findById(1L))
+                .findById(2L))
                 .thenReturn(Optional.empty());
 
-        // Act & Assert
         assertThrows(
                 ResourceNotFoundException.class,
                 () -> movieService.update(2L, movieRequest));
@@ -392,16 +385,13 @@ public class MovieServiceTests {
 
     @Test
     void delete_GivenValidId_WhenSuccess_ThenMovieDeleted() {
-        // Arrange
         when(movieRepository
                 .findById(1L))
                 .thenReturn(Optional.of(movie));
 
-        // Act
         movieService
                 .delete(1L);
 
-        // Assert
         verify(movieRepository, times(1))
                 .findById(1L);
         verify(movieRepository, times(1))
@@ -410,12 +400,10 @@ public class MovieServiceTests {
 
     @Test
     void delete_GivenInvalidId_WhenMovieNotFound_ThenThrowResourceNotFoundException() {
-        // Arrange
         when(movieRepository
                 .findById(1L))
                 .thenReturn(Optional.empty());
 
-        // Act & Assert
         assertThrows(
                 ResourceNotFoundException.class,
                 () -> movieService.delete(1L));

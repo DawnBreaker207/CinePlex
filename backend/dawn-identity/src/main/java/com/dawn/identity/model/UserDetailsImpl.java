@@ -1,5 +1,6 @@
 package com.dawn.identity.model;
 
+import com.dawn.common.core.model.AuthenticatedUser;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -16,7 +17,7 @@ import java.util.stream.Collectors;
 @Getter
 @AllArgsConstructor
 @Builder
-public class UserDetailsImpl implements UserDetails {
+public class UserDetailsImpl implements UserDetails, AuthenticatedUser {
     @Serial
     private static final long serialVersionUID = 1L;
 

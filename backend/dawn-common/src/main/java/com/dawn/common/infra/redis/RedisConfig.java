@@ -38,13 +38,11 @@ public class RedisConfig {
 
     private final ObjectMapper mapper;
 
-    //    Connect to Redis server
     @Bean
     public RedisConnectionFactory redisConnectionFactory() {
         return new LettuceConnectionFactory(redisHost, redisPort);
     }
 
-    //    Config to manipulation with Redis
     @Bean
     public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory) {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
@@ -72,7 +70,6 @@ public class RedisConfig {
     }
 
 
-    //    Config Redis Cache
     @Bean
     public RedisCacheManager cacheManager(RedisConnectionFactory connectionFactory) {
         ObjectMapper mapper = new ObjectMapper();

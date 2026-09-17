@@ -8,7 +8,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface TheaterRepository extends JpaRepository<Theater, Long> {
     Page<Theater> findAll(Pageable pageable);
 
-    //  Find theaters by location (city, area, etc)
     Page<Theater> findByLocationContainingIgnoreCase(String location, Pageable pageable);
 
     Theater findByName(String theaterName);

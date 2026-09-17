@@ -8,6 +8,8 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
+import java.math.BigDecimal;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -22,5 +24,9 @@ public class SeatResponse extends BaseResponse {
     private String seatNumber;
 
     private SeatStatus status;
+
+    private Long reservationId;
+
+    private BigDecimal price;
 
 }

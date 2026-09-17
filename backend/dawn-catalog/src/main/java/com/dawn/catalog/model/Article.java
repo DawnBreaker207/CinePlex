@@ -48,9 +48,9 @@ public class Article extends AbstractMappedEntity {
     @Enumerated(EnumType.STRING)
     private ArticleType type;
 
-    @Column(name = "is_deleted", nullable = false)
+    @Column(name = "is_active", nullable = false)
     @Builder.Default
-    private Boolean isDeleted = false;
+    private Boolean isActive = true;
 
     @Column(name = "views")
     private Long views;

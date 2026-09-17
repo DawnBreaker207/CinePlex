@@ -1,6 +1,6 @@
 package com.dawn.identity.config;
 
-import com.dawn.common.core.constant.Message;
+import com.dawn.common.core.constant.ErrorCode;
 import com.dawn.common.core.constant.URole;
 import com.dawn.common.core.exception.wrapper.ResourceNotFoundException;
 import com.dawn.identity.model.Role;
@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Set;
 
+// Demo bootstrap only: seeds admin/user accounts. Not for production.
 @Component
 @Slf4j
 @RequiredArgsConstructor
@@ -50,15 +51,10 @@ public class DataInitializer implements ApplicationRunner {
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
-        try {
-            createAdminAccountIfNotExist();
-            createUserAccountIfNotExist();
-        } catch (Exception e) {
-            log.error("Error initializing admin account", e);
-        }
+        createAdminAccountIfNotExist();
+        createUserAccountIfNotExist();
     }
 
-    //    Note: This just for demo, don't use this in production
     private void createAdminAccountIfNotExist() {
         if (userRepository.existsByRolesName(URole.ADMIN)) {
             log.info("Admin account already exists");
@@ -68,15 +64,20 @@ public class DataInitializer implements ApplicationRunner {
         Role role = roleRepository
                 .findByName(URole.ADMIN)
                 .orElseThrow(() ->
-                        new ResourceNotFoundException(Message.Exception.ROLE_NOT_FOUND));
+                        new ResourceNotFoundException(ErrorCode.ROLE_NOT_FOUND.format()));
+        Role ownerRole = roleRepository
+                .findByName(URole.OWNER)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(ErrorCode.ROLE_NOT_FOUND.format()));
 
         User user = User
                 .builder()
                 .username(adminUsername)
                 .email(adminEmail)
                 .password(passwordEncoder.encode(adminPassword))
-                .roles(Set.of(role))
-                .isDeleted(false)
+                .roles(Set.of(ownerRole, role))
+                .isActive(true)
+                .emailVerified(true)
                 .build();
 
         userRepository.save(user);
@@ -85,11 +86,10 @@ public class DataInitializer implements ApplicationRunner {
         log.info("   DEMO ADMIN ACCOUNT CREATED");
         log.info("   Username: {}", adminUsername);
         log.info("   Email: {}", adminEmail);
-        log.info("   Password: {}", adminPassword);
+        log.info("   Password: {} (change it after first login)", "********");
         log.info("========================================");
     }
 
-    //    Note: This just for demo, don't use this in production
     private void createUserAccountIfNotExist() {
         if (userRepository.existsByRolesName(URole.USER)) {
             log.info("User account already created");
@@ -98,7 +98,7 @@ public class DataInitializer implements ApplicationRunner {
         Role role = roleRepository
                 .findByName(URole.USER)
                 .orElseThrow(() ->
-                        new ResourceNotFoundException(Message.Exception.ROLE_NOT_FOUND));
+                        new ResourceNotFoundException(ErrorCode.ROLE_NOT_FOUND.format()));
 
         User user = User
                 .builder()
@@ -106,7 +106,8 @@ public class DataInitializer implements ApplicationRunner {
                 .email(userEmail)
                 .password(passwordEncoder.encode(userPassword))
                 .roles(Set.of(role))
-                .isDeleted(false)
+                .isActive(true)
+                .emailVerified(true)
                 .build();
         userRepository.save(user);
 
@@ -114,7 +115,7 @@ public class DataInitializer implements ApplicationRunner {
         log.info("   DEMO USER ACCOUNT CREATED");
         log.info("   Username: {}", userUsername);
         log.info("   Email: {}", userEmail);
-        log.info("   Password: {}", userPassword);
+        log.info("   Password: {} (change it after first login)", "********");
         log.info("========================================");
     }
 }
