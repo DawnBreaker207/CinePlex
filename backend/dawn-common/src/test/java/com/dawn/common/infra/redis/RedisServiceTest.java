@@ -17,6 +17,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.test.context.TestPropertySource;
 
+import jakarta.persistence.EntityManager;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collections;
@@ -61,6 +62,12 @@ class RedisServiceTest {
     @MockBean
     AuditLogRepository auditLogRepository;
 
+    @MockBean
+    com.dawn.common.core.outbox.OutboxRepository outboxRepository;
+
+    @MockBean
+    EntityManager entityManager;
+
     @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
     @Autowired
     RedisService redisService;
@@ -80,9 +87,7 @@ class RedisServiceTest {
         stringRedisTemplate.delete(Arrays.asList(SEAT_KEY_1, SEAT_KEY_2, SEAT_KEY_3));
     }
 
-    // ----------------------------------------------------------------
     // lockMulti — happy path
-    // ----------------------------------------------------------------
 
     @Test
     @DisplayName("lockMulti: tất cả ghế FREE → lock thành công, trả về [1]")
@@ -117,9 +122,7 @@ class RedisServiceTest {
         assertThat(result.getFirst()).isEqualTo(1L);
     }
 
-    // ----------------------------------------------------------------
     // lockMulti — conflict / partial fail
-    // ----------------------------------------------------------------
 
     @Test
     @DisplayName("lockMulti: một ghế đã bị lock bởi owner khác → fail, trả về [0, key, currentOwner]")
@@ -160,9 +163,6 @@ class RedisServiceTest {
         assertThat(stringRedisTemplate.opsForValue().get(SEAT_KEY_1)).startsWith(OWNER_A + ":");
     }
 
-    // ----------------------------------------------------------------
-    // releaseLock
-    // ----------------------------------------------------------------
 
     @Test
     @DisplayName("releaseLock: đúng owner → unlock thành công, trả về true")
@@ -219,9 +219,6 @@ class RedisServiceTest {
         assertThat(released).isFalse();
     }
 
-    // ----------------------------------------------------------------
-    // Race condition
-    // ----------------------------------------------------------------
 
     @Test
     @DisplayName("Race condition: 2 user lock cùng 1 ghế đồng thời → ít nhất 1 winner, cuối cùng chỉ 1 holder")
