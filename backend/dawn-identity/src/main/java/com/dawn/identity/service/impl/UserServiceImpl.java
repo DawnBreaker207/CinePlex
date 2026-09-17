@@ -1,14 +1,19 @@
 package com.dawn.identity.service.impl;
 
+import com.dawn.common.core.annotation.AuditLog;
 import com.dawn.common.core.constant.ErrorCode;
+import com.dawn.common.core.constant.LogConstant;
 import com.dawn.common.core.constant.URole;
 import com.dawn.common.core.dto.response.ResponsePage;
 import com.dawn.common.core.exception.wrapper.InvalidRequestException;
+import com.dawn.common.core.exception.wrapper.PermissionDeniedException;
 import com.dawn.common.core.exception.wrapper.ResourceNotFoundException;
+import com.dawn.common.core.utils.SecurityUtils;
 import com.dawn.identity.dto.request.UserRequest;
 import com.dawn.identity.dto.response.UserResponse;
 import com.dawn.identity.helper.UserMappingHelper;
 import com.dawn.identity.model.Role;
+import com.dawn.identity.model.User;
 import com.dawn.identity.repository.RoleRepository;
 import com.dawn.identity.repository.UserRepository;
 import com.dawn.identity.service.UserService;
@@ -72,10 +77,13 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     @CachePut(value = USER_CACHE, key = "'id:' + #id")
+    @AuditLog(action = LogConstant.Action.UPDATE_INFO, entity = LogConstant.Entity.USER,
+            entityId = "#id", entityClass = User.class, metadata = "'username=' + #userDetails.username")
     public UserResponse update(Long id, UserRequest userDetails) {
         var user = userRepository
                 .findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.USER_NOT_FOUND.format()));
+        assertCanModify(user);
         user.setUsername(userDetails.getUsername());
         user.setAvatar(userDetails.getAvatar());
         return UserMappingHelper.map(userRepository.save(user));
@@ -84,12 +92,23 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     @CacheEvict(value = USER_CACHE, key = "'id:' + #id + 'status' + #status")
+    @AuditLog(action = LogConstant.Action.UPDATE_STATUS, entity = LogConstant.Entity.USER,
+            entityId = "#id", entityClass = User.class, metadata = "'isActive=' + #status")
     public UserResponse updateStatus(Long id, Boolean status) {
         var user = userRepository
                 .findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.USER_NOT_FOUND.format()));
+        if (Boolean.FALSE.equals(status) && isPrivileged(user)
+                && userRepository.countByRolesNameInAndActive(List.of(URole.OWNER, URole.ADMIN), true) <= 1) {
+            throw new PermissionDeniedException(ErrorCode.CANNOT_REMOVE_LAST_ADMIN);
+        }
         user.setIsActive(status);
         return UserMappingHelper.map(userRepository.save(user));
+    }
+
+    private boolean isPrivileged(User user) {
+        return user.getRoles() != null && user.getRoles().stream()
+                .anyMatch(r -> r.getName() == URole.OWNER || r.getName() == URole.ADMIN);
     }
 
     @Override
@@ -136,6 +155,19 @@ public class UserServiceImpl implements UserService {
             return URole.valueOf(roleName);
         } catch (IllegalArgumentException e) {
             throw new InvalidRequestException(ErrorCode.ROLE_NOT_FOUND.format());
+        }
+    }
+
+    private void assertCanModify(User target) {
+        boolean targetIsAdmin = target.getRoles().stream().anyMatch(r -> r.getName() == URole.ADMIN);
+        if (!targetIsAdmin) return;
+        Long actorId = SecurityUtils.getCurrentUserId();
+        boolean actorIsAdmin = actorId != null
+                && userRepository.findById(actorId)
+                        .map(u -> u.getRoles().stream().anyMatch(r -> r.getName() == URole.ADMIN))
+                        .orElse(false);
+        if (!actorIsAdmin) {
+            throw new PermissionDeniedException(ErrorCode.CANNOT_UPDATE_ADMIN_ACCOUNT);
         }
     }
 }

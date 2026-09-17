@@ -1,8 +1,11 @@
 package com.dawn.identity.service;
 
+import com.dawn.common.core.constant.URole;
+import com.dawn.common.core.exception.wrapper.PermissionDeniedException;
 import com.dawn.common.core.exception.wrapper.ResourceNotFoundException;
 import com.dawn.identity.dto.request.UserRequest;
 import com.dawn.identity.dto.response.UserResponse;
+import com.dawn.identity.model.Role;
 import com.dawn.identity.model.User;
 import com.dawn.identity.repository.UserRepository;
 import com.dawn.identity.service.impl.UserServiceImpl;
@@ -19,6 +22,7 @@ import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -46,18 +50,15 @@ public class UserServiceTests {
 
     @Test
     public void findAll_GivenUserExist_WhenCalled_ThenReturnsUserList() {
-        // Arrange
         Pageable pageable = PageRequest.of(0, 10);
         when(userRepository
                 .findAll(pageable))
                 .thenReturn(new PageImpl<>(List.of(user), pageable, 1));
 
-        // Act
         List<UserResponse> result = userService
                 .findAll(pageable)
                 .getContent();
 
-        // Assert
         assertNotNull(result);
         assertEquals(1, result.size());
         assertEquals(user.getUsername(), result.getFirst().getUsername());
@@ -68,7 +69,6 @@ public class UserServiceTests {
 
     @Test
     public void findAll_GivenNoUserExist_WhenCalled_ThenReturnsEmptyList() {
-        // Arrange
         Pageable pageable = PageRequest.of(0, 10);
         when(userRepository
                 .findAll(pageable))
@@ -77,7 +77,6 @@ public class UserServiceTests {
                 .findAll(pageable)
                 .getContent();
 
-        // Act & Assert
         assertNotNull(result);
         assertTrue(result.isEmpty());
         verify(userRepository, times(1))
@@ -86,16 +85,13 @@ public class UserServiceTests {
 
     @Test
     public void findOne_GivenValidId_WhenFound_ThenReturnsUserDto() {
-        // Arrange
         when(userRepository
                 .findById(1L))
                 .thenReturn(Optional.of(user));
 
-        // Act
         UserResponse result = userService
                 .findOne(1L);
 
-        // Assert
         assertNotNull(result);
         assertEquals(user.getUsername(), result.getUsername());
         assertEquals(user.getEmail(), result.getEmail());
@@ -105,7 +101,6 @@ public class UserServiceTests {
 
     @Test
     public void findOne_GivenNullId_WhenNotFound_ThenThrowResourceNotFoundException() {
-        // Act & Assert
         assertThrows(
                 Exception.class,
                 () -> userService.findOne(null));
@@ -113,12 +108,10 @@ public class UserServiceTests {
 
     @Test
     public void findOne_GivenInvalidId_WhenNotFound_ThenThrowResouceNotFoundException() {
-        // Arrange
         when(userRepository
                 .findById(1L))
                 .thenReturn(Optional.empty());
 
-        // Act & Assert
         assertThrows(
                 ResourceNotFoundException.class,
                 () -> userService.findOne(1L));
@@ -128,16 +121,13 @@ public class UserServiceTests {
 
     @Test
     public void findByEmail_GivenValidEmail_WhenNotFound_ThenReturnUserDto() {
-        // Arrange
         when(userRepository
                 .findByEmail("test@gmail.com"))
                 .thenReturn(Optional.of(user));
 
-        // Act
         UserResponse result = userService
                 .findByEmail("test@gmail.com");
 
-        // Assert
         assertNotNull(result);
         assertEquals("testuser", result.getUsername());
         assertEquals("test@gmail.com", result.getEmail());
@@ -147,12 +137,10 @@ public class UserServiceTests {
 
     @Test
     public void findByEmail_GivenInvalidEmail_WhenNotFound_ThenThrowResourceNotFoundException() {
-        // Arrange
         when(userRepository
                 .findByEmail("test@gmail.com"))
                 .thenReturn(Optional.empty());
 
-        // Act & Assert
         assertThrows(
                 ResourceNotFoundException.class,
                 () -> userService.findByEmail("test@gmail.com"));
@@ -162,7 +150,6 @@ public class UserServiceTests {
 
     @Test
     public void updateUser_GivenValidIdAndDetails_WhenUpdated_ThenReturnUpdatedUserDto() {
-        //  Arrange
         UserRequest updateDetails = UserRequest
                 .builder()
                 .username("updatedUser")
@@ -176,11 +163,9 @@ public class UserServiceTests {
                 .save(any(User.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
-        //  Act
         UserResponse result = userService
                 .update(1L, updateDetails);
 
-        //  Assert
         assertNotNull(result);
         assertEquals("updatedUser", result.getUsername());
         assertEquals("updated@gmail.com", result.getAvatar());
@@ -193,7 +178,6 @@ public class UserServiceTests {
 
     @Test
     public void updateUser_GivenInvalidId_WhenNotFound_ThenThrowResourceNotFoundException() {
-        //  Arrange
         UserRequest updatedDetails = UserRequest
                 .builder()
                 .username("updatedUser")
@@ -204,7 +188,6 @@ public class UserServiceTests {
                 .findById(1L))
                 .thenReturn(Optional.empty());
 
-        // Act & Assert
         assertThrows(
                 ResourceNotFoundException.class,
                 () -> userService.update(1L, updatedDetails));
@@ -212,5 +195,33 @@ public class UserServiceTests {
                 .findById(1L);
         verify(userRepository, never())
                 .save(any());
+    }
+
+    @Test
+    public void updateStatus_GivenLastAdmin_WhenDeactivate_ThenThrow() {
+        User admin = User.builder().id(1L).username("admin").email("a@x.com").isActive(true)
+                .roles(Set.of(Role.builder().name(URole.ADMIN).build())).build();
+        when(userRepository.findById(1L)).thenReturn(Optional.of(admin));
+        when(userRepository.countByRolesNameInAndActive(List.of(URole.OWNER, URole.ADMIN), true))
+                .thenReturn(1L);
+
+        assertThrows(
+                PermissionDeniedException.class,
+                () -> userService.updateStatus(1L, false));
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    public void updateStatus_GivenTwoAdmins_WhenDeactivateOne_ThenOk() {
+        User admin = User.builder().id(1L).username("admin").email("a@x.com").isActive(true)
+                .roles(Set.of(Role.builder().name(URole.ADMIN).build())).build();
+        when(userRepository.findById(1L)).thenReturn(Optional.of(admin));
+        when(userRepository.countByRolesNameInAndActive(List.of(URole.OWNER, URole.ADMIN), true))
+                .thenReturn(2L);
+        when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        userService.updateStatus(1L, false);
+
+        verify(userRepository, times(1)).save(any(User.class));
     }
 }
