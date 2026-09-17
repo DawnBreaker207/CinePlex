@@ -7,7 +7,7 @@ import com.dawn.booking.helper.ReservationMappingHelper;
 import com.dawn.booking.helper.ReservationNotificationHelper;
 import com.dawn.booking.model.Reservation;
 import com.dawn.booking.repository.ReservationRepository;
-import com.dawn.booking.service.ReservationLifecycleService;
+import com.dawn.booking.service.ReservationService;
 import com.dawn.booking.service.ReservationRedisService;
 import com.dawn.booking.service.ReservationStateMachine;
 import com.dawn.booking.service.VoucherApplicationService;
@@ -35,6 +35,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,6 +45,7 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -51,7 +53,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Slf4j
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
-public class ReservationLifecycleServiceImpl implements ReservationLifecycleService {
+public class ReservationServiceImpl implements ReservationService {
 
     ReservationRepository reservationRepository;
 
@@ -71,10 +73,13 @@ public class ReservationLifecycleServiceImpl implements ReservationLifecycleServ
     public ResponsePage<UserReservationResponse> findByUser(ReservationUserRequest request, Pageable pageable) {
         log.debug("Finding reservation for user {}, status={}", request.getUserId(), request.getStatus());
 
+        ReservationStatus status = request.getStatus() != null
+                ? request.getStatus()
+                : ReservationStatus.CONFIRMED;
         Page<Reservation> reservations = reservationRepository
                 .findAllByUserIdAndReservationStatusOrderByCreatedAtDesc(
                         request.getUserId(),
-                        ReservationStatus.CONFIRMED,
+                        status,
                         pageable);
         if (reservations.isEmpty()) {
             return ResponsePage.of(reservations.map(r -> null));
@@ -122,7 +127,6 @@ public class ReservationLifecycleServiceImpl implements ReservationLifecycleServ
         LocalDate end = req.getEndDate() != null ? req.getEndDate() : LocalDate.now();
         LocalDate start = req.getStartDate() != null ? req.getStartDate() : end.minusDays(Constants.DEFAULT_DASHBOARD_DAYS);
 
-        //  Convert to Instant
         Instant startDate = start.atStartOfDay(ZoneId.systemDefault()).toInstant();
         Instant endDate = end.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant();
 
@@ -168,7 +172,7 @@ public class ReservationLifecycleServiceImpl implements ReservationLifecycleServ
     }
 
     @Override
-    public ReservationResponse findOne(String reservationCode) {
+    public ReservationResponse findByCode(String reservationCode) {
         Reservation reservation = reservationRepository
                 .findByReservationCode(reservationCode)
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.RESERVATION_NOT_FOUND.format()));
@@ -180,7 +184,7 @@ public class ReservationLifecycleServiceImpl implements ReservationLifecycleServ
     }
 
     @Override
-    public Optional<ReservationDetailResponse> findReservationDetail(String reservationCode) {
+    public Optional<ReservationDetailResponse> findDetailByCode(String reservationCode) {
         return reservationRepository.findByReservationCode(reservationCode)
                 .map(r -> ReservationDetailResponse.builder()
                         .reservationCode(r.getReservationCode())
@@ -203,7 +207,7 @@ public class ReservationLifecycleServiceImpl implements ReservationLifecycleServ
     @AuditLog(action = "'RESERVATION_CONFIRMED'", entity = "'RESERVATION'", entityId = "#reservationId",
             fromState = "'PENDING'", toState = "'CONFIRMED'",
             metadata = "'showtimeId=' + #audit['showtimeId'] + ', seats=' + #audit['seats'] + ', total=' + #audit['total']")
-    public ReservationResponse confirmReservation(String reservationId) {
+    public ReservationResponse confirm(String reservationId) {
 
         // Idempotency + state guard
         Optional<Reservation> existing = reservationRepository.findByReservationCode(reservationId);
@@ -223,31 +227,23 @@ public class ReservationLifecycleServiceImpl implements ReservationLifecycleServ
             }
         }
 
-        //  Processing lock guards the DB write; short TTL (A3)
+        //  Processing lock guards the DB write; short TTL so a crashed confirm releases quickly
         if (!reservationRedisService.tryAcquireProcessingLock(reservationId)) {
             log.warn("Reservation {} is already being processed", reservationId);
             throw new ApiException(HttpStatus.CONFLICT, ErrorCode.RESERVATION_PROCESSING.format());
         }
 
         try {
-            //  Collect data from redis
-            ReservationRedisDTO cachedData = reservationRedisService.getFromRedis(reservationId);
-            if (cachedData == null) {
-                throw new ApiException(HttpStatus.NOT_FOUND, ErrorCode.RESERVATION_NOT_FOUND.format());
-            }
-            log.info("Get reservation from redis: {}", cachedData);
+            ReservationRedisDTO cachedData = reservationRedisService.getReservationSession(reservationId);
 
 
             List<Long> seatIds = cachedData.getSeatsIds();
             if (seatIds == null || seatIds.isEmpty()) {
                 throw new IllegalStateException(ErrorCode.NO_SEAT_SELECTED.format());
             }
-            //  Validate seat lock
             reservationRedisService.validateSeatLocks(reservationId, seatIds);
             UserResponse user = identityApi.findUserById(cachedData.getUserId());
-            log.info("Get user from reservation {}", user);
             List<SeatResponse> seatEntities = loadSeatFromDatabase(seatIds, reservationId);
-            //        Create reservation to save
             ShowtimeResponse showtime = cinemaApi.findShowtimeById(cachedData.getShowtimeId());
 
             //  Persist PENDING row first: seat_instance/ticket FK reference reservation.id (BIGINT)
@@ -257,6 +253,7 @@ public class ReservationLifecycleServiceImpl implements ReservationLifecycleServ
                             .reservationCode(cachedData.getId())
                             .userId(cachedData.getUserId())
                             .showtimeId(showtime.getId())
+                            .idempotencyKey(cachedData.getIdempotencyKey())
                             .reservationStatus(ReservationStatus.PENDING)
                             .totalAmount(BigDecimal.ZERO)
                             .isDeleted(false)
@@ -269,10 +266,11 @@ public class ReservationLifecycleServiceImpl implements ReservationLifecycleServ
                 throw new SeatUnavailableException(ErrorCode.SEAT_UNAVAILABLE.format());
             }
 
-            //  Calculate voucher, not used
-            log.info("All {} seats verified as available in DB for reservation {}", seatEntities.size(), reservationId);
             String voucherCode = cachedData.getVoucherCode();
-            BigDecimal originalAmount = showtime.getPrice().multiply(BigDecimal.valueOf(seatEntities.size()));
+            BigDecimal originalAmount = seatEntities.stream()
+                    .map(SeatResponse::getPrice)
+                    .filter(Objects::nonNull)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
             BigDecimal discountAmount = BigDecimal.ZERO;
             BigDecimal total = originalAmount;
             if (voucherCode != null && !voucherCode.isBlank()) {
@@ -280,19 +278,29 @@ public class ReservationLifecycleServiceImpl implements ReservationLifecycleServ
                 discountAmount = finalCalc.getDiscountAmount();
                 total = finalCalc.getFinalAmount();
             }
-            log.info("Calculated total amount: {} for {} seats", total, seatEntities.size());
 
 
-            // Commit reservation
             pending.setReservationStatus(ReservationStatus.CONFIRMED);
             pending.setOriginalAmount(originalAmount);
             pending.setDiscountAmount(discountAmount);
             pending.setTotalAmount(total);
             pending.setVoucherCode(voucherCode);
             pending.setIsPaid(true);
-            Reservation savedReservation = reservationRepository.saveAndFlush(pending);
+            Reservation savedReservation;
+            try {
+                savedReservation = reservationRepository.saveAndFlush(pending);
+            } catch (ObjectOptimisticLockingFailureException e) {
+                // Race: ExpirationJob/cancel committed a final state while we were confirming
+                log.error("Optimistic lock failure confirming reservation {}, checking latest state", reservationId);
+                Reservation latest = reservationRepository.findByReservationCode(reservationId).orElse(null);
+                if (latest != null && latest.getReservationStatus() == ReservationStatus.CONFIRMED) {
+                    log.info("Reservation {} confirmed concurrently, returning existing", reservationId);
+                    return ReservationMappingHelper.map(latest, user, showtime, seatEntities);
+                }
+                log.error("Reservation {} expired/canceled during confirmation, manual handling required: {}", reservationId, latest);
+                throw new IllegalStateException(ErrorCode.RESERVATION_EXPIRED.format());
+            }
 
-            // Update side effect
             try {
                 if (voucherCode != null && !voucherCode.isBlank()) {
                     catalogApi.useVoucher(voucherCode, cachedData.getUserId(), reservationId);
@@ -323,7 +331,7 @@ public class ReservationLifecycleServiceImpl implements ReservationLifecycleServ
     @AuditLog(action = "'RESERVATION_CANCELED'", entity = "'RESERVATION'", entityId = "#reservationId",
             fromState = "#audit['fromState']", toState = "'CANCELED'",
             metadata = "'seats=' + #audit['seats']")
-    public void cancelReservation(String reservationId) {
+    public void cancel(String reservationId) {
         //  User-initiated cancel on a paid reservation must be explicit, not a silent no-op
         reservationRepository.findByReservationCode(reservationId)
                 .filter(r -> r.getReservationStatus() == ReservationStatus.CONFIRMED)
@@ -337,7 +345,7 @@ public class ReservationLifecycleServiceImpl implements ReservationLifecycleServ
     @AuditLog(action = "'RESERVATION_FAILED'", entity = "'RESERVATION'", entityId = "#reservationId",
             fromState = "#audit['fromState']", toState = "'FAILED'",
             metadata = "'seats=' + #audit['seats']")
-    public void failReservation(String reservationId) {
+    public void fail(String reservationId) {
         releaseReservation(reservationId, ReservationStateMachine.Action.FAIL);
     }
 
@@ -345,7 +353,7 @@ public class ReservationLifecycleServiceImpl implements ReservationLifecycleServ
     @AuditLog(action = "'RESERVATION_EXPIRED'", entity = "'RESERVATION'", entityId = "#reservationId",
             fromState = "#audit['fromState']", toState = "'EXPIRED'",
             metadata = "'seats=' + #audit['seats']")
-    public void expireReservation(String reservationId) {
+    public void expire(String reservationId) {
         releaseReservation(reservationId, ReservationStateMachine.Action.EXPIRE);
     }
 
@@ -363,10 +371,10 @@ public class ReservationLifecycleServiceImpl implements ReservationLifecycleServ
 
         AuditLogContext.set("fromState", existing.map(r -> r.getReservationStatus().name()).orElse(null));
 
-        //        Get reservation id from redis (may have expired already)
+        // Redis entry may have expired already
         ReservationRedisDTO cachedData = null;
         try {
-            cachedData = reservationRedisService.getFromRedis(reservationId);
+            cachedData = reservationRedisService.getReservationSession(reservationId);
         } catch (Exception e) {
             log.warn("Reservation {} not in Redis anymore, releasing from DB only", reservationId);
         }
@@ -388,16 +396,16 @@ public class ReservationLifecycleServiceImpl implements ReservationLifecycleServ
             }
         }
 
-        //   Save record with new status
         if (existing.isEmpty()) {
             if (cachedData == null) {
                 log.warn("No DB row and no Redis data for reservation {}, nothing to release", reservationId);
                 return;
             }
             int seatCount = seatIds != null ? seatIds.size() : 0;
-            BigDecimal price = new BigDecimal(cachedData.getPrice());
+            BigDecimal price = cachedData.getPrice() != null
+                    ? new BigDecimal(cachedData.getPrice())
+                    : BigDecimal.ZERO;
             BigDecimal total = price.multiply(BigDecimal.valueOf(seatCount));
-            log.info("Calculated total amount: {} for {} seats", total, seatCount);
             Reservation reservation = Reservation
                     .builder()
                     .reservationCode(reservationId)
@@ -414,6 +422,8 @@ public class ReservationLifecycleServiceImpl implements ReservationLifecycleServ
         } else {
             Reservation r = existing.get();
             r.setReservationStatus(newStatus);
+            //  ck_reservation_paid_status: only CONFIRMED may carry is_paid=true
+            r.setIsPaid(false);
             reservationRepository.save(r);
             log.info("Updated reservation {} to {}", reservationId, newStatus);
         }
@@ -444,20 +454,21 @@ public class ReservationLifecycleServiceImpl implements ReservationLifecycleServ
     @Override
     @AuditLog(action = "'RESERVATION_CANCELED'", entity = "'RESERVATION'", entityId = "#reservationId",
             fromState = "#audit['fromState']", toState = "'CANCELED'", metadata = "'force cancel'")
-    public void forceCancelReservation(String reservationId) {
-        log.info("Force cancel reservation: {}", reservationId);
+    public void forceCancel(String reservationId) {
+        log.debug("Force cancel reservation: {}", reservationId);
         Optional<Reservation> existing = reservationRepository.findByReservationCode(reservationId);
         String fromStatus = existing.map(r -> r.getReservationStatus().name()).orElse(null);
         AuditLogContext.set("fromState", fromStatus);
         ReservationRedisDTO cachedData = null;
         try {
-            cachedData = reservationRedisService.getFromRedis(reservationId);
+            cachedData = reservationRedisService.getReservationSession(reservationId);
         } catch (Exception e) {
             log.warn("Reservation {} not in Redis anymore, force-canceling from DB only", reservationId);
         }
         if (existing.isPresent()) {
             Reservation r = existing.get();
             r.setReservationStatus(ReservationStatus.CANCELED);
+            r.setIsPaid(false);
             r.setIsDeleted(true);
             reservationRepository.save(r);
         }
@@ -485,7 +496,7 @@ public class ReservationLifecycleServiceImpl implements ReservationLifecycleServ
                         .map(SeatResponse::getId)
                         .toList();
                 reservationNotificationHelper.getSeatRelease(showtimeId, userId, allShowtimeSeatIds);
-                log.info("Published seat release event for force-canceled reservation {}", reservationId);
+                log.debug("Published seat release event for force-canceled reservation {}", reservationId);
             }
         } catch (Exception e) {
             log.warn("Failed to broadcast seat release for reservation {}", reservationId);
@@ -498,9 +509,7 @@ public class ReservationLifecycleServiceImpl implements ReservationLifecycleServ
         }
     }
 
-    //    Reservation private method
     private List<SeatResponse> loadSeatFromDatabase(List<Long> seatIds, String reservationId) {
-        //        Take seat from request
         List<SeatResponse> seats = cinemaApi.findSeatsByIdWithLock(seatIds);
         if (seats.size() != seatIds.size()) {
             log.error("Expected {} seats but found {} for reservation {}", seatIds.size(), seats.size(), reservationId);

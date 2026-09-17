@@ -22,4 +22,6 @@ public class ReservationInitRequest {
 
     @NotNull
     private Long theaterId;
+
+    private String idempotencyKey;
 }

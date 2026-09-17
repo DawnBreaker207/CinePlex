@@ -27,7 +27,7 @@ class ExpirationJobTest {
     ReservationRepository reservationRepository;
 
     @Mock
-    ReservationLifecycleService reservationService;
+    ReservationService reservationService;
 
     @InjectMocks
     ExpirationJob job;
@@ -36,12 +36,12 @@ class ExpirationJobTest {
     @DisplayName("expired PENDING reservation  release")
     void expirePending_shouldRelease() {
         Reservation reservation = ReservationTestData.buildReservation("CP-1", false);
-        when(reservationRepository.findAllByReservationStatusAndExpiredAtBefore(any(), any(Instant.class)))
+        when(reservationRepository.findExpiredLockedSkipped(any(), any(Instant.class)))
                 .thenReturn(List.of(reservation));
 
         job.expirePendingReservations();
 
-        verify(reservationService).expireReservation("CP-1");
+        verify(reservationService).expire("CP-1");
     }
 
     @Test
@@ -49,13 +49,13 @@ class ExpirationJobTest {
     void expirePending_optimisticLockOnOne_shouldSkipAndContinue() {
         Reservation r1 = ReservationTestData.buildReservation("CP-1", false);
         Reservation r2 = ReservationTestData.buildReservation("CP-2", false);
-        when(reservationRepository.findAllByReservationStatusAndExpiredAtBefore(any(), any(Instant.class)))
+        when(reservationRepository.findExpiredLockedSkipped(any(), any(Instant.class)))
                 .thenReturn(List.of(r1, r2));
         doThrow(new ObjectOptimisticLockingFailureException(Reservation.class.getName(), "CP-1"))
-                .when(reservationService).expireReservation("CP-1");
+                .when(reservationService).expire("CP-1");
 
         assertThatCode(() -> job.expirePendingReservations()).doesNotThrowAnyException();
 
-        verify(reservationService).expireReservation("CP-2");
+        verify(reservationService).expire("CP-2");
     }
 }

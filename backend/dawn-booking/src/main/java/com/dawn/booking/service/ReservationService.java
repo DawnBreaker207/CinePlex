@@ -10,23 +10,23 @@ import org.springframework.data.domain.Pageable;
 
 import java.util.Optional;
 
-public interface ReservationLifecycleService {
+public interface ReservationService {
 
     ResponsePage<ReservationResponse> findAll(ReservationFilterRequest req, Pageable pageable);
 
-    ReservationResponse findOne(String id);
+    ReservationResponse findByCode(String reservationCode);
 
-    Optional<ReservationDetailResponse> findReservationDetail(String id);
+    Optional<ReservationDetailResponse> findDetailByCode(String reservationCode);
 
     ResponsePage<UserReservationResponse> findByUser(ReservationUserRequest request, Pageable pageable);
 
-    ReservationResponse confirmReservation(String reservationId);
+    ReservationResponse confirm(String reservationId);
 
-    void cancelReservation(String reservationId);
+    void cancel(String reservationId);
 
-    void failReservation(String reservationId);
+    void fail(String reservationId);
 
-    void expireReservation(String reservationId);
+    void expire(String reservationId);
 
-    void forceCancelReservation(String reservationId);
+    void forceCancel(String reservationId);
 }

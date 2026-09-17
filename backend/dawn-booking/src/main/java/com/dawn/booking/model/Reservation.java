@@ -27,6 +27,9 @@ public class Reservation extends AbstractMappedEntity {
     @Column(name = "reservation_code", nullable = false, unique = true, length = 20)
     private String reservationCode;
 
+    @Column(name = "idempotency_key", unique = true, length = 64)
+    private String idempotencyKey;
+
     @Version
     @Column(name = "version")
     private Long version;

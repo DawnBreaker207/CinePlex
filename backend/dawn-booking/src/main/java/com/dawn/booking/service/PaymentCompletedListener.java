@@ -12,15 +12,15 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @RequiredArgsConstructor
 public class PaymentCompletedListener {
-    private final ReservationLifecycleService reservationService;
+    private final ReservationService reservationService;
 
     @RabbitListener(queues = RabbitMQConstants.QUEUE_BOOKING_PAYMENT_COMPLETED)
     public void onPaymentCompleted(PaymentCompletedEvent event) {
-        log.info("[Booking] PaymentCompletedEvent received: reservationCode={}, eventId={}",
+        log.debug("[Booking] PaymentCompletedEvent received: reservationCode={}, eventId={}",
                 event.reservationCode(), event.eventId());
         try {
-            reservationService.confirmReservation(event.reservationCode());
-            log.info("[Booking] Reservation {} confirmed successfully", event.reservationCode());
+            reservationService.confirm(event.reservationCode());
+            log.debug("[Booking] Reservation {} confirmed successfully", event.reservationCode());
         } catch (Exception e) {
             log.error("[Booking] Failed to confirm reservation {}: {}", event.reservationCode(), e.getMessage());
             throw e;
@@ -29,11 +29,11 @@ public class PaymentCompletedListener {
 
     @RabbitListener(queues = RabbitMQConstants.QUEUE_BOOKING_PAYMENT_FAILED)
     public void onPaymentFailed(PaymentFailedEvent event) {
-        log.info("[Booking] PaymentFailedEvent received: reservationCode={}, reason={}",
+        log.debug("[Booking] PaymentFailedEvent received: reservationCode={}, reason={}",
                 event.reservationCode(), event.reason());
         try {
-            reservationService.failReservation(event.reservationCode());
-            log.info("[Booking] Reservation {} failed successfully", event.reservationCode());
+            reservationService.fail(event.reservationCode());
+            log.debug("[Booking] Reservation {} failed successfully", event.reservationCode());
         } catch (Exception e) {
             log.error("[Booking] Failed to fail reservation {}: {}", event.reservationCode(), e.getMessage());
             throw e;

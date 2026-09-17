@@ -12,11 +12,14 @@ import com.dawn.identity.api.IdentityModuleApi;
 import com.dawn.identity.dto.response.UserResponse;
 import com.dawn.common.core.constant.RabbitMQConstants;
 import com.dawn.common.core.dto.event.BookingCompleteEvent;
+import com.dawn.common.core.outbox.Outbox;
+import com.dawn.common.core.outbox.OutboxRepository;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
@@ -33,7 +36,15 @@ import java.util.stream.Collectors;
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 public class ReservationNotificationHelper {
 
-    RabbitTemplate rabbitTemplate;
+    private static final String OUTBOX_EVENT_BOOKING_COMPLETED = "BOOKING_COMPLETED";
+
+    private static final String OUTBOX_EVENT_DASHBOARD_REFRESH = "DASHBOARD_REFRESH";
+
+    private static final String AGGREGATE_BOOKING = "booking";
+
+    OutboxRepository outboxRepository;
+
+    ObjectMapper objectMapper;
 
     CatalogModuleApi catalogApi;
 
@@ -45,10 +56,7 @@ public class ReservationNotificationHelper {
         try {
 
             UserResponse user = userService.findUserById(reservation.getUserId());
-            log.info("Get user from reservation: {}", user);
-            log.info("Get showtime from reservation: {}", showtime);
             MovieResponse movie = catalogApi.findMovieById(showtime.getMovieId());
-            log.info("Get movie from reservation: {}", movie);
             String seatNumbers = seats.stream().map(SeatResponse::getSeatNumber).collect(Collectors.joining(","));
 
             String paymentTimeStr = LocalDateTime
@@ -72,17 +80,29 @@ public class ReservationNotificationHelper {
                     .total(reservation.getTotalAmount().toString())
                     .build();
 
-            rabbitTemplate.convertAndSend(
-                    RabbitMQConstants.EXCHANGE_NOTIFICATION,
-                    RabbitMQConstants.RK_NOTIFICATION_RESERVATION_COMPLETED,
-                    event);
-
-            rabbitTemplate.convertAndSend(
-                    RabbitMQConstants.EXCHANGE_NOTIFICATION,
-                    RabbitMQConstants.RK_DASHBOARD_REFRESH,
+            enqueue(RabbitMQConstants.RK_NOTIFICATION_RESERVATION_COMPLETED, OUTBOX_EVENT_BOOKING_COMPLETED,
+                    reservation.getReservationCode(), event);
+            enqueue(RabbitMQConstants.RK_DASHBOARD_REFRESH, OUTBOX_EVENT_DASHBOARD_REFRESH,
+                    reservation.getReservationCode(),
                     Collections.singletonMap(Constants.SSE_FIELD_ACTION, "REFRESH"));
         } catch (Exception e) {
             log.error("Failed to send notification for reservation {} ", reservation.getId(), e);
+        }
+    }
+
+    private void enqueue(String routingKey, String eventType, String aggregateId, Object payload) {
+        try {
+            outboxRepository.save(Outbox.builder()
+                    .aggregateType(AGGREGATE_BOOKING)
+                    .aggregateId(aggregateId)
+                    .eventType(eventType)
+                    .exchange(RabbitMQConstants.EXCHANGE_NOTIFICATION)
+                    .routingKey(routingKey)
+                    .payload(objectMapper.writeValueAsString(payload))
+                    .build());
+            log.info("Enqueued outbox event {} for {}", eventType, aggregateId);
+        } catch (JsonProcessingException e) {
+            log.error("Failed to serialize {} event for reservation {}", eventType, aggregateId, e);
         }
     }
 
@@ -94,7 +114,6 @@ public class ReservationNotificationHelper {
                 Constants.SSE_FIELD_USER_ID, userId,
                 Constants.SSE_FIELD_SEAT_IDS, seatInfo
         );
-        log.info("Get seat hold: {}", event);
         reservationRedisService.publishSeatEvent(showtimeId, event);
     }
 
@@ -106,7 +125,6 @@ public class ReservationNotificationHelper {
                 Constants.SSE_FIELD_USER_ID, userId,
                 Constants.SSE_FIELD_SEAT_IDS, seatInfo
         );
-        log.info("Get seat release: {}", event);
         reservationRedisService.publishSeatEvent(showtimeId, event);
     }
 
@@ -117,7 +135,6 @@ public class ReservationNotificationHelper {
                 Constants.SSE_FIELD_SHOWTIME_ID, showtimeId,
                 Constants.SSE_FIELD_SEAT_IDS, seatInfo
         );
-        log.info("Publishing SEAT_RELEASE event: {}", event);
         reservationRedisService.publishSeatEvent(showtimeId, event);
     }
 }

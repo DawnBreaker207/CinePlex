@@ -21,6 +21,7 @@ public class ReservationTestData {
                 .seatNumber("A" + id)
                 .status(SeatStatus.AVAILABLE)
                 .showtimeId(showtimeId)
+                .price(new BigDecimal("100000"))
                 .build();
     }
 

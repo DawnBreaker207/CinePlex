@@ -4,11 +4,7 @@ import com.dawn.common.core.constant.ReservationStatus;
 
 import java.util.Set;
 
-/**
- * Centralized reservation state transitions (Phase 4).
- * Behavior mirrors the guards that previously lived inline in
- * ReservationLifecycleServiceImpl — no observable change.
- */
+// Centralized reservation state transitions.
 public final class ReservationStateMachine {
 
     public enum Action {
@@ -37,10 +33,7 @@ public final class ReservationStateMachine {
     private ReservationStateMachine() {
     }
 
-    /**
-     * @param current current persisted state, or {@code null} when no DB row exists
-     * @return {@code true} if the action may proceed
-     */
+    // Null state (no DB row yet) always allows the action.
     public static boolean canTransition(ReservationStatus current, Action action) {
         if (current == null) {
             return true;

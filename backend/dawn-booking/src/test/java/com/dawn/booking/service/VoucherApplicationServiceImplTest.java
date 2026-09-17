@@ -3,6 +3,7 @@ package com.dawn.booking.service;
 import com.dawn.booking.dto.response.ReservationRedisDTO;
 import com.dawn.booking.dto.response.VoucherDiscountDTO;
 import com.dawn.booking.model.Reservation;
+import com.dawn.booking.repository.ReservationRepository;
 import com.dawn.booking.service.impl.VoucherApplicationServiceImpl;
 import com.dawn.catalog.api.CatalogModuleApi;
 import com.dawn.catalog.dto.response.VoucherCalculation;
@@ -37,18 +38,23 @@ class VoucherApplicationServiceImplTest {
     ReservationRedisService reservationRedisService;
     @Mock
     CatalogModuleApi catalogApi;
+    @Mock
+    ReservationRepository reservationRepository;
 
     @InjectMocks
     VoucherApplicationServiceImpl service;
 
     @Test
-    @DisplayName("applyVoucher → total = price * seats, voucher saved to Redis, discount returned")
+    @DisplayName("applyVoucher → total = sum of seat prices, voucher saved to Redis, discount returned")
     void applyVoucher_success_shouldCalculateAndPersist() {
         ReservationRedisDTO redisData = ReservationRedisDTO.builder()
                 .id("RES-001").userId(1L).showtimeId(10L).theaterId(5L)
                 .seatsIds(List.of(101L, 102L)).build();
-        when(reservationRedisService.getFromRedis("RES-001")).thenReturn(redisData);
+        when(reservationRedisService.getReservationSession("RES-001")).thenReturn(redisData);
         when(cinemaApi.findShowtimeById(10L)).thenReturn(ReservationTestData.buildShowtime(10L)); // price 100_000
+        when(cinemaApi.findSeatsByIds(List.of(101L, 102L))).thenReturn(List.of(
+                ReservationTestData.buildSeat(101L, 10L),
+                ReservationTestData.buildSeat(102L, 10L)));
         when(catalogApi.calculateVoucher(eq("DAWN10"), eq(new BigDecimal("200000"))))
                 .thenReturn(VoucherCalculation.builder()
                         .code("DAWN10")
@@ -56,6 +62,7 @@ class VoucherApplicationServiceImplTest {
                         .discountAmount(new BigDecimal("20000"))
                         .finalAmount(new BigDecimal("180000"))
                         .build());
+        when(reservationRepository.findByReservationCode("RES-001")).thenReturn(Optional.empty());
 
         VoucherDiscountDTO result = service.applyVoucher("RES-001", "DAWN10");
 
@@ -70,7 +77,7 @@ class VoucherApplicationServiceImplTest {
     @Test
     @DisplayName("applyVoucher → Redis session missing → ApiException, no NPE")
     void applyVoucher_noRedis_shouldThrowNotFound() {
-        when(reservationRedisService.getFromRedis("RES-001")).thenReturn(null);
+        when(reservationRedisService.getReservationSession("RES-001")).thenReturn(null);
 
         assertThatThrownBy(() -> service.applyVoucher("RES-001", "DAWN10"))
                 .isInstanceOf(ApiException.class);

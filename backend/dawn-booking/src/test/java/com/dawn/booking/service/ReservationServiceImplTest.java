@@ -5,7 +5,7 @@ import com.dawn.booking.dto.response.ReservationResponse;
 import com.dawn.booking.helper.ReservationNotificationHelper;
 import com.dawn.booking.model.Reservation;
 import com.dawn.booking.repository.ReservationRepository;
-import com.dawn.booking.service.impl.ReservationLifecycleServiceImpl;
+import com.dawn.booking.service.impl.ReservationServiceImpl;
 import com.dawn.catalog.api.CatalogModuleApi;
 import com.dawn.catalog.dto.response.VoucherCalculation;
 import com.dawn.cinema.api.CinemaModuleApi;
@@ -14,6 +14,8 @@ import com.dawn.cinema.dto.response.ShowtimeResponse;
 import com.dawn.identity.api.IdentityModuleApi;
 import com.dawn.identity.dto.response.UserResponse;
 import com.dawn.common.core.aspect.AuditLogAspect;
+import com.dawn.common.core.aspect.AuditMessageBuilder;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.dawn.common.core.constant.ReservationStatus;
 import com.dawn.common.core.constant.SeatStatus;
 import com.dawn.common.core.exception.ApiException;
@@ -40,8 +42,8 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("ReservationLifecycleServiceImpl")
-class ReservationLifecycleServiceImplTest {
+@DisplayName("ReservationServiceImpl")
+class ReservationServiceImplTest {
 
     @Mock
     ReservationRepository reservationRepository;
@@ -72,14 +74,15 @@ class ReservationLifecycleServiceImplTest {
     }
 
     @InjectMocks
-    ReservationLifecycleServiceImpl service;
+    ReservationServiceImpl service;
 
     @BeforeEach
     void setUpProxy() {
         AspectJProxyFactory factory = new AspectJProxyFactory(service);
         factory.setProxyTargetClass(true);
-        factory.addAspect(new AuditLogAspect(auditLogService));
-        service = (ReservationLifecycleServiceImpl) factory.getProxy();
+        factory.addAspect(new AuditLogAspect(auditLogService,
+                new ObjectMapper(), new AuditMessageBuilder(new ObjectMapper()), null));
+        service = (ReservationServiceImpl) factory.getProxy();
     }
 
     @Nested
@@ -95,7 +98,7 @@ class ReservationLifecycleServiceImplTest {
             when(cinemaApi.findShowtimeById(10L)).thenReturn(ReservationTestData.buildShowtime(10L));
             when(identityApi.findUserById(1L)).thenReturn(ReservationTestData.buildUser(1L));
 
-            ReservationResponse result = service.confirmReservation("RES-001");
+            ReservationResponse result = service.confirm("RES-001");
 
             assertThat(result).isNotNull();
             verify(reservationRepository, never()).saveAndFlush(any());
@@ -126,7 +129,7 @@ class ReservationLifecycleServiceImplTest {
             doNothing().when(notificationHelper).handleNotification(any(), any(), any());
             doNothing().when(reservationRedisService).cleanupRedisLocks(any(), any());
 
-            service.confirmReservation("RES-001");
+            service.confirm("RES-001");
 
             ArgumentCaptor<Reservation> captor = ArgumentCaptor.forClass(Reservation.class);
             verify(reservationRepository).saveAndFlush(captor.capture());
@@ -156,7 +159,7 @@ class ReservationLifecycleServiceImplTest {
                     .when(notificationHelper).handleNotification(any(), any(), any());
             doNothing().when(reservationRedisService).cleanupRedisLocks(any(), any());
 
-            assertThatNoException().isThrownBy(() -> service.confirmReservation("RES-001"));
+            assertThatNoException().isThrownBy(() -> service.confirm("RES-001"));
 
             verify(reservationRepository).saveAndFlush(any());
         }
@@ -177,7 +180,7 @@ class ReservationLifecycleServiceImplTest {
             when(cinemaApi.findShowtimeById(10L)).thenReturn(ReservationTestData.buildShowtime(10L));
             when(cinemaApi.bookSeats(10L, List.of(101L), 1L)).thenReturn(0);
 
-            assertThatThrownBy(() -> service.confirmReservation("RES-001"))
+            assertThatThrownBy(() -> service.confirm("RES-001"))
                     .isInstanceOf(SeatUnavailableException.class);
 
             verify(reservationRepository, never()).saveAndFlush(any());
@@ -191,7 +194,7 @@ class ReservationLifecycleServiceImplTest {
             ReservationRedisDTO redisData = ReservationRedisDTO.builder()
                     .id("RES-001").userId(1L).showtimeId(10L).theaterId(5L)
                     .seatsIds(List.of(101L)).voucherCode("DAWN10").build();
-            when(reservationRedisService.getFromRedis("RES-001")).thenReturn(redisData);
+            when(reservationRedisService.getReservationSession("RES-001")).thenReturn(redisData);
             doNothing().when(reservationRedisService).validateSeatLocks(any(), any());
             when(reservationRedisService.tryAcquireProcessingLock("RES-001")).thenReturn(true);
 
@@ -213,7 +216,7 @@ class ReservationLifecycleServiceImplTest {
             doNothing().when(notificationHelper).handleNotification(any(), any(), any());
             doNothing().when(reservationRedisService).cleanupRedisLocks(any(), any());
 
-            service.confirmReservation("RES-001");
+            service.confirm("RES-001");
 
             ArgumentCaptor<Reservation> captor = ArgumentCaptor.forClass(Reservation.class);
             verify(reservationRepository).saveAndFlush(captor.capture());
@@ -229,7 +232,7 @@ class ReservationLifecycleServiceImplTest {
             ReservationRedisDTO redisData = ReservationRedisDTO.builder()
                     .id("RES-001").userId(1L).showtimeId(10L).theaterId(5L)
                     .seatsIds(List.of(101L)).voucherCode("DAWN10").build();
-            when(reservationRedisService.getFromRedis("RES-001")).thenReturn(redisData);
+            when(reservationRedisService.getReservationSession("RES-001")).thenReturn(redisData);
             doNothing().when(reservationRedisService).validateSeatLocks(any(), any());
             when(reservationRedisService.tryAcquireProcessingLock("RES-001")).thenReturn(true);
 
@@ -252,7 +255,7 @@ class ReservationLifecycleServiceImplTest {
             doNothing().when(notificationHelper).handleNotification(any(), any(), any());
             doNothing().when(reservationRedisService).cleanupRedisLocks(any(), any());
 
-            assertThatNoException().isThrownBy(() -> service.confirmReservation("RES-001"));
+            assertThatNoException().isThrownBy(() -> service.confirm("RES-001"));
             verify(reservationRepository).saveAndFlush(any());
         }
 
@@ -264,10 +267,10 @@ class ReservationLifecycleServiceImplTest {
             ReservationRedisDTO redisData = ReservationRedisDTO.builder()
                     .id("RES-001").userId(1L).showtimeId(10L).theaterId(5L)
                     .seatsIds(Collections.emptyList()).build();
-            when(reservationRedisService.getFromRedis("RES-001")).thenReturn(redisData);
+            when(reservationRedisService.getReservationSession("RES-001")).thenReturn(redisData);
             when(reservationRedisService.tryAcquireProcessingLock("RES-001")).thenReturn(true);
 
-            assertThatThrownBy(() -> service.confirmReservation("RES-001"))
+            assertThatThrownBy(() -> service.confirm("RES-001"))
                     .isInstanceOf(IllegalStateException.class);
         }
     }
@@ -282,7 +285,7 @@ class ReservationLifecycleServiceImplTest {
             when(reservationRepository.findByReservationCode("RES-001"))
                     .thenReturn(Optional.of(ReservationTestData.buildReservation("RES-001", true)));
 
-            assertThatThrownBy(() -> service.cancelReservation("RES-001"))
+            assertThatThrownBy(() -> service.cancel("RES-001"))
                     .isInstanceOf(ApiException.class);
 
             verify(reservationRedisService, never()).deleteReservation(any());
@@ -297,11 +300,11 @@ class ReservationLifecycleServiceImplTest {
             ReservationRedisDTO redisData = ReservationRedisDTO.builder()
                     .id("RES-001").userId(1L).showtimeId(10L).theaterId(5L)
                     .seatsIds(List.of(101L, 102L)).price("100000").build();
-            when(reservationRedisService.getFromRedis("RES-001")).thenReturn(redisData);
+            when(reservationRedisService.getReservationSession("RES-001")).thenReturn(redisData);
             when(cinemaApi.findSeatsByShowtime(10L)).thenReturn(
                     List.of(ReservationTestData.buildSeat(101L, 10L), ReservationTestData.buildSeat(102L, 10L)));
 
-            service.cancelReservation("RES-001");
+            service.cancel("RES-001");
 
             verify(reservationRedisService).deleteSeatLocks(eq(List.of(101L, 102L)), eq("RES-001"));
             verify(reservationRedisService).deleteReservation("RES-001");
@@ -320,10 +323,10 @@ class ReservationLifecycleServiceImplTest {
             ReservationRedisDTO redisData = ReservationRedisDTO.builder()
                     .id("RES-001").userId(1L).showtimeId(10L).theaterId(5L)
                     .seatsIds(List.of(101L)).voucherCode("DAWN10").price("100000").build();
-            when(reservationRedisService.getFromRedis("RES-001")).thenReturn(redisData);
+            when(reservationRedisService.getReservationSession("RES-001")).thenReturn(redisData);
             when(cinemaApi.findSeatsByShowtime(10L)).thenReturn(List.of(ReservationTestData.buildSeat(101L, 10L)));
 
-            service.cancelReservation("RES-001");
+            service.cancel("RES-001");
 
             verify(voucherApplicationService).releaseVoucher(eq(redisData), any());
         }
@@ -336,12 +339,12 @@ class ReservationLifecycleServiceImplTest {
             ReservationRedisDTO redisData = ReservationRedisDTO.builder()
                     .id("RES-001").userId(1L).showtimeId(10L).theaterId(5L)
                     .seatsIds(List.of(101L)).voucherCode("DAWN10").price("100000").build();
-            when(reservationRedisService.getFromRedis("RES-001")).thenReturn(redisData);
+            when(reservationRedisService.getReservationSession("RES-001")).thenReturn(redisData);
             when(cinemaApi.findSeatsByShowtime(10L)).thenReturn(List.of(ReservationTestData.buildSeat(101L, 10L)));
             doThrow(new RuntimeException("Voucher service down"))
                     .when(voucherApplicationService).releaseVoucher(any(), any());
 
-            assertThatNoException().isThrownBy(() -> service.cancelReservation("RES-001"));
+            assertThatNoException().isThrownBy(() -> service.cancel("RES-001"));
         }
 
         @Test
@@ -352,26 +355,23 @@ class ReservationLifecycleServiceImplTest {
             ReservationRedisDTO redisData = ReservationRedisDTO.builder()
                     .id("RES-001").userId(1L).showtimeId(10L).theaterId(5L)
                     .seatsIds(List.of(101L)).voucherCode("DAWN10").price("100000").build();
-            when(reservationRedisService.getFromRedis("RES-001")).thenReturn(redisData);
+            when(reservationRedisService.getReservationSession("RES-001")).thenReturn(redisData);
             when(cinemaApi.findSeatsByShowtime(10L))
                     .thenReturn(List.of(ReservationTestData.buildSeat(101L, 10L)));
 
-            service.forceCancelReservation("RES-001");
+            service.forceCancel("RES-001");
 
             verify(cinemaApi).unbookSeats(1L, List.of(101L));
             verify(voucherApplicationService).releaseVoucher(eq(redisData), any());
-            verify(auditLogService).record(eq("RESERVATION_CANCELED"), eq("RESERVATION"), eq("RES-001"),
-                    eq("CONFIRMED"), eq("CANCELED"), anyString());
+            verify(auditLogService).record(eq("RESERVATION_CANCELED"), eq("RESERVATION"), eq("RES-001"), isNull(),
+                    eq("CONFIRMED"), eq("CANCELED"), anyString(), eq("SUCCESS"), anyString(), isNull(), isNull());
             verify(notificationHelper).getSeatRelease(eq(10L), eq(1L), any());
         }
     }
 
-    // ----------------------------------------------------------------
-    // Helpers
-    // ----------------------------------------------------------------
 
     private void stubRedisData(String reservationId, List<Long> seatIds) {
-        when(reservationRedisService.getFromRedis(reservationId))
+        when(reservationRedisService.getReservationSession(reservationId))
                 .thenReturn(ReservationTestData.buildRedisData(reservationId, seatIds));
     }
 }

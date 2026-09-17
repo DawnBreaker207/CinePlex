@@ -7,9 +7,7 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class BookingRabbitConfig {
-    // ----------------------------------------------------------------
     // payment.completed
-    // ----------------------------------------------------------------
     @Bean
     public Queue bookingPaymentCompletedQueue() {
         return QueueBuilder.durable(RabbitMQConstants.QUEUE_BOOKING_PAYMENT_COMPLETED)
@@ -45,9 +43,7 @@ public class BookingRabbitConfig {
                 .with(RabbitMQConstants.QUEUE_BOOKING_PAYMENT_COMPLETED_DLQ);
     }
 
-    // ----------------------------------------------------------------
     // payment.failed
-    // ----------------------------------------------------------------
     @Bean
     public Queue bookingPaymentFailedQueue() {
         return QueueBuilder.durable(RabbitMQConstants.QUEUE_BOOKING_PAYMENT_FAILED)

@@ -8,7 +8,7 @@ public interface SeatHoldService {
 
     ReservationInitResponse initReservation(ReservationInitRequest request);
 
-    void holdReservationSeats(ReservationHoldSeatRequest request);
+    void holdSeats(ReservationHoldSeatRequest request);
 
-    ReservationInitResponse restoreReservation(String reservationId);
+    ReservationInitResponse resumeReservation(String reservationId);
 }

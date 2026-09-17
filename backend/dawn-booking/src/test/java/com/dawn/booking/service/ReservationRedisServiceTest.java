@@ -43,17 +43,14 @@ class ReservationRedisServiceTest {
         service = new ReservationRedisService(redisService, redisPublisher, objectMapper);
     }
 
-    // ----------------------------------------------------------------
-    // getFromRedis
-    // ----------------------------------------------------------------
 
     @Nested
-    @DisplayName("getFromRedis")
-    class GetFromRedis {
+    @DisplayName("getReservationSession")
+    class GetReservationSession {
 
         @Test
         @DisplayName("data exists → parse correct ReservationRedisDTO")
-        void getFromRedis_validData_shouldParseCorrectly() {
+        void getReservationSession_validData_shouldParseCorrectly() {
             Map<Object, Object> data = new HashMap<>();
             data.put("userId", "1");
             data.put("showtimeId", "10");
@@ -61,31 +58,33 @@ class ReservationRedisServiceTest {
             data.put("voucherCode", "DAWN10");
             data.put("seatIds", "[101, 102]");
             data.put("tempFinalAmount", "200000");
+            data.put("price", "100000");
 
             when(redisService.getHash(RedisKeyHelper.reservationHoldKey("RES-001")))
                     .thenReturn(data);
 
-            ReservationRedisDTO result = service.getFromRedis("RES-001");
+            ReservationRedisDTO result = service.getReservationSession("RES-001");
 
             assertThat(result.getUserId()).isEqualTo(1L);
             assertThat(result.getShowtimeId()).isEqualTo(10L);
             assertThat(result.getTheaterId()).isEqualTo(5L);
             assertThat(result.getVoucherCode()).isEqualTo("DAWN10");
             assertThat(result.getSeatsIds()).containsExactly(101L, 102L);
+            assertThat(result.getPrice()).isEqualTo("100000");
         }
 
         @Test
         @DisplayName("data null/empty → throw ReservationExpiredException")
-        void getFromRedis_emptyData_shouldThrow() {
+        void getReservationSession_emptyData_shouldThrow() {
             when(redisService.getHash(any())).thenReturn(Collections.emptyMap());
 
-            assertThatThrownBy(() -> service.getFromRedis("RES-001"))
+            assertThatThrownBy(() -> service.getReservationSession("RES-001"))
                     .isInstanceOf(ReservationExpiredException.class);
         }
 
         @Test
         @DisplayName("seatIds null in data → return empty list")
-        void getFromRedis_nullSeatIds_shouldReturnEmptyList() {
+        void getReservationSession_nullSeatIds_shouldReturnEmptyList() {
             Map<Object, Object> data = new HashMap<>();
             data.put("userId", "1");
             data.put("showtimeId", "10");
@@ -95,14 +94,14 @@ class ReservationRedisServiceTest {
 
             when(redisService.getHash(any())).thenReturn(data);
 
-            ReservationRedisDTO result = service.getFromRedis("RES-001");
+            ReservationRedisDTO result = service.getReservationSession("RES-001");
 
             assertThat(result.getSeatsIds()).isEmpty();
         }
 
         @Test
         @DisplayName("userId not a number → throw RedisStorageException")
-        void getFromRedis_invalidUserId_shouldThrow() {
+        void getReservationSession_invalidUserId_shouldThrow() {
             Map<Object, Object> data = new HashMap<>();
             data.put("userId", "not-a-number");
             data.put("showtimeId", "10");
@@ -110,15 +109,12 @@ class ReservationRedisServiceTest {
 
             when(redisService.getHash(any())).thenReturn(data);
 
-            assertThatThrownBy(() -> service.getFromRedis("RES-001"))
+            assertThatThrownBy(() -> service.getReservationSession("RES-001"))
                     .isInstanceOf(RedisStorageException.class)
                     .hasMessageContaining("userId");
         }
     }
 
-    // ----------------------------------------------------------------
-    // acquireSeatLock
-    // ----------------------------------------------------------------
 
     @Nested
     @DisplayName("acquireSeatLock")
@@ -143,7 +139,6 @@ class ReservationRedisServiceTest {
         void acquireSeatLock_seatTaken_shouldThrowWithSeatNumber() {
             List<Long> seatIds = List.of(1L, 2L);
             List<SeatResponse> seats = buildSeats(seatIds);
-            // seat:locked:2 is taken
             when(redisService.lockMulti(anyList(), anyString(), any()))
                     .thenReturn(Arrays.asList(0L, "seat:locked:2", "reservation:data:OTHER"));
 
@@ -167,9 +162,6 @@ class ReservationRedisServiceTest {
         }
     }
 
-    // ----------------------------------------------------------------
-    // validateSeatLocks
-    // ----------------------------------------------------------------
 
     @Nested
     @DisplayName("validateSeatLocks")
@@ -195,7 +187,6 @@ class ReservationRedisServiceTest {
             String reservationId = "RES-001";
             List<Long> seatIds = List.of(1L, 2L);
 
-            // seat 1 expired
             when(redisService.multiGet(anyList()))
                     .thenReturn(Arrays.asList(null, RedisKeyHelper.reservationHoldKey(reservationId)));
 
@@ -222,9 +213,6 @@ class ReservationRedisServiceTest {
         }
     }
 
-    // ----------------------------------------------------------------
-    // deleteSeatLockIfOwner / cleanupRedisLocks
-    // ----------------------------------------------------------------
 
     @Nested
     @DisplayName("cleanupRedisLocks")
@@ -246,9 +234,6 @@ class ReservationRedisServiceTest {
         }
     }
 
-    // ----------------------------------------------------------------
-    // parseSeatIdsFromReservationData
-    // ----------------------------------------------------------------
 
     @Test
     @DisplayName("parseSeatIds: valid JSON → return correct list")
@@ -280,9 +265,6 @@ class ReservationRedisServiceTest {
                 .isInstanceOf(RedisStorageException.class);
     }
 
-    // ----------------------------------------------------------------
-    // updateReservationSeats
-    // ----------------------------------------------------------------
 
     @Nested
     @DisplayName("updateReservationSeats")
@@ -320,9 +302,6 @@ class ReservationRedisServiceTest {
         }
     }
 
-    // ----------------------------------------------------------------
-    // Helper
-    // ----------------------------------------------------------------
 
     private List<SeatResponse> buildSeats(List<Long> seatIds) {
         List<SeatResponse> seats = new ArrayList<>();
