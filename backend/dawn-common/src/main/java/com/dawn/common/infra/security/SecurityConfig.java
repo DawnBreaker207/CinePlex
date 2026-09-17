@@ -85,6 +85,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/auth/**").permitAll()
                 .requestMatchers("/api/v1/notification/**").permitAll()
                 .requestMatchers("/api/v1/payment/**").permitAll()
+                // Financial reports & revenue dashboard: ADMIN only
+                .requestMatchers("/api/v1/report/**", "/api/v1/dashboard/**").hasRole("ADMIN")
                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/v1/movie/batch").permitAll()
                 .requestMatchers(HttpMethod.GET,

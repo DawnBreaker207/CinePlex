@@ -54,7 +54,6 @@ public class SwaggerConfig {
 
     }
 
-    //    All APIs
     @Bean
     public GroupedOpenApi publicApi() {
         return GroupedOpenApi
