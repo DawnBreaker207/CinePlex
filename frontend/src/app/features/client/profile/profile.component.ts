@@ -1,5 +1,12 @@
-import { Component, HostListener, inject, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import {
+  Component,
+  HostListener,
+  inject,
+  OnInit,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
+import { CommonModule, DOCUMENT } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzInputModule } from 'ng-zorro-antd/input';
@@ -14,13 +21,16 @@ import { NzBadgeModule } from 'ng-zorro-antd/badge';
 import { NzModalModule } from 'ng-zorro-antd/modal';
 import { NzQRCodeModule } from 'ng-zorro-antd/qr-code';
 import { NzEmptyModule } from 'ng-zorro-antd/empty';
+import { NzSkeletonModule } from 'ng-zorro-antd/skeleton';
 import { NzTooltipModule } from 'ng-zorro-antd/tooltip';
 import { BookingHistoryComponent } from '@features/client/profile/booking-history/booking-history.component';
 import { InfoComponent } from '@features/client/profile/info/info.component';
+import { UserVouchersComponent } from '@features/client/profile/user-vouchers/user-vouchers.component';
 import { UserStore } from '@domain/user/data-access/user.store';
 import { Store } from '@ngrx/store';
 import { selectUserId } from '@core/auth/auth.selectors';
 import { ReservationStore } from '@domain/reservation/data-access/reservation.store';
+import { ReservationStatus } from '@core/constants/enum';
 import { TranslatePipe } from '@ngx-translate/core';
 
 @Component({
@@ -43,19 +53,24 @@ import { TranslatePipe } from '@ngx-translate/core';
     NzModalModule,
     NzQRCodeModule,
     NzEmptyModule,
+    NzSkeletonModule,
     NzTooltipModule,
     BookingHistoryComponent,
     InfoComponent,
+    UserVouchersComponent,
     TranslatePipe,
   ],
   templateUrl: './profile.component.html',
   styleUrl: './profile.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProfileComponent implements OnInit {
   private store = inject(Store);
   readonly userStore = inject(UserStore);
   readonly reservationStore = inject(ReservationStore);
+  private document = inject(DOCUMENT);
   tabPosition: NzTabPosition = 'left';
+  readonly ticketStatus = signal<ReservationStatus>('CONFIRMED');
 
   ngOnInit() {
     this.checkScreenSize();
@@ -63,8 +78,23 @@ export class ProfileComponent implements OnInit {
 
     if (userId !== undefined && userId !== null) {
       this.userStore.loadUser(userId);
-      this.reservationStore.loadReservationProfile(userId);
+      this.loadTickets();
     }
+  }
+
+  loadTickets() {
+    const userId = this.store.selectSignal(selectUserId)();
+    if (userId !== undefined && userId !== null) {
+      this.reservationStore.loadReservationProfile({
+        id: userId,
+        status: this.ticketStatus(),
+      });
+    }
+  }
+
+  onTicketStatus(status: ReservationStatus) {
+    this.ticketStatus.set(status);
+    this.loadTickets();
   }
 
   @HostListener('window:resize')
@@ -73,6 +103,7 @@ export class ProfileComponent implements OnInit {
   }
 
   checkScreenSize() {
-    this.tabPosition = window.innerWidth < 768 ? 'top' : 'left';
+    this.tabPosition =
+      (this.document.defaultView?.innerWidth ?? 768) < 768 ? 'top' : 'left';
   }
 }

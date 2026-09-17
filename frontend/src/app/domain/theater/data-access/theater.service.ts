@@ -2,7 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { catchError, map, Observable, throwError } from 'rxjs';
 import { environment } from '@env/environment';
-import { ApiRes, ResponsePage } from '@core/models/common.model';
+import { ApiRes, FilterQuery, FilterSort, ResponsePage } from '@core/models/common.model';
 import { Theater, TheaterRequest } from '@domain/theater/models/theater.model';
 
 @Injectable({
@@ -14,7 +14,7 @@ export class TheaterService {
   private http = inject(HttpClient);
 
   // Theater
-  getTheaters(query?: any) {
+  getTheaters(query?: FilterSort & FilterQuery) {
     let params = new HttpParams();
     if (query) {
       Object.entries(query).forEach(([key, value]) => {
@@ -73,8 +73,8 @@ export class TheaterService {
   }
 
   private handleError<T>(operation = 'operation') {
-    return (error: any): Observable<T> => {
-      console.log(`${operation} failed: ${error}`);
+    return (error: unknown): Observable<T> => {
+      console.error(`${operation} failed: ${error}`);
       return throwError(() => error);
     };
   }

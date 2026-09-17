@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzTableModule, NzTableQueryParams } from 'ng-zorro-antd/table';
@@ -11,8 +11,9 @@ import { NzPopconfirmModule } from 'ng-zorro-antd/popconfirm';
 import { FormsModule } from '@angular/forms';
 import { Article } from '@domain/article/models/article.model';
 import { ArticleFormComponent } from '@features/admin/article/form/article-form.component';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { HEADER_COLUMNS } from '@core/constants/column';
+import { NzAlertModule } from 'ng-zorro-antd/alert';
 import { ArticleStore } from '@domain/article/data-access/article.store';
 import { LoadingComponent } from '@shared/components/loading/loading.component';
 
@@ -28,15 +29,17 @@ import { LoadingComponent } from '@shared/components/loading/loading.component';
     NzDrawerModule,
     FormsModule,
     NzPopconfirmModule,
-    TranslateModule,
+    NzAlertModule,
     LoadingComponent,
+    TranslatePipe,
   ],
   templateUrl: './article.component.html',
-  styleUrl: './article.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ArticleComponent {
   readonly articleStore = inject(ArticleStore);
   private drawerService = inject(NzDrawerService);
+  private translate = inject(TranslateService);
 
   headerColumn = HEADER_COLUMNS.ARTICLE;
   pageIndex = 1;
@@ -48,7 +51,9 @@ export class ArticleComponent {
       ArticleFormComponent,
       { article: Article | null; isEditMode: boolean }
     >({
-      nzTitle: isEditMode ? 'Chỉnh sửa bài viét' : 'Viết bài mới',
+      nzTitle: isEditMode
+        ? this.translate.instant('article.form.editTitle')
+        : this.translate.instant('article.form.newTitle'),
       nzContent: ArticleFormComponent,
       nzWidth: 800,
       nzData: {

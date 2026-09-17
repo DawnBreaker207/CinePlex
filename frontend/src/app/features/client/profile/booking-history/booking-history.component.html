@@ -2,7 +2,7 @@
   <h2
     class="text-lg font-bold text-gray-800 mb-6 border-b border-gray-100 pb-2"
   >
-    {{ "Vé đã đặt gần đây" | translate }}
+    {{ "booking.recent" | translate }}
     <nz-tag
       class="ml-2 mr-0 rounded-full bg-gray-100 border-gray-200 text-gray-500 font-bold px-2"
     >
@@ -14,7 +14,7 @@
       <div
         class="group flex flex-col sm:flex-row bg-white order border-gray-200 rounded-xl overflow-hidden hover:border-primary/50 hover:shadow-md transition-all duration-300"
       >
-        <!--  Poster  -->
+        <!-- Poster -->
         <div class="sm:w-32 h-40 sm:h-auto bg-gray-100 relative shrink-0">
           <img
             [src]="ticket.moviePoster"
@@ -23,7 +23,7 @@
           />
         </div>
 
-        <!--  Info  -->
+        <!-- Info -->
         <div class="flex-1 p-4 flex flex-col justify-between">
           <div>
             <div class="flex justify-between items-start">
@@ -40,7 +40,7 @@
               <p class="flex items-center gap-2">
                 <nz-icon nzType="environment" class="text-gray-400" />
                 {{ ticket.theater }}
-                <!--                - {{ ticket.showtime }}-->
+                <!-- - {{ ticket.showtime }}-->
               </p>
 
               <p class="flex items-center gap-2">
@@ -53,7 +53,7 @@
 
               <p class="flex items-center gap-2">
                 <nz-icon nzType="appstore" class="text-gray-400" />
-                {{ "Ghế" | translate }}: {{ ticket.seats.join(",") }}
+                {{ "booking.seat" | translate }}: {{ ticket.seats.join(",") }}
               </p>
             </div>
           </div>
@@ -65,7 +65,7 @@
               (click)="openTicketDetail(ticket)"
               class="rounded-md border-gray-200 text-gray-600 hover:text-primary hover:border-primary"
             >
-              {{ "Xem chi tiết" | translate }}
+              {{ "booking.viewDetail" | translate }}
             </button>
           </div>
         </div>
@@ -74,9 +74,7 @@
       <div
         class="flex flex-col items-center justify-center py-12 text-gray-400"
       >
-        <nz-empty
-          [nzNotFoundContent]="'Chưa có lịch sử đặt vé' | translate"
-        ></nz-empty>
+        <nz-empty [nzNotFoundContent]="'booking.empty' | translate"></nz-empty>
       </div>
     }
   </div>
@@ -95,91 +93,18 @@
           <!-- Ticket Header-->
           <div class="text-center mb-6">
             <h3 class="text-xl font-bold text-gray-900 leading-tight mb-1">
-              {{ selectedTicket.movieTitle }}
+              {{ "booking.ticketDetail" | translate }}
             </h3>
             <p class="text-sm text-gray-500">{{ selectedTicket.theater }}</p>
           </div>
 
-          <!-- Ticket Body-->
-          <div
-            class="bg-gray-50 rounded-xl p-4 border border-dashed border-gray-300 relative"
-          >
-            <!-- Vết cắt-->
-            <div
-              class="absolute -left-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-white rounded-full border border-gray-200"
-            ></div>
-            <div
-              class="absolute -left-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-white rounded-full border border-gray-200"
-            ></div>
-
-            <div class="space-y-4">
-              <div class="flex justify-between">
-                <div>
-                  <p
-                    class="text-xs text-gray-400 uppercase font-bold tracking-wider"
-                  >
-                    {{ "Ngày chiếu" | translate }}
-                  </p>
-                  <p class="font-semibold text-gray-800">
-                    {{ selectedTicket.date | date: "dd/MM/yyyy" }}
-                  </p>
-                </div>
-                <div class="text-right">
-                  <p
-                    class="text-xs text-gray-400 uppercase font-bold tracking-wider"
-                  >
-                    {{ "Giờ chiếu" | translate }}
-                  </p>
-                  <p class="font-bold text-primary text-lg">
-                    {{ selectedTicket.time }}
-                  </p>
-                </div>
-              </div>
-
-              <div class="flex justify-between">
-                <div>
-                  <p
-                    class="text-xs text-gray-400 uppercase font-bold tracking-wider"
-                  >
-                    {{ "Phòng" | translate }}
-                  </p>
-                  <p class="font-semibold text-gray-800">
-                    {{ selectedTicket.room }}
-                  </p>
-                </div>
-                <div class="text-right">
-                  <p
-                    class="text-xs text-gray-400 uppercase font-bold tracking-wider"
-                  >
-                    {{ "Ghế" | translate }}
-                  </p>
-                  <p class="font-bold text-lg">
-                    {{ selectedTicket.seats.join(",") }}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div class="border-t border-dashed border-gray-300 my-4"></div>
-
-            <!--  Barcode-->
-            <div class="flex flex-col items-center gap-2">
-              <app-barcode [value]="selectedTicket.reservationId" />
-              <p class="text-xs text-gray-400 font-mono tracking-widest mt-1">
-                ID: {{ selectedTicket.reservationId }}
-              </p>
-            </div>
-          </div>
-
-          <!-- Total Price-->
-          <div class="mt-6 flex justify-between items-center px-2">
-            <span class="text-gray-500 font-medium">{{
-              "Tổng tiền" | translate
-            }}</span>
-            <span class="text-xl font-bold text-primary">{{
-              selectedTicket.amount | currencyFormat
-            }}</span>
-          </div>
+          <app-ticket-stub
+            [title]="selectedTicket.movieTitle"
+            [subtitle]="selectedTicket.theater"
+            [code]="selectedTicket.reservationId"
+            [amount]="selectedTicket.amount | currencyFormat"
+            [meta]="ticketMeta(selectedTicket)"
+          />
 
           <div class="mt-6">
             <button
@@ -188,7 +113,7 @@
               nzType="primary"
               (click)="closeTicketDetail()"
             >
-              {{ "Đóng" | translate }}
+              {{ "common.close" | translate }}
             </button>
           </div>
         </div>

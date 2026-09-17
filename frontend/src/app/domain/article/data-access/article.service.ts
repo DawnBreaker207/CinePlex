@@ -3,7 +3,7 @@ import { Article, ArticleRequest } from '@domain/article/models/article.model';
 import { environment } from '@env/environment';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { catchError, map, Observable, throwError } from 'rxjs';
-import { ApiRes, ResponsePage } from '@core/models/common.model';
+import { ApiRes, FilterQuery, FilterSort, ResponsePage } from '@core/models/common.model';
 
 @Injectable({
   providedIn: 'root',
@@ -12,7 +12,7 @@ export class ArticleService {
   URL = `${environment.apiUrl}/article`;
   private http = inject(HttpClient);
 
-  getAll(query?: any) {
+  getAll(query?: FilterSort & FilterQuery) {
     let params = new HttpParams();
     if (query) {
       Object.entries(query).forEach(([key, value]) => {
@@ -52,13 +52,12 @@ export class ArticleService {
 
   delete(id: number) {
     return this.http.delete<void>(`${this.URL}/${id}`).pipe(
-      map((res) => console.log(res)),
       catchError(this.handleError<void>('article')),
     );
   }
   private handleError<T>(operation = 'operation') {
-    return (error: any): Observable<T> => {
-      console.log(`${operation} failed: ${error}`);
+    return (error: unknown): Observable<T> => {
+      console.error(`${operation} failed: ${error}`);
       return throwError(() => error);
     };
   }

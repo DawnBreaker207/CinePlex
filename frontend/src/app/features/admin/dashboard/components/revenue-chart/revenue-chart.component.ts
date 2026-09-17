@@ -1,40 +1,78 @@
-import { Component, input, OnInit } from '@angular/core';
+import {
+  Component,
+  computed,
+  input,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { NgxEchartsDirective } from 'ngx-echarts';
 import type { EChartsCoreOption } from 'echarts/core';
-import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzIconModule } from 'ng-zorro-antd/icon';
-import { RevenuePoint } from '@domain/dashboard/models/dashboard.model';
+import { RevenuePoint, DailyForecast } from '@domain/dashboard/models/dashboard.model';
 import { TranslatePipe } from '@ngx-translate/core';
+import { CHART_COLORS } from '@shared/utils/colors';
+import dayjs from 'dayjs';
 
 @Component({
   selector: 'app-revenue-chart',
-  imports: [NgxEchartsDirective, NzIconModule, NzButtonModule, TranslatePipe],
+  imports: [NgxEchartsDirective, NzIconModule, TranslatePipe],
   templateUrl: './revenue-chart.component.html',
-  styleUrl: './revenue-chart.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class RevenueChartComponent implements OnInit {
+export class RevenueChartComponent {
   revenues = input<RevenuePoint[]>([]);
-  options!: EChartsCoreOption;
+  forecast = input<DailyForecast[]>([]);
+  granularity = input<'day' | 'week' | 'month'>('day');
 
-  ngOnInit() {
-    const { date, revenue } = this.revenues().reduce(
-      (acc, r) => {
-        acc.date.push(r.date.toString());
-        acc.revenue.push(r.revenue);
-        return acc;
-      },
-      {
-        date: [] as string[],
-        revenue: [] as number[],
-      },
-    );
-    this.loadChartData(date, revenue);
-  }
+  private readonly grouped = computed(() => {
+    const revenues = this.revenues();
+    const granularity = this.granularity();
+    if (granularity === 'day') {
+      return revenues.map((r) => ({
+        label: dayjs(r.date).format('DD/MM'),
+        value: r.revenue,
+      }));
+    }
+    const key =
+      granularity === 'week'
+        ? (d: dayjs.Dayjs) => d.startOf('week')
+        : (d: dayjs.Dayjs) => d.startOf('month');
+    const map = new Map<string, { label: string; sum: number }>();
+    for (const r of revenues) {
+      const bucket = key(dayjs(r.date));
+      const id = bucket.toISOString();
+      const entry = map.get(id) ?? {
+        label:
+          granularity === 'week'
+            ? bucket.format('DD/MM')
+            : bucket.format('MM/yyyy'),
+        sum: 0,
+      };
+      entry.sum += r.revenue;
+      map.set(id, entry);
+    }
+    return [...map.values()].map((p) => ({ label: p.label, value: p.sum }));
+  });
 
-  loadChartData(name: string[], data: number[]) {
-    this.options = {
+  options = computed<EChartsCoreOption>(() => {
+    const points = this.grouped();
+    const forecastPoints = this.forecast().map((f) => ({
+      label: dayjs(f.date).format('DD/MM'),
+      value: f.projectedRevenue,
+    }));
+    const date = [
+      ...points.map((p) => p.label),
+      ...forecastPoints.map((p) => p.label),
+    ];
+    const revenue = points.map((p) => p.value);
+    const primary = CHART_COLORS.primary();
+    const gold = '#e0ac52';
+    return {
       tooltip: {
         trigger: 'axis',
+      },
+      legend: {
+        show: forecastPoints.length > 0,
+        data: ['Revenue', 'Forecast'],
       },
       grid: {
         left: '3%',
@@ -45,14 +83,14 @@ export class RevenueChartComponent implements OnInit {
       },
       xAxis: {
         type: 'category',
-        data: name,
+        data: date,
         axisLine: {
           lineStyle: {
-            color: '#e0e0e0',
+            color: CHART_COLORS.border(),
           },
         },
         axisLabel: {
-          color: '#666',
+          color: CHART_COLORS.textSecondary(),
         },
       },
       yAxis: {
@@ -63,7 +101,7 @@ export class RevenueChartComponent implements OnInit {
         splitLine: {
           lineStyle: {
             type: 'dashed',
-            color: '#f0f0f0',
+            color: CHART_COLORS.border(),
           },
         },
       },
@@ -71,7 +109,7 @@ export class RevenueChartComponent implements OnInit {
         {
           name: 'Revenue',
           type: 'line',
-          data: data,
+          data: revenue,
           smooth: true,
           showSymbol: false,
           areaStyle: {
@@ -84,23 +122,36 @@ export class RevenueChartComponent implements OnInit {
               colorStops: [
                 {
                   offset: 0,
-                  color: 'rgba(24,144,255,0.2)',
+                  color: primary + '33',
                 },
                 {
                   offset: 1,
-                  color: 'rgba(24,144,255,0)',
+                  color: primary + '00',
                 },
               ],
             },
           },
           itemStyle: {
-            color: '#1890ff',
+            color: primary,
           },
           lineStyle: {
             width: 3,
           },
         },
+        ...(forecastPoints.length > 0
+          ? [
+              {
+                name: 'Forecast',
+                type: 'line' as const,
+                data: [...revenue.map(() => null), ...forecastPoints.map((p) => p.value)],
+                smooth: true,
+                showSymbol: false,
+                itemStyle: { color: gold },
+                lineStyle: { width: 2, type: 'dashed' as const, color: gold },
+              },
+            ]
+          : []),
       ],
     };
-  }
+  });
 }

@@ -2,6 +2,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { ErrorLayoutComponent } from './error-layout.component';
 
+import { testProviders } from '@shared/testing/test-providers';
+
 describe('ErrorLayoutComponent', () => {
   let component: ErrorLayoutComponent;
   let fixture: ComponentFixture<ErrorLayoutComponent>;
@@ -9,6 +11,7 @@ describe('ErrorLayoutComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [ErrorLayoutComponent],
+      providers: [testProviders],
     }).compileComponents();
 
     fixture = TestBed.createComponent(ErrorLayoutComponent);

@@ -1,0 +1,23 @@
+
+    <button
+      type="button"
+      role="switch"
+      [attr.aria-checked]="checked()"
+      (click)="toggle()"
+      class="inline-flex h-7 w-12 shrink-0 cursor-pointer items-center rounded-full border border-transparent outline-none transition-colors focus-visible:ring-2 focus-visible:ring-primary/50"
+      [class.bg-primary]="checked()"
+      [class.bg-gray-300]="!checked()"
+      [class.dark:bg-primary]="checked()"
+      [class.dark:bg-gray-600]="!checked()"
+    >
+      <span
+        class="pointer-events-none flex h-6 w-6 transform items-center justify-center rounded-full bg-white shadow transition-transform duration-200"
+        [class.translate-x-5]="checked()"
+        [class.translate-x-0.5]="!checked()"
+      >
+        <span class="flex h-full w-full items-center justify-center">
+          <ng-content />
+        </span>
+      </span>
+    </button>
+  

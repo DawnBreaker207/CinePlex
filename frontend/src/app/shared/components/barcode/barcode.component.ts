@@ -1,4 +1,11 @@
-import { Component, ElementRef, input, OnInit, viewChild } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  input,
+  OnInit,
+  viewChild,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import JsBarcode from 'jsbarcode';
 
 @Component({
@@ -6,6 +13,7 @@ import JsBarcode from 'jsbarcode';
   imports: [],
   templateUrl: './barcode.component.html',
   styleUrl: './barcode.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BarcodeComponent implements OnInit {
   value = input.required<string>();
@@ -15,7 +23,6 @@ export class BarcodeComponent implements OnInit {
   ngOnInit() {
     const code = this.value();
     const el = this.barcodeEl()?.nativeElement;
-    console.log(code, el);
     if (code && el) {
       try {
         JsBarcode(el, code, {
@@ -27,8 +34,8 @@ export class BarcodeComponent implements OnInit {
           fontSize: 14,
           margin: 0,
         });
-      } catch (err) {
-        console.log(err);
+      } catch {
+        // ignore invalid barcode input
       }
     }
   }

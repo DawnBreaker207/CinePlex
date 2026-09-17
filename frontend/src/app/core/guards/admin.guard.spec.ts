@@ -1,14 +1,18 @@
 import { TestBed } from '@angular/core/testing';
-import { CanActivateChildFn } from '@angular/router';
+import { CanMatchFn } from '@angular/router';
 
 import { AdminGuard } from './admin.guard';
 
+import { testProviders } from '@shared/testing/test-providers';
+
 describe('AdminGuard', () => {
-  const executeGuard: CanActivateChildFn = (...guardParameters) =>
+  const executeGuard: CanMatchFn = (...guardParameters) =>
     TestBed.runInInjectionContext(() => AdminGuard(...guardParameters));
 
   beforeEach(() => {
-    TestBed.configureTestingModule({});
+    TestBed.configureTestingModule({
+      providers: [testProviders],
+    });
   });
 
   it('should be created', () => {

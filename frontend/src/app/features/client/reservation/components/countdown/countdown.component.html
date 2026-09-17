@@ -1,5 +1,8 @@
 <span
-  class="font-mono text-base md:text-lg font-bold text-red-600 tracking-wider"
+  nz-tooltip
+  [nzTooltipTitle]="'reservation.countdownHint' | translate"
+  aria-live="polite"
+  class="font-mono text-base md:text-lg font-bold text-warning tracking-wider"
 >
   {{ reservationStore.formattedTTL() }}
 </span>

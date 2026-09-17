@@ -1,12 +1,13 @@
-<nz-layout class="min-h-screen bg-gray-50">
+<nz-layout class="min-h-screen bg-transparent">
   <!-- HEADER STEPS -->
   <div
     class="bg-white! px-0 h-auto shadow-sm sticky top-0 z-50 border-b border-gray-200"
   >
     <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
       <nz-steps nzType="navigation" nzSize="small" [nzCurrent]="index()">
-        <nz-step nzTitle="Chọn ghế" nzIcon="table"></nz-step>
-        <nz-step nzTitle="Xác nhận & thanh toán" nzIcon="solution"></nz-step>
+        <nz-step [nzTitle]="'reservation.stepSeat' | translate" nzIcon="table"></nz-step>
+        <nz-step [nzTitle]="'reservation.stepCombo' | translate" nzIcon="shopping"></nz-step>
+        <nz-step [nzTitle]="'reservation.stepConfirm' | translate" nzIcon="solution"></nz-step>
       </nz-steps>
     </div>
   </div>
@@ -14,11 +15,11 @@
   <!-- BODY CONTENT -->
   <nz-content class="py-8 px-4 sm:px-6 lg:px-8">
     <div class="max-w-7xl mx-auto">
-      <!--   LEFT MAIN CONTENT     -->
+      <!-- LEFT MAIN CONTENT -->
       <nz-layout class="!bg-transparent flex-col lg:flex-row gap-8">
         <nz-content class="!bg-transparent flex-1 min-w-0">
           <div
-            class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 min-h-full"
+            class="bg-white rounded-xl border border-gray-200 p-6 min-h-full"
           >
             @switch (index()) {
               @case (0) {
@@ -27,13 +28,16 @@
                 }
               }
               @case (1) {
+                <app-combo (next)="onComboNext()" />
+              }
+              @case (2) {
                 <app-confirm />
               }
             }
           </div>
         </nz-content>
 
-        <!--  RIGHT SIDEBAR  -->
+        <!-- RIGHT SIDEBAR -->
         <nz-sider
           [nzWidth]="380"
           nzTheme="light"
@@ -43,11 +47,61 @@
             <app-detail-film
               [index]="index()"
               [steps]="steps()"
+              [holdingSeats]="reservationStore.holdingSeats()"
+              [paymentLoading]="reservationStore.submittingPayment()"
               (stepChange)="onStepChange($event)"
+              (confirm)="onConfirm()"
+              (pay)="onPay()"
             />
           </div>
         </nz-sider>
-      </nz-layout>
+        </nz-layout>
+      </div>
+    </nz-content>
+
+  <!-- MOBILE BOTTOM BAR -->
+  <div
+    class="lg:hidden sticky bottom-0 z-40 border-t border-gray-200 bg-white px-4 py-3"
+  >
+    <div class="flex items-center justify-between gap-3">
+      <div>
+        <p class="text-xs text-gray-500">{{ "reservation.total" | translate }}</p>
+        <p class="text-xl font-black text-primary">
+          {{ seatStore.totalPrice() | currency: "VND" }}
+        </p>
+      </div>
+      @if (index() === 0) {
+        <button
+          nz-button
+          nzType="primary"
+          class="h-11 rounded-xl font-bold"
+          [disabled]="seatStore.selectSeatsCount() === 0 || reservationStore.holdingSeats()"
+          [nzLoading]="reservationStore.holdingSeats()"
+          (click)="onConfirm()"
+        >
+          {{ "reservation.holdSeat" | translate }}
+        </button>
+      } @else if (index() === 1) {
+        <button
+          nz-button
+          nzType="primary"
+          class="h-11 rounded-xl font-bold"
+          (click)="onComboNext()"
+        >
+          {{ "reservation.comboContinue" | translate }}
+        </button>
+      } @else {
+        <button
+          nz-button
+          nzType="primary"
+          class="h-11 rounded-xl font-bold"
+          [disabled]="reservationStore.submittingPayment()"
+          [nzLoading]="reservationStore.submittingPayment()"
+          (click)="onPay()"
+        >
+          {{ "reservation.payNow" | translate }}
+        </button>
+      }
     </div>
-  </nz-content>
+  </div>
 </nz-layout>

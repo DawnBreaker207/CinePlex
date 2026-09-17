@@ -1,5 +1,4 @@
 import { Injectable } from '@angular/core';
-import { Jwt } from '@core/models/jwt.model';
 import Dexie, { Table } from 'dexie';
 import { Movie } from '@domain/movie/models/movie.model';
 
@@ -7,38 +6,12 @@ import { Movie } from '@domain/movie/models/movie.model';
   providedIn: 'root',
 })
 export class StorageService extends Dexie {
-  private readonly JWT_KEY = 'jwt';
-  private readonly ACCESS_TOKEN_KEY = 'accessToken';
   private readonly SELECTED_THEATER_KEY = 'selectedTheaterId';
   movies!: Table<Movie, number>;
 
   constructor() {
     super('CinemaDB');
     this.version(1).stores({ movies: 'id, title' });
-  }
-
-  setJWT(jwt: Jwt) {
-    try {
-      localStorage.setItem(this.JWT_KEY, JSON.stringify(jwt));
-      localStorage.setItem(this.ACCESS_TOKEN_KEY, jwt.accessToken);
-    } catch (error) {
-      console.error('Failed to set JWT', error);
-    }
-  }
-
-  getJwt() {
-    try {
-      const item = localStorage.getItem(this.JWT_KEY);
-      return item ? JSON.parse(item) : null;
-    } catch (error) {
-      console.error('Failed to parse Jwt', error);
-      return null;
-    }
-  }
-
-  clearAuth() {
-    localStorage.removeItem(this.JWT_KEY);
-    localStorage.removeItem(this.ACCESS_TOKEN_KEY);
   }
 
   setItem<T>(key: string, value: T) {
@@ -71,7 +44,7 @@ export class StorageService extends Dexie {
   setSelectedTheaterId(theaterId: number) {
     try {
       localStorage.setItem(this.SELECTED_THEATER_KEY, theaterId.toString());
-    } catch (error) {
+    } catch {
       console.error(`Failed to set selected theater `, theaterId);
     }
   }
@@ -80,7 +53,7 @@ export class StorageService extends Dexie {
     try {
       const id = localStorage.getItem(this.SELECTED_THEATER_KEY);
       return id ? Number(id) : null;
-    } catch (error) {
+    } catch {
       console.error(`Failed to get selected theater `);
       return null;
     }

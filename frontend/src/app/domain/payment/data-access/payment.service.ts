@@ -21,13 +21,22 @@ export class PaymentService {
       .get<ApiRes<Payment>>(`${this.URL}/create`, { params })
       .pipe(
         map((res) => res.data.paymentUrl),
-        catchError(this.handleError<any>('Payment')),
+        catchError(this.handleError<string>('Payment')),
+      );
+  }
+
+  reCheck(provider: string, id: string) {
+    return this.http
+      .post<ApiRes<string>>(`${this.URL}/re-check/${provider}/${id}`, {})
+      .pipe(
+        map((res) => res.data),
+        catchError(this.handleError<string>('Re-check payment')),
       );
   }
 
   private handleError<T>(operation = 'operation') {
-    return (error: any): Observable<T> => {
-      console.log(`${operation} failed: ${error}`);
+    return (error: unknown): Observable<T> => {
+      console.error(`${operation} failed: ${error}`);
       return throwError(() => error);
     };
   }

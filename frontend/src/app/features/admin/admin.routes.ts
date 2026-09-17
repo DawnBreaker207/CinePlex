@@ -7,7 +7,10 @@ import { ReservationComponent } from '@features/admin/reservation/reservation.co
 import { UserComponent } from '@features/admin/user/user.component';
 import { ArticleComponent } from '@features/admin/article/article.component';
 import { AdminLayoutComponent } from '../../layout/admin-layout/admin-layout.component';
-import { VoucherComponent } from '@features/admin/voucher/voucher.component';
+import { VoucherListComponent } from '@features/admin/voucher/pages/voucher-list/voucher-list.component';
+import { CheckInComponent } from '@features/admin/check-in/check-in.component';
+import { AuditComponent } from '@features/admin/audit/audit.component';
+import { RoomsComponent } from '@features/admin/theater/rooms/rooms.component';
 
 export const ADMIN_ROUTES: Routes = [
   {
@@ -21,43 +24,58 @@ export const ADMIN_ROUTES: Routes = [
       },
       {
         path: 'dashboard',
+        title: 'admin.dashboard',
         component: DashboardComponent,
-        data: { breadcrumb: 'Dashboard' },
       },
       {
         path: 'movie',
+        title: 'admin.movie',
         component: MovieComponent,
-        data: { breadcrumb: 'Movie Manager' },
       },
       {
         path: 'theater',
+        title: 'admin.theater',
         component: TheaterComponent,
-        data: { breadcrumb: 'Theater Manager' },
+      },
+      {
+        path: 'theater/:theaterId/rooms',
+        title: 'admin.room.title',
+        component: RoomsComponent,
       },
       {
         path: 'showtime',
+        title: 'admin.showtime',
         component: ShowtimeComponent,
-        data: { breadcrumb: 'Showtime Manager' },
       },
       {
         path: 'reservation',
+        title: 'admin.reservation',
         component: ReservationComponent,
-        data: { breadcrumb: 'Reservation Manager' },
+      },
+      {
+        path: 'checkin',
+        title: 'admin.checkin',
+        component: CheckInComponent,
       },
       {
         path: 'user',
+        title: 'admin.user',
         component: UserComponent,
-        data: { breadcrumb: 'User Manager' },
       },
       {
         path: 'article',
+        title: 'admin.article',
         component: ArticleComponent,
-        data: { breadcrumb: 'Article Manager' },
       },
       {
         path: 'voucher',
-        component: VoucherComponent,
-        data: { breadcrumb: 'Voucher Manager' },
+        title: 'admin.voucher',
+        component: VoucherListComponent,
+      },
+      {
+        path: 'audit-logs',
+        title: 'admin.audit.title',
+        component: AuditComponent,
       },
     ],
   },

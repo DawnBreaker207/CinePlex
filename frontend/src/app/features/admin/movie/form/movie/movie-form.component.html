@@ -1,21 +1,24 @@
-<nz-spin [nzSpinning]="(loading$ | async) || (saving$ | async)">
+<nz-spin [nzSpinning]="loading() || saving()">
   <form nz-form [formGroup]="form" class="w-full">
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
       <!-- LEFT COLUMN -->
       <div class="lg:col-span-8 flex flex-col gap-6">
         <!-- Movie Title & Auto-fill Button -->
         <nz-form-item class="mb-6">
-          <nz-form-label nzRequired class="font-bold text-gray-700"
-            >{{ "Tiêu đề phim" | translate }}
+          <nz-form-label
+            nzRequired
+            class="font-bold text-gray-700 dark:text-gray-300"
+            >{{ "admin.movie.form.title" | translate }}
           </nz-form-label>
-          <nz-form-control [nzErrorTip]="'Bắt buộc' | translate">
+          <nz-form-control [nzErrorTip]="'common.required' | translate">
             <div class="flex items-center gap-2">
               <input
                 nz-input
                 formControlName="title"
-                [placeholder]="'Tên phim' | translate"
+                [placeholder]="'admin.movie.form.name' | translate"
                 class="rounded-lg h-12 px-4 text-base shadow-sm"
                 [readOnly]="mode === 'view'"
+                maxlength="255"
               />
 
               <!-- Search API  -->
@@ -24,11 +27,11 @@
                   type="button"
                   nz-button
                   nzType="default"
-                  class="flex items-center gap-2 rounded-lg bg-blue-50 text-primary border-blue-200 hover:border-primary h-10 px-4"
+                  class="flex items-center gap-2 rounded-lg bg-primary-light text-primary border-primary/30 hover:border-primary h-10 px-4"
                   (click)="openMovieModal()"
                 >
-                  <nz-icon nzType="cloud-download" />
-                  {{ "Tự động điền" | translate }}
+                  <nz-icon nzType="cloud-download" aria-hidden="true" />
+                  {{ "admin.movie.form.autoFill" | translate }}
                 </button>
               }
             </div>
@@ -37,18 +40,20 @@
 
         <!-- Duration & Release Date -->
         <div
-          class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50 p-6 rounded-xl border border-gray-100"
+          class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50 dark:bg-gray-800 p-6 rounded-xl border border-gray-100 dark:border-gray-700"
         >
           <nz-form-item class="mb-0">
             <nz-form-label nzRequired>{{
-              "Thời lượng (phút)" | translate
+              "admin.movie.form.durationMinutes" | translate
             }}</nz-form-label>
-            <nz-form-control [nzErrorTip]="'Nhập thời lượng' | translate">
+            <nz-form-control
+              [nzErrorTip]="'admin.movie.form.durationPlaceholder' | translate"
+            >
               <input
                 type="number"
                 nz-input
                 formControlName="duration"
-                [placeholder]="'https://image.tmdb.org/...' | translate"
+                [placeholder]="'admin.movie.form.durationExample' | translate"
                 class="rounded-lg h-11"
                 [readOnly]="mode === 'view'"
               />
@@ -57,9 +62,13 @@
 
           <nz-form-item class="mb-0">
             <nz-form-label nzRequired>{{
-              "Ngày phát hành" | translate
+              "common.releaseDate" | translate
             }}</nz-form-label>
-            <nz-form-control [nzErrorTip]="'Nhập ngày phát hành' | translate">
+            <nz-form-control
+              [nzErrorTip]="
+                'admin.movie.form.releaseDatePlaceholder' | translate
+              "
+            >
               <nz-date-picker
                 formControlName="releaseDate"
                 class="w-full rounded-lg h-11"
@@ -71,35 +80,42 @@
 
         <nz-form-item class="mb-0">
           <nz-form-label nzRequired>{{
-            "Ảnh nền (Backdrop)" | translate
+            "admin.movie.form.backdrop" | translate
           }}</nz-form-label>
-          <nz-form-control [nzErrorTip]="'Nhập URL ảnh nền' | translate">
+          <nz-form-control
+            [nzErrorTip]="'admin.movie.form.backdropPlaceholder' | translate"
+          >
             <input
               type="text"
               nz-input
               formControlName="backdrop"
-              [placeholder]="'ví dụ: 120' | translate"
+              [placeholder]="'admin.movie.form.tmdbExample' | translate"
               class="rounded-lg h-11"
               [readOnly]="mode === 'view'"
+              maxlength="500"
             />
           </nz-form-control>
         </nz-form-item>
 
         <nz-form-item class="mb-0">
-          <nz-form-label nzRequired>{{ "Ngôn ngữ" | translate }}</nz-form-label>
-          <nz-form-control [nzErrorTip]="'Nhập ngôn ngữ' | translate">
+          <nz-form-label nzRequired>{{
+            "common.language" | translate
+          }}</nz-form-label>
+          <nz-form-control
+            [nzErrorTip]="'admin.movie.form.languagePlaceholder' | translate"
+          >
             <nz-select
               formControlName="language"
-              nzPlaceHolder="Select language"
+              [nzPlaceHolder]="'admin.movie.form.selectLanguage' | translate"
               [nzDisabled]="mode === 'view'"
               class="rounded-lg h-11 flex items-center"
             >
               <nz-option
-                [nzLabel]="'English' | translate"
+                [nzLabel]="'common.langEnglish' | translate"
                 nzValue="en"
               ></nz-option>
               <nz-option
-                [nzLabel]="'Vietnamese' | translate"
+                [nzLabel]="'common.langVietnamese' | translate"
                 nzValue="vi"
               ></nz-option>
             </nz-select>
@@ -107,17 +123,24 @@
         </nz-form-item>
 
         <nz-form-item class="mb-0">
-          <nz-form-label nzRequired>{{ "Quốc gia" | translate }}</nz-form-label>
-          <nz-form-control [nzErrorTip]="'Nhập quốc gia' | translate">
+          <nz-form-label nzRequired>{{
+            "common.country" | translate
+          }}</nz-form-label>
+          <nz-form-control
+            [nzErrorTip]="'admin.movie.form.countryPlaceholder' | translate"
+          >
             <nz-select
               formControlName="country"
-              [nzPlaceHolder]="'Select Country' | translate"
+              [nzPlaceHolder]="'admin.movie.form.selectCountry' | translate"
               [nzDisabled]="mode === 'view'"
               class="rounded-lg h-11 flex items-center"
             >
-              <nz-option [nzLabel]="'US' | translate" nzValue="US"></nz-option>
               <nz-option
-                [nzLabel]="'Vietnam' | translate"
+                [nzLabel]="'common.countryUS' | translate"
+                nzValue="US"
+              ></nz-option>
+              <nz-option
+                [nzLabel]="'common.countryVN' | translate"
                 nzValue="VI"
               ></nz-option>
             </nz-select>
@@ -125,26 +148,37 @@
         </nz-form-item>
 
         <nz-form-item class="mb-0">
-          <nz-form-label nzRequired>{{ "Tên gốc" | translate }}</nz-form-label>
-          <nz-form-control [nzErrorTip]="'Nhập tên gốc' | translate">
+          <nz-form-label nzRequired>{{
+            "admin.movie.form.originalName" | translate
+          }}</nz-form-label>
+          <nz-form-control
+            [nzErrorTip]="
+              'admin.movie.form.originalTitlePlaceholder' | translate
+            "
+          >
             <input
               type="text"
               nz-input
               formControlName="originalTitle"
-              [placeholder]="'Tiêu đề gốc' | translate"
+              [placeholder]="'admin.movie.form.originalTitle' | translate"
               class="rounded-lg h-11"
               [readOnly]="mode === 'view'"
+              maxlength="255"
             />
           </nz-form-control>
         </nz-form-item>
 
         <nz-form-item class="mb-0">
-          <nz-form-label nzRequired>{{ "Thể loại" | translate }}</nz-form-label>
-          <nz-form-control [nzErrorTip]="'Nhập thể loại' | translate">
+          <nz-form-label nzRequired>{{
+            "common.genre" | translate
+          }}</nz-form-label>
+          <nz-form-control
+            [nzErrorTip]="'admin.movie.form.genrePlaceholder' | translate"
+          >
             <nz-select
               formControlName="genres"
               nzMode="tags"
-              [nzPlaceHolder]="'Type and press enter' | translate"
+              [nzPlaceHolder]="'admin.movie.form.typeAndEnter' | translate"
               [nzDisabled]="mode === 'view'"
               class="rounded-lg min-h-[44px] flex items-center"
             ></nz-select>
@@ -153,11 +187,13 @@
 
         <!-- Description -->
         <nz-form-item class="flex-1 mb-0">
-          <nz-form-label nzRequired class="font-bold text-gray-700"
-            >{{ "Mô tả" | translate }}
+          <nz-form-label
+            nzRequired
+            class="font-bold text-gray-700 dark:text-gray-300"
+            >{{ "common.description" | translate }}
           </nz-form-label>
           <nz-form-control
-            [nzErrorTip]="'Nhập mô tả phim' | translate"
+            [nzErrorTip]="'admin.movie.form.descriptionPlaceholder' | translate"
             class="h-full"
           >
             <textarea
@@ -165,8 +201,9 @@
               formControlName="overview"
               [nzAutosize]="{ minRows: 5, maxRows: 10 }"
               class="rounded-xl resize-none text-base p-4 shadow-sm h-full"
-              [placeholder]="'Tóm tắt phim...' | translate"
+              [placeholder]="'admin.movie.form.summaryPlaceholder' | translate"
               [readOnly]="mode === 'view'"
+              maxlength="2000"
             ></textarea>
           </nz-form-control>
         </nz-form-item>
@@ -175,50 +212,83 @@
       <!-- RIGHT COLUMN-->
       <div class="lg:col-span-4 space-y-6">
         <nz-form-item class="mb-0">
-          <nz-form-label nzRequired class="font-bold text-gray-700"
-            >{{ "URL Poster" | translate }}
+          <nz-form-label
+            nzRequired
+            class="font-bold text-gray-700 dark:text-gray-300"
+            >{{ "admin.movie.form.posterUrl" | translate }}
           </nz-form-label>
-          <nz-form-control [nzErrorTip]="'Bắt buộc' | translate">
+          <nz-form-control [nzErrorTip]="'common.required' | translate">
             <input
               nz-input
               formControlName="poster"
-              placeholder="https://image.tmdb.org/..."
+              [placeholder]="'admin.movie.form.tmdbExample' | translate"
               class="rounded-lg h-12 shadow-sm"
               [readOnly]="mode === 'view'"
+              maxlength="500"
             />
+            @if (mode !== 'view') {
+              <div class="mt-2 flex items-center gap-2">
+                <input
+                  #posterFile
+                  type="file"
+                  accept="image/*"
+                  class="hidden"
+                  (change)="onPosterFile($event)"
+                />
+                <button
+                  nz-button
+                  nzType="default"
+                  class="rounded-lg"
+                  [nzLoading]="uploading()"
+                  (click)="posterFile.click()"
+                >
+                  <nz-icon nzType="upload" />
+                  {{ "common.upload" | translate }}
+                </button>
+              </div>
+            }
           </nz-form-control>
         </nz-form-item>
 
         <!-- POSTER PREVIEW BOX -->
         <div
-          class="w-full aspect-[2/3] bg-white rounded-2xl border-2 border-dashed border-gray-300 relative overflow-hidden flex items-center justify-center group shadow-md transition-all hover:shadow-xl hover:border-blue-300"
+          class="w-full aspect-[2/3] bg-white dark:bg-[#161a20] rounded-2xl border-2 border-dashed border-gray-300 relative overflow-hidden flex items-center justify-center group shadow-md transition-[box-shadow,border-color] hover:shadow-xl hover:border-primary/40"
         >
           <!-- LOGIC HIỂN THỊ ẢNH THÔNG MINH -->
           @if (form.get("poster")?.value) {
             <img
               [src]="form.get('poster')?.value"
+              loading="lazy"
               class="w-full h-full object-cover transition-transform duration-500"
               alt="Poster Preview"
             />
 
             <!-- Fallback -->
             <div
-              class="absolute inset-0 hidden flex-col items-center justify-center text-gray-400 bg-gray-100"
+              class="absolute inset-0 hidden flex-col items-center justify-center text-gray-500 dark:text-gray-400 bg-gray-100"
             >
-              <nz-icon nzType="frown" class="text-3xl mb-2" />
+              <nz-icon
+                nzType="frown"
+                class="text-3xl mb-2"
+                aria-hidden="true"
+              />
               <span class="text-xs font-semibold">{{
-                "Không tìm thấy ảnh" | translate
+                "common.imageNotFound" | translate
               }}</span>
             </div>
           } @else {
             <!-- Empty State -->
             <div
-              class="flex flex-col items-center justify-center text-gray-400"
+              class="flex flex-col items-center justify-center text-gray-500 dark:text-gray-400"
             >
-              <nz-icon nzType="file-image" class="text-4xl mb-2 opacity-50" />
+              <nz-icon
+                nzType="file-image"
+                class="text-4xl mb-2 opacity-50"
+                aria-hidden="true"
+              />
               <span
-                class="text-xs uppercase font-bold tracking-wider opacity-70"
-                >{{ "Không có Poster" | translate }}</span
+                class="text-sm font-medium text-gray-500 dark:text-gray-400"
+                >{{ "common.noPoster" | translate }}</span
               >
             </div>
           }
@@ -229,12 +299,11 @@
 </nz-spin>
 
 <!-- Error Alert (Giữ nguyên logic cũ) -->
-@let error = error$ | async;
-@if (error) {
+@if (error(); as currentError) {
   <div class="mt-4">
     <nz-alert
       nzType="error"
-      [nzMessage]="error"
+      [nzMessage]="currentError"
       nzShowIcon
       nzCloseable
     ></nz-alert>

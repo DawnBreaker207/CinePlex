@@ -1,29 +1,37 @@
+<a href="#main-content" class="skip-link">
+  {{ "common.skipToContent" | translate }}
+</a>
 <nz-layout
   class="ant-layout-has-sider h-screen w-full overflow-hidden font-sans text-slate-800"
 >
   <!-- SIDER -->
-  <app-sidebar [isCollapsed]="isCollapsed" />
+  <app-sidebar
+    [isCollapsed]="isCollapsed"
+    (triggerCollapsed)="toggleCollapse($event)"
+  />
 
   <!-- LAYOUT RIGHT -->
   <nz-layout class="flex flex-col overflow-hidden">
     <!-- NAVBAR -->
     <nz-header class="shrink-0 z-40">
-      <app-navbar
-        [breadcrumbs]="breadcrumbs"
-        [isCollapsed]="isCollapsed"
-        (toggleCollapsed)="toggleCollapse($event)"
-      />
+      <app-navbar [breadcrumbs]="breadcrumbs()" />
     </nz-header>
 
     <!-- CONTENT AREA -->
-    <nz-content class="flex-1 overflow-y-auto overflow-x-hidden bg-slate-50">
+    <nz-content
+      id="main-content"
+      class="flex-1 overflow-y-auto overflow-x-hidden bg-slate-50 dark:bg-[#0b0d10]"
+      style="content-visibility: auto"
+    >
       <router-outlet />
-      <app-chat />
-
       <nz-footer class="text-center text-slate-400 bg-transparent py-6">
-        {{ "Hệ thống đặt vé CinePlex" | translate }} &copy;
+        {{ "adminLayout.title" | translate }} &copy;
         {{ date.getFullYear() }}
       </nz-footer>
     </nz-content>
+
+    @defer (on idle) {
+      <app-chat />
+    }
   </nz-layout>
 </nz-layout>

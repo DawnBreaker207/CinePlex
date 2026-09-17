@@ -2,10 +2,10 @@
   <!-- HEADER -->
   <div class="mb-6">
     <h1 class="text-2xl font-bold text-gray-900">
-      {{ "Tài khoản của tôi" | translate }}
+      {{ "profile.myAccount" | translate }}
     </h1>
     <p class="text-gray-500">
-      {{ "Quản lý thông tin và lịch sử đặt vé" | translate }}
+      {{ "profile.subtitle" | translate }}
     </p>
   </div>
 
@@ -19,12 +19,12 @@
       nzSize="large"
       class="h-full custom-tabs"
     >
-      <!-- INFO  -->
+      <!-- INFO -->
       <nz-tab [nzTitle]="infoTitle">
         <ng-template #infoTitle>
           <div class="flex items-center gap-2 px-2">
             <nz-icon nzType="idcard" nzTheme="outline" />
-            {{ "Hồ sơ cá nhân" | translate }}
+            {{ "profile.title" | translate }}
           </div>
         </ng-template>
         @if (userStore.selectedUser(); as user) {
@@ -37,28 +37,56 @@
         <ng-template #historyFile>
           <div class="flex items-center gap-2 px-2">
             <nz-icon nzType="history" />
-            {{ "Lịch sử đặt vé" | translate }}
+            {{ "profile.bookingHistory" | translate }}
           </div>
         </ng-template>
+        <div class="flex gap-2 px-6 pt-4">
+          <button
+            nz-button
+            [nzType]="ticketStatus() === 'PENDING' ? 'primary' : 'default'"
+            nzSize="small"
+            (click)="onTicketStatus('PENDING')"
+          >
+            <nz-icon nzType="clock-circle" />
+            {{ "status.pending" | translate }}
+          </button>
+          <button
+            nz-button
+            [nzType]="ticketStatus() === 'CONFIRMED' ? 'primary' : 'default'"
+            nzSize="small"
+            (click)="onTicketStatus('CONFIRMED')"
+          >
+            <nz-icon nzType="check-circle" />
+            {{ "status.confirmed" | translate }}
+          </button>
+          <button
+            nz-button
+            [nzType]="ticketStatus() === 'CANCELED' ? 'primary' : 'default'"
+            nzSize="small"
+            (click)="onTicketStatus('CANCELED')"
+          >
+            <nz-icon nzType="close-circle" />
+            {{ "status.cancelled" | translate }}
+          </button>
+        </div>
         @if (reservationStore.reservationProfile(); as tickets) {
           <app-booking-history [tickets]="tickets" />
         }
       </nz-tab>
 
-      <!--  MEMBERS    -->
-      <nz-tab [nzTitle]="memberTitle">
+      <!-- MEMBERS -->
+      <nz-tab [nzTitle]="memberTitle" [nzDisabled]="true">
         <ng-template #memberTitle>
-          <div class="flex items-center gap-2 px-2">
+          <div
+            class="flex items-center gap-2 px-2"
+            nz-tooltip
+            [nzTooltipTitle]="'profile.comingSoon' | translate"
+          >
             <nz-icon nzType="crown" nzTheme="outline" />
-            {{ "Thành viên" | translate }}
+            {{ "profile.member" | translate }}
+            <nz-tag nzColor="default">{{ "profile.soon" | translate }}</nz-tag>
           </div>
         </ng-template>
-        <div class="p-12 text-center">
-          <nz-empty [nzNotFoundContent]="null"></nz-empty>
-          <p class="text-gray-500">
-            {{ "Tính năng đang phát triển" | translate }}
-          </p>
-        </div>
       </nz-tab>
 
       <!-- VOUCHER -->
@@ -66,31 +94,25 @@
         <ng-template #voucherTitle>
           <div class="flex items-center gap-2 px-2">
             <nz-icon nzType="tags" nzTheme="outline" />
-            {{ "Voucher" | translate }}
+            {{ "profile.voucher" | translate }}
           </div>
         </ng-template>
-        <div class="p-12 text-center">
-          <nz-empty [nzNotFoundContent]="null"></nz-empty>
-          <p class="text-gray-500">
-            {{ "Tính năng đang phát triển" | translate }}
-          </p>
-        </div>
+        <app-user-vouchers />
       </nz-tab>
 
       <!-- SETTINGS -->
-      <nz-tab [nzTitle]="settingTitle">
+      <nz-tab [nzTitle]="settingTitle" [nzDisabled]="true">
         <ng-template #settingTitle>
-          <div class="flex items-center gap-2 px-2">
+          <div
+            class="flex items-center gap-2 px-2"
+            nz-tooltip
+            [nzTooltipTitle]="'profile.comingSoon' | translate"
+          >
             <nz-icon nzType="setting" />
-            {{ "Cài đặt" | translate }}
+            {{ "profile.settings" | translate }}
+            <nz-tag nzColor="default">{{ "profile.soon" | translate }}</nz-tag>
           </div>
         </ng-template>
-        <div class="p-12 text-center">
-          <nz-empty [nzNotFoundContent]="null"></nz-empty>
-          <p class="text-gray-500">
-            {{ "Tính năng đang phát triển" | translate }}
-          </p>
-        </div>
       </nz-tab>
     </nz-tabs>
   </div>

@@ -1,29 +1,31 @@
 <app-loading [isLoading]="reservationStore.loading()">
   @if (reservationStore.reservation(); as reservation) {
     <div class="w-full h-full">
-      <div>{{ "Mã vé" | translate }}: {{ reservation.id }}</div>
-      <div>{{ "Name" | translate }}: {{ reservation.user.username }}</div>
+      <div>{{ "common.ticketCode" | translate }}: {{ reservation.id }}</div>
       <div>
-        {{ "Suất chiếu" | translate }}:
+        {{ "common.name" | translate }}: {{ reservation.user.username }}
+      </div>
+      <div>
+        {{ "reservation.showtime" | translate }}:
         {{ reservation.showtime.showDate | date: "dd/MM/yyyy" }}
       </div>
       <div>
-        Status:
+        {{ "common.status" | translate }}:
         <nz-tag [nzColor]="(reservation.reservationStatus | tags).color">
           {{ (reservation.reservationStatus | tags).status }}
         </nz-tag>
       </div>
       <div>
-        {{ "Tổng tiền" | translate }}:
+        {{ "common.total" | translate }}:
         {{ reservation.totalAmount | currency: "VND" }}
       </div>
       <div>
-        {{ "Ngày đặt vé" | translate }}:
+        {{ "common.bookingDate" | translate }}:
         {{ reservation.createdAt | date: "dd/MM/yyyy" }}
       </div>
-      <div>{{ "Ghế" | translate }}: {{ reservation.seats }}</div>
+      <div>{{ "booking.seat" | translate }}: {{ reservation.seats }}</div>
     </div>
   } @else {
-    <p>{{ "Lỗi" | translate }}</p>
+    <p>{{ "common.error" | translate }}</p>
   }
 </app-loading>

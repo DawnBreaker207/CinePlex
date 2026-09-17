@@ -45,6 +45,21 @@ export interface VoucherRequest {
 
 export interface VoucherCalculate {
   code: string;
+  originalAmount: number;
   discountAmount: number;
-  finalAMount: number;
+  finalAmount: number;
+}
+
+export type UserVoucherStatus = 'AVAILABLE' | 'USED' | 'EXPIRED';
+
+export interface UserVoucher {
+  id: number;
+  code: string;
+  voucherName: string;
+  discountType: DiscountType;
+  discountValue: number;
+  maxDiscountAmount: number;
+  minOrderValue: number;
+  status: UserVoucherStatus;
+  expiredAt: Date;
 }

@@ -1,19 +1,25 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import {
+  Component,
+  computed,
+  effect,
+  inject,
+  input,
+  linkedSignal,
+  numberAttribute,
+  OnInit,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { Store } from '@ngrx/store';
-import { DatePipe, NgClass } from '@angular/common';
-import { map } from 'rxjs';
-import { NzTagModule } from 'ng-zorro-antd/tag';
-import { NzButtonModule } from 'ng-zorro-antd/button';
-import { NzIconModule } from 'ng-zorro-antd/icon';
+import { DatePipe, NgClass, NgOptimizedImage } from '@angular/common';
 import { NzTabsModule } from 'ng-zorro-antd/tabs';
 import { NzAvatarModule } from 'ng-zorro-antd/avatar';
 import { NzRateModule } from 'ng-zorro-antd/rate';
 import { FormsModule } from '@angular/forms';
 import { selectMovieById } from '@domain/movie/data-access/movie.selectors';
 import { MovieActions } from '@domain/movie/data-access/movie.actions';
-import { toSignal } from '@angular/core/rxjs-interop';
 import { LoadingComponent } from '@shared/components/loading/loading.component';
+import { NzSkeletonModule } from 'ng-zorro-antd/skeleton';
 import { selectAllShowtimes } from '@domain/showtime/data-access/showtime.selectors';
 import {
   selectAllTheaters,
@@ -21,37 +27,59 @@ import {
 } from '@domain/theater/data-access/theater.selectors';
 import { ShowtimeActions } from '@domain/showtime/data-access/showtime.actions';
 import { TheaterActions } from '@domain/theater/data-access/theater.actions';
-import dayjs from 'dayjs';
+import { NzIconModule } from 'ng-zorro-antd/icon';
+import { NzButtonModule } from 'ng-zorro-antd/button';
+import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
 import { TranslatePipe } from '@ngx-translate/core';
+import dayjs from 'dayjs';
+import {
+  CinemaGroup,
+  ShowtimeSectionComponent,
+} from '@features/client/detail/components/showtime-section/showtime-section.component';
+import { DetailHeaderComponent } from '@features/client/detail/components/detail-header/detail-header.component';
+
+interface Review {
+  user: string;
+  avatar: string;
+  rating: number;
+  comment: string;
+  date: string;
+}
 
 @Component({
   selector: 'app-detail',
   imports: [
     DatePipe,
-    NzTagModule,
-    NzButtonModule,
-    NzIconModule,
     NzTabsModule,
     NzAvatarModule,
     NzRateModule,
     FormsModule,
     LoadingComponent,
+    NzSkeletonModule,
     NgClass,
+    NgOptimizedImage,
     TranslatePipe,
+    NzIconModule,
+    NzButtonModule,
+    NzToolTipModule,
+    DetailHeaderComponent,
+    ShowtimeSectionComponent,
   ],
   templateUrl: './detail.component.html',
-  styleUrl: './detail.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DetailComponent implements OnInit {
-  private route = inject(ActivatedRoute);
   private store = inject(Store);
-  private router = inject(Router);
 
-  private movieId = toSignal(this.route.params.pipe(map((p) => +p['id'])));
-  selectedDate = signal<Date>(dayjs().startOf('day').toDate());
+  id = input(0, { transform: numberAttribute });
+  selectedDate = linkedSignal({
+    source: this.id,
+    computation: () => dayjs().startOf('day').toDate(),
+  });
+  showtimesLoading = signal(true);
 
   movie = computed(() => {
-    const id = this.movieId();
+    const id = this.id();
     return id ? this.store.selectSignal(selectMovieById(id))() : null;
   });
 
@@ -65,7 +93,7 @@ export class DetailComponent implements OnInit {
     );
   });
 
-  showtimes = computed(() => {
+  showtimes = computed<CinemaGroup[]>(() => {
     const movie = this.movie();
     const showtimes = this.allShowtimes();
     const theaters = this.allTheaters();
@@ -82,7 +110,7 @@ export class DetailComponent implements OnInit {
     );
     if (filtered.length === 0) return [];
 
-    const groupTheater = new Map<number, any>();
+    const groupTheater = new Map<number, CinemaGroup>();
 
     filtered.forEach((st) => {
       const theater = theaters.find((t) => t.id === st.theaterId);
@@ -94,7 +122,7 @@ export class DetailComponent implements OnInit {
             showtimes: [],
           });
         }
-        groupTheater.get(theater.id).showtimes.push({
+        groupTheater.get(theater.id)!.showtimes.push({
           id: st.id,
           time: st.showTime.toString().substring(0, 5),
           availableSeats: st.availableSeats,
@@ -105,9 +133,18 @@ export class DetailComponent implements OnInit {
     return Array.from(groupTheater.values());
   });
 
+  constructor() {
+    effect(() => {
+      if (this.allShowtimes().length > 0) {
+        this.showtimesLoading.set(false);
+      }
+    });
+  }
+
   ngOnInit() {
-    const id = this.movieId();
+    const id = this.id();
     if (id) {
+      this.showtimesLoading.set(true);
       this.store.dispatch(MovieActions.loadMovie({ id: id }));
       this.store.dispatch(
         ShowtimeActions.loadShowtimesByMovieId({
@@ -128,20 +165,5 @@ export class DetailComponent implements OnInit {
     this.selectedDate.set(date);
   }
 
-  reviews = [
-    {
-      user: 'Minh Tuấn',
-      avatar: 'https://i.pravatar.cc/150?u=99',
-      rating: 5,
-      comment: 'Phim đỉnh cao, hình ảnh và âm thanh quá tuyệt vời!',
-      date: '02/03/2025',
-    },
-    {
-      user: 'Lan Ngọc',
-      avatar: 'https://i.pravatar.cc/150?u=88',
-      rating: 4,
-      comment: 'Hơi dài nhưng xứng đáng.',
-      date: '03/03/2025',
-    },
-  ];
+  reviews: Review[] = [];
 }

@@ -1,12 +1,14 @@
 import { inject, Injectable } from '@angular/core';
 import { environment } from '@env/environment';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { ApiRes, ResponsePage } from '@core/models/common.model';
+import { ApiRes, FilterQuery, FilterSort, ResponsePage } from '@core/models/common.model';
+import { errorMessage } from '@shared/utils/error.helper';
 import { catchError, map, Observable, throwError } from 'rxjs';
 import {
   Voucher,
   VoucherCalculate,
   VoucherRequest,
+  UserVoucher,
 } from '@domain/voucher/model/voucher.model';
 
 @Injectable({
@@ -16,7 +18,7 @@ export class VoucherService {
   URL = `${environment.apiUrl}/voucher`;
   private http = inject(HttpClient);
 
-  getAll(query?: any) {
+  getAll(query?: FilterSort & FilterQuery) {
     let params = new HttpParams();
     if (query) {
       Object.entries(query).forEach(([key, value]) => {
@@ -71,10 +73,31 @@ export class VoucherService {
         catchError(this.handleError<VoucherCalculate>('voucher')),
       );
   }
+
+  claimVoucher(code: string) {
+    return this.http
+      .post<ApiRes<UserVoucher>>(
+        `${this.URL}/claim`,
+        null,
+        { params: new HttpParams().set('code', code) },
+      )
+      .pipe(
+        map((res) => res.data),
+        catchError(this.handleError<UserVoucher>('voucher')),
+      );
+  }
+
+  getUserVouchers() {
+    return this.http.get<ApiRes<UserVoucher[]>>(`${this.URL}/user`).pipe(
+      map((res) => res.data ?? []),
+      catchError(this.handleError<UserVoucher[]>('voucher')),
+    );
+  }
   private handleError<T>(operation = 'operation') {
-    return (error: any): Observable<T> => {
-      console.log(`${operation} failed: ${error}`);
-      return throwError(() => error);
+    return (error: unknown): Observable<T> => {
+      console.error(`${operation} failed:`, error);
+      const message = errorMessage(error) || `L?i ${operation}`;
+      return throwError(() => ({ message }));
     };
   }
 }

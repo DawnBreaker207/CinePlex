@@ -12,6 +12,7 @@ import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { pipe, switchMap, tap } from 'rxjs';
 import { tapResponse } from '@ngrx/operators';
 import { Pagination } from '@core/models/common.model';
+import { errorMessage } from '@shared/utils/error.helper';
 
 export interface UserState {
   users: User[];
@@ -67,8 +68,8 @@ export const UserStore = signalStore(
                   pagination: pagination,
                   loading: false,
                 }),
-              error: (error: any) =>
-                patchState(store, { error, loadingDetails: false }),
+              error: (error) =>
+                patchState(store, { error: errorMessage(error), loadingDetails: false }),
             }),
           ),
         ),
@@ -100,8 +101,8 @@ export const UserStore = signalStore(
                   };
                 });
               },
-              error: (error: any) =>
-                patchState(store, { error, loadingDetails: false }),
+              error: (error) =>
+                patchState(store, { error: errorMessage(error), loadingDetails: false }),
             }),
           ),
         ),
@@ -126,8 +127,8 @@ export const UserStore = signalStore(
                   saving: false,
                 }));
               },
-              error: (error: any) =>
-                patchState(store, { error, loadingDetails: false }),
+              error: (error) =>
+                patchState(store, { error: errorMessage(error), loadingDetails: false }),
             }),
           ),
         ),
@@ -148,12 +149,12 @@ export const UserStore = signalStore(
           userService.updateStatus(id, isDeleted).pipe(
             tapResponse({
               next: () => {},
-              error: (error: any) => {
+              error: (error) => {
                 patchState(store, (state) => ({
                   users: state.users.map((u) =>
                     u.userId === id ? { ...u, isDeleted: !isDeleted } : u,
                   ),
-                  error,
+                  error: errorMessage(error),
                 }));
               },
             }),

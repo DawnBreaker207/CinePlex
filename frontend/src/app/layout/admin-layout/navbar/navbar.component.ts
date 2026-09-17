@@ -1,4 +1,8 @@
-import { Component, input, output } from '@angular/core';
+import {
+  Component,
+  input,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { NzBadgeComponent } from 'ng-zorro-antd/badge';
 import {
   NzBreadCrumbComponent,
@@ -10,7 +14,8 @@ import {
 } from 'ng-zorro-antd/dropdown';
 import { NzHeaderComponent } from 'ng-zorro-antd/layout';
 import { NzIconDirective } from 'ng-zorro-antd/icon';
-import { ProfileMenuComponent } from '@shared/components/profile-menu/profile-menu.component';
+import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
+import { AuthMenuComponent } from '@shared/components/auth-menu/auth-menu.component';
 import { Breadcrumb } from '../admin-layout.component';
 import { RouterLink } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
@@ -24,19 +29,16 @@ import { TranslatePipe } from '@ngx-translate/core';
     NzDropDownDirective,
     NzDropdownMenuComponent,
     NzHeaderComponent,
-    NzIconDirective,
-    ProfileMenuComponent,
+NzIconDirective,
+NzToolTipModule,
+AuthMenuComponent,
     RouterLink,
     TranslatePipe,
   ],
   templateUrl: './navbar.component.html',
   styleUrl: './navbar.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NavbarComponent {
   breadcrumbs = input<Breadcrumb[]>([]);
-  isCollapsed = input<boolean>(true);
-  toggleCollapsed = output<boolean>();
-  toggleCollapse() {
-    this.toggleCollapsed.emit(!this.isCollapsed());
-  }
 }

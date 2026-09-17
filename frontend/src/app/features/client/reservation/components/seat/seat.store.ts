@@ -8,13 +8,17 @@ import {
 } from '@ngrx/signals';
 import { computed, inject } from '@angular/core';
 import { SeatService } from '@domain/seat/data-access/seat.service';
+import { ReservationService } from '@domain/reservation/data-access/reservation.service';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { pipe, switchMap, tap } from 'rxjs';
+import { EMPTY, pipe, switchMap, tap, catchError } from 'rxjs';
 import { tapResponse } from '@ngrx/operators';
 import { SeatStatus } from '@core/constants/enum';
-import { SseService } from '@core/services/sse/sse.service';
+import { SseEvent, SseService } from '@core/services/sse/sse.service';
+import { ToastService } from '@core/services/toast/toast.service';
+import { errorMessage } from '@shared/utils/error.helper';
 import { Store } from '@ngrx/store';
 import { selectSelectedShowtime } from '@domain/showtime/data-access/showtime.selectors';
+import { TranslateService } from '@ngx-translate/core';
 
 export interface SeatState {
   seats: Seat[];
@@ -74,7 +78,10 @@ export const SeatStore = signalStore(
     (
       store,
       seatService = inject(SeatService),
+      reservationService = inject(ReservationService),
       sseService = inject(SseService),
+      translate = inject(TranslateService),
+      toast = inject(ToastService),
     ) => ({
       loadSeats: rxMethod<{ showtimeId: number }>(
         pipe(
@@ -86,7 +93,7 @@ export const SeatStore = signalStore(
               tapResponse({
                 next: (seats) =>
                   patchState(store, { seats, loading: false, error: null }),
-                error: (error: any) => patchState(store, { error }),
+                error: (error) => patchState(store, { error: errorMessage(error) }),
               }),
             ),
           ),
@@ -132,25 +139,58 @@ export const SeatStore = signalStore(
           ),
           switchMap(({ showtimeId, userId, reservationId }) =>
             seatService.getSeatByShowtime(showtimeId).pipe(
-              tapResponse({
-                next: (seats) => {
-                  patchState(store, { seats, loading: false });
-
-                  sseService.connect(showtimeId, userId).subscribe({
-                    next: (res: any) => {
+              tap((seats) =>
+                patchState(store, { seats, loading: false }),
+              ),
+              switchMap(() =>
+                reservationService.getLockedSeats(showtimeId).pipe(
+                  tap((locked) => {
+                    if (!locked.length) return;
+                    patchState(store, (state) => ({
+                      seats: state.seats.map((s) =>
+                        locked.some(
+                          (l) =>
+                            Number(l.seatId) === s.id &&
+                            l.reservationId !== reservationId,
+                        ) && s.status === 'AVAILABLE'
+                          ? { ...s, status: 'HOLD' as SeatStatus }
+                          : s,
+                      ),
+                    }));
+                  }),
+                ),
+              ),
+              switchMap(() =>
+                sseService.connect(showtimeId, userId).pipe(
+                  tap({
+                    next: (res: SseEvent) => {
                       if (
                         res.event === 'SEAT_STATE_INIT' ||
                         res.event === 'SEAT_HOLD'
                       ) {
-                        const holdData = res.data.seatIds || [];
-
+                        const data = res.data as {
+                          seatIds?: { seatId: number; reservationId: string }[];
+                        };
+                        const holdData = data.seatIds ?? [];
                         const isMyUpdate =
                           holdData.length > 0 &&
                           holdData[0].reservationId === reservationId;
+                        const stolen = store
+                          .seats()
+                          .filter(
+                            (s) =>
+                              s.status === 'SELECTED' &&
+                              holdData.some(
+                                (h) =>
+                                  Number(h.seatId) === s.id &&
+                                  h.reservationId !== reservationId,
+                              ),
+                          )
+                          .map((s) => s.seatNumber);
                         patchState(store, (state) => ({
                           seats: state.seats.map((s) => {
                             const match = holdData.find(
-                              (h: any) => Number(h.seatId) === s.id,
+                              (h) => Number(h.seatId) === s.id,
                             );
                             if (match) {
                               return {
@@ -174,8 +214,21 @@ export const SeatStore = signalStore(
                             return s;
                           }),
                         }));
+                        if (stolen.length > 0) {
+                          toast.createNotification({
+                            type: 'warning',
+                            title: translate.instant('reservation.seatStolenTitle'),
+                            message: translate.instant(
+                              'reservation.seatStolen',
+                              { seats: stolen.join(', ') },
+                            ),
+                            position: 'top',
+                          });
+                        }
                       } else if (res.event === 'SEAT_RELEASE') {
-                        const releaseIds = res.data.seatIds;
+                        const releaseIds = (
+                          res.data as { seatIds?: number[] }
+                        ).seatIds ?? [];
                         patchState(store, (state) => ({
                           seats: state.seats.map((s) =>
                             releaseIds.includes(s.id) && s.status !== 'BOOKED'
@@ -185,19 +238,45 @@ export const SeatStore = signalStore(
                         }));
                       }
                     },
-                    error: (err) => console.error('SSE Error:', err),
-                  });
-                },
-                error: (error: any) =>
-                  patchState(store, { error, loading: false }),
+                  }),
+                  catchError((err) => {
+                    console.error('SSE Error:', err);
+                    patchState(store, { error: translate.instant('reservation.sseDisconnected') });
+                    return EMPTY;
+                  }),
+                ),
+              ),
+              catchError((error: unknown) => {
+                patchState(store, {
+                  error: error instanceof Error ? error.message : String(error),
+                  loading: false,
+                });
+                return EMPTY;
               }),
             ),
           ),
         ),
       ),
       //
+      clearError: () => patchState(store, { error: null }),
+      //
+
       toggleSeat(seat: Seat) {
         if (seat.status === 'BOOKED' || seat.status === 'HOLD') return;
+        if (seat.status !== 'SELECTED') {
+          const count = store
+            .seats()
+            .filter((s) => s.status === 'SELECTED').length;
+          if (count >= 8) {
+            toast.createNotification({
+              type: 'warning',
+              title: translate.instant('reservation.maxSeatsTitle'),
+              message: translate.instant('reservation.maxSeats'),
+              position: 'top',
+            });
+            return;
+          }
+        }
         patchState(store, (state) => ({
           seats: state.seats.map((s) =>
             s.id === seat.id

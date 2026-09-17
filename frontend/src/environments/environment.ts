@@ -1,4 +1,5 @@
 export const environment = {
+  useMock: true,
   apiUrl: "/api/v1",
   tmbd: {
     apiUrl: "https://api.themoviedb.org/3",

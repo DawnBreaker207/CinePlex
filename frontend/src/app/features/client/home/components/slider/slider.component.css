@@ -1,11 +1,11 @@
 ::ng-deep .ant-carousel .slick-dots li button {
   height: 4px;
-  background: #fff;
+  background: white;
   opacity: 0.5;
 }
 
 ::ng-deep .ant-carousel .slick-dots li.slick-active button {
   opacity: 1;
   width: 24px;
-  background: #e53e3e;
+  background: var(--color-primary);
 }

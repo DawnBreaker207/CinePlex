@@ -1,3 +1,7 @@
 :host {
   display: contents;
 }
+
+.ant-menu-inline-collapsed li:not(.ant-menu-item):not(.sidebar-section) {
+  display: none;
+}

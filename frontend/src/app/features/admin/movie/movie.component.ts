@@ -1,4 +1,10 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import {
+  Component,
+  computed,
+  inject,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { NzTableModule, NzTableQueryParams } from 'ng-zorro-antd/table';
 import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzSelectModule } from 'ng-zorro-antd/select';
@@ -8,30 +14,34 @@ import { NzModalService } from 'ng-zorro-antd/modal';
 import { NzTagComponent } from 'ng-zorro-antd/tag';
 import { DatePipe, NgClass } from '@angular/common';
 import { NzSpaceComponent } from 'ng-zorro-antd/space';
-import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { NzAvatarComponent } from 'ng-zorro-antd/avatar';
+import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
 import {
   NzListComponent,
   NzListItemComponent,
   NzListItemMetaComponent,
 } from 'ng-zorro-antd/list';
-import { debounceTime, distinctUntilChanged, map } from 'rxjs';
+import { debouncedSearch, saveFooter } from '@shared/utils/form-utils';
 import { Store } from '@ngrx/store';
 import { NzAlertComponent } from 'ng-zorro-antd/alert';
 import { NzSpinModule } from 'ng-zorro-antd/spin';
-import { IsDeletedPipe } from '@core/pipes/is-deleted.pipe';
+import { IsDeletedPipe } from '@shared/pipes/is-deleted.pipe';
 import {
   selectAllMovies,
   selectMovieLoading,
   selectMoviesError,
   selectPaginationMovie,
+  selectSelectedMovie,
 } from '@domain/movie/data-access/movie.selectors';
 import { MovieActions } from '@domain/movie/data-access/movie.actions';
 import { FormMovieComponent } from '@features/admin/movie/form/movie/movie-form.component';
 import { LoadingComponent } from '@shared/components/loading/loading.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { HEADER_COLUMNS } from '@core/constants/column';
+import { ICON_COLORS } from '@shared/utils/colors';
+import { confirmDelete } from '@shared/utils/confirm-delete';
 
 @Component({
   selector: 'app-movie',
@@ -51,19 +61,21 @@ import { HEADER_COLUMNS } from '@core/constants/column';
     NgClass,
     ReactiveFormsModule,
     NzAlertComponent,
-    NzSpinModule,
-    IsDeletedPipe,
+NzSpinModule,
+NzToolTipModule,
+IsDeletedPipe,
     LoadingComponent,
     TranslatePipe,
   ],
   templateUrl: './movie.component.html',
-  styleUrl: './movie.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [NzModalService],
 })
 export class MovieComponent {
-  private fb = inject(FormBuilder);
+  private fb = inject(NonNullableFormBuilder);
   private store = inject(Store);
   private modalService = inject(NzModalService);
+  private translate = inject(TranslateService);
 
   // NgRx Selectors
   readonly movies = this.store.selectSignal(selectAllMovies);
@@ -73,28 +85,32 @@ export class MovieComponent {
 
   // Local State
   readonly headerColumn = HEADER_COLUMNS.MOVIE;
+  readonly ICON_COLORS = ICON_COLORS;
   readonly searchCtrl = this.fb.control('');
 
   isSearching = signal(false);
-  selectedMovie = signal<any>(null);
+  readonly selectedMovie = this.store.selectSignal(selectSelectedMovie);
   searchResults = computed(() => {
-    return this.isSearching() && this.searchCtrl.value ? this.movies() : [];
+    if (!this.isSearching()) return [];
+    const q = (this.searchCtrl.value || '').toLowerCase().trim();
+    if (!q) return [];
+    return this.movies().filter(
+      (m) =>
+        m.title.toLowerCase().includes(q) ||
+        (m.originalTitle || '').toLowerCase().includes(q),
+    );
   });
 
   constructor() {
-    this.searchCtrl.valueChanges
-      .pipe(
-        debounceTime(500),
-        map((v) => v?.trim() || ''),
-        distinctUntilChanged(),
-        takeUntilDestroyed(),
-      )
+    debouncedSearch(this.searchCtrl, 500)
+      .pipe(takeUntilDestroyed())
       .subscribe((search) => {
         if (search) {
           this.isSearching.set(true);
           this.store.dispatch(MovieActions.searchMovies({ search: search }));
         } else {
           this.isSearching.set(false);
+          this.store.dispatch(MovieActions.loadMovies({ page: 0, size: 10 }));
         }
       });
   }
@@ -103,7 +119,6 @@ export class MovieComponent {
     const movie = this.movies().find((m) => m.id === id);
     if (movie) {
       this.store.dispatch(MovieActions.selectedMovie({ movie }));
-      this.selectedMovie.set(movie);
       this.openMovieModal('view', id);
     }
     this.isSearching.set(false);
@@ -128,26 +143,13 @@ export class MovieComponent {
       },
       nzWidth: 900,
       nzKeyboard: true,
-      nzFooter:
-        mode === 'view'
-          ? null
-          : [
-              {
-                label: 'Confirm',
-                type: 'primary',
-                onClick: () => {
-                  const form =
-                    modal.getContentComponent() as FormMovieComponent;
-                  if (form.form.valid) {
-                    form.submit();
-                    modal.close();
-                  } else {
-                    console.log('Form Invalid!');
-                  }
-                },
-              },
-            ],
+      nzFooter: mode === 'view' ? null : saveFooter<FormMovieComponent>(this.translate),
       nzOnCancel: (instance) => this.handleCancel(instance),
+    });
+    modal.afterClose.subscribe((result) => {
+      if (result) {
+        this.store.dispatch(MovieActions.loadMovies({ page: 0, size: 10 }));
+      }
     });
   }
 
@@ -156,14 +158,20 @@ export class MovieComponent {
 
     return new Promise((resolve) => {
       this.modalService.confirm({
-        nzTitle: 'Are u sure',
+        nzTitle: this.translate.instant('movie.form.unsavedTitle'),
+        nzContent: this.translate.instant('movie.form.unsavedContent'),
+        nzOkText: this.translate.instant('movie.form.discard'),
+        nzOkDanger: true,
         nzOnOk: () => resolve(true),
+        nzCancelText: this.translate.instant('movie.form.keepEditing'),
         nzOnCancel: () => resolve(false),
       });
     });
   }
 
   onDelete(id: number) {
-    this.store.dispatch(MovieActions.deleteMovie({ id }));
+    confirmDelete(this.modalService, this.translate, 'movie.deleteTitle', () =>
+      this.store.dispatch(MovieActions.deleteMovie({ id })),
+    );
   }
 }

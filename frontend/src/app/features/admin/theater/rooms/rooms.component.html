@@ -1,0 +1,201 @@
+<div class="min-h-screen py-10 px-4 sm:px-6 lg:px-8">
+  <div
+    class="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between"
+  >
+    <div>
+      <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">
+        {{ "admin.room.title" | translate }}
+      </h1>
+      <p class="text-gray-500">{{ "admin.room.subtitle" | translate }}</p>
+    </div>
+    <button nz-button nzType="primary" class="rounded-lg" (click)="openAdd()">
+      <nz-icon nzType="plus" />
+      {{ "common.add" | translate }}
+    </button>
+  </div>
+
+  @if (error(); as err) {
+    <app-error-state
+      [message]="err"
+      (retry)="loadRooms()"
+      class="mb-4 block"
+    />
+  }
+
+  <app-loading [isLoading]="loading()">
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+      @for (room of rooms(); track room.id) {
+        <div
+          class="cursor-pointer rounded-2xl border p-6 transition-colors"
+          [class]="
+            selectedRoom()?.id === room.id
+              ? 'border-[var(--color-primary)] bg-[var(--color-primary-light)]/30'
+              : 'border-gray-200 bg-white dark:border-gray-700 dark:bg-[#161a20]'
+          "
+          (click)="selectRoom(room)"
+          (keyup.enter)="selectRoom(room)"
+          tabindex="0"
+          role="button"
+        >
+          <div class="flex items-center justify-between gap-2">
+            <p class="text-lg font-bold text-gray-900 dark:text-gray-100">
+              {{ room.name }} · {{ room.roomType }}
+            </p>
+            <div class="flex gap-1">
+              <ng-container (click)="$event.stopPropagation()">
+              <button
+                nz-button
+                nzType="text"
+                nzShape="circle"
+                [attr.aria-label]="'common.edit' | translate"
+                (click)="openEdit(room)"
+              >
+                <nz-icon nzType="edit" />
+              </button>
+              <button
+                nz-button
+                nzType="text"
+                nzShape="circle"
+                [attr.aria-label]="'common.delete' | translate"
+                (click)="deleteRoom(room)"
+              >
+                <nz-icon nzType="delete" class="text-danger" />
+              </button>
+              </ng-container>
+            </div>
+          </div>
+          <p class="text-sm text-gray-500">
+            {{ room.seatCount || room.totalSeats }}
+            {{ "admin.showtime.totalSeats" | translate }}
+          </p>
+        </div>
+      } @empty {
+        <p class="text-gray-500">{{ "admin.room.empty" | translate }}</p>
+      }
+    </div>
+
+    @if (showRoomForm()) {
+      <div class="mt-6 rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-[#161a20]">
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <input
+            nz-input
+            class="rounded-lg"
+            [placeholder]="'admin.room.name' | translate"
+            [ngModel]="roomName()"
+            (ngModelChange)="roomName.set($event)"
+          />
+          <nz-select
+            class="w-full"
+            [ngModel]="roomType()"
+            (ngModelChange)="roomType.set($event)"
+          >
+            <nz-option nzValue="2D" nzLabel="2D" />
+            <nz-option nzValue="3D" nzLabel="3D" />
+            <nz-option nzValue="IMAX" nzLabel="IMAX" />
+          </nz-select>
+          <input
+            nz-input
+            type="number"
+            class="rounded-lg"
+            [placeholder]="'admin.showtime.totalSeats' | translate"
+            [ngModel]="roomSeats()"
+            (ngModelChange)="roomSeats.set($event)"
+          />
+        </div>
+        <div class="mt-4 flex justify-end gap-2">
+          <button nz-button nzType="default" (click)="showRoomForm.set(false)">
+            {{ "common.cancel" | translate }}
+          </button>
+          <button
+            nz-button
+            nzType="primary"
+            [nzLoading]="saving()"
+            (click)="saveRoom()"
+          >
+            {{ "common.save" | translate }}
+          </button>
+        </div>
+      </div>
+    }
+
+    @if (selectedRoom(); as room) {
+      <div class="mt-6 rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-[#161a20]">
+        <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100">
+            {{ "admin.room.layout" | translate }} — {{ room.name }}
+          </h2>
+          <div class="flex gap-2">
+            <button nz-button nzType="default" (click)="addRow()">
+              {{ "admin.room.addRow" | translate }}
+            </button>
+            <button
+              nz-button
+              nzType="primary"
+              [disabled]="!dirty()"
+              [nzLoading]="saving()"
+              (click)="saveLayout()"
+            >
+              {{ "common.save" | translate }}
+            </button>
+          </div>
+        </div>
+
+        @if (selectedCount() >= 2) {
+          <div class="mb-4 flex items-center gap-2 rounded-lg bg-gray-50 p-3 dark:bg-gray-800">
+            <span class="text-sm font-semibold">
+              {{ "admin.room.selectedCount" | translate }}: {{ selectedCount() }}
+            </span>
+            <nz-select
+              class="w-40"
+              [nzPlaceHolder]="'admin.room.setType' | translate"
+              (ngModelChange)="applyTypeToSelected($event)"
+              [ngModel]="null"
+            >
+              <nz-option nzValue="NORMAL" label="NORMAL" />
+              <nz-option nzValue="VIP" label="VIP" />
+              <nz-option nzValue="COUPLE" label="COUPLE" />
+              <nz-option nzValue="WHEELCHAIR" label="WHEELCHAIR" />
+            </nz-select>
+          </div>
+        }
+
+        <div class="space-y-2 overflow-x-auto pb-2">
+          @for (group of grouped(); track group.row) {
+            <div class="flex items-center justify-center gap-2">
+              <button
+                nz-button
+                nzType="text"
+                nzSize="small"
+                class="w-8 font-mono font-bold"
+                (click)="selectRow(group.row)"
+                [attr.aria-label]="group.row"
+              >
+                {{ group.row }}
+              </button>
+              @for (seat of group.seats; track seat.id) {
+                <button
+                  class="h-9 w-9 rounded-lg border text-[10px] font-bold transition-transform"
+                  [class]="seatClass(seat.seatType)"
+                  [class.ring-2]="selectedIds().has(seat.id)"
+                  [class.ring-[var(--color-primary)]]="selectedIds().has(seat.id)"
+                  [title]="seat.rowLabel + seat.seatNumber + ' • ' + seat.seatType"
+                  (click)="cycleType(seat)"
+                  (contextmenu)="toggleSelect(seat); $event.preventDefault()"
+                >
+                  {{ seat.seatNumber }}
+                </button>
+              }
+            </div>
+          } @empty {
+            <p class="py-8 text-center text-gray-500">
+              {{ "admin.room.emptyLayout" | translate }}
+            </p>
+          }
+        </div>
+        <p class="mt-3 text-xs text-gray-400">
+          {{ "admin.room.layoutHint" | translate }}
+        </p>
+      </div>
+    }
+  </app-loading>
+</div>

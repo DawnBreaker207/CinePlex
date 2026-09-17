@@ -1,12 +1,14 @@
-import { inject, Injectable } from '@angular/core';
+import { inject, Injectable, Injector } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ToastService } from '@core/services/toast/toast.service';
+import { TranslateService } from '@ngx-translate/core';
 
 @Injectable({
   providedIn: 'root',
 })
 export class GlobalErrorService {
   private toast = inject(ToastService);
+  private injector = inject(Injector);
 
   readonly RETRY_CONFIG = {
     maxRetries: 3,
@@ -33,45 +35,48 @@ export class GlobalErrorService {
   }
 
   private parseError(error: HttpErrorResponse) {
+    const translate = this.injector.get(TranslateService);
+    const t = (key: string) => translate.instant(key);
     const status = error.status;
     let type = 'error';
-    let title = `Error ${status}`;
+    let title = `${t('error.title')} ${status}`;
     const serverMessage = error.error?.message;
-    let message = serverMessage || error.message || 'Unknown error';
+    let message = serverMessage || error.message || t('error.unknown');
 
     switch (status) {
       case 400:
-        title = `${status}:Bad Request`;
+        title = `${status}: ${t('error.badRequest')}`;
+        if (!serverMessage) message = t('error.badRequestMsg');
         break;
       case 401:
-        title = `${status}: Unauthorized`;
-        if (!serverMessage) message = 'Unauthorized';
+        title = `${status}: ${t('error.unauthorized')}`;
+        if (!serverMessage) message = t('error.unauthorizedMsg');
         break;
       case 403:
         type = 'warning';
-        title = `${status}: Forbidden`;
-        if (!serverMessage) message = 'Forbidden';
+        title = `${status}: ${t('error.forbidden')}`;
+        if (!serverMessage) message = t('error.forbiddenMsg');
         break;
       case 404:
-        title = `${status}: Not Found`;
-        if (!serverMessage) message = 'Not Found';
+        title = `${status}: ${t('error.notFound')}`;
+        if (!serverMessage) message = t('error.notFoundMsg');
         break;
       case 429:
         type = 'warning';
-        title = `${status}: Too Many Requests`;
-        if (!serverMessage) message = 'Too Many Requests';
+        title = `${status}: ${t('error.tooManyRequests')}`;
+        if (!serverMessage) message = t('error.tooManyRequestsMsg');
         break;
       case 500:
-        title = `${status}: Server Error`;
-        if (!serverMessage) message = 'Server Error';
+        title = `${status}: ${t('error.serverError')}`;
+        if (!serverMessage) message = t('error.serverErrorMsg');
         break;
       case 503:
         type = 'warning';
-        title = `${status}: Service Unavailable`;
-        if (!serverMessage) message = 'Service Unavailable';
+        title = `${status}: ${t('error.serviceUnavailable')}`;
+        if (!serverMessage) message = t('error.serviceUnavailableMsg');
         break;
       default:
-        title = `Error ${status}`;
+        title = `${t('error.title')} ${status}`;
         break;
     }
     return { type, title, message };

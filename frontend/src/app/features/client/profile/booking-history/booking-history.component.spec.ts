@@ -2,6 +2,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { BookingHistoryComponent } from './booking-history.component';
 
+import { testProviders } from '@shared/testing/test-providers';
+
 describe('BookingHistoryComponent', () => {
   let component: BookingHistoryComponent;
   let fixture: ComponentFixture<BookingHistoryComponent>;
@@ -9,6 +11,7 @@ describe('BookingHistoryComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [BookingHistoryComponent],
+      providers: [testProviders],
     }).compileComponents();
 
     fixture = TestBed.createComponent(BookingHistoryComponent);

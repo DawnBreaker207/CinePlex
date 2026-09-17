@@ -6,6 +6,7 @@ import {
   DashboardMetrics,
   DashboardQuery,
   DashboardSummary,
+  DailyForecast,
   PaymentDistribution,
   RevenuePoint,
   TopMovie,
@@ -133,9 +134,21 @@ export class DashboardService {
       );
   }
 
+  getForecast(days = 7) {
+    const params = new HttpParams().set('days', days.toString());
+    return this.http
+      .get<ApiRes<DailyForecast[]>>(`${environment.apiUrl}/ai/forecast/revenue`, {
+        params,
+      })
+      .pipe(
+        map((res) => res.data ?? []),
+        catchError(this.handleError<DailyForecast[]>('Revenue forecast')),
+      );
+  }
+
   private handleError<T>(operation = 'operation') {
-    return (error: any): Observable<T> => {
-      console.log(`${operation} failed: ${error}`);
+    return (error: unknown): Observable<T> => {
+      console.error(`${operation} failed: ${error}`);
       return throwError(() => error);
     };
   }

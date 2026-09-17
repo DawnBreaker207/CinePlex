@@ -9,13 +9,9 @@ export const SocketConfig: RxStompConfig = {
   heartbeatIncoming: 0,
   heartbeatOutgoing: 20000,
 
-  debug: (message: string) => {
-    console.log('[SockJS]', new Date(), message);
-  },
+  debug: () => {},
 
   connectHeaders: {},
 
-  beforeConnect: () => {
-    console.log('Connecting to the server via SockJS...');
-  },
+  beforeConnect: () => {},
 };

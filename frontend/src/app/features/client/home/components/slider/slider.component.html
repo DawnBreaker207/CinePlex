@@ -1,6 +1,6 @@
-<div class="mt-6 w-full bg-[url('/assets/bg-slider.png')] bg-repeat-x">
+<div class="w-full bg-black bg-[url('/assets/bg-slider.png')] bg-repeat bg-center py-6">
   <div
-    class="mx-auto max-w-5xl overflow-hidden rounded-xl border border-slate-700 bg-black shadow-2xl"
+    class="mx-auto w-full max-w-5xl overflow-hidden rounded-xl border border-slate-700 bg-black shadow-2xl"
   >
     <nz-carousel
       nzAutoPlay
@@ -26,7 +26,7 @@
             >
               <div class="max-w-3xl">
                 <h1
-                  class="mb-3 font-['Bricolage_Grotesque'] text-3xl font-extrabold leading-tight text-white md:text-5xl"
+                  class="mb-3 text-3xl font-extrabold leading-tight text-white md:text-5xl"
                 >
                   {{ banner.title }}
                 </h1>
@@ -41,18 +41,18 @@
                   <button
                     nz-button
                     nzType="primary"
-                    class="flex h-10 items-center gap-2 rounded-lg border-none bg-[#E53E3E] px-5 text-sm font-semibold text-white hover:bg-[#C53030]"
+                    class="flex h-10 items-center gap-2 rounded-lg border-none bg-[var(--color-primary)] px-5 text-sm font-semibold text-white hover:bg-[var(--color-primary-dark)]"
                   >
-                    <nz-icon nzType="barcode"/>
-                    {{ 'Đặt vé ngay' | translate }}
+                    <nz-icon nzType="barcode" />
+                    {{ "detail.bookNow" | translate }}
                   </button>
                   <button
                     nz-button
                     nzType="default"
-                    class="flex h-10 items-center gap-2 rounded-lg border border-slate-200/70 bg-transparent px-5 text-sm font-semibold text-white hover:border-[#E53E3E] hover:text-[#E53E3E]"
+                    class="flex h-10 items-center gap-2 rounded-lg border border-slate-200/70 bg-transparent px-5 text-sm font-semibold text-white hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]"
                   >
-                    <nz-icon nzType="play-circle"/>
-                    {{ 'Xem trailer' | translate }}
+                    <nz-icon nzType="play-circle" />
+                    {{ "detail.watchTrailerLower" | translate }}
                   </button>
                 </div>
               </div>

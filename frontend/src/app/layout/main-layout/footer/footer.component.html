@@ -1,8 +1,4 @@
-<nz-footer
-  nz-menu
-  nzTheme="light"
-  style="height: auto; background: transparent"
->
+<footer class="bg-surface dark:bg-[#0b0d10]">
   <div class="text-gray-300 pt-16 pb-8 border-t border-gray-800">
     <div class="max-w-5xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-12">
       <!-- Brand -->
@@ -12,10 +8,7 @@
           CINEPLEX
         </h2>
         <p class="text-sm text-gray-400">
-          {{
-            "Trải nghiệm những bộ phim hay nhất với chất lượng âm thanh và hình ảnh cao cấp. Đặt vé chưa bao giờ dễ dàng đến thế."
-              | translate
-          }}
+          {{ "footer.aboutText" | translate }}
         </p>
         <div class="flex gap-4 pt-2">
           <a
@@ -26,7 +19,7 @@
           </a>
           <a
             href="#"
-            class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-red-500 hover:text-white transition-colors"
+            class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-primary hover:text-white transition-colors"
           >
             <nz-icon nzType="google" />
           </a>
@@ -36,27 +29,27 @@
       <!-- Links -->
       <div>
         <h4 class="text-white font-bold mb-6">
-          {{ "Liên kết nhanh" | translate }}
+          {{ "footer.quickLinks" | translate }}
         </h4>
         <ul class="space-y-3 text-sm">
           <li>
             <a href="#" class="hover:text-primary transition-colors">{{
-              "Về chúng tôi" | translate
+              "footer.about" | translate
+            }}</a>
+          </li>
+          <li>
+            <a routerLink="/movies" class="hover:text-primary transition-colors">{{
+              "common.movies" | translate
+            }}</a>
+          </li>
+          <li>
+            <a routerLink="/home" class="hover:text-primary transition-colors">{{
+              "common.theaters" | translate
             }}</a>
           </li>
           <li>
             <a href="#" class="hover:text-primary transition-colors">{{
-              "Phim" | translate
-            }}</a>
-          </li>
-          <li>
-            <a href="#" class="hover:text-primary transition-colors">{{
-              "Rạp chiếu" | translate
-            }}</a>
-          </li>
-          <li>
-            <a href="#" class="hover:text-primary transition-colors">{{
-              "Liên hệ" | translate
+              "footer.contact" | translate
             }}</a>
           </li>
         </ul>
@@ -64,26 +57,28 @@
 
       <!-- Links -->
       <div>
-        <h4 class="text-white font-bold mb-6">{{ "Hỗ trợ" | translate }}</h4>
+        <h4 class="text-white font-bold mb-6">
+          {{ "footer.support" | translate }}
+        </h4>
         <ul class="space-y-3 text-sm">
           <li>
             <a href="#" class="hover:text-primary transition-colors">{{
-              "Chính sách bảo mật" | translate
+              "footer.privacy" | translate
             }}</a>
           </li>
           <li>
             <a href="#" class="hover:text-primary transition-colors">{{
-              "Điều khoản dịch vụ" | translate
+              "footer.terms" | translate
             }}</a>
           </li>
           <li>
             <a href="#" class="hover:text-primary transition-colors">{{
-              "Hỏi đáp (FAQ)" | translate
+              "footer.faq" | translate
             }}</a>
           </li>
           <li>
             <a href="#" class="hover:text-primary transition-colors">{{
-              "Trung tâm hỗ trợ" | translate
+              "footer.supportCenter" | translate
             }}</a>
           </li>
         </ul>
@@ -92,19 +87,19 @@
       <!-- Newsletter -->
       <div>
         <h4 class="text-white font-bold mb-6">
-          {{ "Bản tin" | translate }}
+          {{ "footer.newsletter" | translate }}
         </h4>
-        <p class="text-xs text-gray-400 mb-4">
-          {{ "Đăng ký để nhận những cập nhật và ưu đãi mới nhất." | translate }}
+        <p class="text-xs text-gray-400 mb-4 leading-relaxed">
+          {{ "footer.subscribeText" | translate }}
         </p>
         <div class="flex gap-2">
           <input
             type="text"
-            [placeholder]="'Email của bạn' | translate"
+            [placeholder]="'footer.emailPlaceholder' | translate"
             class="bg-gray-500 border-none outline-none text-white text-sm px-4 py-2 rounded-l-lg w-full focus:ring-1 focus:ring-primary"
           />
           <button
-            class="bg-gray-500 bg-primary hover:bg-blue-600 text-white px-4 py-2 rounded-r-lg font-bold"
+            class="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-r-lg font-bold"
           >
             <nz-icon nzType="mail" />
           </button>
@@ -112,10 +107,10 @@
       </div>
     </div>
     <div
-      class="max-w-full mx-auto px-6 mt-12 pt-8 border-t border-gray-800 text-center text-xs text-gray-500"
+      class="max-w-full mx-auto px-6 mt-12 pt-8 border-t border-gray-800 text-center text-xs text-gray-400"
     >
       &copy; {{ date.getFullYear() }} CineTicket.
-      {{ "Toàn bộ bản quyền được bảo lưu." | translate }}
+      {{ "footer.copyright" | translate }}
     </div>
   </div>
-</nz-footer>
+</footer>

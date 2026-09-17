@@ -1,9 +1,12 @@
-<nz-layout>
+<a href="#main-content" class="skip-link">
+  {{ "common.skipToContent" | translate }}
+</a>
+<nz-layout data-theme="client">
   <app-header />
-  <nz-content>
+  <nz-content id="main-content">
     <div class="relative">
       @if (loading()) {
-        <app-loading tip="Loading...">
+        <app-loading>
           <router-outlet />
         </app-loading>
       } @else {

@@ -14,6 +14,18 @@ import { formatDate } from '@shared/utils/date.helper';
 import { ApiRes, ResponsePage } from '@core/models/common.model';
 import { ReservationStatus } from '@core/constants/enum';
 
+export interface LockedSeat {
+  seatId: number;
+  reservationId: string;
+}
+
+export interface VoucherDiscount {
+  code: string;
+  originalAmount: number;
+  discountAmount: number;
+  finalAmount: number;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -26,7 +38,6 @@ export class ReservationService {
     page: number = 0,
     size: number = 0,
   ) {
-    console.log(filter);
     let params = new HttpParams();
 
     params = params.set('page', page.toString());
@@ -111,9 +122,31 @@ export class ReservationService {
       );
   }
 
+  getLockedSeats(showtimeId: number) {
+    return this.http
+      .get<LockedSeat[]>(`${this.URL}/showtimes/${showtimeId}/locked-seats`)
+      .pipe(
+        map((res) => res ?? []),
+        catchError(this.handleError<LockedSeat[]>('Locked seats')),
+      );
+  }
+
+  applyVoucher(reservationId: string, code: string) {
+    return this.http
+      .post<ApiRes<VoucherDiscount>>(
+        `${this.URL}/${reservationId}/voucher`,
+        null,
+        { params: { code } },
+      )
+      .pipe(
+        map((res) => res.data),
+        catchError(this.handleError<VoucherDiscount>('Apply voucher')),
+      );
+  }
+
   private handleError<T>(operation = 'operation') {
-    return (error: any): Observable<T> => {
-      console.log(`${operation} failed: ${error}`);
+    return (error: unknown): Observable<T> => {
+      console.error(`${operation} failed: ${error}`);
       return throwError(() => error);
     };
   }

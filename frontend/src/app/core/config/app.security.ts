@@ -1,5 +1,5 @@
 import { inject, isDevMode, provideAppInitializer } from '@angular/core';
-import { SecurityService } from '@shared/service/security.service';
+import { SecurityService } from '@core/services/security/security.service';
 
 export function provideAppSecurity() {
   return [

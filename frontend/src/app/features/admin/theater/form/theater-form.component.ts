@@ -1,12 +1,22 @@
-import { Component, inject, OnDestroy, OnInit } from '@angular/core';
 import {
-  FormBuilder,
+  Component,
+  DestroyRef,
+  inject,
+  OnInit,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
+import {
+  FormControl,
   FormGroup,
   FormsModule,
+  NonNullableFormBuilder,
   ReactiveFormsModule,
+  Validators,
 } from '@angular/forms';
 import { NzModalRef } from 'ng-zorro-antd/modal';
-import { filter, Subject, take, takeUntil } from 'rxjs';
+import { filter, take } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NzInputDirective } from 'ng-zorro-antd/input';
 import { NzColDirective, NzRowDirective } from 'ng-zorro-antd/grid';
 import {
@@ -15,12 +25,17 @@ import {
   NzFormLabelComponent,
 } from 'ng-zorro-antd/form';
 import { Store } from '@ngrx/store';
-import { Actions, ofType } from '@ngrx/effects';
+import { Actions } from '@ngrx/effects';
 import { NzOptionComponent, NzSelectComponent } from 'ng-zorro-antd/select';
 import { TheaterActions } from '@domain/theater/data-access/theater.actions';
 import { selectTheaterById } from '@domain/theater/data-access/theater.selectors';
-import { Theater } from '@domain/theater/models/theater.model';
+import { Theater, TheaterRequest } from '@domain/theater/models/theater.model';
 import { TranslatePipe } from '@ngx-translate/core';
+import {
+  disableForm,
+  markFormTouched,
+  watchSaveResult,
+} from '@shared/utils/form-utils';
 
 @Component({
   selector: 'app-theater-form',
@@ -39,18 +54,25 @@ import { TranslatePipe } from '@ngx-translate/core';
   ],
   templateUrl: './theater-form.component.html',
   styleUrl: './theater-form.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class FormTheaterComponent implements OnInit, OnDestroy {
+export class FormTheaterComponent implements OnInit {
+  readonly submitting = signal(false);
   mode: 'add' | 'edit' | 'view' = 'add';
   theaterId!: number;
-  form!: FormGroup;
-  private fb = inject(FormBuilder);
+  form!: FormGroup<{
+    id: FormControl<string>;
+    name: FormControl<string>;
+    location: FormControl<string>;
+    capacity: FormControl<number | null>;
+  }>;
+  private fb = inject(NonNullableFormBuilder);
   private modelRef = inject(NzModalRef);
   private store = inject(Store);
   private actions$ = inject(Actions);
+  private destroyRef = inject(DestroyRef);
 
-  private initialForm: any = null;
-  destroy$: Subject<void> = new Subject<void>();
+  private initialForm: unknown = null;
 
   ngOnInit() {
     this.initForm();
@@ -70,14 +92,14 @@ export class FormTheaterComponent implements OnInit, OnDestroy {
             (theater) => theater !== null && theater.id === this.theaterId,
           ),
           take(1),
-          takeUntil(this.destroy$),
+          takeUntilDestroyed(this.destroyRef),
         )
         .subscribe((theater) => {
           if (theater) {
             this.patchFormValue(theater);
             this.initialForm = this.form.value;
             if (this.mode === 'view') {
-              this.disableForm();
+              disableForm(this.form);
             }
           } else {
             this.initialForm = this.form.value;
@@ -86,18 +108,15 @@ export class FormTheaterComponent implements OnInit, OnDestroy {
     }
   }
 
-  private disableForm() {
-    Object.keys(this.form.controls).forEach((key) => {
-      this.form.get(key)?.disable();
-    });
-  }
-
   initForm() {
     this.form = this.fb.group({
       id: [''],
-      name: [''],
-      location: [''],
-      capacity: [''],
+      name: ['', Validators.required],
+      location: ['', Validators.required],
+      capacity: [
+        null as number | null,
+        [Validators.required, Validators.min(1)],
+      ],
     });
   }
 
@@ -116,51 +135,42 @@ export class FormTheaterComponent implements OnInit, OnDestroy {
   }
 
   submit() {
-    if (this.form.valid) {
-      const theaterData = this.form.value;
-      if (this.mode === 'edit') {
-        this.store.dispatch(
-          TheaterActions.updateTheater({
-            id: this.theaterId as number,
-            theater: theaterData,
-          }),
-        );
-      } else if (this.mode === 'add') {
-        this.store.dispatch(
-          TheaterActions.createTheater({ theater: theaterData }),
-        );
-      }
-
-      this.actions$
-        .pipe(
-          ofType(
-            TheaterActions.createTheaterSuccess,
-            TheaterActions.updateTheaterSuccess,
-          ),
-          take(1),
-          takeUntil(this.destroy$),
-        )
-        .subscribe(() => {
-          this.modelRef.close();
-        });
-
-      this.actions$
-        .pipe(
-          ofType(
-            TheaterActions.createTheaterFailed,
-            TheaterActions.updateTheaterFailed,
-          ),
-          take(1),
-          takeUntil(this.destroy$),
-        )
-        .subscribe(({ error }) => {
-          console.error('Save theater failed', error);
-        });
+    if (!this.form.valid || this.submitting()) {
+      markFormTouched(this.form);
+      return;
     }
-  }
 
-  ngOnDestroy() {
-    this.destroy$.next();
-    this.destroy$.complete();
+    this.submitting.set(true);
+    const theaterData = this.form.getRawValue() as TheaterRequest;
+    if (this.mode === 'edit') {
+      this.store.dispatch(
+        TheaterActions.updateTheater({
+          id: this.theaterId as number,
+          theater: theaterData as Theater,
+        }),
+      );
+    } else if (this.mode === 'add') {
+      this.store.dispatch(
+        TheaterActions.createTheater({ theater: theaterData }),
+      );
+    }
+
+    watchSaveResult(
+      this.actions$,
+      this.destroyRef,
+      [
+        TheaterActions.createTheaterSuccess,
+        TheaterActions.updateTheaterSuccess,
+      ],
+      [TheaterActions.createTheaterFailed, TheaterActions.updateTheaterFailed],
+      () => {
+        this.submitting.set(false);
+        this.modelRef.close();
+      },
+      (error) => {
+        this.submitting.set(false);
+        console.error('Save theater failed', error);
+      },
+    );
   }
 }

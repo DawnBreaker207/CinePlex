@@ -1,4 +1,5 @@
 import { createReducer, on } from '@ngrx/store';
+import { errorMessage } from '@shared/utils/error.helper';
 import { Showtime } from '@domain/showtime/models/showtime.model';
 import { Pagination } from '@core/models/common.model';
 import { ShowtimeActions } from '@domain/showtime/data-access/showtime.actions';
@@ -70,7 +71,7 @@ export const showtimeReducer = createReducer(
       return {
         ...state,
         loading: false,
-        error,
+        error: errorMessage(error),
       };
     },
   ),
@@ -102,7 +103,7 @@ export const showtimeReducer = createReducer(
     return {
       ...state,
       loadingDetails: false,
-      error,
+      error: errorMessage(error),
     };
   }),
   //  Create
@@ -125,7 +126,7 @@ export const showtimeReducer = createReducer(
     return {
       ...state,
       saving: false,
-      error,
+      error: errorMessage(error),
     };
   }),
   //  Update
@@ -154,7 +155,7 @@ export const showtimeReducer = createReducer(
     return {
       ...state,
       saving: false,
-      error,
+      error: errorMessage(error),
     };
   }),
   //  Delete
@@ -179,7 +180,7 @@ export const showtimeReducer = createReducer(
     return {
       ...state,
       loading: false,
-      error,
+      error: errorMessage(error),
     };
   }),
   on(ShowtimeActions.selectedShowtime, (state, { showtime }) => {

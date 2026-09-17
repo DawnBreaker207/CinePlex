@@ -1,4 +1,9 @@
-import { Component, inject, OnInit } from '@angular/core';
+import {
+  Component,
+  inject,
+  OnInit,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { NzTableModule, NzTableQueryParams } from 'ng-zorro-antd/table';
 import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzSwitchModule } from 'ng-zorro-antd/switch';
@@ -6,8 +11,10 @@ import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzSpinModule } from 'ng-zorro-antd/spin';
 import { DatePipe } from '@angular/common';
 import { NzTagComponent } from 'ng-zorro-antd/tag';
+import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
 import { FormsModule } from '@angular/forms';
-import { IsDeletedPipe } from '@core/pipes/is-deleted.pipe';
+import { NzAlertModule } from 'ng-zorro-antd/alert';
+import { IsDeletedPipe } from '@shared/pipes/is-deleted.pipe';
 import { LoadingComponent } from '@shared/components/loading/loading.component';
 import { UserStore } from '@domain/user/data-access/user.store';
 import { TranslatePipe } from '@ngx-translate/core';
@@ -21,7 +28,9 @@ import { HEADER_COLUMNS } from '@core/constants/column';
     NzSwitchModule,
     NzIconModule,
     NzSpinModule,
-    DatePipe,
+NzAlertModule,
+NzToolTipModule,
+DatePipe,
     IsDeletedPipe,
     NzTagComponent,
     FormsModule,
@@ -30,7 +39,7 @@ import { HEADER_COLUMNS } from '@core/constants/column';
     TranslatePipe,
   ],
   templateUrl: './user.component.html',
-  styleUrl: './user.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class UserComponent implements OnInit {
   readonly userStore = inject(UserStore);

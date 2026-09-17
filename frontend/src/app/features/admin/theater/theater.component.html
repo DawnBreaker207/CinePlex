@@ -1,54 +1,63 @@
-<div class="min-h-screen bg-slate-50 py-10 px-4 sm:px-6 lg:px-8">
+<div class="min-h-screen bg-[var(--color-bg-admin)] py-10 px-4 sm:px-6 lg:px-8">
   <div
     class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8"
   >
     <div>
-      <h1 class="text-3xl font-bold text-gray-900">
-        {{ "Quản Lý Rạp Chiếu" | translate }}
+      <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">
+        {{ "admin.theater.manage" | translate }}
       </h1>
     </div>
     <button
       nz-button
       nzType="primary"
       nzShape="circle"
+      nz-tooltip
+      [nzTooltipTitle]="'common.add' | translate"
       (click)="openModal('add')"
     >
-      <nz-icon nzType="plus" nzTheme="outline" />
+      <nz-icon nzType="plus" nzTheme="outline" aria-hidden="true" />
     </button>
   </div>
-  <div class="mb-5 flex items-center justify-between">
-    <nz-input-group nzPrefixIcon="search">
+  <div
+    class="mb-5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3"
+  >
+    <nz-input-group nzPrefixIcon="search" class="w-full max-w-[500px]">
       <input
         nz-input
-        [placeholder]="'Tìm kiếm' | translate"
-        style="width: 500px"
+        [formControl]="searchCtrl"
+        [placeholder]="'common.search' | translate"
+        class="w-full"
         type="text"
+        maxlength="255"
       />
     </nz-input-group>
-    <!--   Search result list-->
-    <nz-select class="w-[150px]" [nzPlaceHolder]="'Sắp xếp' | translate">
+    <nz-select
+      class="w-full sm:w-[150px]"
+      [formControl]="sortCtrl"
+      [nzPlaceHolder]="'common.sort' | translate"
+    >
       <nz-option
-        [nzLabel]="'Mới nhất' | translate"
+        [nzLabel]="'admin.movie.sortNewest' | translate"
         nzValue="newest"
       ></nz-option>
-      <nz-option [nzLabel]="'Cũ nhất' | translate" nzValue="oldest"></nz-option>
+      <nz-option
+        [nzLabel]="'admin.movie.sortOldest' | translate"
+        nzValue="oldest"
+      ></nz-option>
     </nz-select>
   </div>
   @let errorMsg = error();
-  @let pag = pagination();
   <app-loading [isLoading]="loading()">
     <div
-      class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 overflow-hidden"
+      class="bg-white dark:bg-[#161a20] rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-6 overflow-x-auto"
     >
       <nz-table
-        [nzData]="theaters()"
-        [nzFrontPagination]="false"
-        [nzTotal]="pag?.totalElements || 0"
-        [nzPageIndex]="(pag?.pageNumber ?? 0) + 1"
-        [nzPageSize]="pag?.pageSize ?? 10"
+        [nzData]="filteredTheaters()"
+        [nzFrontPagination]="true"
+        [nzPageSize]="10"
         nzShowPagination
         [nzShowSizeChanger]="true"
-        (nzQueryParams)="onQueryParamsChange($event)"
+        [nzNoResult]="'admin.theater.empty' | translate"
       >
         <thead>
           <tr>
@@ -58,13 +67,21 @@
           </tr>
         </thead>
         <tbody>
-          @for (item of theaters(); track item.id) {
+          @for (item of filteredTheaters(); track item.id) {
             <tr
-              class="group hover:bg-gray-50 transition-colors border-b border-gray-100"
+              class="group hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors border-b border-gray-100 dark:border-gray-700"
             >
               <td>{{ item.id }}</td>
-              <td>{{ item.name }}</td>
-              <td>{{ item.location }}</td>
+              <td class="max-w-[200px]">
+                <span class="truncate block" [title]="item.name">{{
+                  item.name
+                }}</span>
+              </td>
+              <td class="max-w-[250px]">
+                <span class="truncate block" [title]="item.location">{{
+                  item.location
+                }}</span>
+              </td>
               <td>{{ item.capacity }}</td>
               <td>{{ item.showtime.length }}</td>
               <td>{{ item.createdAt | date: "dd/MM/yyyy" }}</td>
@@ -75,32 +92,60 @@
                       nz-button
                       nzType="text"
                       nzShape="circle"
+                      [attr.aria-label]="'common.view' | translate"
+                      nz-tooltip
+                      [nzTooltipTitle]="'common.viewDetail' | translate"
                       (click)="openModal('view', item.id)"
                     >
-                      <nz-icon nzType="eye" nzTheme="twotone" />
-                    </button>
-                    <button
-                      nz-button
-                      nzType="text"
-                      nzShape="circle"
-                      (click)="openModal('edit', item.id)"
-                    >
                       <nz-icon
-                        nzType="edit"
+                        nzType="eye"
                         nzTheme="twotone"
-                        nzTwotoneColor="#52c41a"
+                        aria-hidden="true"
                       />
                     </button>
                     <button
                       nz-button
                       nzType="text"
                       nzShape="circle"
+                      [attr.aria-label]="'admin.room.title' | translate"
+                      nz-tooltip
+                      [nzTooltipTitle]="'admin.room.title' | translate"
+                      (click)="goRooms(item.id)"
+                    >
+                      <nz-icon
+                        nzType="appstore"
+                        nzTheme="outline"
+                        aria-hidden="true"
+                      />
+                    </button>
+                    <button
+                      nz-button
+                      nzType="text"
+                      nzShape="circle"
+                      [attr.aria-label]="'common.edit' | translate"
+                      nz-tooltip
+                      [nzTooltipTitle]="'common.edit' | translate"
+                      (click)="openModal('edit', item.id)"
+                    >
+                      <nz-icon
+                        nzType="edit"
+                        nzTheme="twotone"
+                        [nzTwotoneColor]="ICON_COLORS.edit()"
+                      />
+                    </button>
+                    <button
+                      nz-button
+                      nzType="text"
+                      nzShape="circle"
+                      [attr.aria-label]="'common.delete' | translate"
+                      nz-tooltip
+                      [nzTooltipTitle]="'common.delete' | translate"
                       (click)="onDelete(item.id)"
                     >
                       <nz-icon
                         nzType="delete"
                         nzTheme="twotone"
-                        nzTwotoneColor="#e7000b"
+                        [nzTwotoneColor]="ICON_COLORS.delete()"
                       />
                     </button>
                   </nz-space>

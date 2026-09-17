@@ -1,0 +1,16 @@
+<nz-alert
+  nzType="error"
+  [nzMessage]="title() | translate"
+  [nzDescription]="descTpl"
+  nzShowIcon
+></nz-alert>
+<ng-template #descTpl>
+  @if (message()) {
+    <p class="mb-3">{{ message() }}</p>
+  }
+  @if (showRetry()) {
+    <button nz-button nzType="primary" nzSize="small" (click)="retry.emit()">
+      {{ retryText() | translate }}
+    </button>
+  }
+</ng-template>

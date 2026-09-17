@@ -1,17 +1,20 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { SeatVipComponent } from './seat-vip.component';
+import { SeatIconVipComponent } from './seat-vip.component';
 
-describe('SeatVipComponent', () => {
-  let component: SeatVipComponent;
-  let fixture: ComponentFixture<SeatVipComponent>;
+import { testProviders } from '@shared/testing/test-providers';
+
+describe('SeatIconVipComponent', () => {
+  let component: SeatIconVipComponent;
+  let fixture: ComponentFixture<SeatIconVipComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [SeatVipComponent],
+      imports: [SeatIconVipComponent],
+      providers: [testProviders],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(SeatVipComponent);
+    fixture = TestBed.createComponent(SeatIconVipComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

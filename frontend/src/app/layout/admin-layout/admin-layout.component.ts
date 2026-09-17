@@ -1,4 +1,11 @@
-import { Component, DestroyRef, inject, OnInit } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  inject,
+  OnInit,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import {
   ActivatedRoute,
   NavigationEnd,
@@ -11,12 +18,6 @@ import {
   NzFooterComponent,
   NzLayoutModule,
 } from 'ng-zorro-antd/layout';
-import { NzIconModule } from 'ng-zorro-antd/icon';
-import { NzMenuModule } from 'ng-zorro-antd/menu';
-import { NzAvatarModule } from 'ng-zorro-antd/avatar';
-import { NzDropDownModule } from 'ng-zorro-antd/dropdown';
-import { NzBadgeModule } from 'ng-zorro-antd/badge';
-import { NzBreadCrumbModule } from 'ng-zorro-antd/breadcrumb';
 import { SidebarComponent } from './sidebar/sidebar.component';
 import { NavbarComponent } from './navbar/navbar.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -32,15 +33,9 @@ export interface Breadcrumb {
   selector: 'app-admin-layout',
   imports: [
     NzContentComponent,
-    NzIconModule,
     NzLayoutModule,
-    NzMenuModule,
     RouterOutlet,
     NzFooterComponent,
-    NzAvatarModule,
-    NzDropDownModule,
-    NzBadgeModule,
-    NzBreadCrumbModule,
     SidebarComponent,
     NavbarComponent,
     TranslatePipe,
@@ -48,6 +43,7 @@ export interface Breadcrumb {
   ],
   templateUrl: './admin-layout.component.html',
   styleUrl: './admin-layout.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AdminLayoutComponent implements OnInit {
   private router = inject(Router);
@@ -56,7 +52,7 @@ export class AdminLayoutComponent implements OnInit {
 
   ngOnInit() {
     // Tạo breadcrumb lần đầu
-    this.breadcrumbs = this.createBreadcrumbs(this.activatedRoute.root);
+    this.breadcrumbs.set(this.createBreadcrumbs(this.activatedRoute.root));
 
     // Lắng nghe sự kiện đổi route để cập nhật lại breadcrumb
     this.router.events
@@ -65,11 +61,11 @@ export class AdminLayoutComponent implements OnInit {
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe(() => {
-        this.breadcrumbs = this.createBreadcrumbs(this.activatedRoute.root);
+        this.breadcrumbs.set(this.createBreadcrumbs(this.activatedRoute.root));
       });
   }
 
-  breadcrumbs: Breadcrumb[] = [];
+  breadcrumbs = signal<Breadcrumb[]>([]);
   isCollapsed = false;
   protected readonly date = new Date();
 

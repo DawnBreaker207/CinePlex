@@ -99,3 +99,4 @@ export class TheaterEffects {
     { dispatch: false },
   );
 }
+

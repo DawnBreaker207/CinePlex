@@ -2,7 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { catchError, map, Observable, throwError } from 'rxjs';
 import { environment } from '@env/environment';
-import { ApiRes, ResponsePage } from '@core/models/common.model';
+import { ApiRes, FilterDate, FilterSort, ResponsePage } from '@core/models/common.model';
 import {
   Showtime,
   ShowtimeRequest,
@@ -26,7 +26,7 @@ export class ShowtimeService {
       );
   }
 
-  getShowtimeByMovie(movieId: number, query?: any) {
+  getShowtimeByMovie(movieId: number, query?: FilterSort & FilterDate) {
     let params = new HttpParams();
     if (query) {
       Object.entries(query).forEach(([key, value]) => {
@@ -45,7 +45,7 @@ export class ShowtimeService {
       );
   }
 
-  getShowtimeByTheater(theaterId: number, query?: any) {
+  getShowtimeByTheater(theaterId: number, query?: FilterSort & FilterDate) {
     let params = new HttpParams();
     if (query) {
       Object.entries(query).forEach(([key, value]) => {
@@ -116,8 +116,8 @@ export class ShowtimeService {
       .pipe(catchError(this.handleError<void>('showtime')));
   }
   private handleError<T>(operation = 'operation') {
-    return (error: any): Observable<T> => {
-      console.log(`${operation} failed: ${error}`);
+    return (error: unknown): Observable<T> => {
+      console.error(`${operation} failed: ${error}`);
       return throwError(() => error);
     };
   }

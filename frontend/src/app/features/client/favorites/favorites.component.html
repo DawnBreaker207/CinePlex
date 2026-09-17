@@ -1,0 +1,55 @@
+
+    <div class="mx-auto w-full max-w-5xl px-4 py-8 md:px-6">
+      <h1 class="mb-6 text-3xl font-bold uppercase tracking-wide text-slate-900 dark:text-gray-100">
+        {{ 'favorites.title' | translate }}
+      </h1>
+
+      @if (favorites.value(); as movies) {
+        @if (movies.length) {
+          <div nz-row [nzGutter]="[16, 16]">
+            @for (movie of movies; track movie.id) {
+              <div nz-col [nzXs]="24" [nzSm]="12" [nzMd]="8" [nzLg]="6">
+                <div class="group overflow-hidden rounded-xl border border-border bg-white dark:bg-[#161a20]">
+                  <a [routerLink]="['/movie/detail', movie.id]" class="block h-44 bg-gray-100">
+                    <img
+                      [src]="movie.backdrop || movie.poster"
+                      [alt]="movie.title"
+                      class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                  </a>
+                  <div class="flex items-center justify-between gap-2 p-3">
+                    <a
+                      [routerLink]="['/movie/detail', movie.id]"
+                      class="line-clamp-1 min-w-0 flex-1 font-semibold text-slate-900 hover:text-primary dark:text-gray-100"
+                      [title]="movie.title"
+                    >
+                      {{ movie.title }}
+                    </a>
+                    <button
+                      nz-button
+                      nzType="text"
+                      nzShape="circle"
+                      class="shrink-0"
+                      [attr.aria-label]="'favorites.remove' | translate"
+                      nz-tooltip
+                      [nzTooltipTitle]="'favorites.remove' | translate"
+                      (click)="remove(movie.id)"
+                    >
+                      <nz-icon nzType="heart" nzTheme="fill" class="text-primary" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="flex flex-col items-center justify-center rounded-2xl border border-border bg-white py-16 dark:bg-[#161a20]">
+            <nz-empty [nzNotFoundContent]="'favorites.empty' | translate" />
+            <a nz-button nzType="primary" routerLink="/movies" class="mt-2">
+              {{ 'favorites.browse' | translate }}
+            </a>
+          </div>
+        }
+      }
+    </div>
+  

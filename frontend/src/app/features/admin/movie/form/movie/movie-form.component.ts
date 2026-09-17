@@ -1,7 +1,21 @@
-import { Component, inject, OnDestroy, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import {
+  Component,
+  DestroyRef,
+  inject,
+  OnInit,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
+import { toSignal, takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import {
+  NonNullableFormBuilder,
+  FormControl,
+  FormGroup,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
 import { NzModalModule, NzModalRef, NzModalService } from 'ng-zorro-antd/modal';
-import { filter, map, Subject, take, takeUntil } from 'rxjs';
+import { filter, map, take } from 'rxjs';
 import { NzAutosizeDirective, NzInputDirective } from 'ng-zorro-antd/input';
 import {
   NzFormControlComponent,
@@ -14,11 +28,16 @@ import { NzDatePickerComponent } from 'ng-zorro-antd/date-picker';
 import { NzButtonComponent } from 'ng-zorro-antd/button';
 import { NzSpaceModule } from 'ng-zorro-antd/space';
 import { Store } from '@ngrx/store';
-import { Actions, ofType } from '@ngrx/effects';
-import { AsyncPipe } from '@angular/common';
+import { Actions } from '@ngrx/effects';
 import { NzAlertComponent } from 'ng-zorro-antd/alert';
 import { NzIconModule } from 'ng-zorro-antd/icon';
-import { MovieService } from '@domain/movie/data-access/movie.service';
+import { MovieService, TMDBMovie, TMDBMovieDetail } from '@domain/movie/data-access/movie.service';
+
+type TMDBFormMovie = Omit<TMDBMovieDetail, 'genres' | 'poster_path' | 'backdrop_path'> & {
+  poster_path: string;
+  backdrop_path: string;
+  genres: string[];
+};
 import { environment } from '@env/environment';
 import {
   selectMovieById,
@@ -27,10 +46,16 @@ import {
   selectMoviesSaving,
 } from '@domain/movie/data-access/movie.selectors';
 import { MovieActions } from '@domain/movie/data-access/movie.actions';
-import { Movie } from '@domain/movie/models/movie.model';
+import { Movie, MovieRequest } from '@domain/movie/models/movie.model';
 import { FormMovieAPIComponent } from '@features/admin/movie/form/api/api-form.component';
 import { NzSpinModule } from 'ng-zorro-antd/spin';
+import { UploadService } from '@core/services/upload/upload.service';
 import { TranslatePipe } from '@ngx-translate/core';
+import {
+  disableForm,
+  markFormTouched,
+  watchSaveResult,
+} from '@shared/utils/form-utils';
 
 @Component({
   selector: 'app-movie-form',
@@ -48,36 +73,55 @@ import { TranslatePipe } from '@ngx-translate/core';
     NzButtonComponent,
     NzSpaceModule,
     NzAutosizeDirective,
-    AsyncPipe,
     NzAlertComponent,
     NzIconModule,
     NzSpinModule,
     TranslatePipe,
   ],
   templateUrl: './movie-form.component.html',
-  styleUrl: './movie-form.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class FormMovieComponent implements OnInit, OnDestroy {
-  private fb = inject(FormBuilder);
+export class FormMovieComponent implements OnInit {
+  private fb = inject(NonNullableFormBuilder);
   private store = inject(Store);
   private actions$ = inject(Actions);
   private modelRef = inject(NzModalRef);
   private movieService = inject(MovieService);
+  private uploadService = inject(UploadService);
   private modalService = inject(NzModalService);
+  private destroyRef = inject(DestroyRef);
 
   // Props
   mode: 'add' | 'edit' | 'view' = 'add';
   movieId!: number;
-  form!: FormGroup;
+  form!: FormGroup<{
+    id: FormControl<string>;
+    title: FormControl<string>;
+    originalTitle: FormControl<string>;
+    poster: FormControl<string>;
+    backdrop: FormControl<string>;
+    overview: FormControl<string>;
+    duration: FormControl<number | null>;
+    language: FormControl<string>;
+    country: FormControl<string>;
+    genres: FormControl<string[]>;
+    releaseDate: FormControl<Date | null>;
+    imdbId: FormControl<string>;
+    filmId: FormControl<string | null>;
+  }>;
   imageBase = environment.tmbd.imageUrl;
 
   // NgRx State
-  loading$ = this.store.select(selectMovieLoadingDetails);
-  saving$ = this.store.select(selectMoviesSaving);
-  error$ = this.store.select(selectMoviesError);
+  private loading$ = this.store.select(selectMovieLoadingDetails);
+  private saving$ = this.store.select(selectMoviesSaving);
+  private error$ = this.store.select(selectMoviesError);
+  readonly loading = toSignal(this.loading$, { initialValue: false });
+  readonly saving = toSignal(this.saving$, { initialValue: false });
+  readonly error = toSignal(this.error$, { initialValue: null });
 
-  private initialFormValue: any = null;
-  private destroy$: Subject<void> = new Subject<void>();
+  readonly submitting = signal(false);
+  readonly uploading = signal(false);
+  private initialFormValue: MovieRequest | null = null;
 
   ngOnInit() {
     this.initForm();
@@ -92,17 +136,17 @@ export class FormMovieComponent implements OnInit, OnDestroy {
         .pipe(
           filter((movie) => movie !== null && movie.id === this.movieId),
           take(1),
-          takeUntil(this.destroy$),
+          takeUntilDestroyed(this.destroyRef),
         )
         .subscribe((movie) => {
           if (movie) {
             this.patchFormValue(movie);
-            this.initialFormValue = this.form.value;
+            this.initialFormValue = this.form.getRawValue() as MovieRequest;
             if (this.mode === 'view') {
-              this.disableForm();
+              disableForm(this.form);
             }
           } else {
-            this.initialFormValue = this.form.value;
+            this.initialFormValue = this.form.getRawValue() as MovieRequest;
           }
         });
     }
@@ -121,29 +165,21 @@ export class FormMovieComponent implements OnInit, OnDestroy {
   initForm() {
     this.form = this.fb.group({
       id: [''],
-      title: [''],
-      originalTitle: [''],
-      poster: [''],
+      title: ['', Validators.required],
+      originalTitle: ['', Validators.required],
+      poster: ['', Validators.required],
       backdrop: [''],
-      overview: [''],
-      duration: [null],
-      language: [''],
-      country: [''],
-      genres: [[]],
-      releaseDate: [null],
+      overview: ['', Validators.required],
+      duration: [
+        null as number | null,
+        [Validators.required, Validators.min(1)],
+      ],
+      language: ['', Validators.required],
+      country: ['', Validators.required],
+      genres: [[] as string[], Validators.required],
+      releaseDate: [null as Date | null, Validators.required],
       imdbId: [''],
-      filmId: [null],
-    });
-  }
-
-  ngOnDestroy() {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
-
-  private disableForm() {
-    Object.keys(this.form.controls).forEach((key) => {
-      this.form.get(key)?.disable();
+      filmId: [null as string | null],
     });
   }
 
@@ -164,15 +200,27 @@ export class FormMovieComponent implements OnInit, OnDestroy {
     });
   }
 
+  onPosterFile(event: Event) {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+    this.uploading.set(true);
+    this.uploadService.uploadAssets(file).subscribe({
+      next: (url) => {
+        this.form.controls.poster.setValue(url);
+        this.uploading.set(false);
+      },
+      error: () => this.uploading.set(false),
+    });
+  }
+
   submit() {
-    if (!this.form.valid) {
-      Object.keys(this.form.controls).forEach((key) => {
-        this.form.get(key)?.markAllAsTouched();
-      });
+    if (!this.form.valid || this.submitting()) {
+      markFormTouched(this.form);
       return;
     }
 
-    const movieData = this.form.value;
+    this.submitting.set(true);
+    const movieData = this.form.getRawValue() as MovieRequest;
 
     if (this.mode === 'edit') {
       this.store.dispatch(
@@ -182,28 +230,20 @@ export class FormMovieComponent implements OnInit, OnDestroy {
       this.store.dispatch(MovieActions.createMovie({ movie: movieData }));
     }
 
-    this.actions$
-      .pipe(
-        ofType(
-          MovieActions.createMovieSuccess,
-          MovieActions.updateMovieSuccess,
-        ),
-        take(1),
-        takeUntil(this.destroy$),
-      )
-      .subscribe(() => {
+    watchSaveResult(
+      this.actions$,
+      this.destroyRef,
+      [MovieActions.createMovieSuccess, MovieActions.updateMovieSuccess],
+      [MovieActions.createMovieFailed, MovieActions.updateMovieFailed],
+      () => {
+        this.submitting.set(false);
         this.modelRef.close();
-      });
-
-    this.actions$
-      .pipe(
-        ofType(MovieActions.createMovieFailed, MovieActions.updateMovieFailed),
-        take(1),
-        takeUntil(this.destroy$),
-      )
-      .subscribe(({ error }) => {
+      },
+      (error) => {
+        this.submitting.set(false);
         console.error('Save movie failed: ', error);
-      });
+      },
+    );
   }
 
   openMovieModal() {
@@ -216,13 +256,13 @@ export class FormMovieComponent implements OnInit, OnDestroy {
       nzFooter: null,
     });
 
-    modal.afterClose.subscribe((selectMovie: any) => {
+    modal.afterClose.subscribe((selectMovie: TMDBMovie | undefined) => {
       if (!selectMovie) return;
 
       this.movieService
         .getMovieDetails(selectMovie.id)
         .pipe(
-          map((movie: any) => ({
+          map((movie: TMDBMovieDetail) => ({
             ...movie,
             poster_path: movie.poster_path
               ? `${this.imageBase}/${movie.poster_path}`
@@ -231,14 +271,14 @@ export class FormMovieComponent implements OnInit, OnDestroy {
               ? `${this.imageBase}/${movie.backdrop_path}`
               : '',
             genres: movie.genres
-              ? movie.genres.map((g: any) => g.name.replace(/^Phim\s/i, ''))
+              ? movie.genres.map((g) => g.name.replace(/^Phim\s/i, ''))
               : [],
           })),
           take(1),
-          takeUntil(this.destroy$),
+          takeUntilDestroyed(this.destroyRef),
         )
         .subscribe({
-          next: (result: any) => {
+          next: (result: TMDBFormMovie) => {
             this.form.patchValue({
               title: result.title,
               originalTitle: result.original_title,
@@ -249,9 +289,9 @@ export class FormMovieComponent implements OnInit, OnDestroy {
               language: result.original_language,
               country: result.origin_country[0],
               genres: result.genres,
-              releaseDate: result.release_date,
+              releaseDate: new Date(result.release_date),
               imdbId: result.imdb_id,
-              filmId: result.id,
+              filmId: String(result.id),
             });
             this.form.markAsDirty();
           },

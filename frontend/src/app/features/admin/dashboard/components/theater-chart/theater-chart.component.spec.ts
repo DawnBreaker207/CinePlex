@@ -2,6 +2,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { TheaterChartComponent } from './theater-chart.component';
 
+import { testProviders } from '@shared/testing/test-providers';
+
 describe('TheaterChartComponent', () => {
   let component: TheaterChartComponent;
   let fixture: ComponentFixture<TheaterChartComponent>;
@@ -9,6 +11,7 @@ describe('TheaterChartComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [TheaterChartComponent],
+      providers: [testProviders],
     }).compileComponents();
 
     fixture = TestBed.createComponent(TheaterChartComponent);

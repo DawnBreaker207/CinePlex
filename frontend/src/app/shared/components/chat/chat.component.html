@@ -1,37 +1,46 @@
 @if (isOpen()) {
   <div
-    class="fixed bottom-[90px] right-6 z-50 flex flex-col w-[360px] h-[520px] max-h-[80vh] bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden font-sans animate-fade-in-up"
+    class="fixed bottom-[90px] right-4 sm:right-6 z-50 flex flex-col w-[calc(100vw-2rem)] sm:w-[360px] h-[520px] max-h-[80vh] bg-white dark:bg-[#161a20] rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 overflow-hidden font-sans animate-fade-in-up"
   >
     <!-- HEADER -->
     <div
-      class="flex h-16 shrink-0 items-center justify-between bg-blue-600 px-5 text-white shadow-md"
+      class="flex h-16 shrink-0 items-center justify-between bg-primary px-5 text-white shadow-md"
     >
       <div class="flex items-center gap-3">
         <div class="relative">
           <nz-avatar
             nzIcon="user"
-            class="!bg-white !text-blue-600 shadow-sm"
+            class="bg-white! dark:bg-[#161a20]! text-primary! shadow-sm"
             [nzSize]="36"
           ></nz-avatar>
           <span
-            class="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-green-400 ring-2 ring-white"
+            class="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-green-400 ring-2 ring-white dark:ring-gray-700"
           ></span>
         </div>
         <div>
-          <h3 class="text-[15px] font-bold text-white m-0">Support Bot</h3>
-          <p class="text-[11px] text-blue-100 m-0">Luôn sẵn sàng</p>
+          <h3 class="text-sm font-bold text-white m-0">Support Bot</h3>
+          <p class="text-xs text-white/70 m-0">
+            {{ "chat.alwaysAvailable" | translate }}
+          </p>
         </div>
       </div>
       <button
         (click)="toggleChat()"
         class="text-white/80 hover:text-white hover:bg-white/20 h-10 w-10 p-2 rounded-full transition-colors cursor-pointer"
+        [attr.aria-label]="'chat.close' | translate"
+        nz-tooltip
+        [nzTooltipTitle]="'chat.close' | translate"
       >
         <nz-icon nzType="close" nzTheme="outline" />
       </button>
     </div>
 
     <!-- BODY -->
-    <div class="flex-1 overflow-y-auto bg-slate-50 p-4 space-y-5" #scrollBottom>
+    <div
+      class="flex-1 overflow-y-auto bg-slate-50 dark:bg-gray-800/50 p-4 space-y-5"
+      #scrollBottom
+      style="content-visibility: auto; contain: layout style paint"
+    >
       @for (msg of messages(); track msg.time) {
         <div
           class="flex w-full"
@@ -46,18 +55,18 @@
             @if (msg.sender === "bot") {
               <nz-avatar
                 nzIcon="robot"
-                class="!bg-orange-500 mt-auto shrink-0 shadow-sm"
+                class="bg-primary! mt-auto shrink-0 shadow-sm"
                 [nzSize]="28"
               ></nz-avatar>
             }
 
             <!-- Bubble chat -->
             <div
-              class="relative px-4 py-2.5 shadow-sm text-[14px] leading-relaxed transition-all"
+              class="relative px-4 py-2.5 shadow-sm text-[14px] leading-relaxed transition-colors"
               [class]="
                 msg.sender === 'user'
-                  ? 'bg-blue-600 text-white rounded-2xl rounded-tr-none'
-                  : 'bg-white text-gray-700 border border-gray-200 rounded-2xl rounded-tl-none'
+                  ? 'bg-primary text-white rounded-2xl rounded-tr-none'
+                  : 'bg-white dark:bg-[#161a20] text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-600 rounded-2xl rounded-tl-none'
               "
             >
               @if (msg.sender === "user") {
@@ -67,11 +76,11 @@
               }
 
               <span
-                class="block text-[10px] mt-1 opacity-70"
+                class="block text-xs mt-1 opacity-70"
                 [class]="
                   msg.sender === 'user'
-                    ? 'text-blue-100 text-left'
-                    : 'text-gray-400 text-right'
+                    ? 'text-white/70 text-left'
+                    : 'text-gray-500 dark:text-gray-400 text-right'
                 "
               >
                 {{ msg.time | date: "HH:mm" }}
@@ -85,21 +94,15 @@
           <div class="flex gap-2">
             <nz-avatar
               nzIcon="robot"
-              class="!bg-orange-500 mt-auto shrink-0 shadow-sm"
+              class="bg-primary! mt-auto shrink-0 shadow-sm"
               [nzSize]="28"
             ></nz-avatar>
             <div
-              class="bg-white border border-gray-200 rounded-2xl rounded-tl-none px-4 py-3 shadow-sm flex items-center gap-1 h-10"
+              class="bg-white dark:bg-[#161a20] border border-gray-200 dark:border-gray-600 rounded-2xl rounded-tl-none px-4 py-3 shadow-sm flex items-center gap-1 h-10"
             >
-              <div
-                class="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce"
-              ></div>
-              <div
-                class="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.15s]"
-              ></div>
-              <div
-                class="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.3s]"
-              ></div>
+              <div class="typing-dot bg-primary/50"></div>
+              <div class="typing-dot bg-primary/50"></div>
+              <div class="typing-dot bg-primary/50"></div>
             </div>
           </div>
         </div>
@@ -107,24 +110,32 @@
     </div>
 
     <!-- FOOTER -->
-    <div class="shrink-0 bg-white p-3 border-t border-gray-100">
+    <div
+      class="shrink-0 bg-white dark:bg-[#161a20] p-3 border-t border-gray-100 dark:border-gray-700"
+    >
       <div
-        class="flex items-center gap-2 bg-gray-100 rounded-full border border-transparent focus-within:bg-white focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100 transition-all"
+        class="flex items-center gap-2 bg-gray-100 dark:bg-gray-700 rounded-full border border-transparent focus-within:bg-white dark:focus-within:bg-[#161a20] focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 transition-[background-color,border-color,box-shadow]"
       >
         <input
           type="text"
           [ngModel]="inputValue()"
           (ngModelChange)="inputValue.set($event)"
           (keyup.enter)="sendMessage()"
-          placeholder="Nhập tin nhắn..."
-          class="flex-1 bg-transparent border-none text-sm px-4 py-2 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-0"
+          [placeholder]="'chat.inputPlaceholder' | translate"
+          [attr.aria-label]="'chat.inputLabel' | translate"
+          maxlength="2000"
+          class="flex-1 bg-transparent border-none text-sm px-4 py-2 text-gray-700 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-0"
         />
         <button
           nz-button
           nzType="primary"
           nzShape="circle"
           (click)="sendMessage()"
-          class="!bg-blue-600 !border-none hover:!bg-blue-700 shrink-0 shadow-md"
+          [disabled]="!inputValue().trim() || isTyping()"
+          [attr.aria-label]="'chat.send' | translate"
+          nz-tooltip
+          [nzTooltipTitle]="'chat.send' | translate"
+          class="bg-primary! border-none! hover:bg-primary-dark! shrink-0 shadow-md"
         >
           <nz-icon nzType="send" />
         </button>
@@ -138,6 +149,9 @@
   [nzIcon]="iconTemplate"
   (nzOnClick)="toggleChat()"
   [nzShape]="'circle'"
+  nz-tooltip
+  [nzTooltipTitle]="isOpen() ? ('chat.close' | translate) : ('chat.open' | translate)"
+  [nzTooltipPlacement]="'left'"
 >
 </nz-float-button>
 

@@ -1,8 +1,10 @@
-import { Theater } from '@domain/theater/models/theater.model';
 import { Movie } from '@domain/movie/models/movie.model';
 import { signalStore, withMethods } from '@ngrx/signals';
-import { computed, inject } from '@angular/core';
+import { computed, inject, signal, effect, untracked, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
+import dayjs from 'dayjs';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { StorageService } from '@core/services/storage/storage.service';
 import {
@@ -15,24 +17,29 @@ import { selectJwt } from '@core/auth/auth.selectors';
 import { TheaterActions } from '@domain/theater/data-access/theater.actions';
 import { MovieActions } from '@domain/movie/data-access/movie.actions';
 import { ShowtimeActions } from '@domain/showtime/data-access/showtime.actions';
-import { TheaterModalComponent } from '@features/client/home/components/theater-modal/theater.component';
 import { ShowtimeModalComponent } from '@features/client/home/components/showtime-modal/modal.component';
 import { ReservationStore } from '@features/client/reservation/reservation.store';
+import { TranslateService } from '@ngx-translate/core';
 
 export const HomeStore = signalStore(
   withMethods(
     (
       store,
       ngrxStore = inject(Store),
+      router = inject(Router),
       modalService = inject(NzModalService),
       storageService = inject(StorageService),
       reservationStore = inject(ReservationStore),
+      translate = inject(TranslateService),
     ) => {
       const theaters = ngrxStore.selectSignal(selectAllTheaters);
       const showtimes = ngrxStore.selectSignal(selectAllShowtimes);
       const allMovies = ngrxStore.selectSignal(selectAllMovies);
       const selectedTheaterId = ngrxStore.selectSignal(selectSelectedTheaterId);
       const user = ngrxStore.selectSignal(selectJwt);
+
+      const loading = signal(false);
+      const error = signal<string | null>(null);
 
       const showtimesForTheater = computed(() => {
         const id = selectedTheaterId();
@@ -43,7 +50,6 @@ export const HomeStore = signalStore(
         const showtimes = showtimesForTheater();
         const movies = allMovies();
         if (!showtimes.length || !movies.length) return [];
-
         const movieMap = new Map(movies.map((m) => [m.id, m]));
         const uniqueIds = [...new Set(showtimes.map((st) => st.movieId))];
         return uniqueIds
@@ -51,15 +57,53 @@ export const HomeStore = signalStore(
           .filter((m): m is Movie => !!m);
       });
 
+      const nowShowing = computed(() =>
+        movies().filter((m) => !dayjs(m.releaseDate).isAfter(dayjs(), 'day')),
+      );
+
+      const comingSoon = computed(() =>
+        movies().filter((m) => dayjs(m.releaseDate).isAfter(dayjs(), 'day')),
+      );
+
+      effect(() => {
+        if (movies().length > 0) {
+          untracked(() => loading.set(false));
+        }
+      });
+
+      effect((onCleanup) => {
+        if (loading()) {
+          const timer = setTimeout(() => {
+            untracked(() => {
+              loading.set(false);
+              error.set(translate.instant('home.loadFailed'));
+            });
+          }, 15000);
+          onCleanup(() => clearTimeout(timer));
+        }
+      });
+
       return {
         theaters,
         selectedTheaterId,
         movies,
+        nowShowing,
+        comingSoon,
         showtimesForTheater,
         user,
+        loading: loading.asReadonly(),
+        error: error.asReadonly(),
+        setError(msg: string) { error.set(msg); },
+        clearError() { error.set(null); },
         initData() {
           const currentTheaters = theaters();
           const currentMovies = allMovies();
+
+          if (currentTheaters.length > 0 && currentMovies.length > 0) {
+            loading.set(false);
+          } else {
+            loading.set(true);
+          }
 
           if (currentTheaters.length === 0) {
             ngrxStore.dispatch(
@@ -76,22 +120,24 @@ export const HomeStore = signalStore(
               (t) => t.id === savedTheater,
             );
 
-            if (savedTheater && foundTheater) {
-              ngrxStore.dispatch(
-                TheaterActions.setSelectedTheaterId({
-                  theaterId: savedTheater,
-                }),
-              );
-            } else {
-              const defaultTheater = currentTheaters[0].id;
-              ngrxStore.dispatch(
-                TheaterActions.setSelectedTheaterId({
-                  theaterId: defaultTheater,
-                }),
-              );
-              this.openTheaterModal(currentTheaters, defaultTheater as number);
-            }
+            const id = savedTheater && foundTheater ? savedTheater : currentTheaters[0].id;
+            ngrxStore.dispatch(TheaterActions.setSelectedTheaterId({ theaterId: id }));
+            ngrxStore.dispatch(ShowtimeActions.loadShowtimesByTheaterId({ theaterId: id, page: 0, size: 100 }));
           }
+        },
+
+        selectTheater(theaterId: number) {
+          ngrxStore.dispatch(
+            TheaterActions.setSelectedTheaterId({ theaterId }),
+          );
+          storageService.setSelectedTheaterId(theaterId);
+          ngrxStore.dispatch(
+            ShowtimeActions.loadShowtimesByTheaterId({
+              theaterId,
+              page: 0,
+              size: 100,
+            }),
+          );
         },
 
         loadShowtimes(theaterId: number) {
@@ -104,34 +150,19 @@ export const HomeStore = signalStore(
           );
         },
 
-        openTheaterModal(theatersList: Theater[], defaultTheater: number) {
-          const modal = modalService.create({
-            nzTitle: 'Chọn rạp chiếu',
-            nzContent: TheaterModalComponent,
-            nzData: {
-              theaters: theatersList,
-              selectedTheaterId: defaultTheater,
-            },
-            nzFooter: null,
-          });
-          modal.afterClose.subscribe((id) => {
-            if (id)
-              ngrxStore.dispatch(
-                TheaterActions.setSelectedTheaterId({ theaterId: id }),
-              );
-          });
-        },
         handleMovieSelection(movieId: number) {
           const movieShowtimes = showtimesForTheater().filter(
             (st) => st.movieId === movieId,
           );
+          const movie = allMovies().find((m) => m.id === movieId);
           const modal = modalService.create({
             nzTitle: undefined,
             nzContent: ShowtimeModalComponent,
-            nzData: { showtimes: movieShowtimes },
+            nzData: { showtimes: movieShowtimes, movieTitle: movie?.title },
             nzFooter: null,
           });
-          modal.afterClose.subscribe((stId) => {
+          const destroyRef = inject(DestroyRef);
+          modal.afterClose.pipe(takeUntilDestroyed(destroyRef)).subscribe((stId) => {
             if (stId) this.proceedToReservation(stId);
           });
         },
@@ -140,7 +171,11 @@ export const HomeStore = signalStore(
           const currentUser = user();
           const theaterId = selectedTheaterId();
 
-          if (!currentUser || !theaterId) return;
+          if (!currentUser) {
+            router.navigate(['/login'], { queryParams: { returnUrl: '/home' } });
+            return;
+          }
+          if (!theaterId) return;
           reservationStore.initReservation({
             reservationId: '',
             userId: currentUser.userId,

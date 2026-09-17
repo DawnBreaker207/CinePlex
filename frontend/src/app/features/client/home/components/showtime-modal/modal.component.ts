@@ -1,49 +1,92 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import {
+  Component,
+  computed,
+  inject,
+  OnInit,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { NzModalRef } from 'ng-zorro-antd/modal';
-import dayjs from 'dayjs';
-import { NgClass } from '@angular/common';
+import { DatePipe, NgClass } from '@angular/common';
 import { NzButtonComponent } from 'ng-zorro-antd/button';
 import { Showtime } from '@domain/showtime/models/showtime.model';
 import { formatDate } from '@shared/utils/date.helper';
 import { NzIconDirective } from 'ng-zorro-antd/icon';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import dayjs from 'dayjs';
 
 @Component({
   selector: 'app-theater',
-  imports: [NgClass, NzButtonComponent, NzIconDirective, TranslatePipe],
+  imports: [
+    NgClass,
+    NzButtonComponent,
+    NzIconDirective,
+    DatePipe,
+    TranslatePipe,
+  ],
   templateUrl: './modal.component.html',
-  styleUrl: './modal.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ShowtimeModalComponent implements OnInit {
   private modalRef = inject(NzModalRef);
+  private translate = inject(TranslateService);
 
   showtimes = signal<Showtime[]>([]);
+  movieTitle = signal<string | null>(null);
   selectedShowtimeId = signal<number | null>(null);
 
   groupShowtimes = computed(() => {
     const listShowtimes = this.showtimes();
-    const groupsDate: { date: string; items: Showtime[] }[] = [];
+    const groupsDate: { label: string; rawDate: Date; items: Showtime[] }[] =
+      [];
 
     listShowtimes.forEach((st) => {
-      const date = formatDate(st.showDate);
-      let groupDay = groupsDate.find((g) => g.date === date);
+      const raw = new Date(st.showDate);
+      const label = formatDate(st.showDate);
+      const rawDate = new Date(
+        raw.getFullYear(),
+        raw.getMonth(),
+        raw.getDate(),
+      );
+      let groupDay = groupsDate.find(
+        (g) => g.rawDate.getTime() === rawDate.getTime(),
+      );
       if (!groupDay) {
-        groupDay = { date: date, items: [] };
+        groupDay = { label, rawDate, items: [] };
         groupsDate.push(groupDay);
       }
-      groupDay?.items.push(st);
+      groupDay.items.push(st);
     });
 
-    return groupsDate.sort((a, b) => a.date.localeCompare(b.date));
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    return groupsDate.sort((a, b) => a.rawDate.getTime() - b.rawDate.getTime());
   });
 
   ngOnInit() {
-    const { showtimes } = this.modalRef.getConfig().nzData;
+    const { showtimes, movieTitle } = this.modalRef.getConfig().nzData;
     this.showtimes.set(showtimes);
+    if (movieTitle) this.movieTitle.set(movieTitle);
   }
 
-  formatShowtime(date: Date | string | null) {
-    return dayjs(date).format('DD/MM/YYYY');
+  getDateLabel(date: Date): string {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const t = this.translate.instant.bind(this.translate);
+    if (date.getTime() === today.getTime()) return t('home.today');
+    if (date.getTime() === tomorrow.getTime()) return t('home.tomorrow');
+    return '';
+  }
+
+  formatShowTime(time: string | Date): string {
+    if (!time) return '-';
+    return dayjs(time, 'HH:mm:ss').format('HH:mm');
   }
 
   onSelect(showtimeId: number) {

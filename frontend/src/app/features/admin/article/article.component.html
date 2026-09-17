@@ -1,13 +1,13 @@
-<div class="min-h-screen bg-slate-50 py-10 px-4 sm:px-6 lg:px-8">
+<div class="min-h-screen bg-[var(--color-bg-admin)] py-10 px-4 sm:px-6 lg:px-8">
   <div
     class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8"
   >
     <div>
-      <h1 class="text-3xl font-bold text-gray-900">
-        {{ "Quản lý bài viết" | translate }}
+      <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">
+        {{ "admin.article.manage" | translate }}
       </h1>
-      <p class="text-gray-600">
-        {{ "Tạo nội dung tin tức, khuyến mãi và review phim." | translate }}
+      <p class="text-gray-600 dark:text-gray-400">
+        {{ "admin.article.subtitle" | translate }}
       </p>
     </div>
     <button
@@ -15,15 +15,28 @@
       nzType="primary"
       nzSize="large"
       nzShape="circle"
+      nz-tooltip
+      [nzTooltipTitle]="'common.add' | translate"
       (click)="openDrawer()"
     >
-      <nz-icon nzType="plus" nzTheme="outline" />
+      <nz-icon nzType="plus" nzTheme="outline" aria-hidden="true" />
     </button>
   </div>
 
+  @if (articleStore.error(); as error) {
+    <nz-alert
+      nzType="error"
+      [nzMessage]="error"
+      nzShowIcon
+      nzCloseable
+      class="mb-4"
+      (nzOnClose)="articleStore.clearError()"
+    ></nz-alert>
+  }
+
   <app-loading [isLoading]="articleStore.loading()">
     <div
-      class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 overflow-hidden"
+      class="bg-white dark:bg-[#161a20] rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-6 overflow-x-auto"
     >
       <nz-table
         [nzData]="articleStore.articles()"
@@ -33,6 +46,7 @@
         [nzPageSize]="pageSize"
         nzShowPagination
         [nzShowSizeChanger]="true"
+        [nzNoResult]="'admin.article.empty' | translate"
         (nzQueryParams)="onQueryParamsChange($event)"
       >
         <thead>
@@ -45,13 +59,14 @@
         <tbody>
           @for (item of articleStore.articles(); track item.id) {
             <tr
-              class="group hover:bg-gray-50 transition-colors border-b border-gray-100"
+              class="group hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors border-b border-gray-100 dark:border-gray-700"
             >
               <td>
                 <img
                   [src]="item.thumbnail"
                   [alt]="item.title"
-                  class="w-12 h-12 object-cover rounded shadow-sm border border-gray-600"
+                  loading="lazy"
+                  class="w-12 h-12 object-cover rounded shadow-sm border border-gray-200 dark:border-gray-700"
                 />
               </td>
               <td>
@@ -67,7 +82,7 @@
                 </div>
               </td>
               <td>
-                <nz-tag [nzColor]="'blue'">
+                <nz-tag [nzColor]="'#e53e3e'">
                   {{ item.type }}
                 </nz-tag>
               </td>
@@ -77,16 +92,21 @@
               <td>
                 @if (item.status === "PUBLISHED") {
                   <nz-tag [nzColor]="'success'" class="border-none">
-                    <span nz-icon nzType="check-circle"></span>
-                    {{ "Đã đăng" | translate }}
+                    <span
+                      nz-icon
+                      nzType="check-circle"
+                      aria-hidden="true"
+                    ></span>
+                    {{ "status.published" | translate }}
                   </nz-tag>
                 } @else {
                   <nz-tag [nzColor]="'default'" class="border-none">
-                    <span nz-icon nzType="edit"></span> {{ "Nháp" | translate }}
+                    <span nz-icon nzType="edit" aria-hidden="true"></span>
+                    {{ "status.draft" | translate }}
                   </nz-tag>
                 }
               </td>
-              <td class="text-gray-600">
+              <td class="text-gray-700 dark:text-gray-300">
                 {{ item.createdAt | date: "dd/MM/yyyy" }}
               </td>
               <td nzRight>
@@ -95,26 +115,34 @@
                     nz-button
                     nzType="default"
                     nzShape="circle"
+                    [attr.aria-label]="'common.edit' | translate"
                     (click)="openDrawer(item)"
                     nz-tooltip
-                    [nzTooltipTitle]="'Chỉnh sửa' | translate"
+                    [nzTooltipTitle]="'common.edit' | translate"
                   >
-                    <span nz-icon nzType="edit" class="text-blue-400"> </span>
+                    <span
+                      nz-icon
+                      nzType="edit"
+                      class="text-primary"
+                      aria-hidden="true"
+                    >
+                    </span>
                   </button>
                   <button
                     nz-button
                     nzType="default"
                     nzDanger
                     nzShape="circle"
+                    [attr.aria-label]="'common.delete' | translate"
                     nz-popconfirm
                     [nzPopconfirmTitle]="
-                      'Bạn có chắc chắn muốn xóa bài này?' | translate
+                      'admin.article.deleteConfirm' | translate
                     "
                     (nzOnConfirm)="deleteArticle(item.id)"
                     nz-tooltip
-                    [nzTooltipTitle]="'Xóa' | translate"
+                    [nzTooltipTitle]="'common.delete' | translate"
                   >
-                    <span nz-icon nzType="delete"> </span>
+                    <span nz-icon nzType="delete" aria-hidden="true"> </span>
                   </button>
                 </div>
               </td>

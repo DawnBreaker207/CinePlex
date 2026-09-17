@@ -8,13 +8,16 @@
   <!-- TITLE/SLUG -->
   <nz-form-item>
     <nz-form-label [nzSpan]="24" nzRequired
-      >{{ "Tiêu đề bài viét" | translate }}
+      >{{ "admin.article.form.title" | translate }}
     </nz-form-label>
-    <nz-form-control [nzErrorTip]="'Vui lòng nhập tiêu đề' | translate">
+    <nz-form-control
+      [nzErrorTip]="'admin.article.form.titleRequired' | translate"
+    >
       <input
         nz-input
         formControlName="title"
-        [placeholder]="'Nhập tiêu đề...' | translate"
+        [placeholder]="'admin.article.form.titlePlaceholder' | translate"
+        maxlength="255"
       />
     </nz-form-control>
   </nz-form-item>
@@ -24,14 +27,37 @@
     <!-- Upload giả lập (Input URL) -->
     <nz-form-item>
       <nz-form-label nzRequired
-        >{{ "Hình ảnh(URL)" | translate }}
+        >{{ "admin.article.imageUrl" | translate }}
       </nz-form-label>
       <nz-form-control>
-        <input nz-input formControlName="thumbnail" placeholder="https://..." />
+        <input
+          nz-input
+          formControlName="thumbnail"
+          [placeholder]="'admin.article.imagePlaceholder' | translate"
+          maxlength="500"
+        />
+        <input
+          #thumbFile
+          type="file"
+          accept="image/*"
+          class="hidden"
+          (change)="onThumbnailFile($event)"
+        />
+        <button
+          nz-button
+          nzType="default"
+          class="rounded-lg mt-2"
+          [nzLoading]="uploading()"
+          (click)="thumbFile.click()"
+        >
+          <nz-icon nzType="upload" />
+          {{ "common.upload" | translate }}
+        </button>
         @if (form.get("thumbnail")?.value) {
           <img
             [src]="form.get('thumbnail')?.value"
             [alt]="form.get('title')?.value"
+            loading="lazy"
             class="h-32 w-full object-cover rounded-lg border border-gray-600"
           />
         }
@@ -40,14 +66,15 @@
 
     <nz-form-item>
       <nz-form-label nzRequired
-        >{{ "Tóm tắt ngắn" | translate }}
+        >{{ "admin.article.form.summary" | translate }}
       </nz-form-label>
       <nz-form-control>
         <textarea
           nz-input
           formControlName="summary"
           rows="5"
-          [placeholder]="'Mô tả ngắn gọn...' | translate"
+          [placeholder]="'admin.article.form.summaryPlaceholder' | translate"
+          maxlength="500"
         ></textarea>
       </nz-form-control>
     </nz-form-item>
@@ -55,7 +82,9 @@
 
   <!-- QUILL EDITOR -->
   <nz-form-item>
-    <nz-form-label nzRequired>{{ "Nội dung" | translate }}</nz-form-label>
+    <nz-form-label nzRequired>{{
+      "admin.article.form.content" | translate
+    }}</nz-form-label>
     <nz-form-control [nzSpan]="24">
       <quill-editor
         formControlName="content"
@@ -73,36 +102,36 @@
   <!-- TYPE & STATUS -->
   <div class="grid grid-cols-2 gap-6">
     <nz-form-item>
-      <nz-form-label>{{ "Danh mục" | translate }}</nz-form-label>
+      <nz-form-label>{{ "common.category" | translate }}</nz-form-label>
       <nz-form-control>
         <nz-select formControlName="type">
           <nz-option
             [nzValue]="ArticleType.UNKNOWN"
-            [nzLabel]="'Chưa xác định' | translate"
+            [nzLabel]="'common.unknown' | translate"
           ></nz-option>
           <nz-option
             [nzValue]="ArticleType.NEWS"
-            [nzLabel]="'Tin tức' | translate"
+            [nzLabel]="'admin.article.category.news' | translate"
           ></nz-option>
           <nz-option
             [nzValue]="ArticleType.PROMOTION"
-            [nzLabel]="'Khuyến mãi' | translate"
+            [nzLabel]="'admin.article.category.promo' | translate"
           ></nz-option>
         </nz-select>
       </nz-form-control>
     </nz-form-item>
 
     <nz-form-item>
-      <nz-form-label>{{ "Trạng thái" | translate }} </nz-form-label>
+      <nz-form-label>{{ "common.status" | translate }} </nz-form-label>
       <nz-form-control>
         <nz-select formControlName="status">
           <nz-option
             [nzValue]="ArticleStatus.DRAFT"
-            [nzLabel]="'Bản nháp (Draft)' | translate"
+            [nzLabel]="'admin.article.category.draft' | translate"
           ></nz-option>
           <nz-option
             [nzValue]="ArticleStatus.PUBLISHED"
-            [nzLabel]="'Công khai (Published)' | translate"
+            [nzLabel]="'admin.article.category.published' | translate"
           ></nz-option>
         </nz-select>
       </nz-form-control>
@@ -111,18 +140,22 @@
 
   <!-- FOOTER -->
   <div
-    class="absolute bottom-0 left-0 w-full bg-white border-t border-gray-200 p-4 flex justify-end gap-3 z-50 shadow-md"
+    class="absolute bottom-0 left-0 w-full bg-white dark:bg-[#161a20] border-t border-gray-200 dark:border-gray-700 p-4 flex justify-end gap-3 z-50 shadow-md"
   >
     <button nz-button nzType="default" (click)="close()">
-      {{ "Hủy bỏ" | translate }}
+      {{ "common.cancel" | translate }}
     </button>
     <button
       nz-button
       nzType="primary"
       [nzLoading]="isLoading()"
+      [disabled]="form.invalid"
       (click)="submit()"
     >
-      {{ (nzData.isEditMode ? "Cập nhật" : "Đăng bài") | translate }}
+      {{
+        (nzData.isEditMode ? "article.form.update" : "article.form.publish")
+          | translate
+      }}
     </button>
   </div>
 </form>

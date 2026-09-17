@@ -1,9 +1,6 @@
 import { FilterDate } from '@core/models/common.model';
 
-export interface DashboardQuery extends FilterDate {
-  // movieId: number;
-  // theaterId: number;
-}
+export type DashboardQuery = FilterDate;
 
 export interface DashboardMetrics {
   totalRevenue: number;
@@ -40,4 +37,11 @@ export interface DashboardSummary {
   movies: TopMovie[];
   theaters: TopTheater[];
   payments: PaymentDistribution[];
+}
+
+export interface DailyForecast {
+  date: Date;
+  dayOfWeek: string;
+  projectedRevenue: number;
+  sampleDays: number;
 }

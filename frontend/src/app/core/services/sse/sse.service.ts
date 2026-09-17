@@ -2,6 +2,11 @@ import { inject, Injectable, NgZone } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '@env/environment';
 
+export interface SseEvent {
+  event: string;
+  data: unknown;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -9,7 +14,10 @@ export class SseService {
   URL = `${environment.apiUrl}/notification/subscribe/showtime`;
   private zone = inject(NgZone);
 
-  connect(id: string | number, userId: number) {
+  connect(id: string | number, userId: number): Observable<SseEvent> {
+    if (environment.useMock) {
+      return this.mockConnect(id, userId);
+    }
     return new Observable((observer) => {
       // Seat channel
       const clientId = `${userId}_${Math.random().toString(36).substring(3, 9)}`;
@@ -23,7 +31,7 @@ export class SseService {
           try {
             const parsedData = JSON.parse(data);
             observer.next({ event: eventName, data: parsedData });
-          } catch (e) {
+          } catch {
             observer.next({ event: eventName, data });
           }
         });
@@ -39,9 +47,7 @@ export class SseService {
         handleEvent('SEAT_RELEASE', e.data),
       );
 
-      source.addEventListener('CONNECTED', (e: MessageEvent) =>
-        console.log('SSE Handshake: connected'),
-      );
+      source.addEventListener('CONNECTED', () => {});
 
       // ✅ Optional: thêm handler fallback cho các event khác
       source.onmessage = (event) => {
@@ -53,7 +59,7 @@ export class SseService {
         });
       };
 
-      source.onerror = (error) => {
+      source.onerror = (_error) => {
         if (source.readyState === EventSource.CLOSED) {
           console.error(
             'SSE Connection was closed. Browser will attempt to reconnect...',
@@ -65,9 +71,42 @@ export class SseService {
 
       // Clean up
       return () => {
-        console.log('Closing SSE connection for client: ', clientId);
         source?.close();
       };
+    });
+  }
+
+  /** Mock: phát sự kiện giả lập — một người dùng khác giữ 1 ghế, rồi nhả ra. */
+  private mockConnect(id: string | number, _userId: number): Observable<SseEvent> {
+    return new Observable((observer) => {
+      const timers: ReturnType<typeof setTimeout>[] = [];
+
+      const emit = (event: string, data: unknown, delayMs: number) => {
+        timers.push(
+          setTimeout(() => {
+            this.zone.run(() => observer.next({ event, data }));
+          }, delayMs),
+        );
+      };
+
+      const seatIds = Array.from({ length: 80 }, (_, i) => i + 1 + Number(id) * 1000);
+      const randomSeat = () =>
+        seatIds[Math.floor(Math.random() * seatIds.length)];
+
+      // Simulated other-user holds a seat at ~5s, releases at ~20s
+      const heldSeat = randomSeat();
+      emit(
+        'SEAT_HOLD',
+        { seatIds: [{ seatId: heldSeat, reservationId: 'other-user-res' }] },
+        5000,
+      );
+      emit(
+        'SEAT_RELEASE',
+        { seatIds: [heldSeat] },
+        20000,
+      );
+
+      return () => timers.forEach((t) => clearTimeout(t));
     });
   }
 }

@@ -2,9 +2,8 @@ import { inject, Injectable } from '@angular/core';
 import { catchError, map, Observable, throwError } from 'rxjs';
 import { environment } from '@env/environment';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { ReservationFilter } from '@domain/reservation/models/reservation.model';
 import { User, UserProfile } from '@domain/user/models/user.model';
-import { ApiRes, ResponsePage } from '@core/models/common.model';
+import { ApiRes, FilterQuery, FilterSort, ResponsePage } from '@core/models/common.model';
 
 @Injectable({
   providedIn: 'root',
@@ -13,11 +12,11 @@ export class UserService {
   URL = `${environment.apiUrl}/user`;
   private http = inject(HttpClient);
 
-  getAll(filter?: any) {
+  getAll(filter?: FilterSort & FilterQuery) {
     let params = new HttpParams();
     if (filter) {
       Object.keys(filter).forEach((key) => {
-        const value = filter[key as keyof ReservationFilter];
+        const value = filter[key as keyof typeof filter];
         if (value !== null && value !== undefined && value !== '') {
           params = params.set(key, value.toString());
         }
@@ -62,8 +61,8 @@ export class UserService {
   }
 
   private handleError<T>(operation = 'operation') {
-    return (error: any): Observable<T> => {
-      console.log(`${operation} failed: ${error}`);
+    return (error: unknown): Observable<T> => {
+      console.error(`${operation} failed: ${error}`);
       return throwError(() => error);
     };
   }

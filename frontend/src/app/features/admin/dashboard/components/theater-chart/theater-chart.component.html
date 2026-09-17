@@ -1,17 +1,31 @@
-<div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+<div
+  class="bg-white dark:bg-[#161a20] p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700"
+>
   <div class="flex justify-between items-center mb-4">
-    <h4 class="text-base font-bold text-gray-800 flex items-center gap-2">
-      <nz-icon nzType="shop" nzTheme="fill" class="text-primary" />
-      {{ "Top 5 rạp có doanh thu cao" | translate }}
-    </h4>
-    <button
-      nz-button
-      nzType="text"
-      nzSize="small"
-      class="text-gray-400 hover:bg-gray-100"
+    <h4
+      class="text-base font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2"
     >
-      <nz-icon nzType="more" nzTheme="outline" class="text-xl" />
-    </button>
+      <nz-icon
+        nzType="shop"
+        nzTheme="fill"
+        class="text-primary"
+        aria-hidden="true"
+      />
+      {{ "admin.dashboard.topTheaters" | translate }}
+    </h4>
   </div>
-  <div echarts [options]="options" class="w-full h-[350px]"></div>
+  @if (theaters().length === 0) {
+    <div
+      class="h-[250px] sm:h-[350px] flex flex-col items-center justify-center gap-2 text-gray-400 dark:text-gray-500"
+    >
+      <nz-icon nzType="shop" nzTheme="outline" class="text-4xl" aria-hidden="true" />
+      <span class="text-sm">{{ "common.noData" | translate }}</span>
+    </div>
+  } @else {
+    <div
+      echarts
+      [options]="options()"
+      class="w-full h-[250px] sm:h-[350px]"
+    ></div>
+  }
 </div>

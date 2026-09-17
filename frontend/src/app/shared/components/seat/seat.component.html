@@ -7,11 +7,17 @@
   [class]="className()"
 >
   <path
-    fill="currentColor"
+    [attr.fill]="outline() ? 'none' : 'currentColor'"
+    [attr.stroke]="outline() ? 'currentColor' : 'none'"
+    [attr.stroke-width]="outline() ? 28 : 0"
+    [attr.stroke-dasharray]="outline() ? '40 24' : null"
     d="M70 335 L70 180 C70 120 130 110 256 110 C382 110 442 120 442 180 L442 335 Q 442 355 422 358 Q 256 390 90 358 Q 70 355 70 335 Z"
   />
   <path
-    fill="currentColor"
+    [attr.fill]="outline() ? 'none' : 'currentColor'"
+    [attr.stroke]="outline() ? 'currentColor' : 'none'"
+    [attr.stroke-width]="outline() ? 28 : 0"
+    [attr.stroke-dasharray]="outline() ? '40 24' : null"
     d="M70 385 Q 256 425 442 385 C 442 385 442 435 422 455 Q 256 495 90 455 C 70 435 70 385 70 385 Z"
   />
 </svg>

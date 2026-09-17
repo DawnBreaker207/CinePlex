@@ -1,56 +1,80 @@
-<nz-layout class="min-h-screen bg-slate-50">
+<nz-layout class="min-h-screen bg-transparent">
+  <app-slider [movies]="homeStore.movies()" />
+
   <nz-content class="mx-auto w-full max-w-5xl px-4 pb-12 pt-6 md:px-6">
-    <app-slider [movies]="homeStore.movies()"/>
 
-    @if (homeStore.movies(); as movies) {
-      <section
-        class="mt-6 rounded-xl border border-slate-200 bg-white px-4 py-3 md:px-6"
-      >
-        <nz-tabs nzSize="large" class="movie-tabset">
-          <nz-tab nzTitle="Đang chiếu">
-            <div class="mb-4 mt-4 flex items-center justify-between">
-              <h2
-                class="font-['Bricolage_Grotesque'] text-[17px] font-semibold text-slate-900"
-              >
-                {{ 'Phim đang chiếu' | translate }}
-              </h2>
-              <span class="text-sm font-medium text-[#E53E3E]">
-                {{ movies.length }} {{ 'phim' | translate }}
-              </span>
-            </div>
-            <div nz-row [nzGutter]="[14, 14]">
-              @for (movie of movies; track movie.id; let idx = $index) {
+    <section
+      class="mt-6 rounded-xl border border-slate-200 bg-white px-4 py-3 md:px-6"
+    >
+      <nz-tabs nzSize="large" nzCentered class="movie-tabset">
+        <nz-tab [nzTitle]="'home.nowShowing' | translate">
+          @if (homeStore.nowShowing(); as nowShowing) {
+            <div nz-row [nzGutter]="[14, 14]" class="mt-4">
+              @for (movie of nowShowing; track movie.id) {
                 <div nz-col [nzXs]="24" [nzSm]="12" [nzMd]="12" [nzLg]="6">
-                  <app-movie-item [movie]="movie" (selectMovie)="onSelectedMovie(movie.id)"/>
+                  <app-movie-item
+                    [movie]="movie"
+                    (selectMovie)="onSelectedMovie(movie.id)"
+                  />
                 </div>
               }
             </div>
-          </nz-tab>
+          } @else {
+            <div class="text-center text-gray-400 py-10">
+              {{ "home.noMovies" | translate }}
+            </div>
+          }
+        </nz-tab>
 
-          <nz-tab nzTitle="Sắp chiếu">
-            <div class="mb-4 mt-4 flex items-center justify-between">
-              <h2
-                class="font-['Bricolage_Grotesque'] text-[17px] font-semibold text-slate-900"
-              >
-                {{ 'Phim sắp chiếu' | translate }}
-              </h2>
-              <span class="text-sm font-medium text-[#E53E3E]">
-                {{ movies.length }} {{ 'phim' | translate }}
-              </span>
-              >
-            </div>
-            <div nz-row [nzGutter]="[14, 14]">
-              @for (movie of movies.slice(0, 8); track movie.id) {
-                <div nz-col [nzXs]="24" [nzSm]="12" [nzMd]="12" [nzLg]="6">
-                  <app-movie-item [movie]="movie" (selectMovie)="onSelectedMovie(movie.id)"/>
-                </div>
-              }
-            </div>
-          </nz-tab>
-        </nz-tabs>
-      </section>
-    } @else {
-      <nz-empty/>
+        <nz-tab [nzTitle]="comingSoonTitle">
+          <ng-template #comingSoonTitle>
+            <span>{{ "home.comingSoon" | translate }}</span>
+          </ng-template>
+          @if (homeStore.comingSoon(); as comingSoon) {
+            @if (comingSoon.length > 0) {
+              <div nz-row [nzGutter]="[14, 14]" class="mt-4">
+                @for (movie of comingSoon; track movie.id) {
+                  <div nz-col [nzXs]="24" [nzSm]="12" [nzMd]="12" [nzLg]="6">
+                    <app-movie-item
+                      [movie]="movie"
+                      [canBook]="false"
+                      (selectMovie)="onSelectedMovie(movie.id)"
+                    />
+                  </div>
+                }
+              </div>
+            } @else {
+              <div class="text-center text-gray-400 py-10">
+                {{ "home.noMovies" | translate }}
+              </div>
+            }
+          }
+        </nz-tab>
+      </nz-tabs>
+    </section>
+
+    @if (suggestedOrFallback(); as movies) {
+      @if (movies.length > 0) {
+        <section
+          class="mt-6 rounded-xl border border-slate-200 bg-white px-4 py-3 md:px-6"
+        >
+          <div class="mb-4 mt-4">
+            <h2 class="text-xl font-bold text-slate-900">
+              {{ "home.recommended" | translate }}
+            </h2>
+          </div>
+          <div class="flex gap-4 overflow-x-auto pb-2">
+            @for (movie of movies; track movie.id) {
+              <div class="w-40 shrink-0 sm:w-44">
+                <app-movie-item
+                  [movie]="movie"
+                  (selectMovie)="onSelectedMovie(movie.id)"
+                />
+              </div>
+            }
+          </div>
+        </section>
+      }
     }
   </nz-content>
 </nz-layout>

@@ -6,6 +6,7 @@ import {
   input,
   output,
 } from '@angular/core';
+import { ChangeDetectionStrategy } from '@angular/core';
 import { NzImageModule } from 'ng-zorro-antd/image';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzButtonComponent } from 'ng-zorro-antd/button';
@@ -34,6 +35,7 @@ import { SeatStore } from '@features/client/reservation/components/seat/seat.sto
   ],
   templateUrl: './detail-film.component.html',
   styleUrl: './detail-film.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DetailFilmComponent {
   private store = inject(Store);
@@ -41,7 +43,11 @@ export class DetailFilmComponent {
 
   index = input<number>(0);
   steps = input<number[]>([]);
+  paymentLoading = input(false);
+  holdingSeats = input(false);
   stepChange = output<number>();
+  confirm = output<void>();
+  pay = output<void>();
 
   readonly movie = this.store.selectSignal(selectSelectedMovie);
   readonly theater = this.store.selectSignal(selectSelectedTheater);
@@ -60,16 +66,16 @@ export class DetailFilmComponent {
     });
   }
 
-  nextStep() {
-    this.stepChange.emit(this.index() + 1);
+  emitConfirm() {
+    this.confirm.emit();
   }
 
   prevStep() {
     this.stepChange.emit(this.index() - 1);
   }
 
-  saveSeats() {
-    this.nextStep();
+  emitPay() {
+    this.pay.emit();
   }
 
   protected readonly timeFormat = timeFormat;

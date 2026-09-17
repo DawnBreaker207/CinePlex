@@ -1,8 +1,15 @@
-import { Component, inject, OnInit } from '@angular/core';
+import {
+  Component,
+  inject,
+  OnInit,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
-  FormBuilder,
+  FormControl,
   FormGroup,
+  NonNullableFormBuilder,
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
@@ -20,6 +27,7 @@ import {
 } from '@domain/article/models/article.model';
 import { TranslatePipe } from '@ngx-translate/core';
 import { quillConfig } from '@core/config/quill.config';
+import { UploadService } from '@core/services/upload/upload.service';
 import { NZ_DRAWER_DATA, NzDrawerRef } from 'ng-zorro-antd/drawer';
 import { ArticleStore } from '@domain/article/data-access/article.store';
 
@@ -39,19 +47,29 @@ import { ArticleStore } from '@domain/article/data-access/article.store';
   ],
   templateUrl: './article-form.component.html',
   styleUrl: './article-form.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ArticleFormComponent implements OnInit {
   protected readonly quillConfig = quillConfig;
   private drawerRef = inject(NzDrawerRef);
   private articleStore = inject(ArticleStore);
+  private uploadService = inject(UploadService);
   readonly nzData = inject<{ article: Article | null; isEditMode: boolean }>(
     NZ_DRAWER_DATA,
   );
   protected readonly ArticleType = ArticleType;
   protected readonly ArticleStatus = ArticleStatus;
   isLoading = this.articleStore.saving;
-  form!: FormGroup;
-  private fb = inject(FormBuilder);
+  readonly uploading = signal(false);
+  form!: FormGroup<{
+    title: FormControl<string>;
+    thumbnail: FormControl<string>;
+    summary: FormControl<string>;
+    content: FormControl<string>;
+    type: FormControl<ArticleType>;
+    status: FormControl<ArticleStatus>;
+  }>;
+  private fb = inject(NonNullableFormBuilder);
 
   ngOnInit() {
     this.initForm(this.nzData.article);
@@ -63,12 +81,25 @@ export class ArticleFormComponent implements OnInit {
       thumbnail: [data?.thumbnail || '', [Validators.required]],
       summary: [data?.summary || '', [Validators.required]],
       content: [data?.content || '', [Validators.required]],
-      type: [data?.type || 'UNKNOWN'],
-      status: [data?.status || 'DRAFT'],
+      type: [data?.type ?? ArticleType.UNKNOWN],
+      status: [data?.status ?? ArticleStatus.DRAFT],
     });
   }
   close() {
     this.drawerRef.close();
+  }
+
+  onThumbnailFile(event: Event) {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+    this.uploading.set(true);
+    this.uploadService.uploadAssets(file).subscribe({
+      next: (url) => {
+        this.form.controls.thumbnail.setValue(url);
+        this.uploading.set(false);
+      },
+      error: () => this.uploading.set(false),
+    });
   }
 
   submit() {
@@ -82,7 +113,7 @@ export class ArticleFormComponent implements OnInit {
       return;
     }
 
-    const formData = this.form.value;
+    const formData = this.form.getRawValue();
     if (this.nzData.isEditMode && this.nzData.article) {
       this.articleStore.updateArticle({
         id: this.nzData.article.id,

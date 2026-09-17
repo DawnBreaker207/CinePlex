@@ -1,4 +1,10 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import {
+  Component,
+  inject,
+  OnInit,
+  signal,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { NzModalRef } from 'ng-zorro-antd/modal';
 import { Theater } from '@domain/theater/models/theater.model';
 import { TranslatePipe } from '@ngx-translate/core';
@@ -7,7 +13,7 @@ import { TranslatePipe } from '@ngx-translate/core';
   selector: 'app-theater',
   imports: [TranslatePipe],
   templateUrl: './theater.component.html',
-  styleUrl: './theater.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TheaterModalComponent implements OnInit {
   private modelRef = inject(NzModalRef);

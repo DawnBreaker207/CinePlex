@@ -1,33 +1,22 @@
-import {
-  Component,
-  computed,
-  inject,
-  OnDestroy,
-  OnInit,
-  signal,
-} from '@angular/core';
+import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import { ChangeDetectionStrategy } from '@angular/core';
 import { NzFormModule } from 'ng-zorro-antd/form';
 import {
-  FormBuilder,
+  FormControl,
   FormGroup,
   FormsModule,
+  NonNullableFormBuilder,
   ReactiveFormsModule,
+  Validators,
 } from '@angular/forms';
 import { DatePipe, SlicePipe } from '@angular/common';
 import { NzDatePickerModule } from 'ng-zorro-antd/date-picker';
 import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzModalRef } from 'ng-zorro-antd/modal';
 import { Store } from '@ngrx/store';
-import { Actions, ofType } from '@ngrx/effects';
-import {
-  debounceTime,
-  distinctUntilChanged,
-  filter,
-  map,
-  Subject,
-  take,
-  takeUntil,
-} from 'rxjs';
+import { Actions } from '@ngrx/effects';
+import { filter, take } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NzSelectModule } from 'ng-zorro-antd/select';
 import { NzTimePickerModule } from 'ng-zorro-antd/time-picker';
 import { NzIconModule } from 'ng-zorro-antd/icon';
@@ -37,14 +26,25 @@ import { TheaterActions } from '@domain/theater/data-access/theater.actions';
 import { ShowtimeActions } from '@domain/showtime/data-access/showtime.actions';
 import { selectSelectedShowtime } from '@domain/showtime/data-access/showtime.selectors';
 import { Movie } from '@domain/movie/models/movie.model';
-import { Showtime } from '@domain/showtime/models/showtime.model';
+import {
+  Showtime,
+  ShowtimeRequest,
+} from '@domain/showtime/models/showtime.model';
 import {
   formatDate,
   formatTime,
   timeFormatDay,
 } from '@shared/utils/date.helper';
 import { MovieActions } from '@domain/movie/data-access/movie.actions';
+import { RoomService } from '@domain/theater/data-access/room.service';
+import { Room } from '@domain/theater/models/room.model';
 import { TranslatePipe } from '@ngx-translate/core';
+import {
+  debouncedSearch,
+  disableForm,
+  markFormTouched,
+  watchSaveResult,
+} from '@shared/utils/form-utils';
 
 @Component({
   selector: 'app-form',
@@ -63,28 +63,41 @@ import { TranslatePipe } from '@ngx-translate/core';
   ],
   templateUrl: './showtime-form.component.html',
   styleUrl: './showtime-form.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class FormShowtimeComponent implements OnInit, OnDestroy {
-  private fb = inject(FormBuilder);
+export class FormShowtimeComponent implements OnInit {
+  private fb = inject(NonNullableFormBuilder);
   private modelRef = inject(NzModalRef);
+  private roomService = inject(RoomService);
   private store = inject(Store);
   private actions$ = inject(Actions);
+  private destroyRef = inject(DestroyRef);
 
   mode: 'add' | 'edit' | 'view' = 'add';
+  readonly submitting = signal(false);
   showtimeId!: number;
-  form!: FormGroup;
+  form!: FormGroup<{
+    movieId: FormControl<number | null>;
+    moviePosterUrl: FormControl<string>;
+    theaterId: FormControl<number | null>;
+    roomId: FormControl<number | null>;
+    showDate: FormControl<Date | null>;
+    showTime: FormControl<Date | null>;
+    price: FormControl<number | null>;
+    totalSeats: FormControl<number | null>;
+  }>;
   searchCtrl = this.fb.control('');
+  readonly rooms = signal<Room[]>([]);
 
   theaters = this.store.selectSignal(selectAllTheaters);
   searchMovie = this.store.selectSignal(selectAllMovies);
   isSearching = signal(false);
-  selectedMovie = signal<any>(null);
+  selectedMovie = signal<Movie | null>(null);
   searchResults = computed(() => {
     return this.isSearching() && this.searchCtrl.value
       ? this.searchMovie()
       : [];
   });
-  destroy$: Subject<void> = new Subject<void>();
 
   ngOnInit() {
     this.initForm();
@@ -103,13 +116,13 @@ export class FormShowtimeComponent implements OnInit, OnDestroy {
             (showtime) => showtime !== null && showtime.id === this.showtimeId,
           ),
           take(1),
-          takeUntil(this.destroy$),
+          takeUntilDestroyed(this.destroyRef),
         )
         .subscribe((theater) => {
           if (theater) {
             this.patchFormValue(theater);
             if (this.mode === 'view') {
-              this.disableForm();
+              disableForm(this.form);
             }
           }
         });
@@ -118,12 +131,8 @@ export class FormShowtimeComponent implements OnInit, OnDestroy {
   }
 
   search() {
-    this.searchCtrl.valueChanges
-      .pipe(
-        debounceTime(300),
-        map((v) => v?.trim()),
-        distinctUntilChanged(),
-      )
+    debouncedSearch(this.searchCtrl, 300)
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((search) => {
         if (search) {
           this.isSearching.set(true);
@@ -134,14 +143,9 @@ export class FormShowtimeComponent implements OnInit, OnDestroy {
       });
   }
 
-  private disableForm() {
-    Object.keys(this.form.controls).forEach((key) => {
-      this.form.get(key)?.disable();
-    });
-  }
-
   selectMovie(movie: Movie) {
-    const movieResult = this.searchMovie().find((m) => m.id === movie?.id);
+    const movieResult =
+      this.searchMovie().find((m) => m.id === movie?.id) ?? null;
     this.form.patchValue({
       movieId: movie.id,
       moviePosterUrl: movie.poster,
@@ -150,22 +154,46 @@ export class FormShowtimeComponent implements OnInit, OnDestroy {
     this.isSearching.set(false);
     this.searchCtrl.setValue('', { emitEvent: false });
   }
-
   initForm() {
     this.form = this.fb.group({
-      movieId: [''],
+      movieId: [null as number | null, Validators.required],
       moviePosterUrl: [''],
-      theaterId: [''],
+      theaterId: [null as number | null, Validators.required],
+      roomId: [null as number | null],
 
-      showDate: [null],
-      showTime: [null],
+      showDate: [null as Date | null, Validators.required],
+      showTime: [null as Date | null, Validators.required],
 
-      price: [''],
-      totalSeats: [''],
+      price: [null as number | null, [Validators.required, Validators.min(1)]],
+      totalSeats: [
+        null as number | null,
+        [Validators.required, Validators.min(1)],
+      ],
+    });
+    this.form.controls.theaterId.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((theaterId) => this.loadRooms(theaterId));
+  }
+
+  loadRooms(theaterId: number | null) {
+    this.rooms.set([]);
+    this.form.controls.roomId.setValue(null, { emitEvent: false });
+    if (!theaterId) return;
+    this.roomService.getByTheater(theaterId).subscribe({
+      next: (rooms) => this.rooms.set(rooms),
+      error: () => this.rooms.set([]),
     });
   }
 
+  onRoomChange(roomId: number | null) {
+    const room = this.rooms().find((r) => r.id === roomId);
+    if (room?.totalSeats) {
+      this.form.controls.totalSeats.setValue(room.totalSeats);
+    }
+  }
+
   private patchFormValue(showtime: Showtime) {
+    this.loadRooms(showtime.theaterId);
     this.form.patchValue({
       // Theater
       theaterId: showtime.theaterId,
@@ -177,27 +205,23 @@ export class FormShowtimeComponent implements OnInit, OnDestroy {
       totalSeats: showtime.totalSeats,
       // Showtime Date
       showDate: showtime.showDate,
-      showTime: timeFormatDay(showtime.showTime),
+      showTime: timeFormatDay(showtime.showTime) as unknown as Date,
     });
   }
 
   submit() {
-    if (this.form.invalid) {
-      Object.keys(this.form.controls).forEach((key) => {
-        this.form.get(key)?.markAllAsTouched();
-      });
+    if (this.form.invalid || this.submitting()) {
+      markFormTouched(this.form);
       return;
     }
 
+    this.submitting.set(true);
+    const { showDate, showTime, roomId: _roomId, ...rest } = this.form.getRawValue();
     const showtimeData = {
-      ...this.form.value,
-      showDate: this.form.value.showDate
-        ? formatDate(this.form.value.showDate)
-        : null,
-      showTime: this.form.value.showTime
-        ? formatTime(this.form.value.showDate)
-        : null,
-    };
+      ...rest,
+      showDate: showDate ? formatDate(showDate) : null,
+      showTime: showTime ? formatTime(showTime) : null,
+    } as unknown as ShowtimeRequest;
 
     if (this.mode === 'edit') {
       this.store.dispatch(
@@ -212,35 +236,25 @@ export class FormShowtimeComponent implements OnInit, OnDestroy {
       );
     }
 
-    this.actions$
-      .pipe(
-        ofType(
-          ShowtimeActions.createShowtimeSuccess,
-          ShowtimeActions.updateShowtimeSuccess,
-        ),
-        take(1),
-        takeUntil(this.destroy$),
-      )
-      .subscribe(() => {
+    watchSaveResult(
+      this.actions$,
+      this.destroyRef,
+      [
+        ShowtimeActions.createShowtimeSuccess,
+        ShowtimeActions.updateShowtimeSuccess,
+      ],
+      [
+        ShowtimeActions.createShowtimeFailed,
+        ShowtimeActions.updateShowtimeFailed,
+      ],
+      () => {
+        this.submitting.set(false);
         this.modelRef.close();
-      });
-
-    this.actions$
-      .pipe(
-        ofType(
-          ShowtimeActions.createShowtimeFailed,
-          ShowtimeActions.updateShowtimeFailed,
-        ),
-        take(1),
-        takeUntil(this.destroy$),
-      )
-      .subscribe(({ error }) => {
+      },
+      (error) => {
+        this.submitting.set(false);
         console.error('Save showtime failed', error);
-      });
-  }
-
-  ngOnDestroy() {
-    this.destroy$.next();
-    this.destroy$.complete();
+      },
+    );
   }
 }

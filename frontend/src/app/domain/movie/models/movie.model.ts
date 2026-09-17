@@ -14,6 +14,7 @@ export interface Movie extends DateModel, IsDeleted {
   country: string;
   imdbId: string;
   filmId: string;
+  rating?: number;
 }
 
 export interface MovieRequest {

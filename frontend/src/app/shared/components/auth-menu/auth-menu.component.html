@@ -1,0 +1,176 @@
+
+    <div class="relative">
+      <!-- Trigger -->
+      <button
+        nz-dropdown
+        nzTrigger="click"
+        [nzDropdownMenu]="menu"
+        [nzPlacement]="'bottomRight'"
+        class="flex items-center justify-center rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-primary/50 hover:ring-2 hover:ring-primary/20"
+        type="button"
+        nz-tooltip
+        [nzTooltipTitle]="'profileMenu.openMenu' | translate"
+        [nzTooltipPlacement]="'bottom'"
+      >
+        <span class="sr-only">{{ 'profileMenu.openMenu' | translate }}</span>
+        @if (authService.isAuthenticated()) {
+          @if (userStore.selectedUser(); as user) {
+            <nz-avatar
+              [nzSize]="40"
+              [nzSrc]="
+                user.avatar ||
+                'https://avatars.githubusercontent.com/u/12519008?v=4'
+              "
+              class="cursor-pointer border border-gray-200 shadow-sm dark:border-gray-700"
+            />
+          } @else {
+            <nz-avatar
+              [nzSize]="40"
+              nzIcon="user"
+              class="cursor-pointer bg-primary text-white"
+            />
+          }
+        } @else {
+          <nz-avatar
+            [nzSize]="40"
+            class="cursor-pointer bg-gray-100 text-slate-500 dark:bg-gray-700 dark:text-gray-300"
+          >
+            ?
+          </nz-avatar>
+        }
+      </button>
+
+      <nz-dropdown-menu #menu="nzDropdownMenu">
+        <div
+          class="min-w-[220px] rounded-xl border border-border bg-white py-2 shadow-xl dark:border-gray-700 dark:bg-[#161a20]"
+        >
+          @if (authService.isAuthenticated(); as authed) {
+            @if (userStore.selectedUser(); as user) {
+              <div
+                class="flex items-center gap-3 border-b border-border bg-gray-50/50 px-4 py-3 dark:border-gray-700 dark:bg-gray-800/40"
+              >
+                <nz-avatar
+                  [nzSize]="40"
+                  [nzSrc]="
+                    user.avatar ||
+                    'https://avatars.githubusercontent.com/u/12519008?v=4'
+                  "
+                  class="shrink-0 border border-white shadow-sm dark:border-gray-600"
+                />
+                <div class="min-w-0 flex-1">
+                  <p class="truncate text-sm font-bold text-gray-900 dark:text-gray-100">
+                    {{ user.username || 'User' }}
+                  </p>
+                  <p class="truncate text-xs text-gray-500 dark:text-gray-400">
+                    {{ user.email }}
+                  </p>
+                </div>
+              </div>
+            }
+          } @else {
+            <div
+              class="flex items-center gap-3 border-b border-border px-4 py-3 dark:border-gray-700"
+            >
+              <nz-avatar
+                [nzSize]="40"
+                class="shrink-0 bg-gray-100 text-slate-500 dark:bg-gray-700 dark:text-gray-300"
+              >
+                ?
+              </nz-avatar>
+              <div class="min-w-0 flex-1">
+                <p class="text-sm font-bold text-gray-900 dark:text-gray-100">
+                  {{ 'profileMenu.guest' | translate }}
+                </p>
+                <a
+                  (click)="login()"
+                  (keydown.enter)="login()"
+                  tabindex="0"
+                  class="text-xs font-semibold text-primary hover:underline"
+                  >{{ 'header.login' | translate }}</a
+                >
+              </div>
+            </div>
+          }
+
+          <!-- Admin -->
+          @if (isAdmin()) {
+            <button
+              type="button"
+              (click)="goAdmin()"
+              class="flex w-full items-center gap-2 border-b border-border px-4 py-3 text-left text-sm font-medium text-gray-700 transition-colors hover:text-primary dark:border-gray-700 dark:text-gray-300 dark:hover:text-primary"
+            >
+              <i-lucide name="gauge" class="h-4 w-4 opacity-80 dark:text-gray-300" />
+              <span>{{ 'profileMenu.admin' | translate }}</span>
+              <i-lucide name="arrow-right" class="ml-auto h-4 w-4 opacity-60" />
+            </button>
+          }
+
+          <!-- Settings -->
+          <div
+            class="flex items-center justify-between gap-3 border-b border-border px-4 py-3 dark:border-gray-700"
+          >
+            <div class="flex items-center gap-2">
+              <i-lucide name="moon" class="h-4 w-4 opacity-80 dark:text-gray-300" />
+              <span class="text-sm text-gray-700 dark:text-gray-300">{{
+                'settings.theme' | translate
+              }}</span>
+            </div>
+            <app-switch
+              [checked]="settings.theme()"
+              (checkedChange)="settings.toggleTheme()"
+              [attr.aria-label]="'settings.theme' | translate"
+            >
+              @if (settings.theme()) {
+                <i-lucide name="moon" class="size-3.5 text-slate-700 dark:text-gray-200" />
+              } @else {
+                <i-lucide name="sun" class="size-3.5 text-amber-500" />
+              }
+            </app-switch>
+          </div>
+
+          <div
+            class="flex items-center justify-between gap-3 border-b border-border px-4 py-3 dark:border-gray-700"
+          >
+            <div class="flex items-center gap-2">
+              <i-lucide name="languages" class="h-4 w-4 opacity-80 dark:text-gray-300" />
+              <span class="text-sm text-gray-700 dark:text-gray-300">{{
+                'settings.language' | translate
+              }}</span>
+            </div>
+            <app-switch
+              [checked]="settings.lang() === 'en'"
+              (checkedChange)="toggleLang($event)"
+              [attr.aria-label]="'settings.language' | translate"
+            >
+              <span
+                class="text-[10px] font-bold leading-none text-slate-700"
+              >
+                {{ settings.lang() === 'en' ? 'EN' : 'VI' }}
+              </span>
+            </app-switch>
+          </div>
+
+          <!-- Menu List -->
+          <ul class="flex flex-col gap-1 p-2">
+            @for (item of filterMenu(); track $index) {
+              <li
+                (click)="handleItemClick(item)"
+                (keydown.enter)="handleItemClick(item)"
+                (keydown.space)="handleItemClick(item)"
+                tabindex="0"
+                [class]="
+                  'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium outline-none transition-colors cursor-pointer' +
+                  (item.isDanger
+                    ? ' text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30'
+                    : ' text-gray-700 hover:bg-gray-100 hover:text-primary dark:text-gray-300 dark:hover:bg-gray-700/60')
+                "
+              >
+                <i-lucide [name]="item.icon" class="h-4 w-4 opacity-70" />
+                {{ item.title | translate }}
+              </li>
+            }
+          </ul>
+        </div>
+      </nz-dropdown-menu>
+    </div>
+  

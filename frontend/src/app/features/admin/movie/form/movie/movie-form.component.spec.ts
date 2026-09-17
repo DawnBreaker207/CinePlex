@@ -2,6 +2,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { FormMovieComponent } from './movie-form.component';
 
+import { testProviders } from '@shared/testing/test-providers';
+
 describe('FormComponent', () => {
   let component: FormMovieComponent;
   let fixture: ComponentFixture<FormMovieComponent>;
@@ -9,6 +11,7 @@ describe('FormComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [FormMovieComponent],
+      providers: [testProviders],
     }).compileComponents();
 
     fixture = TestBed.createComponent(FormMovieComponent);

@@ -1,0 +1,29 @@
+<div class="mx-auto flex min-h-[60vh] w-full max-w-md flex-col items-center justify-center px-4 py-12">
+  @if (checking()) {
+    <nz-spin nzSize="large" [nzTip]="'common.loading' | translate" />
+  } @else if (verified()) {
+    <nz-result
+      nzStatus="success"
+      [nzTitle]="'auth.emailVerified' | translate"
+      [nzSubTitle]="'auth.emailVerifiedSub' | translate"
+    >
+      <div nz-result-extra>
+        <button nz-button nzType="primary" routerLink="/login">
+          {{ "header.login" | translate }}
+        </button>
+      </div>
+    </nz-result>
+  } @else {
+    <nz-result
+      nzStatus="warning"
+      [nzTitle]="'auth.emailVerifyFailed' | translate"
+      [nzSubTitle]="'auth.emailVerifyFailedSub' | translate"
+    >
+      <div nz-result-extra>
+        <button nz-button nzType="primary" routerLink="/login">
+          {{ "header.login" | translate }}
+        </button>
+      </div>
+    </nz-result>
+  }
+</div>

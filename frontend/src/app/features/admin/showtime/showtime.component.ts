@@ -1,4 +1,9 @@
-import { Component, inject, OnInit } from '@angular/core';
+import {
+  Component,
+  inject,
+  OnInit,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import { Store } from '@ngrx/store';
 import { DatePipe } from '@angular/common';
@@ -17,9 +22,10 @@ import { NzSpinModule } from 'ng-zorro-antd/spin';
 import { NzAlertModule } from 'ng-zorro-antd/alert';
 import { filter, take } from 'rxjs';
 import {
-  FormBuilder,
+  FormControl,
   FormGroup,
   FormsModule,
+  NonNullableFormBuilder,
   ReactiveFormsModule,
 } from '@angular/forms';
 import { NzFormModule } from 'ng-zorro-antd/form';
@@ -28,6 +34,9 @@ import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzTooltipModule } from 'ng-zorro-antd/tooltip';
 import { NzProgressModule } from 'ng-zorro-antd/progress';
 import { NzDropDownModule } from 'ng-zorro-antd/dropdown';
+import { ICON_COLORS, CHART_COLORS } from '@shared/utils/colors';
+import { confirmDelete } from '@shared/utils/confirm-delete';
+import { saveFooter } from '@shared/utils/form-utils';
 import {
   selectAllShowtimes,
   selectPaginationShowtime,
@@ -41,7 +50,7 @@ import { formatDate } from '@shared/utils/date.helper';
 import { FormShowtimeComponent } from '@features/admin/showtime/form/showtime-form.component';
 import { LoadingComponent } from '@shared/components/loading/loading.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { HEADER_COLUMNS } from '@core/constants/column';
 
 @Component({
@@ -70,13 +79,14 @@ import { HEADER_COLUMNS } from '@core/constants/column';
     TranslatePipe,
   ],
   templateUrl: './showtime.component.html',
-  styleUrl: './showtime.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [NzModalService],
 })
 export class ShowtimeComponent implements OnInit {
-  private modalService = inject(NzModalService);
-  private store = inject(Store);
-  private fb = inject(FormBuilder);
+private modalService = inject(NzModalService);
+private store = inject(Store);
+private fb = inject(NonNullableFormBuilder);
+private translate = inject(TranslateService);
 
   showtimes = this.store.selectSignal(selectAllShowtimes);
   theaters = this.store.selectSignal(selectAllTheaters);
@@ -85,7 +95,15 @@ export class ShowtimeComponent implements OnInit {
   error = this.store.selectSignal(selectShowtimeError);
 
   headerColumn = HEADER_COLUMNS.SHOWTIME;
-  form!: FormGroup;
+  readonly ICON_COLORS = ICON_COLORS;
+  readonly progressStrokeColor = {
+    '0%': CHART_COLORS.success(),
+    '100%': CHART_COLORS.primary(),
+  };
+  form!: FormGroup<{
+    theaterId: FormControl<number | null>;
+    dateRange: FormControl<Date[] | null>;
+  }>;
 
   constructor() {
     this.initForm();
@@ -110,7 +128,7 @@ export class ShowtimeComponent implements OnInit {
   }
 
   loadData(pageIndex: number, pageSize?: number) {
-    const { theaterId, dateRange } = this.form.value;
+    const { theaterId, dateRange } = this.form.getRawValue();
     if (!theaterId) return;
     const size = pageSize ?? this.pagination()?.pageSize ?? 10;
     this.store.dispatch(
@@ -132,7 +150,7 @@ export class ShowtimeComponent implements OnInit {
   }
 
   openModal(mode: 'add' | 'edit' | 'view', id?: number) {
-    const modal = this.modalService.create({
+    this.modalService.create({
       nzContent: FormShowtimeComponent,
       nzTitle: undefined,
       nzClosable: true,
@@ -142,28 +160,14 @@ export class ShowtimeComponent implements OnInit {
       },
       nzWidth: 900,
       nzKeyboard: true,
-      nzFooter:
-        mode === 'view'
-          ? null
-          : [
-              {
-                label: 'Confirm',
-                type: 'primary',
-                onClick: () => {
-                  const form =
-                    modal.getContentComponent() as FormShowtimeComponent;
-                  if (form.form.valid) {
-                    form.submit();
-                    modal.close();
-                  }
-                },
-              },
-            ],
+      nzFooter: mode === 'view' ? null : saveFooter<FormShowtimeComponent>(this.translate),
     });
   }
 
   onDelete(id: number) {
-    this.store.dispatch(ShowtimeActions.deleteShowtime({ id }));
+    confirmDelete(this.modalService, this.translate, 'showtime.deleteTitle', () =>
+      this.store.dispatch(ShowtimeActions.deleteShowtime({ id })),
+    );
   }
 
   resetForm() {
@@ -176,8 +180,8 @@ export class ShowtimeComponent implements OnInit {
 
   private initForm() {
     this.form = this.fb.group({
-      theaterId: [null],
-      dateRange: [null],
+      theaterId: this.fb.control<number | null>(null),
+      dateRange: this.fb.control<Date[] | null>(null),
     });
   }
 }

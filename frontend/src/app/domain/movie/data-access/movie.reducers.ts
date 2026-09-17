@@ -1,4 +1,5 @@
 import { createReducer, on } from '@ngrx/store';
+import { errorMessage } from '@shared/utils/error.helper';
 import { Movie } from '@domain/movie/models/movie.model';
 import { Pagination } from '@core/models/common.model';
 import { MovieActions } from '@domain/movie/data-access/movie.actions';
@@ -52,7 +53,7 @@ export const movieReducer = createReducer(
     return {
       ...state,
       loading: false,
-      error,
+      error: errorMessage(error),
     };
   }),
   //   Search
@@ -77,7 +78,7 @@ export const movieReducer = createReducer(
     return {
       ...state,
       loading: false,
-      error,
+      error: errorMessage(error),
     };
   }),
   //  Get one
@@ -106,7 +107,7 @@ export const movieReducer = createReducer(
     return {
       ...state,
       loadingDetails: false,
-      error,
+      error: errorMessage(error),
     };
   }),
   //  Create
@@ -129,7 +130,7 @@ export const movieReducer = createReducer(
     return {
       ...state,
       saving: false,
-      error,
+      error: errorMessage(error),
     };
   }),
   //  Update
@@ -154,7 +155,7 @@ export const movieReducer = createReducer(
     return {
       ...state,
       saving: false,
-      error,
+      error: errorMessage(error),
     };
   }),
   //  Delete
@@ -179,7 +180,7 @@ export const movieReducer = createReducer(
     return {
       ...state,
       loading: false,
-      error,
+      error: errorMessage(error),
     };
   }),
   on(MovieActions.selectedMovie, (state, { movie }) => {
