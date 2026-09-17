@@ -1,5 +1,6 @@
 package com.dawn.identity.controller;
 
+import com.dawn.common.core.constant.security.AuthorizationExpressions;
 import com.dawn.common.core.dto.response.ResponseObject;
 import com.dawn.common.core.dto.response.ResponsePage;
 import com.dawn.identity.dto.request.UserRequest;
@@ -26,7 +27,7 @@ public class UserController {
 
     @GetMapping("")
     @RateLimiter(name = "limit")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('MODERATOR')")
+    @PreAuthorize(AuthorizationExpressions.CAN_MANAGE_SYSTEM)
     public ResponseObject<ResponsePage<UserResponse>> getAll(Pageable pageable) {
         return ResponseObject.success(userService.findAll(pageable));
     }
@@ -53,6 +54,7 @@ public class UserController {
     }
 
     @PutMapping("/update/{id}/profile")
+    @PreAuthorize("@roleSecurity.canUpdateProfile(#id, authentication)")
     public ResponseObject<UserResponse> updateUserInfo(@PathVariable Long id, @Valid @RequestBody UserRequest req) {
         return ResponseObject.success(userService.update(id, req));
     }

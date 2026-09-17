@@ -26,9 +26,8 @@ public class UserRoleSecurity {
 
         if (currentUser == null) return false;
 
-        // Can not update yourself
         if (currentUser.getId().equals(userId)) {
-            throw new PermissionDeniedException(ErrorCode.USER_CANNOT_UPDATE_SELF.format());
+            throw new PermissionDeniedException(ErrorCode.USER_CANNOT_UPDATE_SELF);
         }
 
         User targetUser = userRepository.findById(userId).orElse(null);
@@ -39,9 +38,21 @@ public class UserRoleSecurity {
         int targetUserRole = getMaxRole(targetUser.getRoles());
 
         if (currentUserRole <= targetUserRole) {
-            throw new PermissionDeniedException(ErrorCode.PERMISSION_NOT_ENOUGH.format());
+            throw new PermissionDeniedException(ErrorCode.PERMISSION_NOT_ENOUGH);
         }
         ;
+        return true;
+    }
+
+    public boolean canUpdateProfile(Long userId, Authentication auth) {
+        String currentUsername = auth.getName();
+        User currentUser = userRepository
+                .findByUsername(currentUsername)
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.CAN_NOT_FIND_USER_BY_USERNAME.format()));
+
+        if (!currentUser.getId().equals(userId)) {
+            throw new PermissionDeniedException(ErrorCode.PERMISSION_NOT_ENOUGH);
+        }
         return true;
     }
 
