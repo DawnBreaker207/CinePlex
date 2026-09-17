@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Set;
 
+// Demo bootstrap only: seeds admin/user accounts. Not for production.
 @Component
 @Slf4j
 @RequiredArgsConstructor
@@ -54,7 +55,6 @@ public class DataInitializer implements ApplicationRunner {
         createUserAccountIfNotExist();
     }
 
-    //    Note: This just for demo, don't use this in production
     private void createAdminAccountIfNotExist() {
         if (userRepository.existsByRolesName(URole.ADMIN)) {
             log.info("Admin account already exists");
@@ -65,14 +65,19 @@ public class DataInitializer implements ApplicationRunner {
                 .findByName(URole.ADMIN)
                 .orElseThrow(() ->
                         new ResourceNotFoundException(ErrorCode.ROLE_NOT_FOUND.format()));
+        Role ownerRole = roleRepository
+                .findByName(URole.OWNER)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(ErrorCode.ROLE_NOT_FOUND.format()));
 
         User user = User
                 .builder()
                 .username(adminUsername)
                 .email(adminEmail)
                 .password(passwordEncoder.encode(adminPassword))
-                .roles(Set.of(role))
+                .roles(Set.of(ownerRole, role))
                 .isActive(true)
+                .emailVerified(true)
                 .build();
 
         userRepository.save(user);
@@ -85,7 +90,6 @@ public class DataInitializer implements ApplicationRunner {
         log.info("========================================");
     }
 
-    //    Note: This just for demo, don't use this in production
     private void createUserAccountIfNotExist() {
         if (userRepository.existsByRolesName(URole.USER)) {
             log.info("User account already created");
@@ -103,6 +107,7 @@ public class DataInitializer implements ApplicationRunner {
                 .password(passwordEncoder.encode(userPassword))
                 .roles(Set.of(role))
                 .isActive(true)
+                .emailVerified(true)
                 .build();
         userRepository.save(user);
 
