@@ -4,11 +4,11 @@ import java.text.MessageFormat;
 
 public enum ErrorCode {
 
-    // ── Movie ────────────────────────────────────────────────────
+    // Movie
     MOVIE_NOT_FOUND("Movie not found"),
     MOVIE_EXISTED("Movie was existed"),
 
-    // ── Reservation ──────────────────────────────────────────────
+    // Reservation
     RESERVATION_NOT_FOUND("Reservation not found"),
     RESERVATION_EXISTED("Reservation existed"),
     RESERVATION_EXPIRED("Reservation expired or not existed"),
@@ -17,6 +17,7 @@ public enum ErrorCode {
     RESERVATION_INVALID_DATA("Invalid reservation data"),
     RESERVATION_INVALID_STATUS("Reservation is not in a confirmable state"),
     RESERVATION_PROCESSING("Reservation is being processed, please try again"),
+    HOLD_TOO_MANY_ATTEMPTS("Too many hold attempts, please try again later"),
     RESERVATION_SEATS_NOT_FOUND_DB("Some seats not found in database"),
     SEAT_WRONG_SHOWTIME("Seats {0} do not belong to the requested showtime"),
     FAILED_STORE_SEAT("Failed to store seat information. Please try again"),
@@ -25,17 +26,17 @@ public enum ErrorCode {
     INVALID_REDIS_FORMAT("Invalid {0} format in Redis"),
     INVALID_REDIS_DATA("Info in redis not exists or error when getting that"),
 
-    // ── Showtime ─────────────────────────────────────────────────
+    // Showtime
     SHOWTIME_NOT_FOUND("Showtime not found"),
 
-    // ── Theater ──────────────────────────────────────────────────
+    // Theater
     THEATER_NOT_FOUND("Theater not found"),
 
-    // ── Room ─────────────────────────────────────────────────────
+    // Room
     ROOM_NOT_FOUND("Room not found"),
     ROOM_NAME_EXISTS("A room with this name already exists in the theater"),
 
-    // ── Seat ─────────────────────────────────────────────────────
+    // Seat
     NO_SEAT_SELECTED("No seats selected in this reservation"),
     SEAT_NOT_FOUND("Seat not found"),
     SEAT_UNAVAILABLE("Seat already booked or no longer unavailable"),
@@ -43,11 +44,11 @@ public enum ErrorCode {
     SEAT_TEMPLATE_DUPLICATE("Seat {0}{1} already exists in the room"),
     SEAT_TYPE_INVALID("Invalid seat type: {0}"),
 
-    // ── Refresh Token ────────────────────────────────────────────
+    // Refresh Token
     REFRESH_TOKEN_NOT_FOUND("Refresh token not found"),
     REFRESH_TOKEN_EXPIRED("Refresh token was expired, Please make a new log in request"),
 
-    // ── User ─────────────────────────────────────────────────────
+    // User
     USER_NOT_FOUND("User not found"),
     USERNAME_EXISTED("Username already exists"),
     USERNAME_NOT_FOUND("Username not found"),
@@ -55,18 +56,18 @@ public enum ErrorCode {
     EMAIL_EXISTED("Email already exists"),
     PASSWORD_NOT_MATCH("Password not match"),
 
-    // ── Role ─────────────────────────────────────────────────────
+    // Role
     ROLE_NOT_FOUND("Role not found"),
     PERMISSION_FORBIDDEN("You don't have permission"),
 
-    // ── Payment ──────────────────────────────────────────────────
+    // Payment
     PAYMENT_COMPLETE("Payment already for this reservation"),
     PAYMENT_NOT_FOUND("Payment not found"),
 
-    // ── Service ──────────────────────────────────────────────────
+    // Service
     INTERNAL_SERVICE_ERROR("Internal Service Error"),
 
-    // ── Voucher ──────────────────────────────────────────────────
+    // Voucher
     VOUCHER_NOT_FOUND("Voucher not found"),
     VOUCHER_EXPIRED("Voucher has expired"),
     VOUCHER_OUT_OF_STOCK("Voucher already taken, please try again"),
@@ -78,18 +79,33 @@ public enum ErrorCode {
     VOUCHER_INVALID("Voucher is invalid or not eligible for application"),
     VOUCHER_NO_RESPONSE("No response received from Voucher system"),
 
-    // ── General ──────────────────────────────────────────────────
+    // General
     PROVIDER_NOT_SUPPORTED("Provider not supported"),
     DASHBOARD_CAN_NOT_GET_DATA("Can not get data dashboard"),
     PAYMENT_INTERNAL_ERROR("Internal Error"),
     PAYMENT_INVALID_SIGNATURE("Invalid payment signature"),
+    PAYMENT_AMOUNT_MISMATCH("Payment amount mismatch"),
     CAN_NOT_FIND_USER_BY_USERNAME("Can not find this user"),
     USER_CANNOT_UPDATE_SELF("You can't update yourself"),
     PERMISSION_NOT_ENOUGH("You permission not enough (Must higher than this person)"),
     MOMO_PAYMENT_FAILED("MoMo payment failed or payUrl is null"),
     VOUCHER_ALREADY_EXISTED("This voucher already existed"),
     MIN_ORDER_NOT_MET("Order total is less than minimum requirement"),
-    SEAT_CAPACITY_EXCEEDED("Total seats cannot be greater than capacity of {0}");
+    SEAT_CAPACITY_EXCEEDED("Total seats cannot be greater than capacity of {0}"),
+
+    // Auth / RBAC
+    CANNOT_ASSIGN_ADMIN_ROLE("Cannot assign ADMIN role"),
+    CANNOT_CHANGE_OWN_ROLE("Cannot change your own role"),
+    CANNOT_UPDATE_ADMIN_ACCOUNT("Cannot update ADMIN account"),
+    CANNOT_REMOVE_LAST_ADMIN("Cannot remove the last admin account"),
+    LOGIN_TOO_MANY_ATTEMPTS("Too many login attempts, please try again later"),
+    EMAIL_NOT_VERIFIED("Email not verified, please check your inbox"),
+    EMAIL_VERIFICATION_INVALID("Verification link expired or invalid"),
+    REGISTER_TOO_MANY_ATTEMPTS("Too many registration attempts, please try again later"),
+    INVALID_STATE_TRANSITION("Invalid state transition from {0} to {1}"),
+
+    // System
+    FILE_NOT_FOUND("File not found");
 
     private final String template;
 
