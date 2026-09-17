@@ -6,11 +6,11 @@ import com.dawn.cinema.dto.response.ShowtimeResponse;
 import com.dawn.cinema.service.SeatService;
 import com.dawn.cinema.service.ShowtimeService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-@Component
+@Service
 @RequiredArgsConstructor
 public class CinemaModuleApiImpl implements CinemaModuleApi {
 

@@ -10,6 +10,7 @@ import com.dawn.cinema.service.SeatLayoutService;
 import com.dawn.common.core.constant.ErrorCode;
 import com.dawn.common.core.exception.ApiException;
 import com.dawn.common.core.exception.wrapper.ResourceNotFoundException;
+import com.dawn.common.core.service.AuditLogService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -129,8 +130,9 @@ public class SeatLayoutServiceImpl implements SeatLayoutService {
     private void auditReactivated(Long roomId, List<SeatTemplate> saved) {
         long reactivated = saved.stream().filter(t -> t.getId() != null).count();
         if (reactivated > 0) {
-            auditLogService.record("SEAT_TEMPLATE_REACTIVATED", "SEAT_TEMPLATE", String.valueOf(roomId),
-                    "INACTIVE", "ACTIVE", "roomId=" + roomId + ", count=" + reactivated);
+            auditLogService.record("SEAT_TEMPLATE_REACTIVATED", "SEAT_TEMPLATE", String.valueOf(roomId), null,
+                    "INACTIVE", "ACTIVE", "roomId=" + roomId + ", count=" + reactivated,
+                    "SUCCESS", AuditLogService.clientIp(), null, null);
         }
     }
 

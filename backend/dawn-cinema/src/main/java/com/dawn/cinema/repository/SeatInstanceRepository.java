@@ -27,7 +27,7 @@ public interface SeatInstanceRepository extends JpaRepository<SeatInstance, Long
     List<SeatInstance> findByIdWithLock(@Param("seatIds") List<Long> seatIds);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
-    @Query("UPDATE SeatInstance s SET s.status = :status, s.reservationId = :reservationId " +
+    @Query("UPDATE SeatInstance s SET s.status = :status, s.reservationId = :reservationId, s.version = s.version + 1 " +
             "WHERE s.showtimeId = :showtimeId AND s.id IN :seatIds AND s.status = 'AVAILABLE'")
     int bookSeats(@Param("showtimeId") Long showtimeId,
                   @Param("seatIds") List<Long> seatIds,
@@ -35,7 +35,7 @@ public interface SeatInstanceRepository extends JpaRepository<SeatInstance, Long
                   @Param("reservationId") Long reservationId);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
-    @Query("UPDATE SeatInstance s SET s.status = 'AVAILABLE', s.reservationId = NULL " +
+    @Query("UPDATE SeatInstance s SET s.status = 'AVAILABLE', s.reservationId = NULL, s.version = s.version + 1 " +
             "WHERE s.reservationId = :reservationId AND s.id IN :seatIds AND s.status = 'BOOKED'")
     int unbookSeats(@Param("reservationId") Long reservationId,
                     @Param("seatIds") List<Long> seatIds);

@@ -11,6 +11,7 @@ import com.dawn.cinema.service.RoomService;
 import com.dawn.common.core.constant.ErrorCode;
 import com.dawn.common.core.exception.ApiException;
 import com.dawn.common.core.exception.wrapper.ResourceNotFoundException;
+import com.dawn.common.core.service.AuditLogService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -61,8 +62,9 @@ public class RoomServiceImpl implements RoomService {
             existing.setTotalSeats(request.getTotalSeats() != null ? request.getTotalSeats() : existing.getTotalSeats());
             existing.setIsActive(true);
             Room reactivated = roomRepository.save(existing);
-            auditLogService.record("ROOM_REACTIVATED", "ROOM", reactivated.getId().toString(),
-                    "INACTIVE", "ACTIVE", "theaterId=" + theaterId + ", name=" + request.getName());
+            auditLogService.record("ROOM_REACTIVATED", "ROOM", reactivated.getId().toString(), null,
+                    "INACTIVE", "ACTIVE", "theaterId=" + theaterId + ", name=" + request.getName(),
+                    "SUCCESS", AuditLogService.clientIp(), null, null);
             return toResponse(reactivated);
         }
         Room room = Room.builder()

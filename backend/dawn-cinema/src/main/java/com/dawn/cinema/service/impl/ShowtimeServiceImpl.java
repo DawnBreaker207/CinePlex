@@ -1,9 +1,9 @@
 package com.dawn.cinema.service.impl;
 
-import com.dawn.cinema.client.MovieClientCinemaService;
+import com.dawn.catalog.api.CatalogModuleApi;
+import com.dawn.catalog.dto.response.MovieResponse;
 import com.dawn.cinema.dto.request.ShowtimeFilterRequest;
 import com.dawn.cinema.dto.request.ShowtimeRequest;
-import com.dawn.cinema.dto.response.MovieDTO;
 import com.dawn.cinema.dto.response.ShowtimeResponse;
 import com.dawn.cinema.helper.ShowtimeMappingHelper;
 import com.dawn.cinema.model.*;
@@ -38,7 +38,7 @@ public class ShowtimeServiceImpl implements ShowtimeService {
 
     private final ShowtimeRepository showtimeRepository;
 
-    private final MovieClientCinemaService movieService;
+    private final CatalogModuleApi catalogModuleApi;
 
     private final TheaterRepository theaterRepository;
 
@@ -55,7 +55,7 @@ public class ShowtimeServiceImpl implements ShowtimeService {
                 .findByShowDate(date)
                 .stream()
                 .map(showtime -> {
-                    MovieDTO movie = movieService.findOne(showtime.getMovieId());
+                    MovieResponse movie = catalogModuleApi.findMovieById(showtime.getMovieId());
                     Theater theater = resolveTheater(showtime.getRoomId());
                     return ShowtimeMappingHelper.map(showtime, movie, theater);
                 })
@@ -68,7 +68,7 @@ public class ShowtimeServiceImpl implements ShowtimeService {
         return ResponsePage.of(showtimeRepository
                 .findByMovieId(movieId, pageable)
                 .map((showtime) -> {
-                    MovieDTO movie = movieService.findOne(movieId);
+                    MovieResponse movie = catalogModuleApi.findMovieById(movieId);
                     Theater theater = resolveTheater(showtime.getRoomId());
                     return ShowtimeMappingHelper.map(showtime, movie, theater);
                 }));
@@ -89,10 +89,10 @@ public class ShowtimeServiceImpl implements ShowtimeService {
                 .map(Showtime::getMovieId)
                 .distinct()
                 .toList();
-        Map<Long, MovieDTO> movieCache = movieService
-                .findAllByIds(movieIds)
+        Map<Long, MovieResponse> movieCache = catalogModuleApi
+                .findMoviesByIds(movieIds)
                 .stream()
-                .collect(Collectors.toMap(MovieDTO::getId, Function.identity()));
+                .collect(Collectors.toMap(MovieResponse::getId, Function.identity()));
         return ResponsePage.of(
                 showtimePage.map(
                         showtime -> ShowtimeMappingHelper.map(
@@ -108,7 +108,7 @@ public class ShowtimeServiceImpl implements ShowtimeService {
                 .findAvailableShowtimeFromDate(date)
                 .stream()
                 .map(showtime -> {
-                    MovieDTO movie = movieService.findOne(showtime.getMovieId());
+                    MovieResponse movie = catalogModuleApi.findMovieById(showtime.getMovieId());
                     Theater theater = resolveTheater(showtime.getRoomId());
                     return ShowtimeMappingHelper.map(showtime, movie, theater);
                 })
@@ -128,9 +128,9 @@ public class ShowtimeServiceImpl implements ShowtimeService {
                 .distinct()
                 .toList();
 
-        Map<Long, MovieDTO> movieMap = movieService.findAllByIds(movieIds)
+        Map<Long, MovieResponse> movieMap = catalogModuleApi.findMoviesByIds(movieIds)
                 .stream()
-                .collect(Collectors.toMap(MovieDTO::getId, m -> m));
+                .collect(Collectors.toMap(MovieResponse::getId, m -> m));
         return showtimes.stream()
                 .map(showtime -> {
                     Theater theater = resolveTheater(showtime.getRoomId());
@@ -149,7 +149,7 @@ public class ShowtimeServiceImpl implements ShowtimeService {
                 .findByShowDateAndMovieId(date, movieId)
                 .stream()
                 .map(showtime -> {
-                    MovieDTO movie = movieService.findOne(showtime.getMovieId());
+                    MovieResponse movie = catalogModuleApi.findMovieById(showtime.getMovieId());
                     Theater theater = resolveTheater(showtime.getRoomId());
                     return ShowtimeMappingHelper.map(showtime, movie, theater);
                 })
@@ -162,7 +162,7 @@ public class ShowtimeServiceImpl implements ShowtimeService {
         return showtimeRepository
                 .findById(id)
                 .map(showtime -> {
-                    MovieDTO movie = movieService.findOne(showtime.getMovieId());
+                    MovieResponse movie = catalogModuleApi.findMovieById(showtime.getMovieId());
                     Theater theater = resolveTheater(showtime.getRoomId());
                     ShowtimeResponse response = ShowtimeMappingHelper.map(showtime, movie, theater);
                     response.setAvailableSeats(
@@ -177,8 +177,8 @@ public class ShowtimeServiceImpl implements ShowtimeService {
     public ShowtimeResponse add(ShowtimeRequest showtimeRequest) {
         log.info("Adding new showtime for movie id: {} at theater id: {}", showtimeRequest.getMovieId(), showtimeRequest.getTheaterId());
 
-        MovieDTO movie = movieService
-                .findOne(showtimeRequest.getMovieId());
+        MovieResponse movie = catalogModuleApi
+                .findMovieById(showtimeRequest.getMovieId());
 
         Theater theater = theaterRepository
                 .findById(showtimeRequest.getTheaterId())
@@ -217,8 +217,8 @@ public class ShowtimeServiceImpl implements ShowtimeService {
                 .findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.THEATER_NOT_FOUND.format()));
 
-        MovieDTO movie = movieService
-                .findOne(showtimeDetails.getMovieId());
+        MovieResponse movie = catalogModuleApi
+                .findMovieById(showtimeDetails.getMovieId());
         if (showtimeDetails.getMovieId() != null) {
             showtime.setMovieId(movie.getId());
         }

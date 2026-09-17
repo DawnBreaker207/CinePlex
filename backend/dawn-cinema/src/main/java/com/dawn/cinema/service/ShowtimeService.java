@@ -22,8 +22,6 @@ public interface ShowtimeService {
 
     List<ShowtimeResponse> getAvailableShowtime(LocalDate date);
 
-    // get available showtimes for a specific movie from a date (paginated)
-    // this is what the booking page uses
     List<ShowtimeResponse> getAvailableShowtimeForMovie(Long movieId, LocalDate date);
 
     ShowtimeResponse getById(Long id);

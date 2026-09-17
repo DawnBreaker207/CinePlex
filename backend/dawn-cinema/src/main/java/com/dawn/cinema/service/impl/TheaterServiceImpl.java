@@ -10,6 +10,7 @@ import com.dawn.cinema.service.TheaterService;
 import com.dawn.common.core.constant.ErrorCode;
 import com.dawn.common.core.dto.response.ResponsePage;
 import com.dawn.common.core.exception.wrapper.ResourceNotFoundException;
+import com.dawn.common.core.service.AuditLogService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -85,8 +86,9 @@ public class TheaterServiceImpl implements TheaterService {
             existing.setLocation(request.getLocation());
             existing.setIsActive(true);
             Theater reactivated = theaterRepository.save(existing);
-            auditLogService.record("THEATER_REACTIVATED", "THEATER", reactivated.getId().toString(),
-                    "INACTIVE", "ACTIVE", "name=" + request.getName());
+            auditLogService.record("THEATER_REACTIVATED", "THEATER", reactivated.getId().toString(), null,
+                    "INACTIVE", "ACTIVE", "name=" + request.getName(),
+                    "SUCCESS", AuditLogService.clientIp(), null, null);
             log.info("Theater reactivated: {}", request.getName());
             return TheaterMappingHelper.map(reactivated, List.of());
         }

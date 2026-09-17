@@ -258,6 +258,7 @@ public class SeatServiceImpl implements SeatService {
                     .showtimeId(seatInstance.getShowtimeId())
                     .status(toSeatStatus(seatInstance.getStatus()))
                     .reservationId(seatInstance.getReservationId())
+                    .price(seatInstance.getPrice())
                     .build();
         }
         return SeatResponse.builder()
@@ -266,6 +267,7 @@ public class SeatServiceImpl implements SeatService {
                 .seatNumber(template.getRowLabel() + template.getSeatNumber())
                 .status(toSeatStatus(seatInstance.getStatus()))
                 .reservationId(seatInstance.getReservationId())
+                .price(seatInstance.getPrice())
                 .build();
     }
 
