@@ -39,8 +39,20 @@ public class AuditLog {
     @Column(name = "to_state")
     private String toState;
 
-    @Column(name = "metadata", length = 1024)
+    @Column(name = "metadata", length = 4096)
     private String metadata;
+
+    @Column(name = "status", nullable = false)
+    private String status;
+
+    @Column(name = "ip_address")
+    private String ipAddress;
+
+    @Column(name = "old_value", columnDefinition = "TEXT")
+    private String oldValue;
+
+    @Column(name = "new_value", columnDefinition = "TEXT")
+    private String newValue;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     @Builder.Default

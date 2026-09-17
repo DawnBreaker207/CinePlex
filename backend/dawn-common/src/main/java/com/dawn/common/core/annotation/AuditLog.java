@@ -17,6 +17,8 @@ public @interface AuditLog {
 
     String entityId() default "";
 
+    Class<?> entityClass() default void.class;
+
     String fromState() default "";
 
     String toState() default "";

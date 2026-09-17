@@ -5,6 +5,10 @@ public interface RedisKeyHelper {
         return "reservation:data:" + reservationId;
     }
 
+    static String reservationIdempotencyKey(final String idempotencyKey) {
+        return "reservation:idem:" + idempotencyKey;
+    }
+
     static String seatLockKey(final Long seatId) {
         return "seat:locked:" + seatId;
     }

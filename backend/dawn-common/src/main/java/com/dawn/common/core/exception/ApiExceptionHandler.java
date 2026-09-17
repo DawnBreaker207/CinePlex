@@ -3,7 +3,10 @@ package com.dawn.common.core.exception;
 import com.dawn.common.core.exception.payload.ExceptionMessage;
 import io.github.resilience4j.ratelimiter.RequestNotPermitted;
 import jakarta.validation.ConstraintViolationException;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,14 +21,21 @@ import java.time.ZonedDateTime;
 
 @RestControllerAdvice
 @Slf4j
+@RequiredArgsConstructor
 public class ApiExceptionHandler {
 
     private static final HttpStatus DEFAULT_STATUS = HttpStatus.BAD_REQUEST;
 
+    private final MessageSource messageSource;
+
     @ExceptionHandler(ApiException.class)
     public ResponseEntity<ExceptionMessage> handleApiRequestException(ApiException e) {
-        log.info("**ApiExceptionHandler controller, handler API request**");
-        return buildResponse(e.getStatus(), e.getMessage());
+        String message = e.getMessage();
+        if (e.getErrorCode() != null) {
+            message = messageSource.getMessage(e.getErrorCode().code(), e.getArgs(), e.getMessage(),
+                    LocaleContextHolder.getLocale());
+        }
+        return buildResponse(e.getStatus(), message, e.getErrorCode() != null ? e.getErrorCode().code() : null);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -55,7 +65,6 @@ public class ApiExceptionHandler {
         return buildResponse(DEFAULT_STATUS, "Invalid request");
     }
 
-    //  Malformed JSON
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ExceptionMessage> handleNotReadableException(final Exception ex) {
         log.warn("Malformed request body", ex);
@@ -76,7 +85,6 @@ public class ApiExceptionHandler {
         return buildResponse(HttpStatus.BAD_REQUEST, "Transaction failed, please retry");
     }
 
-    //  403 Error
     @ExceptionHandler({AccessDeniedException.class})
     public ResponseEntity<ExceptionMessage> handleAccessDeniedException(final Exception ex) {
         log.warn("Access denied", ex);
@@ -84,7 +92,6 @@ public class ApiExceptionHandler {
         return buildResponse(HttpStatus.FORBIDDEN, errorMsg);
     }
 
-    //  429 Error
     @ExceptionHandler({RequestNotPermitted.class})
     public ResponseEntity<ExceptionMessage> handleRateLimitException(final Exception ex) {
         log.warn("Too many request", ex);
@@ -92,7 +99,6 @@ public class ApiExceptionHandler {
         return buildResponse(HttpStatus.TOO_MANY_REQUESTS, errorMsg);
     }
 
-    //  500 Error
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ExceptionMessage> handleAllException(final Exception ex) {
         log.warn("Unhandled exception", ex);
@@ -101,11 +107,16 @@ public class ApiExceptionHandler {
     }
 
     private ResponseEntity<ExceptionMessage> buildResponse(HttpStatus status, String message) {
+        return buildResponse(status, message, null);
+    }
+
+    private ResponseEntity<ExceptionMessage> buildResponse(HttpStatus status, String message, String code) {
         ExceptionMessage response = ExceptionMessage
                 .builder()
                 .timestamp(ZonedDateTime.now())
                 .status(status.value())
                 .message(message)
+                .code(code)
                 .build();
         return new ResponseEntity<>(response, status);
     }
