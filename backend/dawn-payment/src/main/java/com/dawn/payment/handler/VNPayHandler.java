@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -28,15 +29,10 @@ public class VNPayHandler implements PaymentHandler {
         Map<String, String> vnpParamsMap = VNPayConfig.getVNPayConfig();
         long amount = totalAmount * VND_MULTIPLIER;
 
-        //  Config default bankCode
-        //  This bank code is fixed, you can change it
         vnpParamsMap.put("vnp_BankCode", "NCB");
         vnpParamsMap.put("vnp_TxnRef", reservationId);
         vnpParamsMap.put("vnp_Amount", String.valueOf(amount));
-        //  Update Ip Address
-        // You can set default IP to "127.0.0.1" or "0.0.0.0" without get IP utils
         vnpParamsMap.put("vnp_IpAddr", ipAddress);
-        //	Build Query URL
         String queryUrl = VNPayUtils.getPaymentURL(vnpParamsMap, true);
         String hashData = VNPayUtils.getPaymentURL(vnpParamsMap, false);
         String vnpSecureHash = VNPayUtils.hmacSHA512(VNPayConfig.getVnp_SecretKey(), hashData);
@@ -54,7 +50,7 @@ public class VNPayHandler implements PaymentHandler {
         String data = VNPayUtils.getPaymentURL(vnp_Params, false);
         String hash = VNPayUtils.hmacSHA512(VNPayConfig.getVnp_SecretKey(), data);
         boolean checkPaymentSuccess = hash.equalsIgnoreCase(vnp_SecureHash) && "00".equalsIgnoreCase(params.get("vnp_ResponseCode"));
-        log.info("Check payment success: {}", checkPaymentSuccess);
+        log.debug("Check payment success: {}", checkPaymentSuccess);
         return checkPaymentSuccess;
     }
 
@@ -66,5 +62,20 @@ public class VNPayHandler implements PaymentHandler {
     @Override
     public String getTxnRef(Map<String, String> params) {
         return params.get("vnp_TransactionNo");
+    }
+
+    @Override
+    public BigDecimal getAmount(Map<String, String> params) {
+        //  vnp_Amount is in VND * 100
+        String amount = params.get("vnp_Amount");
+        if (amount == null || amount.isBlank()) {
+            return null;
+        }
+        try {
+            return new BigDecimal(amount).divide(BigDecimal.valueOf(VND_MULTIPLIER));
+        } catch (NumberFormatException e) {
+            log.warn("Invalid vnp_Amount '{}'", amount);
+            return null;
+        }
     }
 }

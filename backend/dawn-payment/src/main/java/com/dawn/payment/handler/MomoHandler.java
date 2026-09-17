@@ -11,6 +11,7 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
+import java.math.BigDecimal;
 import java.util.Map;
 import java.util.UUID;
 
@@ -68,5 +69,18 @@ public class MomoHandler implements PaymentHandler {
     @Override
     public String getTxnRef(Map<String, String> params) {
         return params.get("transId");
+    }
+
+    @Override
+    public BigDecimal getAmount(Map<String, String> params) {
+        String amount = params.get("amount");
+        if (amount == null || amount.isBlank()) {
+            return null;
+        }
+        try {
+            return new BigDecimal(amount);
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 }

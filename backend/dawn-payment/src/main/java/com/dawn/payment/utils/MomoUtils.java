@@ -52,10 +52,10 @@ public final class MomoUtils {
 
     public static String sign(Map<String, String> params, MomoConfig config) {
         String rawSignature = buildRawSignature(params, config.getMomo_AccessKey());
-        log.info("Raw signature: {}", rawSignature);
+        log.debug("Raw signature: {}", rawSignature);
 
         String signature = hmacSHA256(config.getMomo_SecretKey(), rawSignature);
-        log.info("Signed signature: {}", signature);
+        log.debug("Signed signature: {}", signature);
 
         return signature;
     }

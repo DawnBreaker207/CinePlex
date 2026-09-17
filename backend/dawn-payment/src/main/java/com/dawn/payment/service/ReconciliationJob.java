@@ -1,8 +1,8 @@
 package com.dawn.payment.service;
 
+import com.dawn.common.core.outbox.Outbox;
+import com.dawn.common.core.outbox.OutboxRepository;
 import com.dawn.common.core.service.AuditLogService;
-import com.dawn.payment.model.Outbox;
-import com.dawn.payment.repository.OutboxRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -30,10 +30,12 @@ public class ReconciliationJob {
             return;
         }
         for (Outbox outbox : stale) {
-            log.warn("Outbox {} for reservation {} stuck in {} (attempts={}, lastError={}), manual intervention required",
-                    outbox.getId(), outbox.getReservationId(), outbox.getStatus(), outbox.getAttempts(), outbox.getLastError());
-            auditLogService.record("RECONCILIATION_ALERT", "OUTBOX", String.valueOf(outbox.getId()), null, outbox.getStatus(),
-                    "reservationId=" + outbox.getReservationId() + ", attempts=" + outbox.getAttempts());
+            log.warn("Outbox {} for aggregate {} stuck in {} (attempts={}, lastError={}), manual intervention required",
+                    outbox.getId(), outbox.getAggregateId(), outbox.getStatus(), outbox.getAttempts(), outbox.getLastError());
+            auditLogService.record("RECONCILIATION_ALERT", "OUTBOX", String.valueOf(outbox.getId()), null, null, outbox.getStatus(),
+                    "aggregateType=" + outbox.getAggregateType() + ", aggregateId=" + outbox.getAggregateId()
+                            + ", attempts=" + outbox.getAttempts(),
+                    "SUCCESS", AuditLogService.clientIp(), null, null);
         }
     }
 }

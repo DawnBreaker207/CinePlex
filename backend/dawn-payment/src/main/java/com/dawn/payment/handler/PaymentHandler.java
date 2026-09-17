@@ -1,5 +1,6 @@
 package com.dawn.payment.handler;
 
+import java.math.BigDecimal;
 import java.util.Map;
 
 public interface PaymentHandler {
@@ -12,4 +13,8 @@ public interface PaymentHandler {
     String getId(Map<String, String> params);
 
     String getTxnRef(Map<String, String> params);
+
+    default BigDecimal getAmount(Map<String, String> params) {
+        return null;
+    }
 }
