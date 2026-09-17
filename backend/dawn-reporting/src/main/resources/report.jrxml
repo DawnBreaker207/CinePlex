@@ -46,6 +46,97 @@
 
     <queryString><![CDATA[]]></queryString>
 
+    <!-- ===== MAIN DATASET: doanh thu phân cấp Rạp -> Phòng ===== -->
+    <field name="theaterName" class="java.lang.String"/>
+    <field name="roomName" class="java.lang.String"/>
+    <field name="ticketsSold" class="java.lang.Long"/>
+    <field name="bookedValue" class="java.math.BigDecimal"/>
+    <field name="paidRevenue" class="java.math.BigDecimal"/>
+
+    <!-- Subtotal theo Rạp -->
+    <variable name="v_TheaterTickets" class="java.lang.Long" calculation="Sum" resetType="Group" resetGroup="TheaterGroup">
+        <variableExpression><![CDATA[$F{ticketsSold}]]></variableExpression>
+    </variable>
+    <variable name="v_TheaterBooked" class="java.math.BigDecimal" calculation="Sum" resetType="Group" resetGroup="TheaterGroup">
+        <variableExpression><![CDATA[$F{bookedValue}]]></variableExpression>
+    </variable>
+    <variable name="v_TheaterPaid" class="java.math.BigDecimal" calculation="Sum" resetType="Group" resetGroup="TheaterGroup">
+        <variableExpression><![CDATA[$F{paidRevenue}]]></variableExpression>
+    </variable>
+
+    <!-- Tổng toàn Hệ thống -->
+    <variable name="v_SystemTickets" class="java.lang.Long" calculation="Sum" resetType="Report">
+        <variableExpression><![CDATA[$F{ticketsSold}]]></variableExpression>
+    </variable>
+    <variable name="v_SystemBooked" class="java.math.BigDecimal" calculation="Sum" resetType="Report">
+        <variableExpression><![CDATA[$F{bookedValue}]]></variableExpression>
+    </variable>
+    <variable name="v_SystemPaid" class="java.math.BigDecimal" calculation="Sum" resetType="Report">
+        <variableExpression><![CDATA[$F{paidRevenue}]]></variableExpression>
+    </variable>
+
+    <!-- Nhóm theo Rạp: mỗi rạp bắt đầu trang mới, lặp lại header khi sang trang -->
+    <group name="TheaterGroup" isStartNewPage="true" isReprintHeaderOnEachPage="true">
+        <groupExpression><![CDATA[$F{theaterName}]]></groupExpression>
+        <groupHeader>
+            <band height="30">
+                <frame>
+                    <reportElement mode="Opaque" x="0" y="0" width="555" height="30" backcolor="#003366" uuid="a1b2c3d4-0001-4000-8000-000000000000"/>
+                    <staticText>
+                        <reportElement x="10" y="5" width="70" height="20" forecolor="#DEDEDE" uuid="a1b2c3d4-0002-4000-8000-000000000000"/>
+                        <textElement verticalAlignment="Middle">
+                            <font fontName="DejaVu Sans" size="11" isBold="true"/>
+                        </textElement>
+                        <text><![CDATA[RẠP:]]></text>
+                    </staticText>
+                    <textField>
+                        <reportElement x="80" y="5" width="465" height="20" forecolor="#FFFFFF" uuid="a1b2c3d4-0003-4000-8000-000000000000"/>
+                        <textElement verticalAlignment="Middle">
+                            <font fontName="DejaVu Sans" size="14" isBold="true"/>
+                        </textElement>
+                        <textFieldExpression><![CDATA[$F{theaterName}]]></textFieldExpression>
+                    </textField>
+                </frame>
+            </band>
+        </groupHeader>
+        <groupFooter>
+            <band height="26">
+                <textField>
+                    <reportElement x="0" y="3" width="200" height="20" forecolor="#003366" uuid="a1b2c3d4-0004-4000-8000-000000000000"/>
+                    <textElement verticalAlignment="Middle">
+                        <font fontName="DejaVu Sans" size="10" isBold="true"/>
+                    </textElement>
+                    <textFieldExpression><![CDATA["TỔNG CỘNG RẠP " + $F{theaterName}]]></textFieldExpression>
+                </textField>
+                <textField pattern="#,##0">
+                    <reportElement x="200" y="3" width="85" height="20" forecolor="#003366" uuid="a1b2c3d4-0005-4000-8000-000000000000"/>
+                    <textElement textAlignment="Right" verticalAlignment="Middle">
+                        <font fontName="DejaVu Sans" size="10" isBold="true"/>
+                    </textElement>
+                    <textFieldExpression><![CDATA[$V{v_TheaterTickets}]]></textFieldExpression>
+                </textField>
+                <textField pattern="#,##0 '₫'">
+                    <reportElement x="285" y="3" width="135" height="20" forecolor="#003366" uuid="a1b2c3d4-0006-4000-8000-000000000000"/>
+                    <textElement textAlignment="Right" verticalAlignment="Middle">
+                        <font fontName="DejaVu Sans" size="10" isBold="true"/>
+                    </textElement>
+                    <textFieldExpression><![CDATA[$V{v_TheaterBooked}]]></textFieldExpression>
+                </textField>
+                <textField pattern="#,##0 '₫'">
+                    <reportElement x="420" y="3" width="135" height="20" forecolor="#003366" uuid="a1b2c3d4-0007-4000-8000-000000000000"/>
+                    <textElement textAlignment="Right" verticalAlignment="Middle">
+                        <font fontName="DejaVu Sans" size="10" isBold="true"/>
+                    </textElement>
+                    <textFieldExpression><![CDATA[$V{v_TheaterPaid}]]></textFieldExpression>
+                </textField>
+                <line>
+                    <reportElement x="0" y="24" width="555" height="1" uuid="a1b2c3d4-0008-4000-8000-000000000000"/>
+                    <graphicElement><pen lineWidth="1.0" lineColor="#003366"/></graphicElement>
+                </line>
+            </band>
+        </groupFooter>
+    </group>
+
     <!-- TITLE -->
     <title>
         <band height="100" splitType="Stretch">
@@ -77,6 +168,78 @@
         </band>
     </title>
 
+    <!-- COLUMN HEADER: lặp lại ở mọi trang -->
+    <columnHeader>
+        <band height="22">
+            <staticText>
+                <reportElement x="0" y="4" width="200" height="16" forecolor="#666666" uuid="b2c3d4e5-0011-4000-8000-000000000000"/>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="DejaVu Sans" size="9" isBold="true"/>
+                </textElement>
+                <text><![CDATA[PHÒNG CHIẾU]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="200" y="4" width="85" height="16" forecolor="#666666" uuid="b2c3d4e5-0012-4000-8000-000000000000"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle">
+                    <font fontName="DejaVu Sans" size="9" isBold="true"/>
+                </textElement>
+                <text><![CDATA[VÉ BÁN]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="285" y="4" width="135" height="16" forecolor="#666666" uuid="b2c3d4e5-0013-4000-8000-000000000000"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle">
+                    <font fontName="DejaVu Sans" size="9" isBold="true"/>
+                </textElement>
+                <text><![CDATA[ĐẶT CHỖ (CONFIRMED)]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="420" y="4" width="135" height="16" forecolor="#666666" uuid="b2c3d4e5-0014-4000-8000-000000000000"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle">
+                    <font fontName="DejaVu Sans" size="9" isBold="true"/>
+                </textElement>
+                <text><![CDATA[THỰC NHẬN (PAID)]]></text>
+            </staticText>
+            <line>
+                <reportElement x="0" y="21" width="555" height="1" uuid="b2c3d4e5-0015-4000-8000-000000000000"/>
+                <graphicElement><pen lineWidth="0.5" lineColor="#999999"/></graphicElement>
+            </line>
+        </band>
+    </columnHeader>
+
+    <!-- DETAIL: từng Phòng chiếu trong Rạp -->
+    <detail>
+        <band height="20">
+            <textField>
+                <reportElement x="10" y="2" width="190" height="16" forecolor="#333333" uuid="c3d4e5f6-0021-4000-8000-000000000000"/>
+                <textElement verticalAlignment="Middle">
+                    <font fontName="DejaVu Sans" size="10"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{roomName}]]></textFieldExpression>
+            </textField>
+            <textField pattern="#,##0">
+                <reportElement x="200" y="2" width="85" height="16" forecolor="#333333" uuid="c3d4e5f6-0022-4000-8000-000000000000"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle">
+                    <font fontName="DejaVu Sans" size="10"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{ticketsSold}]]></textFieldExpression>
+            </textField>
+            <textField pattern="#,##0 '₫'">
+                <reportElement x="285" y="2" width="135" height="16" forecolor="#333333" uuid="c3d4e5f6-0023-4000-8000-000000000000"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle">
+                    <font fontName="DejaVu Sans" size="10"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{bookedValue}]]></textFieldExpression>
+            </textField>
+            <textField pattern="#,##0 '₫'">
+                <reportElement x="420" y="2" width="135" height="16" forecolor="#27AE60" uuid="c3d4e5f6-0024-4000-8000-000000000000"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle">
+                    <font fontName="DejaVu Sans" size="10"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{paidRevenue}]]></textFieldExpression>
+            </textField>
+        </band>
+    </detail>
+
     <!-- PAGE FOOTER -->
     <pageFooter>
         <band height="30">
@@ -97,18 +260,51 @@
 
     <!-- SUMMARY -->
     <summary>
-        <band height="550" splitType="Stretch">
+        <band height="605" splitType="Stretch">
+
+            <!-- SYSTEM TOTAL: tổng toàn Hệ thống -->
+            <frame>
+                <reportElement mode="Opaque" x="0" y="0" width="555" height="50" backcolor="#003366" uuid="d4e5f6a7-0031-4000-8000-000000000000"/>
+                <staticText>
+                    <reportElement x="10" y="6" width="300" height="16" forecolor="#DEDEDE" uuid="d4e5f6a7-0032-4000-8000-000000000000"/>
+                    <textElement>
+                        <font fontName="DejaVu Sans" size="9" isBold="true"/>
+                    </textElement>
+                    <text><![CDATA[TỔNG DOANH THU HỆ THỐNG CINEPLEX]]></text>
+                </staticText>
+                <textField pattern="#,##0 '₫'">
+                    <reportElement x="10" y="22" width="270" height="24" forecolor="#FFFFFF" uuid="d4e5f6a7-0033-4000-8000-000000000000"/>
+                    <textElement verticalAlignment="Middle">
+                        <font fontName="DejaVu Sans" size="15" isBold="true"/>
+                    </textElement>
+                    <textFieldExpression><![CDATA[$V{v_SystemPaid}]]></textFieldExpression>
+                </textField>
+                <textField pattern="#,##0" textAdjust="ScaleFont">
+                    <reportElement x="290" y="22" width="120" height="24" forecolor="#FFFFFF" uuid="d4e5f6a7-0034-4000-8000-000000000000"/>
+                    <textElement textAlignment="Right" verticalAlignment="Middle">
+                        <font fontName="DejaVu Sans" size="11" isBold="true"/>
+                    </textElement>
+                    <textFieldExpression><![CDATA[$V{v_SystemTickets} + " vé bán ra"]]></textFieldExpression>
+                </textField>
+                <textField pattern="#,##0 '₫'" textAdjust="ScaleFont">
+                    <reportElement x="415" y="22" width="130" height="24" forecolor="#DEDEDE" uuid="d4e5f6a7-0035-4000-8000-000000000000"/>
+                    <textElement textAlignment="Right" verticalAlignment="Middle">
+                        <font fontName="DejaVu Sans" size="11" isBold="true"/>
+                    </textElement>
+                    <textFieldExpression><![CDATA["Đặt chỗ: " + $V{v_SystemBooked}]]></textFieldExpression>
+                </textField>
+            </frame>
 
             <!-- SECTION 1: METRICS -->
             <staticText>
-                <reportElement style="SectionHeader" x="0" y="10" width="555" height="25" uuid="2c3d4e5f-6789-0123-4567-23456789abcd"/>
+                <reportElement style="SectionHeader" x="0" y="65" width="555" height="25" uuid="2c3d4e5f-6789-0123-4567-23456789abcd"/>
                 <textElement verticalAlignment="Middle"/>
                 <text><![CDATA[OVERVIEW METRICS]]></text>
             </staticText>
 
             <!-- Card 1: REVENUE -->
             <frame>
-                <reportElement mode="Opaque" x="0" y="45" width="130" height="70" backcolor="#FFFFFF" uuid="3d4e5f6a-7890-1234-5678-3456789abcde"/>
+                <reportElement mode="Opaque" x="0" y="100" width="130" height="70" backcolor="#FFFFFF" uuid="3d4e5f6a-7890-1234-5678-3456789abcde"/>
                 <box>
                     <pen lineWidth="0.5" lineColor="#DDDDDD"/>
                     <topPen lineWidth="3.0" lineColor="#2ECC71"/>
@@ -130,7 +326,7 @@
 
             <!-- Card 2: Tickets -->
             <frame>
-                <reportElement mode="Opaque" x="142" y="45" width="130" height="70" backcolor="#FFFFFF" uuid="6a7b8c9d-0123-4567-8901-6789abcdef01"/>
+                <reportElement mode="Opaque" x="142" y="100" width="130" height="70" backcolor="#FFFFFF" uuid="6a7b8c9d-0123-4567-8901-6789abcdef01"/>
                 <box>
                     <pen lineWidth="0.5" lineColor="#DDDDDD"/>
                     <topPen lineWidth="3.0" lineColor="#3498DB"/>
@@ -152,7 +348,7 @@
 
             <!-- Card 3 -->
             <frame>
-                <reportElement mode="Opaque" x="284" y="45" width="130" height="70" backcolor="#FFFFFF" uuid="9d0e1f2a-3456-7890-1234-9abcdef01234"/>
+                <reportElement mode="Opaque" x="284" y="100" width="130" height="70" backcolor="#FFFFFF" uuid="9d0e1f2a-3456-7890-1234-9abcdef01234"/>
                 <box>
                     <pen lineWidth="0.5" lineColor="#DDDDDD"/>
                     <topPen lineWidth="3.0" lineColor="#F39C12"/>
@@ -174,7 +370,7 @@
 
             <!-- Card 4 -->
             <frame>
-                <reportElement mode="Opaque" x="425" y="45" width="130" height="70" backcolor="#FFFFFF" uuid="2a3b4c5d-6789-0123-4567-cdef01234567"/>
+                <reportElement mode="Opaque" x="425" y="100" width="130" height="70" backcolor="#FFFFFF" uuid="2a3b4c5d-6789-0123-4567-cdef01234567"/>
                 <box>
                     <pen lineWidth="0.5" lineColor="#DDDDDD"/>
                     <topPen lineWidth="3.0" lineColor="#9B59B6"/>
@@ -196,14 +392,14 @@
 
             <!-- SECTION 2: SALES -->
             <staticText>
-                <reportElement style="SectionHeader" x="0" y="130" width="555" height="25" uuid="5d6e7f8a-9012-3456-7890-f01234567890"/>
+                <reportElement style="SectionHeader" x="0" y="185" width="555" height="25" uuid="5d6e7f8a-9012-3456-7890-f01234567890"/>
                 <textElement verticalAlignment="Middle"/>
                 <text><![CDATA[SALES PERFORMANCE]]></text>
             </staticText>
 
             <!-- Pie Chart -->
             <frame>
-                <reportElement x="0" y="165" width="220" height="180" uuid="6e7f8a9b-0123-4567-8901-0123456789ab"/>
+                <reportElement x="0" y="220" width="220" height="180" uuid="6e7f8a9b-0123-4567-8901-0123456789ab"/>
                 <box>
                     <pen lineWidth="0.5" lineColor="#CCCCCC"/>
                 </box>
@@ -242,7 +438,7 @@
 
             <!-- Bar Chart -->
             <frame>
-                <reportElement x="230" y="165" width="325" height="180" uuid="0c1d2e3f-4567-8901-2345-456789abcdef"/>
+                <reportElement x="230" y="220" width="325" height="180" uuid="0c1d2e3f-4567-8901-2345-456789abcdef"/>
                 <box>
                     <pen lineWidth="0.5" lineColor="#CCCCCC"/>
                 </box>
@@ -299,13 +495,13 @@
 
             <!-- TREND -->
             <staticText>
-                <reportElement style="SectionHeader" x="0" y="360" width="555" height="25" uuid="4a5b6c7d-8901-2345-6789-89abcdef0123"/>
+                <reportElement style="SectionHeader" x="0" y="415" width="555" height="25" uuid="4a5b6c7d-8901-2345-6789-89abcdef0123"/>
                 <textElement verticalAlignment="Middle"/>
                 <text><![CDATA[REVENUE TREND]]></text>
             </staticText>
 
             <frame>
-                <reportElement x="0" y="395" width="555" height="150" uuid="5b6c7d8e-9012-3456-7890-9abcdef01234"/>
+                <reportElement x="0" y="450" width="555" height="150" uuid="5b6c7d8e-9012-3456-7890-9abcdef01234"/>
                 <box>
                     <pen lineWidth="0.5" lineColor="#CCCCCC"/>
                 </box>

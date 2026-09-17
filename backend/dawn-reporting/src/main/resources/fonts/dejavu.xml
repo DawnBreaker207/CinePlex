@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Font family hỗ trợ tiếng Việt, nhúng vào PDF với Identity-H -->
+<fontFamilies>
+    <fontFamily name="DejaVu Sans">
+        <normal>fonts/dejavu/DejaVuSans.ttf</normal>
+        <bold>fonts/dejavu/DejaVuSans-Bold.ttf</bold>
+        <italic>fonts/dejavu/DejaVuSans-Oblique.ttf</italic>
+        <boldItalic>fonts/dejavu/DejaVuSans-BoldOblique.ttf</boldItalic>
+        <pdfEncoding>Identity-H</pdfEncoding>
+        <pdfEmbedded>true</pdfEmbedded>
+    </fontFamily>
+</fontFamilies>
