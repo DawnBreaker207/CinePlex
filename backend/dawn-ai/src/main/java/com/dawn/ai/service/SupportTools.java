@@ -1,6 +1,6 @@
 package com.dawn.ai.service;
 
-import com.dawn.booking.service.ReservationLifecycleService;
+import com.dawn.booking.service.ReservationService;
 import com.dawn.identity.dto.response.UserResponse;
 import com.dawn.identity.service.UserService;
 import com.dawn.payment.dto.response.PaymentDetailDTO;
@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 public class SupportTools {
 
     private final UserService userService;
-    private final ReservationLifecycleService reservationService;
+    private final ReservationService reservationService;
     private final PaymentService paymentService;
 
     @Tool("""
@@ -49,7 +49,7 @@ public class SupportTools {
             return "Vui lòng cung cấp mã reservation.";
         }
 
-        var reservationOpt = reservationService.findReservationDetail(reservationId);
+        var reservationOpt = reservationService.findDetailByCode(reservationId);
         if (reservationOpt.isEmpty()) {
             return "Không tìm thấy reservation \"" + reservationId + "\".";
         }
@@ -92,7 +92,7 @@ public class SupportTools {
             return "Vui lòng cung cấp mã reservation.";
         }
 
-        var reservationOpt = reservationService.findReservationDetail(reservationId);
+        var reservationOpt = reservationService.findDetailByCode(reservationId);
         if (reservationOpt.isEmpty()) {
             return "Không tìm thấy reservation \"" + reservationId + "\".";
         }
@@ -100,7 +100,7 @@ public class SupportTools {
         var r = reservationOpt.get();
 
         if (r.getReservationStatus() == com.dawn.common.core.constant.ReservationStatus.CONFIRMED) {
-            reservationService.forceCancelReservation(reservationId);
+            reservationService.forceCancel(reservationId);
             return String.format("""
                     Đã hủy reservation **%s** (đã thanh toán).
                     - Lý do: %s
@@ -108,7 +108,7 @@ public class SupportTools {
                     """, reservationId, reason != null ? reason : "Không có lý do");
         }
 
-        reservationService.cancelReservation(reservationId);
+        reservationService.cancel(reservationId);
         return String.format("""
                 Đã hủy reservation **%s** (chưa thanh toán) thành công.
                 - Lý do: %s
