@@ -18,7 +18,6 @@ public class RabbitConfig {
         return new Queue(RabbitMQConstants.QUEUE_NOTIFICATION_RESERVATION_COMPLETED);
     }
 
-    //
     @Bean
     public Binding bindingNotify(Queue queueNotify, TopicExchange exchange) {
         return BindingBuilder
@@ -27,7 +26,6 @@ public class RabbitConfig {
                 .with(RabbitMQConstants.RK_NOTIFICATION_RESERVATION_COMPLETED);
     }
 
-    //
 
     @Bean
     public Queue queueDashboard() {
@@ -40,5 +38,18 @@ public class RabbitConfig {
                 .bind(queueDashboard)
                 .to(exchange)
                 .with(RabbitMQConstants.RK_DASHBOARD_REFRESH);
+    }
+
+    @Bean
+    public Queue queueEmailVerification() {
+        return new Queue(RabbitMQConstants.QUEUE_NOTIFICATION_EMAIL_VERIFICATION);
+    }
+
+    @Bean
+    public Binding bindingEmailVerification(Queue queueEmailVerification, TopicExchange exchange) {
+        return BindingBuilder
+                .bind(queueEmailVerification)
+                .to(exchange)
+                .with(RabbitMQConstants.RK_NOTIFICATION_EMAIL_VERIFICATION);
     }
 }
