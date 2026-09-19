@@ -13,6 +13,8 @@ import java.util.List;
 public interface ShowtimeRepository extends JpaRepository<Showtime, Long> {
     List<Showtime> findByShowDate(LocalDate date);
 
+    List<Showtime> findByRoomIdAndShowDate(Long roomId, LocalDate showDate);
+
     List<Showtime> findByIdIn(List<Long> ids);
 
     Page<Showtime> findByMovieId(Long movieId, Pageable pageable);
