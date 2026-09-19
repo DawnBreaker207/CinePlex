@@ -59,7 +59,7 @@ public class AuthController {
     }
 
     @PostMapping("/refresh-token")
-    public ResponseObject<TokenRefreshResponse> refreshToken(@CookieValue("refreshToken") String refreshToken) {
+    public ResponseObject<TokenRefreshResponse> refreshToken(@CookieValue(value = "${dawn.app.jwtRefreshCookieName}", required = false) String refreshToken) {
         TokenRefreshResponse token = authService.refreshToken(refreshToken);
         return new ResponseObject<>(HttpStatus.OK, "Success", token,
                 new HttpHeaders() {{

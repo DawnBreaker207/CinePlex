@@ -302,7 +302,11 @@ public class AuthServiceImpl implements AuthService {
                 .map(refreshTokenService::verifyExpiration)
                 .map(RefreshToken::getUser)
                 .map(user -> {
-                    String jwtCookie = jWTUtils.generateToken(user.getUsername());
+                    List<String> roles = user.getRoles() == null ? List.of() : user.getRoles()
+                            .stream()
+                            .map(r -> r.getName().name())
+                            .toList();
+                    String jwtCookie = jWTUtils.generateToken(user.getUsername(), user.getEmail(), roles);
                     return TokenRefreshResponse
                             .builder()
                             .accessToken(jwtCookie)
