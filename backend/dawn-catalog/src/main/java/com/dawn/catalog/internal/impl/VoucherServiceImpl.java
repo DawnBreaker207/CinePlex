@@ -14,12 +14,16 @@ import com.dawn.catalog.internal.VoucherService;
 import com.dawn.common.core.annotation.AuditLog;
 import com.dawn.common.core.constant.ErrorCode;
 import com.dawn.common.core.constant.LogConstant;
+import com.dawn.common.core.constant.PermissionKey;
 import com.dawn.common.core.constant.UserVoucherStatus;
 import com.dawn.common.core.constant.VoucherStatus;
 import com.dawn.common.core.dto.response.ResponsePage;
 import com.dawn.common.core.exception.wrapper.InvalidRequestException;
+import com.dawn.common.core.exception.wrapper.PermissionDeniedException;
 import com.dawn.common.core.exception.wrapper.ResourceAlreadyExistedException;
 import com.dawn.common.core.exception.wrapper.ResourceNotFoundException;
+import com.dawn.common.core.utils.SecurityUtils;
+import com.dawn.identity.service.PermissionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
@@ -38,6 +42,11 @@ public class VoucherServiceImpl implements VoucherService {
 
     private final VoucherRepository voucherRepository;
     private final UserVoucherRepository userVoucherRepository;
+
+    private final PermissionService permissionService;
+
+    private static final BigDecimal MAX_PERCENT_AUTO = new BigDecimal("50");
+    private static final BigDecimal MAX_FIXED_AUTO = new BigDecimal("500000");
 
     @Override
     @Transactional(readOnly = true)
@@ -66,6 +75,10 @@ public class VoucherServiceImpl implements VoucherService {
             throw new ResourceAlreadyExistedException(ErrorCode.VOUCHER_ALREADY_EXISTED.format());
         }
         Voucher voucher = VoucherMappingHelper.map(req);
+        voucher.setCreatedByAdminId(SecurityUtils.getCurrentUserId());
+        if (needsApproval(voucher.getDiscountType(), voucher.getDiscountValue())) {
+            voucher.setStatus(VoucherStatus.PENDING_APPROVAL);
+        }
         return VoucherMappingHelper.map(voucherRepository.save(voucher));
     }
 
@@ -97,8 +110,43 @@ public class VoucherServiceImpl implements VoucherService {
         existedVoucher.setConditions(req.getConditions());
         existedVoucher.setStatus(req.getStatus());
         existedVoucher.setMaxPerUser(req.getMaxPerUser());
+        if (needsApproval(existedVoucher.getDiscountType(), existedVoucher.getDiscountValue())) {
+            existedVoucher.setStatus(VoucherStatus.PENDING_APPROVAL);
+        }
 
         return VoucherMappingHelper.map(voucherRepository.save(existedVoucher));
+    }
+
+    @Override
+    @Transactional
+    @AuditLog(action = LogConstant.Action.VOUCHER_UPDATE, entity = LogConstant.Entity.VOUCHER,
+            entityId = "#id", metadata = "'approve'")
+    public VoucherResponse approveVoucher(Long id) {
+        Voucher voucher = voucherRepository
+                .findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.VOUCHER_NOT_FOUND.format()));
+        if (voucher.getStatus() != VoucherStatus.PENDING_APPROVAL) {
+            throw new InvalidRequestException(ErrorCode.VOUCHER_NOT_PENDING);
+        }
+        Long approverId = SecurityUtils.getCurrentUserId();
+        if (!permissionService.hasPermission(approverId, PermissionKey.PRICING)) {
+            throw new PermissionDeniedException(ErrorCode.PERMISSION_NOT_ENOUGH);
+        }
+        if (voucher.getCreatedByAdminId() != null && voucher.getCreatedByAdminId().equals(approverId)) {
+            throw new PermissionDeniedException(ErrorCode.VOUCHER_SELF_APPROVAL);
+        }
+        voucher.setStatus(VoucherStatus.ACTIVE);
+        return VoucherMappingHelper.map(voucherRepository.save(voucher));
+    }
+
+    private boolean needsApproval(DiscountType type, BigDecimal value) {
+        if (type == null || value == null) {
+            return false;
+        }
+        return switch (type) {
+            case PERCENT -> value.compareTo(MAX_PERCENT_AUTO) > 0;
+            case FIXED -> value.compareTo(MAX_FIXED_AUTO) > 0;
+        };
     }
 
     @Override

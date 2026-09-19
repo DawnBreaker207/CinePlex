@@ -63,6 +63,13 @@ public class VoucherController {
         return ResponseObject.success(voucherService.update(id, req));
     }
 
+    @PutMapping("/{id}/approve")
+    @PreAuthorize(AuthorizationExpressions.CAN_MANAGE_PRICING)
+    @Operation(summary = "Approve a pending voucher (maker-checker: approver must differ from creator)")
+    public ResponseObject<VoucherResponse> approve(@PathVariable Long id) {
+        return ResponseObject.success(voucherService.approveVoucher(id));
+    }
+
     @PostMapping("/use")
     public ResponseObject<Void> useVoucher(
             @RequestParam String code,

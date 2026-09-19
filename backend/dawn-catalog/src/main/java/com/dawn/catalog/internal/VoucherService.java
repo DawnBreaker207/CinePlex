@@ -20,6 +20,8 @@ public interface VoucherService {
 
     VoucherResponse update(Long id, VoucherRequest req);
 
+    VoucherResponse approveVoucher(Long id);
+
     void delete(Long id);
 
     void useVoucher(String code, Long userId, String reservationId);

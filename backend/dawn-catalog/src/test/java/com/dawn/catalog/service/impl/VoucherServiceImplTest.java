@@ -8,10 +8,16 @@ import com.dawn.catalog.model.Voucher;
 import com.dawn.catalog.repository.UserVoucherRepository;
 import com.dawn.catalog.repository.VoucherRepository;
 import com.dawn.catalog.internal.VoucherService;
+import com.dawn.common.core.constant.PermissionKey;
 import com.dawn.common.core.constant.UserVoucherStatus;
 import com.dawn.common.core.constant.VoucherStatus;
 import com.dawn.common.core.exception.wrapper.InvalidRequestException;
+import com.dawn.common.core.exception.wrapper.PermissionDeniedException;
 import com.dawn.common.core.exception.wrapper.ResourceNotFoundException;
+import com.dawn.common.core.model.AuthenticatedUser;
+import com.dawn.common.core.utils.SecurityUtils;
+import com.dawn.identity.service.PermissionService;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -20,6 +26,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -41,8 +49,32 @@ class VoucherServiceImplTest {
     @Mock
     UserVoucherRepository userVoucherRepository;
 
+    @Mock
+    PermissionService permissionService;
+
     @InjectMocks
     VoucherServiceImpl service;
+
+    @AfterEach
+    void clearContext() {
+        SecurityContextHolder.clearContext();
+    }
+
+    private static void login(long id) {
+        AuthenticatedUser user = new AuthenticatedUser() {
+            @Override
+            public Long getId() {
+                return id;
+            }
+
+            @Override
+            public String getUsername() {
+                return "admin" + id;
+            }
+        };
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(user, null, List.of()));
+    }
 
     private Voucher createVoucher(VoucherStatus status, DiscountType type, BigDecimal value,
                                    BigDecimal maxDiscount, BigDecimal minOrder,
@@ -350,6 +382,135 @@ class VoucherServiceImplTest {
             var results = service.getUserVouchers(1L);
 
             assertThat(results).isEmpty();
+        }
+    }
+
+    @Nested
+    @DisplayName("maker-checker (approveVoucher + create/update thresholds)")
+    class MakerChecker {
+
+        private VoucherRequest req(VoucherStatus status, DiscountType type, BigDecimal value) {
+            VoucherRequest r = new VoucherRequest();
+            r.setName("Voucher");
+            r.setCode("CHECK");
+            r.setQuantityTotal(100);
+            r.setDiscountType(type);
+            r.setDiscountValue(value);
+            r.setMaxDiscountAmount(null);
+            r.setMinOrderValue(BigDecimal.ZERO);
+            r.setStartAt(Instant.now().minus(1, ChronoUnit.DAYS));
+            r.setEndAt(Instant.now().plus(1, ChronoUnit.DAYS));
+            r.setCategory(null);
+            r.setGroupRef(null);
+            r.setConditions(null);
+            r.setStatus(status);
+            r.setMaxPerUser(1);
+            return r;
+        }
+
+        @Test
+        @DisplayName("create ≤ threshold → ACTIVE, no approval needed")
+        void create_smallVoucher_shouldStayActive() {
+            login(1L);
+            lenient().when(voucherRepository.findByCode("CHECK")).thenReturn(Optional.empty());
+            lenient().when(voucherRepository.save(any()))
+                    .thenAnswer(inv -> {
+                        Voucher v = inv.getArgument(0);
+                        v.setId(1L);
+                        return v;
+                    });
+
+            var result = service.create(req(VoucherStatus.ACTIVE, DiscountType.PERCENT, new BigDecimal("30")));
+
+            assertThat(result.getStatus()).isEqualTo(VoucherStatus.ACTIVE);
+            ArgumentCaptor<Voucher> captor = ArgumentCaptor.forClass(Voucher.class);
+            verify(voucherRepository).save(captor.capture());
+            assertThat(captor.getValue().getCreatedByAdminId()).isEqualTo(1L);
+        }
+
+        @Test
+        @DisplayName("create above threshold → PENDING_APPROVAL + recorded creator")
+        void create_bigVoucher_shouldGoPending() {
+            login(7L);
+            lenient().when(voucherRepository.findByCode("CHECK")).thenReturn(Optional.empty());
+            when(voucherRepository.save(any())).thenAnswer(inv -> {
+                Voucher v = inv.getArgument(0);
+                v.setId(1L);
+                return v;
+            });
+
+            var result = service.create(req(VoucherStatus.ACTIVE, DiscountType.PERCENT, new BigDecimal("60")));
+
+            ArgumentCaptor<Voucher> captor = ArgumentCaptor.forClass(Voucher.class);
+            verify(voucherRepository).save(captor.capture());
+            assertThat(captor.getValue().getStatus()).isEqualTo(VoucherStatus.PENDING_APPROVAL);
+            assertThat(captor.getValue().getCreatedByAdminId()).isEqualTo(7L);
+            assertThat(result.getStatus()).isEqualTo(VoucherStatus.PENDING_APPROVAL);
+        }
+
+        @Test
+        @DisplayName("approve by different privileged admin → ACTIVE")
+        void approve_notOwnedWithPermission_shouldActivate() {
+            login(2L);
+            Voucher voucher = createVoucher(VoucherStatus.PENDING_APPROVAL, DiscountType.PERCENT,
+                    new BigDecimal("60"), null, BigDecimal.ZERO,
+                    100, 0, Instant.now().minus(1, ChronoUnit.DAYS), Instant.now().plus(1, ChronoUnit.DAYS));
+            voucher.setCreatedByAdminId(1L);
+            when(voucherRepository.findById(1L)).thenReturn(Optional.of(voucher));
+            when(permissionService.hasPermission(2L, PermissionKey.PRICING)).thenReturn(true);
+            when(voucherRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+            var result = service.approveVoucher(1L);
+
+            assertThat(result.getStatus()).isEqualTo(VoucherStatus.ACTIVE);
+            verify(permissionService).hasPermission(2L, PermissionKey.PRICING);
+        }
+
+        @Test
+        @DisplayName("approve without PRICING permission → PermissionDeniedException")
+        void approve_noPermission_shouldThrow() {
+            login(2L);
+            Voucher voucher = createVoucher(VoucherStatus.PENDING_APPROVAL, DiscountType.FIXED,
+                    new BigDecimal("800000"), null, BigDecimal.ZERO,
+                    100, 0, Instant.now().minus(1, ChronoUnit.DAYS), Instant.now().plus(1, ChronoUnit.DAYS));
+            voucher.setCreatedByAdminId(1L);
+            when(voucherRepository.findById(1L)).thenReturn(Optional.of(voucher));
+            when(permissionService.hasPermission(2L, PermissionKey.PRICING)).thenReturn(false);
+
+            assertThatThrownBy(() -> service.approveVoucher(1L))
+                    .isInstanceOf(PermissionDeniedException.class);
+            verify(voucherRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("approve own voucher → PermissionDeniedException (maker ≠ checker)")
+        void approve_ownVoucher_shouldThrow() {
+            login(2L);
+            Voucher voucher = createVoucher(VoucherStatus.PENDING_APPROVAL, DiscountType.FIXED,
+                    new BigDecimal("800000"), null, BigDecimal.ZERO,
+                    100, 0, Instant.now().minus(1, ChronoUnit.DAYS), Instant.now().plus(1, ChronoUnit.DAYS));
+            voucher.setCreatedByAdminId(2L);
+            when(voucherRepository.findById(1L)).thenReturn(Optional.of(voucher));
+            when(permissionService.hasPermission(2L, PermissionKey.PRICING)).thenReturn(true);
+
+            assertThatThrownBy(() -> service.approveVoucher(1L))
+                    .isInstanceOf(PermissionDeniedException.class);
+            verify(voucherRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("approve non-pending voucher → InvalidRequestException")
+        void approve_notPending_shouldThrow() {
+            login(2L);
+            Voucher voucher = createVoucher(VoucherStatus.ACTIVE, DiscountType.FIXED,
+                    new BigDecimal("800000"), null, BigDecimal.ZERO,
+                    100, 0, Instant.now().minus(1, ChronoUnit.DAYS), Instant.now().plus(1, ChronoUnit.DAYS));
+            voucher.setCreatedByAdminId(1L);
+            when(voucherRepository.findById(1L)).thenReturn(Optional.of(voucher));
+
+            assertThatThrownBy(() -> service.approveVoucher(1L))
+                    .isInstanceOf(InvalidRequestException.class);
+            verify(permissionService, never()).hasPermission(any(), any());
         }
     }
 }

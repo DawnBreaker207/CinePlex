@@ -77,6 +77,9 @@ public class Voucher extends AbstractMappedEntity {
     @Builder.Default
     private Integer maxPerUser = 1;
 
+    @Column(name = "created_by_admin_id")
+    private Long createdByAdminId;
+
     @Version
     @Column(name = "version")
     private Long version;

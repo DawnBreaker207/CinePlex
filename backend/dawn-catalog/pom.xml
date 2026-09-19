@@ -24,6 +24,10 @@
             <artifactId>dawn-common</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.dawn.backend</groupId>
+            <artifactId>dawn-identity</artifactId>
+        </dependency>
+        <dependency>
             <groupId>com.cloudinary</groupId>
             <artifactId>cloudinary-http44</artifactId>
         </dependency>
