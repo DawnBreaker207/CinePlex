@@ -100,14 +100,21 @@ public class SeatServiceImpl implements SeatService {
         log.info("Batch fetching {} seats", ids.size());
         List<SeatInstance> seatInstances = seatInstanceRepository.findAllByReservationIdIn(ids);
         if (seatInstances.isEmpty()) return List.of();
-        Long showtimeId = seatInstances.getFirst().getShowtimeId();
-        Showtime showtime = showtimeRepository.findById(showtimeId).orElse(null);
-        Map<Long, SeatTemplate> templateMap = showtime != null
-                ? getSeatTemplateMap(showtime.getRoomId())
-                : Map.of();
-        return seatInstances.stream()
-                .map(s -> toResponse(s, templateMap.get(s.getSeatTemplateId())))
-                .toList();
+        // Reservations may span rooms: build one template map per room,
+        // otherwise seats outside the first instance's room map to null.
+        Map<Long, List<SeatInstance>> byShowtime = seatInstances.stream()
+                .collect(Collectors.groupingBy(SeatInstance::getShowtimeId));
+        List<SeatResponse> out = new ArrayList<>();
+        for (Map.Entry<Long, List<SeatInstance>> e : byShowtime.entrySet()) {
+            Showtime showtime = showtimeRepository.findById(e.getKey()).orElse(null);
+            Map<Long, SeatTemplate> templateMap = showtime != null
+                    ? getSeatTemplateMap(showtime.getRoomId())
+                    : Map.of();
+            e.getValue().stream()
+                    .map(s -> toResponse(s, templateMap.get(s.getSeatTemplateId())))
+                    .forEach(out::add);
+        }
+        return out;
     }
 
     @Override
@@ -265,6 +272,7 @@ public class SeatServiceImpl implements SeatService {
                 .id(seatInstance.getId())
                 .showtimeId(seatInstance.getShowtimeId())
                 .seatNumber(template.getRowLabel() + template.getSeatNumber())
+                .seatType(template.getSeatType())
                 .status(toSeatStatus(seatInstance.getStatus()))
                 .reservationId(seatInstance.getReservationId())
                 .price(seatInstance.getPrice())

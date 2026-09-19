@@ -22,6 +22,20 @@ public interface SeatInstanceRepository extends JpaRepository<SeatInstance, Long
 
     List<SeatInstance> findByShowtimeIdAndStatus(Long showtimeId, String status);
 
+    interface SeatCount {
+        Long getShowtimeId();
+
+        long getTotal();
+    }
+
+    @Query("SELECT s.showtimeId AS showtimeId, COUNT(s) AS total FROM SeatInstance s " +
+            "WHERE s.showtimeId IN :ids GROUP BY s.showtimeId")
+    List<SeatCount> countTotalByShowtimeIds(@Param("ids") List<Long> ids);
+
+    @Query("SELECT s.showtimeId AS showtimeId, COUNT(s) AS total FROM SeatInstance s " +
+            "WHERE s.showtimeId IN :ids AND s.status = 'AVAILABLE' GROUP BY s.showtimeId")
+    List<SeatCount> countAvailableByShowtimeIds(@Param("ids") List<Long> ids);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT s FROM SeatInstance s WHERE s.id IN :seatIds")
     List<SeatInstance> findByIdWithLock(@Param("seatIds") List<Long> seatIds);

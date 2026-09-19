@@ -34,6 +34,7 @@ public class RoomServiceImpl implements RoomService {
     @Transactional(readOnly = true)
     public List<RoomResponse> findByTheaterId(Long theaterId) {
         return roomRepository.findByTheaterId(theaterId).stream()
+                .filter(r -> Boolean.TRUE.equals(r.getIsActive()))
                 .map(this::toResponse)
                 .toList();
     }

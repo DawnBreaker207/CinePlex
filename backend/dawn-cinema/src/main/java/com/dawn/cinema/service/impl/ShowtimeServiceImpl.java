@@ -48,10 +48,27 @@ public class ShowtimeServiceImpl implements ShowtimeService {
 
     private final SeatInstanceRepository seatInstanceRepository;
 
+    private void enrichSeatCounts(List<ShowtimeResponse> responses) {
+        if (responses.isEmpty()) return;
+        List<Long> ids = responses.stream().map(ShowtimeResponse::getId).distinct().toList();
+        Map<Long, Long> totalByShowtime = seatInstanceRepository.countTotalByShowtimeIds(ids)
+                .stream().collect(Collectors.toMap(
+                        SeatInstanceRepository.SeatCount::getShowtimeId,
+                        SeatInstanceRepository.SeatCount::getTotal));
+        Map<Long, Long> availableByShowtime = seatInstanceRepository.countAvailableByShowtimeIds(ids)
+                .stream().collect(Collectors.toMap(
+                        SeatInstanceRepository.SeatCount::getShowtimeId,
+                        SeatInstanceRepository.SeatCount::getTotal));
+        responses.forEach(r -> {
+            r.setTotalSeats(totalByShowtime.getOrDefault(r.getId(), 0L).intValue());
+            r.setAvailableSeats(availableByShowtime.getOrDefault(r.getId(), 0L).intValue());
+        });
+    }
+
     @Override
     public List<ShowtimeResponse> getByDate(LocalDate date) {
         log.info("Fetching showtime for date: {}", date);
-        return showtimeRepository
+        List<ShowtimeResponse> responses = showtimeRepository
                 .findByShowDate(date)
                 .stream()
                 .map(showtime -> {
@@ -60,18 +77,22 @@ public class ShowtimeServiceImpl implements ShowtimeService {
                     return ShowtimeMappingHelper.map(showtime, movie, theater);
                 })
                 .toList();
+        enrichSeatCounts(responses);
+        return responses;
     }
 
     @Override
     public ResponsePage<ShowtimeResponse> getByMovie(Long movieId, Pageable pageable) {
         log.info("Fetching showtime for movie id: {}", movieId);
-        return ResponsePage.of(showtimeRepository
+        Page<ShowtimeResponse> page = showtimeRepository
                 .findByMovieId(movieId, pageable)
                 .map((showtime) -> {
                     MovieResponse movie = catalogModuleApi.findMovieById(movieId);
                     Theater theater = resolveTheater(showtime.getRoomId());
                     return ShowtimeMappingHelper.map(showtime, movie, theater);
-                }));
+                });
+        enrichSeatCounts(page.getContent());
+        return ResponsePage.of(page);
     }
 
     @Override
@@ -93,18 +114,19 @@ public class ShowtimeServiceImpl implements ShowtimeService {
                 .findMoviesByIds(movieIds)
                 .stream()
                 .collect(Collectors.toMap(MovieResponse::getId, Function.identity()));
-        return ResponsePage.of(
-                showtimePage.map(
-                        showtime -> ShowtimeMappingHelper.map(
-                                showtime,
-                                movieCache.get(showtime.getMovieId()),
-                                theater)));
+        Page<ShowtimeResponse> page = showtimePage.map(
+                showtime -> ShowtimeMappingHelper.map(
+                        showtime,
+                        movieCache.get(showtime.getMovieId()),
+                        theater));
+        enrichSeatCounts(page.getContent());
+        return ResponsePage.of(page);
     }
 
     @Override
     public List<ShowtimeResponse> getAvailableShowtime(LocalDate date) {
         log.info("Fetching available showtime from date: {}", date);
-        return showtimeRepository
+        List<ShowtimeResponse> responses = showtimeRepository
                 .findAvailableShowtimeFromDate(date)
                 .stream()
                 .map(showtime -> {
@@ -113,6 +135,8 @@ public class ShowtimeServiceImpl implements ShowtimeService {
                     return ShowtimeMappingHelper.map(showtime, movie, theater);
                 })
                 .toList();
+        enrichSeatCounts(responses);
+        return responses;
     }
 
     @Override
@@ -131,7 +155,7 @@ public class ShowtimeServiceImpl implements ShowtimeService {
         Map<Long, MovieResponse> movieMap = catalogModuleApi.findMoviesByIds(movieIds)
                 .stream()
                 .collect(Collectors.toMap(MovieResponse::getId, m -> m));
-        return showtimes.stream()
+        List<ShowtimeResponse> responses = showtimes.stream()
                 .map(showtime -> {
                     Theater theater = resolveTheater(showtime.getRoomId());
                     return ShowtimeMappingHelper.map(
@@ -140,12 +164,14 @@ public class ShowtimeServiceImpl implements ShowtimeService {
                             theater);
                 })
                 .toList();
+        enrichSeatCounts(responses);
+        return responses;
     }
 
     @Override
     public List<ShowtimeResponse> getAvailableShowtimeForMovie(Long movieId, LocalDate date) {
         log.info("Fetching available showtime for movie id: {} form date {}", movieId, date);
-        return showtimeRepository
+        List<ShowtimeResponse> responses = showtimeRepository
                 .findByShowDateAndMovieId(date, movieId)
                 .stream()
                 .map(showtime -> {
@@ -154,6 +180,8 @@ public class ShowtimeServiceImpl implements ShowtimeService {
                     return ShowtimeMappingHelper.map(showtime, movie, theater);
                 })
                 .toList();
+        enrichSeatCounts(responses);
+        return responses;
     }
 
     @Override

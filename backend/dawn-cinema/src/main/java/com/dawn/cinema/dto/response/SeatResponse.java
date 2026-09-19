@@ -23,6 +23,8 @@ public class SeatResponse extends BaseResponse {
 
     private String seatNumber;
 
+    private String seatType;
+
     private SeatStatus status;
 
     private Long reservationId;
