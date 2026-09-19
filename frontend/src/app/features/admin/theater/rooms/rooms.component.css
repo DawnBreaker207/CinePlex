@@ -1,0 +1,18 @@
+/* Touch devices have no hover: the corner delete button of a SELECTED seat
+   is always visible (unselected seats keep full tap area). Renovated 24px. */
+@media (pointer: coarse) {
+  .seat-x {
+    display: flex;
+    min-width: 1.5rem;
+    min-height: 1.5rem;
+  }
+}
+
+/* Let the browser handle tap/double-tap gestures natively inside the grid
+   (blocks double-tap-zoom so double-tap merge always reaches the app). */
+
+/* Let the browser handle tap/double-tap gestures natively inside the grid
+   (blocks double-tap-zoom so double-tap merge always reaches the app). */
+.seat-grid {
+  touch-action: manipulation;
+}

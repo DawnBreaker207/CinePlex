@@ -2,6 +2,7 @@ import {
   Component,
   computed,
   inject,
+  signal,
   ChangeDetectionStrategy,
 } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
@@ -30,7 +31,8 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { HEADER_COLUMNS } from '@core/constants/column';
 import { ICON_COLORS } from '@shared/utils/colors';
 import { confirmDelete } from '@shared/utils/confirm-delete';
-import { saveFooter } from '@shared/utils/form-utils';
+import { debouncedSearch, saveFooter } from '@shared/utils/form-utils';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-theater',
@@ -68,10 +70,17 @@ private translate = inject(TranslateService);
 
   searchCtrl = this.fb.control('');
   sortCtrl = this.fb.control('newest');
+  private readonly searchQuery = signal('');
+
+  constructor() {
+    debouncedSearch(this.searchCtrl, 300)
+      .pipe(takeUntilDestroyed())
+      .subscribe((q) => this.searchQuery.set(q));
+  }
 
   filteredTheaters = computed(() => {
     const list = this.theaters();
-    const q = (this.searchCtrl.value || '').toLowerCase().trim();
+    const q = this.searchQuery().toLowerCase().trim();
     const sort = this.sortCtrl.value || 'newest';
     let result = q
       ? list.filter(

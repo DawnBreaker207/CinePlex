@@ -123,7 +123,7 @@ export class FormTheaterComponent implements OnInit {
   private patchFormValue(theater: Theater) {
     this.form.patchValue({
       name: theater.name,
-      location: theater.name,
+      location: theater.location,
       capacity: theater.capacity,
     });
   }
