@@ -5,12 +5,10 @@
   <app-header />
   <nz-content id="main-content">
     <div class="relative">
-      @if (loading()) {
-        <app-loading>
-          <router-outlet />
-        </app-loading>
-      } @else {
+      <app-loading [isLoading]="loading()">
         <router-outlet />
+      </app-loading>
+      @if (!loading()) {
         <nz-float-button-top />
       }
     </div>

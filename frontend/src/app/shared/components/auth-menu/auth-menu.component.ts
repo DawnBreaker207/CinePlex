@@ -59,18 +59,12 @@ export class AuthMenuComponent {
     action: item.action === 'logout' ? () => this.logout() : undefined,
   })) as MenuItem[];
 
-  private roleOf(user: { role?: string | string[] } | null | undefined) {
-    const role = user?.role;
-    return (Array.isArray(role) ? role[0] : role)?.toLowerCase();
-  }
-
   filterMenu = computed(() => {
-    const role = this.roleOf(this.userStore.selectedUser());
-
-    return this.profileMenu.filter((item) => {
-      if (item.role === 'both') return true;
-      return item.role === role;
-    });
+    // No admin-only items here (admin button gated separately by isAdmin).
+    if (!this.authService.isAuthenticated()) {
+      return this.profileMenu.filter((item) => item.role === 'both' && !item.action);
+    }
+    return this.profileMenu;
   });
 
   handleItemClick(item: MenuItem) {
@@ -85,9 +79,7 @@ export class AuthMenuComponent {
     this.router.navigate(['/login']);
   }
 
-  readonly isAdmin = computed(
-    () => this.roleOf(this.userStore.selectedUser()) === 'admin',
-  );
+  readonly isAdmin = computed(() => this.authService.hasRole('ADMIN'));
 
   goAdmin() {
     this.router.navigate(['/admin']);

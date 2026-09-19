@@ -8,6 +8,7 @@ export interface User extends DateModel, IsDeleted {
   phone: string;
   address: string;
   role: string;
+  isActive: boolean;
 }
 
 export interface UserProfile {
@@ -18,6 +19,7 @@ export interface UserProfile {
   phone: string;
   address: string;
   role: string;
+  isActive: boolean;
 }
 
 export interface RegisterRequest {

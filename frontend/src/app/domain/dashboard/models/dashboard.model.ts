@@ -31,6 +31,15 @@ export interface RevenuePoint {
   revenue: number;
 }
 
+export interface Operation {
+  id: string;
+  type: 'FAILED_PAYMENT' | 'REFUND_REQUEST' | 'LOW_OCCUPANCY';
+  title: string;
+  detail: string;
+  amount?: number;
+  time: string;
+}
+
 export interface DashboardSummary {
   metrics: DashboardMetrics;
   revenues: RevenuePoint[];

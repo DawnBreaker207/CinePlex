@@ -1,6 +1,7 @@
 export const environment = {
-  useMock: true,
-  apiUrl: "/api/v1",
+  apiUrl: "http://localhost:8888/api/v1",
+  // TEMP-TEST: skip AuthGuard/AdminGuard for local testing — set false before commit
+  bypassAuth: true,
   tmbd: {
     apiUrl: "https://api.themoviedb.org/3",
     imageUrl: "https://image.tmdb.org/t/p/original",

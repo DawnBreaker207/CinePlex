@@ -10,6 +10,13 @@ export enum DiscountType {
   PERCENT = 'PERCENT',
 }
 
+export type VoucherStatus =
+  | 'SCHEDULED'
+  | 'ACTIVE'
+  | 'PAUSED'
+  | 'EXPIRED'
+  | 'EXHAUSTED';
+
 export interface Voucher extends DateModel {
   id: number;
   name: string;
@@ -25,6 +32,8 @@ export interface Voucher extends DateModel {
   discountValue: number;
   maxDiscountAmount: number;
   minOrderValue: number;
+  status: VoucherStatus;
+  maxPerUser: number;
   isActive: boolean;
 }
 
@@ -41,6 +50,8 @@ export interface VoucherRequest {
   minOrderValue: number;
   startAt: Date;
   endAt: Date;
+  status: VoucherStatus;
+  maxPerUser: number;
 }
 
 export interface VoucherCalculate {

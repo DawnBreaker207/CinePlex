@@ -2,6 +2,10 @@ import dayjs from 'dayjs';
 
 export const formatDate = (date?: Date | string): string => {
   if (!date) return '';
+  return dayjs(date).format('YYYY-MM-DD').toString();
+};
+export const formatDisplayDate = (date?: Date | string): string => {
+  if (!date) return '';
   return dayjs(date).format('DD/MM/YYYY').toString();
 };
 export const formatTime = (date?: Date | string): string | undefined => {
