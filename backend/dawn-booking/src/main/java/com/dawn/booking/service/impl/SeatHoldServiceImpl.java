@@ -21,7 +21,6 @@ import com.dawn.common.core.exception.wrapper.ResourceNotFoundException;
 import com.dawn.common.core.exception.wrapper.SeatUnavailableException;
 import com.dawn.common.core.helper.RedisKeyHelper;
 import com.dawn.common.infra.redis.service.VelocityGuard;
-import com.dawn.common.core.annotation.AuditLog;
 import com.dawn.common.core.exception.ApiException;
 import com.dawn.identity.api.IdentityModuleApi;
 import lombok.AccessLevel;
@@ -174,9 +173,9 @@ public class SeatHoldServiceImpl implements SeatHoldService {
     }
 
     @Override
-    @AuditLog(action = "'RESERVATION_HOLD'", entity = "'RESERVATION'", entityId = "#reservation.reservationId",
-            toState = "'PENDING'",
-            metadata = "'showtimeId=' + #reservation.showtimeId + ', seats=' + #reservation.seatIds")
+    // No @AuditLog: holdSeats runs on every seat click/interval during booking (transient Redis lock).
+    // Logging each hold blew audit_log up to tens of millions of rows; real state transitions
+    // (CONFIRMED/CANCELED/FAILED/EXPIRED) are already logged in ReservationServiceImpl.
     public void holdSeats(ReservationHoldSeatRequest reservation) {
         Long userId = reservation.getUserId();
         String reservationId = reservation.getReservationId();

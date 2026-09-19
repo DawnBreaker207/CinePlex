@@ -182,8 +182,8 @@ class SeatHoldServiceImplTest {
 
             verify(reservationRedisService).acquireSeatLock(eq(List.of(101L, 102L)), anyList(), anyString());
             verify(reservationRedisService).updateReservationSeats(eq("RES-001"), eq(List.of(101L, 102L)));
-            verify(auditLogService).record(eq("RESERVATION_HOLD"), eq("RESERVATION"), anyString(), isNull(),
-                    isNull(), eq("PENDING"), anyString(), eq("SUCCESS"), anyString(), isNull(), isNull());
+            verify(auditLogService, never()).record(eq("RESERVATION_HOLD"),
+                    any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
         }
 
         @Test
