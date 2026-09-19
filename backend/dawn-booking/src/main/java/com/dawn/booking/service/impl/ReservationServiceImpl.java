@@ -202,6 +202,22 @@ public class ReservationServiceImpl implements ReservationService {
                         .build());
     }
 
+    private Optional<BigDecimal> snapshotTotal(ReservationRedisDTO cachedData, List<Long> seatIds) {
+        Map<Long, BigDecimal> prices = cachedData.getSeatPrices();
+        if (prices == null || prices.isEmpty()) {
+            return Optional.empty();
+        }
+        BigDecimal total = BigDecimal.ZERO;
+        for (Long seatId : seatIds) {
+            BigDecimal price = prices.get(seatId);
+            if (price == null) {
+                return Optional.empty();
+            }
+            total = total.add(price);
+        }
+        return Optional.of(total);
+    }
+
     @Override
     @Transactional
     @AuditLog(action = "'RESERVATION_CONFIRMED'", entity = "'RESERVATION'", entityId = "#reservationId",
@@ -267,10 +283,11 @@ public class ReservationServiceImpl implements ReservationService {
             }
 
             String voucherCode = cachedData.getVoucherCode();
-            BigDecimal originalAmount = seatEntities.stream()
-                    .map(SeatResponse::getPrice)
-                    .filter(Objects::nonNull)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            BigDecimal originalAmount = snapshotTotal(cachedData, seatIds)
+                    .orElseGet(() -> seatEntities.stream()
+                            .map(SeatResponse::getPrice)
+                            .filter(Objects::nonNull)
+                            .reduce(BigDecimal.ZERO, BigDecimal::add));
             BigDecimal discountAmount = BigDecimal.ZERO;
             BigDecimal total = originalAmount;
             if (voucherCode != null && !voucherCode.isBlank()) {

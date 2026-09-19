@@ -35,6 +35,7 @@ import org.springframework.aop.aspectj.annotation.AspectJProxyFactory;
 import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
@@ -222,6 +223,37 @@ class ReservationServiceImplTest {
             verify(reservationRepository).saveAndFlush(captor.capture());
             assertThat(captor.getValue().getDiscountAmount()).isEqualByComparingTo("10000");
             assertThat(captor.getValue().getTotalAmount()).isEqualByComparingTo("90000");
+        }
+
+        @Test
+        @DisplayName("hold snapshot present → total uses snapshot, not live prices")
+        void confirmReservation_withPriceSnapshot_shouldUseSnapshot() {
+            when(reservationRepository.findByReservationCode("RES-001")).thenReturn(Optional.empty());
+
+            ReservationRedisDTO redisData = ReservationRedisDTO.builder()
+                    .id("RES-001").userId(1L).showtimeId(10L).theaterId(5L)
+                    .seatsIds(List.of(101L))
+                    .seatPrices(Map.of(101L, new BigDecimal("80000"))).build();
+            when(reservationRedisService.getReservationSession("RES-001")).thenReturn(redisData);
+            doNothing().when(reservationRedisService).validateSeatLocks(any(), any());
+            when(reservationRedisService.tryAcquireProcessingLock("RES-001")).thenReturn(true);
+
+            when(identityApi.findUserById(1L)).thenReturn(ReservationTestData.buildUser(1L));
+            when(cinemaApi.findSeatsByIdWithLock(anyList())).thenReturn(List.of(ReservationTestData.buildSeat(101L, 10L)));
+            ShowtimeResponse showtime = ReservationTestData.buildShowtime(10L); // live price = 100_000
+            when(cinemaApi.findShowtimeById(10L)).thenReturn(showtime);
+            when(cinemaApi.bookSeats(10L, List.of(101L), 1L)).thenReturn(1);
+
+            Reservation saved = ReservationTestData.buildReservation("RES-001", true);
+            when(reservationRepository.saveAndFlush(any())).thenReturn(saved);
+            doNothing().when(notificationHelper).handleNotification(any(), any(), any());
+            doNothing().when(reservationRedisService).cleanupRedisLocks(any(), any());
+
+            service.confirm("RES-001");
+
+            ArgumentCaptor<Reservation> captor = ArgumentCaptor.forClass(Reservation.class);
+            verify(reservationRepository).saveAndFlush(captor.capture());
+            assertThat(captor.getValue().getTotalAmount()).isEqualByComparingTo("80000");
         }
 
         @Test

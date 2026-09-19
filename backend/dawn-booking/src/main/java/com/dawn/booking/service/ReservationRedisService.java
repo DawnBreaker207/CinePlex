@@ -75,12 +75,20 @@ public class ReservationRedisService {
     }
 
     public void updateReservationSeats(String reservationId, List<Long> seats) {
+        updateReservationSeats(reservationId, seats, null);
+    }
+
+    public void updateReservationSeats(String reservationId, List<Long> seats,
+            Map<Long, BigDecimal> prices) {
         try {
             String key = RedisKeyHelper.reservationHoldKey(reservationId);
             Map<Object, Object> existing = redisService.getHash(key);
             Map<String, String> updates = new HashMap<>();
 
             updates.put(Constants.REDIS_SEAT_IDS, mapper.writeValueAsString(seats));
+            if (prices != null && !prices.isEmpty()) {
+                updates.put(Constants.REDIS_SEAT_PRICES, mapper.writeValueAsString(prices));
+            }
             if (existing != null && existing.get(Constants.REDIS_VOUCHER_CODE) != null) {
                 updates.put(Constants.REDIS_VOUCHER_CODE, (String) existing.get(Constants.REDIS_VOUCHER_CODE));
             }
@@ -282,6 +290,17 @@ public class ReservationRedisService {
             log.error("Error parsing seat IDs from Redis", ex);
             throw new RedisStorageException(ErrorCode.INVALID_REDIS_DATA.format());
         }
+        Map<Long, BigDecimal> seatPrices = null;
+        try {
+            String priceJson = (String) data.get(Constants.REDIS_SEAT_PRICES);
+            if (priceJson != null) {
+                seatPrices = mapper.readValue(priceJson, new TypeReference<>() {
+                });
+            }
+        } catch (JsonProcessingException ex) {
+            log.warn("Error parsing seat prices from Redis for reservation {}, falling back to live prices",
+                    reservationId);
+        }
         return ReservationRedisDTO
                 .builder()
                 .id(reservationId)
@@ -289,6 +308,7 @@ public class ReservationRedisService {
                 .showtimeId(showtimeId)
                 .theaterId(theaterId)
                 .seatsIds(seatIds)
+                .seatPrices(seatPrices)
                 .voucherCode(voucherCode)
                 .idempotencyKey(idempotencyKey)
                 .price(price)

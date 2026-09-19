@@ -6,8 +6,11 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Data
 @NoArgsConstructor
@@ -30,4 +33,7 @@ public class ReservationRedisDTO {
 
     @Builder.Default
     private List<Long> seatsIds = new ArrayList<>();
+
+    @Builder.Default
+    private Map<Long, BigDecimal> seatPrices = new HashMap<>();
 }

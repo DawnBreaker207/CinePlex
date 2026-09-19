@@ -37,6 +37,7 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -209,7 +210,10 @@ public class SeatHoldServiceImpl implements SeatHoldService {
         reservationRedisService.acquireSeatLock(seatIds, seats, redisKey);
 
         try {
-            reservationRedisService.updateReservationSeats(reservationId, seatIds);
+            Map<Long, java.math.BigDecimal> priceSnapshot = seats.stream()
+                    .filter(s -> s.getId() != null && s.getPrice() != null)
+                    .collect(Collectors.toMap(SeatResponse::getId, SeatResponse::getPrice, (a, b) -> a));
+            reservationRedisService.updateReservationSeats(reservationId, seatIds, priceSnapshot);
 
             //  Guard: never overwrite a row that already left PENDING (e.g. confirmed during this hold)
             reservationRepository.findByReservationCode(reservationId)

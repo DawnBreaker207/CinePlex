@@ -29,6 +29,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.aop.aspectj.annotation.AspectJProxyFactory;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
 
@@ -181,7 +182,8 @@ class SeatHoldServiceImplTest {
             service.holdSeats(request);
 
             verify(reservationRedisService).acquireSeatLock(eq(List.of(101L, 102L)), anyList(), anyString());
-            verify(reservationRedisService).updateReservationSeats(eq("RES-001"), eq(List.of(101L, 102L)));
+            verify(reservationRedisService).updateReservationSeats(eq("RES-001"), eq(List.of(101L, 102L)),
+                    eq(Map.of(101L, new BigDecimal("100000"), 102L, new BigDecimal("100000"))));
             verify(auditLogService, never()).record(eq("RESERVATION_HOLD"),
                     any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
         }
@@ -270,7 +272,7 @@ class SeatHoldServiceImplTest {
             assertThatThrownBy(() -> service.holdSeats(request))
                     .isInstanceOf(SeatUnavailableException.class);
 
-            verify(reservationRedisService, never()).updateReservationSeats(any(), any());
+            verify(reservationRedisService, never()).updateReservationSeats(any(), any(), any());
         }
 
         @Test

@@ -10,6 +10,7 @@ public final class Constants {
     public static final String REDIS_THEATER_ID = "theaterId";
     public static final String REDIS_PRICE = "price";
     public static final String REDIS_SEAT_IDS = "seatIds";
+    public static final String REDIS_SEAT_PRICES = "seatPrices";
     public static final String REDIS_VOUCHER_CODE = "voucherCode";
     public static final String REDIS_TEMP_FINAL_AMOUNT = "tempFinalAmount";
     public static final String REDIS_IDEMPOTENCY_KEY = "idempotencyKey";
