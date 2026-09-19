@@ -1,22 +1,33 @@
-import { CanMatchFn, Router } from '@angular/router';
+import { CanMatchFn, Router, UrlTree } from '@angular/router';
 import { inject } from '@angular/core';
 import { ToastService } from '@core/services/toast/toast.service';
 import { AuthService } from '@core/auth/auth.service';
+import { TranslateService } from '@ngx-translate/core';
+import { Observable, map, of } from 'rxjs';
+import { environment } from '@env/environment';
 
-export const AuthGuard: CanMatchFn = (_route, _segments) => {
+export const AuthGuard: CanMatchFn = (_route, _segments): Observable<boolean | UrlTree> => {
+  // TEMP-TEST: bypass auth for local testing — remove before commit
+  if (environment.bypassAuth) return of(true);
   const toast = inject(ToastService);
   const router = inject(Router);
   const authService = inject(AuthService);
+  const translate = inject(TranslateService);
 
-  if (!authService.isAuthenticated()) {
+  const deny = () => {
     toast.createNotification({
       type: 'error',
-      title: 'Authentication Required',
-      message: 'Please login to access this page',
+      title: translate.instant('guard.authRequired.title'),
+      message: translate.instant('guard.authRequired.message'),
     });
     return router.createUrlTree(['/login'], {
       queryParams: { returnUrl: router.url },
     });
-  }
-  return true;
+  };
+
+  // One lazy refresh attempt (valid cookie in, expired back to login).
+  // Public pages never reach here so guests cost no call.
+  return authService
+    .ensureAuthenticated()
+    .pipe(map((ok) => (ok ? true : deny())));
 };

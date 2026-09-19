@@ -56,6 +56,15 @@
 
       <!-- LOGIN FORM -->
       @if (activeTab() === "login") {
+        @if (registeredEmail(); as email) {
+          <nz-alert
+            nzType="success"
+            nzShowIcon
+            class="mb-4"
+            [nzMessage]="'auth.checkEmailTitle' | translate"
+            [nzDescription]="'auth.checkEmailDesc' | translate: { email: email }"
+          ></nz-alert>
+        }
         <ng-container *nzStringTemplateOutlet="loginTpl"></ng-container>
       } @else {
         <ng-container *nzStringTemplateOutlet="registerTpl"></ng-container>
@@ -124,7 +133,7 @@
                 >{{ "common.password" | translate }}
               </nz-form-label>
               <nz-form-control
-                [nzErrorTip]="'auth.passwordRequired' | translate"
+                [nzErrorTip]="'auth.passwordMin' | translate: { min: 6 }"
               >
                 <nz-input-group
                   nzPrefixIcon="lock"
@@ -239,7 +248,7 @@
             <nz-form-label nzRequired
               >{{ "common.password" | translate }}
             </nz-form-label>
-            <nz-form-control [nzErrorTip]="'auth.requiredPassword' | translate">
+            <nz-form-control [nzErrorTip]="'auth.passwordMin' | translate: { min: 8 }">
               <nz-input-group
                 nzPrefixIcon="lock"
                 [nzSuffix]="suffixTemplate"

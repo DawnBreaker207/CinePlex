@@ -10,7 +10,7 @@ export interface Jwt {
 export interface JWTPayload extends JWTDecodePayload {
   username?: string;
   email: string;
-  roles: string[];
+  roles?: string[];
 }
 
 export interface RefreshToken {

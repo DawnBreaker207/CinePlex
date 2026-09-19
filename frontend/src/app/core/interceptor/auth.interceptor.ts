@@ -16,13 +16,13 @@ export const AuthInterceptor: HttpInterceptorFn = (req, next) => {
   const isRefresh = req.url.includes('/refresh-token');
 
   let modifiedReq = req;
-  const checkApi = req.url.startsWith('/api');
+  const checkApi = req.url.startsWith('/api') || req.url.includes('/api/v1');
 
   if (checkApi) {
     modifiedReq = req.clone({ withCredentials: true });
   }
 
-  // Refresh-token request chỉ dùng cookie httpOnly, KHÔNG attach access token
+  // Refresh-token request uses the httpOnly cookie only, never the access token
   if (token && !skipAuth && !isRefresh) {
     modifiedReq = modifiedReq.clone({
       setHeaders: { Authorization: `Bearer ${token}` },
@@ -41,8 +41,8 @@ export const AuthInterceptor: HttpInterceptorFn = (req, next) => {
         return throwError(() => error);
       }
 
-      // TOKEN_EXPIRED (hoặc không có message) → silent refresh + retry 1 lần.
-      // TOKEN_INVALID/revoked → logout ngay, không retry.
+      // TOKEN_EXPIRED (or no message) → silent refresh + single retry.
+      // TOKEN_INVALID/revoked → logout immediately, no retry.
       const message =
         typeof error.error?.message === 'string'
           ? error.error.message.toLowerCase()

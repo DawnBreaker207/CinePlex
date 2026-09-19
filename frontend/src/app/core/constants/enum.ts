@@ -1,6 +1,6 @@
 export type ReservationStatus = 'CONFIRMED' | 'CANCELED' | 'PENDING' | 'FAILED' | 'EXPIRED' | 'REFUNDED';
 
-export type PaymentMethod = 'MOMO' | 'VNPAY' | 'ZALOPAY' | 'CASH';
+export type PaymentMethod = 'MOMO' | 'VNPAY' | 'ZALOPAY' | 'CASH' | 'MOCK';
 
 export type PaymentStatus = 'PENDING' | 'PAID' | 'CANCELED';
 

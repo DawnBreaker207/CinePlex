@@ -35,6 +35,7 @@ export class AuthComponent implements OnInit {
   activeTab = signal<'login' | 'register'>('login');
   loginError = signal<string | null>(null);
   registerError = signal<string | null>(null);
+  registeredEmail = signal<string | null>(null);
   loginPasswordVisible = false;
   registerPasswordVisible = false;
   isLoginLoading = signal(false);
@@ -95,7 +96,7 @@ export class AuthComponent implements OnInit {
   private initializeLoginForm() {
     this.formLogin = this.fb.group({
       identifier: ['', [Validators.required]],
-      password: ['', [Validators.required]],
+      password: ['', [Validators.required, Validators.minLength(8)]],
       remember: [false],
     });
   }
@@ -139,6 +140,7 @@ export class AuthComponent implements OnInit {
           this.activeTab.set('login');
           this.formLogin.patchValue({ identifier: email });
           this.loginError.set(null);
+          this.registeredEmail.set(email);
         }
       });
     } else {

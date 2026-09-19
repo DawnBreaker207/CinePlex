@@ -1,5 +1,6 @@
 import { inject, Injectable, signal } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpContext } from '@angular/common/http';
+import { SKIP_ERROR_NOTIFICATION } from '@core/constants/http-context.tokens';
 import { ApiRes } from '../models/common.model';
 import { Jwt, JWTPayload, RefreshToken } from '../models/jwt.model';
 import {
@@ -9,24 +10,30 @@ import {
   Observable,
   of,
   shareReplay,
+  switchMap,
   tap,
   throwError,
 } from 'rxjs';
 import { jwtDecode } from 'jwt-decode';
 import { environment } from '@env/environment';
 import { LoginRequest, RegisterRequest } from '@domain/user/models/user.model';
+import { Store } from '@ngrx/store';
+import { AuthActions } from './auth.actions';
+import { UserService } from '@domain/user/data-access/user.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class AuthService {
-  // TTL: access token 10 phút (<= 15 phút), refresh token 7 ngày (<= 30 ngày).
-  // Token KHÔNG bao giờ vào localStorage — access token chỉ ở trong memory signal,
-  // refresh token nằm ở httpOnly cookie do backend quản lý.
+  // TTLs stay within backend limits (access <= 15m, refresh <= 30d).
+  // Tokens never touch localStorage: access lives in a memory signal,
+  // refresh lives in a backend-managed httpOnly cookie.
   private readonly ACCESS_TTL_MIN = 10;
   private readonly REFRESH_TTL_DAYS = 7;
 
   private http = inject(HttpClient);
+  private store = inject(Store);
+  private userService = inject(UserService);
   URL = `${environment.apiUrl}/auth`;
 
   private _accessToken = signal<string | null>(null);
@@ -64,13 +71,18 @@ export class AuthService {
   }
 
   login(request: LoginRequest) {
-    return this.http.post<ApiRes<Jwt>>(`${this.URL}/login`, request).pipe(
-      map((res) => res?.data),
-      tap((jwt) => {
-        if (jwt?.accessToken) this._accessToken.set(jwt.accessToken);
-      }),
-      catchError(this.handleError<Jwt>('login')),
-    );
+    // withCredentials: accepts the httpOnly refresh cookie; without it F5 loses the session.
+    return this.http
+      .post<ApiRes<Jwt>>(`${this.URL}/login`, request, {
+        withCredentials: true,
+      })
+      .pipe(
+        map((res) => res?.data),
+        tap((jwt) => {
+          if (jwt?.accessToken) this._accessToken.set(jwt.accessToken);
+        }),
+        catchError(this.handleError<Jwt>('login')),
+      );
   }
 
   logout() {
@@ -91,21 +103,46 @@ export class AuthService {
       .post<ApiRes<RefreshToken>>(
         `${this.URL}/refresh-token`,
         {},
-        { withCredentials: true },
+        {
+          withCredentials: true,
+          context: new HttpContext().set(SKIP_ERROR_NOTIFICATION, true),
+        },
       )
       .pipe(
         map((res) => res.data),
-        tap((token) => {
-          this._accessToken.set(token.accessToken);
+        tap((token) => this._accessToken.set(token.accessToken)),
+        // After F5 the store is empty: resolve the real userId via the token email
+        // (JWT sub is username, not numeric) before syncing ngrx.
+        // Best effort: header-level login state survives regardless.
+        switchMap((token) => {
+          const email = this.getFromToken(token.accessToken)?.email;
+          if (!email) return of(token);
+          return this.userService.getByEmail(email).pipe(
+            tap((user) => {
+              if (user) {
+                this.store.dispatch(
+                  AuthActions.loadLoginSuccess({
+                    jwt: {
+                      userId: user.userId,
+                      username: user.username ?? '',
+                      email: user.email ?? '',
+                      accessToken: token.accessToken,
+                    },
+                  }),
+                );
+              }
+            }),
+            map(() => token),
+            catchError(() => of(token)),
+          );
         }),
         catchError(this.handleError<RefreshToken>('refreshToken')),
       );
   }
 
   /**
-   * Silent refresh (dedupe bằng shareReplay(1)): mọi caller đồng thời
-   * (app initializer, interceptor 401, guard) chia sẻ đúng MỘT request refresh.
-   * Không bao giờ throw — fail thì trả null để caller quyết định (logout).
+   * Silent refresh deduped by shareReplay(1): concurrent callers share ONE refresh request.
+   * Never throws — returns null on failure and lets the caller decide (logout).
    */
   silentRefresh(): Observable<string | null> {
     if (!this.refreshInFlight$) {
@@ -151,16 +188,24 @@ export class AuthService {
     return !!token && !this.isTokenExpired(token);
   }
 
+  /**
+   * For guards: memory token short-circuits; otherwise one lazy httpOnly-cookie refresh.
+   */
+  ensureAuthenticated(): Observable<boolean> {
+    if (this.isAuthenticated()) return of(true);
+    return this.silentRefresh().pipe(map((token) => !!token));
+  }
+
   hasRole(role: string) {
     const user = this.getCurrentUser();
-    return user?.roles.includes(role) || false;
+    return user?.roles?.includes(role) || false;
   }
 
   hasAnyRole(roles: string[]) {
     const user = this.getCurrentUser();
     if (!user || !user.roles) return false;
 
-    return roles.some((role) => user.roles.includes(role));
+    return roles.some((role) => user.roles?.includes(role) || false);
   }
 
   private handleError<T>(operation = 'operation', _result?: T) {

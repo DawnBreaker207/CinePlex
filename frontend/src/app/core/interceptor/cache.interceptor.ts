@@ -9,8 +9,21 @@ interface CacheEntry {
 const cache = new Map<string, CacheEntry>();
 const TTL = 300_000;
 
+// Never cache realtime-varying data.
+const NO_CACHE = [
+  '/seats/',
+  '/reservation',
+  '/voucher/calculate',
+  '/voucher/use',
+  '/payment/',
+  '/dashboard/',
+  '/notification/',
+  '/audit-logs',
+];
+
 export const CacheInterceptor: HttpInterceptorFn = (req, next) => {
   if (req.method !== 'GET') return next(req);
+  if (NO_CACHE.some((p) => req.url.includes(p))) return next(req);
 
   const key = `${req.url}|${req.params.toString()}`;
   const entry = cache.get(key);

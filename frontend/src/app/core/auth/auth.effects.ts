@@ -33,12 +33,11 @@ export class AuthEffects {
       ofType(ROOT_EFFECTS_INIT),
       switchMap(() => {
         const existing = this.authService.accessToken();
-        return (existing
-          ? of(existing)
-          : this.authService.silentRefresh()
-        ).pipe(
+        // No eager refresh here: httpOnly cookie is unreadable from JS,
+        // blind calls 404 for every guest. Guard/interceptor refresh lazily.
+        if (!existing) return of(AuthActions.loadLogoutSuccess());
+        return of(existing).pipe(
           map((accessToken) => {
-            if (!accessToken) return AuthActions.loadLogoutSuccess();
             const payload = this.authService.getFromToken(accessToken);
             if (!payload) return AuthActions.loadLogoutSuccess();
             return AuthActions.loadLoginSuccess({
