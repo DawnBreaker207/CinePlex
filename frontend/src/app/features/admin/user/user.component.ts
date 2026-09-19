@@ -56,8 +56,8 @@ export class UserComponent implements OnInit {
     this.userStore.loadUsers({ page: this.pageIndex - 1, size: this.pageSize });
   }
 
-  updateStatus(id: number, status: boolean) {
-    this.userStore.updateUserStatus({ id: id, isDeleted: status });
+  updateStatus(id: number, isActive: boolean) {
+    this.userStore.updateUserStatus({ id: id, isActive: isActive });
   }
 
   onQueryParamsChange(params: NzTableQueryParams) {

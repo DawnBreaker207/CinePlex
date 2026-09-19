@@ -16,11 +16,11 @@ import {
   withState,
 } from '@ngrx/signals';
 import { computed, inject } from '@angular/core';
-import { getMockSummary, Operation } from '@features/admin/dashboard/mocks/dashboard.mock';
+import { Operation } from '@domain/dashboard/models/dashboard.model';
 import { DashboardService } from '@domain/dashboard/data-access/dashboard.service';
 import { SocketService } from '@core/services/socket/socket.service';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { catchError, finalize, from, of, pipe, switchMap, tap } from 'rxjs';
+import { catchError, finalize, of, pipe, switchMap, tap } from 'rxjs';
 import { formatDate } from '@shared/utils/date.helper';
 import { TranslateService } from '@ngx-translate/core';
 
@@ -145,30 +145,6 @@ export const DashboardStore = signalStore(
           payments: summary.payments ?? [],
         }));
 
-      const loadMock = () =>
-        from(getMockSummary(store.getFilterPayload())).pipe(
-          tap(
-            ({
-              metrics,
-              previousMetrics,
-              revenues,
-              movies,
-              theaters,
-              payments,
-              operations,
-            }) =>
-              patchState(store, {
-                metrics: metrics,
-                previousMetrics: previousMetrics,
-                revenues: revenues,
-                movies: movies,
-                theaters: theaters,
-                payments: payments,
-                operations: operations,
-              }),
-          ),
-        );
-
       const loadSummary = rxMethod<void>(
         pipe(
           tap(() => patchState(store, { isLoading: true, error: null })),
@@ -178,7 +154,6 @@ export const DashboardStore = signalStore(
                 applySummary(summary);
                 patchState(store, { operations: [] });
               }),
-              catchError(() => loadMock()),
               catchError(() => {
                 patchState(store, { error: translate.instant('dashboard.loadFailed') });
                 return of(null);

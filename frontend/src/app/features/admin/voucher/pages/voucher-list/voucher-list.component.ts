@@ -111,6 +111,38 @@ private translate = inject(TranslateService);
   isExpired(endDate: Date | string) {
     return new Date(endDate).getTime() < new Date().getTime();
   }
+
+  statusColor(status: string): string {
+    switch (status) {
+      case 'ACTIVE':
+        return 'success';
+      case 'PAUSED':
+      case 'SCHEDULED':
+        return 'default';
+      case 'EXPIRED':
+      case 'EXHAUSTED':
+        return 'error';
+      default:
+        return 'default';
+    }
+  }
+
+  statusLabel(status: string): string {
+    switch (status) {
+      case 'ACTIVE':
+        return 'voucher.status.active';
+      case 'PAUSED':
+        return 'voucher.status.paused';
+      case 'EXPIRED':
+        return 'voucher.status.expired';
+      case 'SCHEDULED':
+        return 'voucher.status.scheduled';
+      case 'EXHAUSTED':
+        return 'voucher.status.exhausted';
+      default:
+        return 'common.unknown';
+    }
+  }
   onDelete(id: number) {
     confirmDelete(this.modalService, this.translate, 'voucher.deleteTitle', () =>
       this.voucherStore.deleteVoucher(id),

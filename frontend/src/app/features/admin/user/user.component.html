@@ -57,15 +57,15 @@
                 </div>
               </td>
               <td>
-                @let tag = item.isDeleted | isDeleted;
+                @let tag = !item.isActive | isDeleted;
                 <nz-tag [nzColor]="tag.color">
                   {{ tag.label }}
                 </nz-tag>
               </td>
               <td>
                 <nz-switch
-                  [ngModel]="!item.isDeleted"
-                  (ngModelChange)="updateStatus(item.userId, !$event)"
+                  [ngModel]="item.isActive"
+                  (ngModelChange)="updateStatus(item.userId, $event)"
                   nz-tooltip
                   [nzTooltipTitle]="'admin.user.toggleStatus' | translate"
                 >

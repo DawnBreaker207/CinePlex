@@ -73,13 +73,14 @@ export class RevenueChartComponent {
       legend: {
         show: forecastPoints.length > 0,
         data: ['Revenue', 'Forecast'],
+        top: 0,
       },
       grid: {
         left: '3%',
         right: '4%',
         bottom: '3%',
         containLabel: true,
-        top: '10%',
+        top: '12%',
       },
       xAxis: {
         type: 'category',

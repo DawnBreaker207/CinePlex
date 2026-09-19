@@ -21,7 +21,7 @@ import { NzButtonModule } from 'ng-zorro-antd/button';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { CurrencyFormatPipe } from '@shared/pipes/currency-format.pipe';
 import { CHART_COLORS } from '@shared/utils/colors';
-import { Operation } from '@features/admin/dashboard/mocks/dashboard.mock';
+import { Operation } from '@domain/dashboard/models/dashboard.model';
 import { inject } from '@angular/core';
 
 type Filter = 'ALL' | Operation['type'];

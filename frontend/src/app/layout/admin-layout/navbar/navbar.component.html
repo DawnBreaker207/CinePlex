@@ -38,22 +38,88 @@
 
     <!-- RIGHT SIDE: Search - Notify - Profile -->
     <div class="flex items-center gap-4 sm:gap-6">
-      <!-- SEARCH BAR FIXED -->
-      <div class="hidden lg:flex items-center w-72 h-10 group">
+      <!-- SEARCH BAR -->
+      <div class="relative hidden lg:block">
         <div
-          class="flex items-center w-full h-full bg-slate-50 dark:bg-gray-800 hover:bg-slate-100 dark:hover:bg-gray-700 border border-slate-200 dark:border-gray-700 rounded-full px-4 transition-[background-color,border-color,box-shadow] group-focus-within:bg-white group-focus-within:border-primary group-focus-within:ring-4 group-focus-within:ring-primary/10 shadow-sm"
+          class="flex items-center w-[26rem] h-10 group"
+          [class.rounded-t-2xl]="suggestionsOpen()"
+          [class.shadow-sm]="!suggestionsOpen()"
+          [class.rounded-full]="!suggestionsOpen()"
         >
-          <nz-icon
-            nzType="search"
-            class="text-slate-400 dark:text-gray-500 group-focus-within:text-primary transition-colors text-lg shrink-0"
-          />
-          <input
-            type="text"
-            [placeholder]="'layout.quickSearchPlaceholder' | translate"
-            [attr.aria-label]="'layout.quickSearch' | translate"
-            class="w-full h-full bg-transparent border-none outline-none text-sm ml-3 text-slate-700 dark:text-gray-200 placeholder-slate-500 dark:placeholder-gray-400 p-0 focus:ring-0"
-          />
+          <div
+            class="flex items-center w-full h-full bg-slate-50 dark:bg-gray-800 hover:bg-slate-100 dark:hover:bg-gray-700 border border-slate-200 dark:border-gray-700 rounded-full px-4 transition-[background-color,border-color,box-shadow] group-focus-within:bg-white group-focus-within:border-primary group-focus-within:ring-4 group-focus-within:ring-primary/10"
+            [class.rounded-t-2xl]="suggestionsOpen()"
+            [class.rounded-b-none!]="suggestionsOpen()"
+          >
+            <nz-icon
+              nzType="search"
+              class="text-slate-400 dark:text-gray-500 group-focus-within:text-primary transition-colors text-lg shrink-0"
+            />
+            <input
+              type="text"
+              [placeholder]="'layout.quickSearchPlaceholder' | translate"
+              [attr.aria-label]="'layout.quickSearch' | translate"
+              #quickSearch
+              (input)="onSearchInput(quickSearch.value)"
+              (keydown)="onKeydown($event)"
+              (blur)="closeSuggestions()"
+              class="w-full h-full bg-transparent border-none outline-none text-sm ml-3 text-slate-700 dark:text-gray-200 placeholder-slate-500 dark:placeholder-gray-400 p-0 focus:ring-0"
+            />
+          </div>
         </div>
+
+        @if (suggestionsOpen() && suggestions().length) {
+          <div
+            class="absolute top-10 left-0 right-0 bg-white dark:bg-[#161a20] rounded-b-2xl shadow-xl border border-t-0 border-slate-200 dark:border-gray-700 z-50 max-h-80 overflow-y-auto custom-scrollbar"
+          >
+            @for (story of suggestions(); track story.title + story.kind + story.subtitle; let i = $index) {
+              <button
+                type="button"
+                [attr.aria-selected]="activeIndex() === i"
+                [class.bg-primary-light]="activeIndex() === i"
+                (mousedown)="select(story)"
+                (mouseenter)="activeIndex.set(i)"
+                class="w-full text-left px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-gray-700 flex items-center gap-3 transition-colors cursor-pointer"
+              >
+                <span
+                  class="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
+                  [ngClass]="{
+                    'bg-primary-light text-primary': story.kind === 'movie',
+                    'bg-success/10 text-success': story.kind === 'theater',
+                    'bg-slate-100 dark:bg-gray-700 text-slate-500 dark:text-gray-300': story.kind === 'page'
+                  }"
+                >
+                  <nz-icon [nzType]="story.icon" class="text-sm" />
+                </span>
+                <span class="min-w-0 flex-1">
+                  <span
+                    class="block text-sm text-slate-800 dark:text-gray-100 truncate"
+                    [ngClass]="{ 'font-medium': story.kind !== 'page' }"
+                  >
+                    {{ story.title }}
+                  </span>
+                  @if (story.subtitle) {
+                    <span
+                      class="block text-xs text-slate-500 dark:text-gray-400 truncate"
+                      >{{ story.subtitle }}</span
+                    >
+                  }
+                </span>
+                @if (activeIndex() === i) {
+                  <nz-icon
+                    nzType="enter"
+                    class="text-xs text-primary shrink-0"
+                  />
+                } @else {
+                  <nz-icon
+                    nzType="arrow-right"
+                    class="text-xs text-slate-400 shrink-0"
+                  />
+                }
+              </button>
+            }
+          </div>
+        }
       </div>
 
       <div
@@ -69,7 +135,7 @@
         tabindex="0"
       >
         <nz-badge
-          [nzCount]="5"
+          [nzCount]="unreadInsights().length"
           [nzStyle]="{ backgroundColor: 'var(--color-primary, #e53e3e)' }"
           nzSize="small"
         >
@@ -85,30 +151,41 @@
             class="px-4 py-2 border-b border-slate-100 dark:border-gray-700 font-bold text-slate-700 dark:text-gray-100 flex justify-between"
           >
             <span>{{ "navbar.notifications" | translate }}</span>
-            <span class="text-xs text-primary cursor-pointer">{{
-              "navbar.markRead" | translate
-            }}</span>
+            <span class="text-xs text-primary cursor-pointer"
+              (click)="markAllRead()">{{
+                "navbar.markRead" | translate
+              }}</span>
           </div>
           <ul class="max-h-64 overflow-y-auto custom-scrollbar">
-            <li
-              class="px-4 py-3 hover:bg-slate-50 dark:hover:bg-gray-700 cursor-pointer flex gap-3 items-start border-b border-slate-50 dark:border-gray-700"
-            >
-              <div
-                class="w-8 h-8 rounded-full bg-success/10 text-success flex items-center justify-center shrink-0"
+            @for (insight of unreadInsights(); track insight.title) {
+              <li
+                class="px-4 py-3 hover:bg-slate-50 dark:hover:bg-gray-700 cursor-pointer flex gap-3 items-start border-b border-slate-50 dark:border-gray-700"
+                (click)="markRead(insight)"
               >
-                <nz-icon nzType="pay-circle" />
-              </div>
-              <div>
-                <p
-                  class="text-sm text-slate-800 dark:text-gray-100 font-medium"
+                <div
+                  class="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
+                  [ngClass]="{
+                    'bg-success/10 text-success': insight.severity === 'success',
+                    'bg-warning/10 text-warning': insight.severity === 'warning',
+                    'bg-primary-light text-primary': insight.severity === 'info'
+                  }"
                 >
-                  {{ "navbar.newOrder" | translate }}
-                </p>
-                <p class="text-xs text-slate-500 dark:text-gray-400 mt-1">
-                  {{ "navbar.justNow" | translate }}
-                </p>
-              </div>
-            </li>
+                  <nz-icon [nzType]="severityIcon(insight.severity)" />
+                </div>
+                <div class="min-w-0 flex-1">
+                  <p class="text-sm text-slate-800 dark:text-gray-100 font-medium">
+                    {{ insight.title }}
+                  </p>
+                  <p class="text-xs text-slate-500 dark:text-gray-400 mt-1">
+                    {{ insight.detail }}
+                  </p>
+                </div>
+              </li>
+            } @empty {
+              <li class="px-4 py-8 text-center text-sm text-slate-500 dark:text-gray-400">
+                {{ "navbar.noNotifications" | translate }}
+              </li>
+            }
           </ul>
         </div>
       </nz-dropdown-menu>

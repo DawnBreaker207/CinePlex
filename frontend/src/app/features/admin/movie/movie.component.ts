@@ -38,6 +38,7 @@ import { MovieActions } from '@domain/movie/data-access/movie.actions';
 import { FormMovieComponent } from '@features/admin/movie/form/movie/movie-form.component';
 import { LoadingComponent } from '@shared/components/loading/loading.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { HEADER_COLUMNS } from '@core/constants/column';
 import { ICON_COLORS } from '@shared/utils/colors';
@@ -76,6 +77,7 @@ export class MovieComponent {
   private store = inject(Store);
   private modalService = inject(NzModalService);
   private translate = inject(TranslateService);
+  private route = inject(ActivatedRoute);
 
   // NgRx Selectors
   readonly movies = this.store.selectSignal(selectAllMovies);
@@ -113,6 +115,13 @@ export class MovieComponent {
           this.store.dispatch(MovieActions.loadMovies({ page: 0, size: 10 }));
         }
       });
+
+    const q = this.route.snapshot.queryParamMap.get('q');
+    if (q) {
+      this.searchCtrl.setValue(q);
+      this.isSearching.set(true);
+      this.store.dispatch(MovieActions.searchMovies({ search: q }));
+    }
   }
 
   selectMovie(id: number) {

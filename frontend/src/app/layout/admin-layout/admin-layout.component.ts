@@ -51,10 +51,9 @@ export class AdminLayoutComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
 
   ngOnInit() {
-    // Tạo breadcrumb lần đầu
     this.breadcrumbs.set(this.createBreadcrumbs(this.activatedRoute.root));
 
-    // Lắng nghe sự kiện đổi route để cập nhật lại breadcrumb
+    // Rebuild breadcrumbs on route change
     this.router.events
       .pipe(
         filter((event) => event instanceof NavigationEnd),
@@ -73,7 +72,7 @@ export class AdminLayoutComponent implements OnInit {
     this.isCollapsed = collapsed;
   }
 
-  // Hàm đệ quy để duyệt cây Router và lấy data.breadcrumb
+  // Walk the Router tree collecting data.breadcrumb
   private createBreadcrumbs(
     route: ActivatedRoute,
     url: string = '',
@@ -94,7 +93,7 @@ export class AdminLayoutComponent implements OnInit {
         url += `/${routeURL}`;
       }
 
-      // Chỉ lấy những route có data.breadcrumb
+      // Only routes carrying data.breadcrumb
       const label = child.snapshot.data['breadcrumb'];
       if (label) {
         breadcrumbs.push({ label, url });

@@ -19,6 +19,7 @@ import {
   DiscountType,
   VoucherCategory,
   VoucherRequest,
+  VoucherStatus,
 } from '@domain/voucher/model/voucher.model';
 import { Mode } from '@core/constants/enum';
 import { NzFormModule } from 'ng-zorro-antd/form';
@@ -65,12 +66,18 @@ export class FormVoucherComponent implements OnInit {
     minOrderValue: FormControl<number>;
     conditions: FormControl<string>;
     groupRef: FormControl<string>;
+    status: FormControl<VoucherStatus>;
   }>;
   mode: Mode = 'view';
   voucherId?: number;
 
   readonly VoucherCategory = VoucherCategory;
   readonly DiscountType = DiscountType;
+  readonly statuses: VoucherStatus[] = [
+    'SCHEDULED',
+    'ACTIVE',
+    'PAUSED',
+  ];
 
   parserPercent = (value: number) => `${value} %`;
   parserMoney = (value: number) =>
@@ -104,6 +111,7 @@ export class FormVoucherComponent implements OnInit {
       minOrderValue: [0],
       conditions: [''],
       groupRef: [''],
+      status: ['ACTIVE' as VoucherStatus, [Validators.required]],
     });
   }
 
@@ -131,6 +139,7 @@ export class FormVoucherComponent implements OnInit {
       minOrderValue: voucher.minOrderValue,
       conditions: voucher.conditions,
       groupRef: voucher.groupRef,
+      status: voucher.status ?? 'ACTIVE',
     });
   }
 
@@ -158,6 +167,8 @@ export class FormVoucherComponent implements OnInit {
       discountValue: formValue.discountValue,
       maxDiscountAmount: formValue.maxDiscountAmount || 0,
       minOrderValue: formValue.minOrderValue || 0,
+      status: formValue.status,
+      maxPerUser: 1,
     };
     if (this.mode === 'edit' && this.voucherId) {
       this.voucherStore.updateVoucher({

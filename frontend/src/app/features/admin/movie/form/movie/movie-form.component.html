@@ -254,7 +254,7 @@
         <div
           class="w-full aspect-[2/3] bg-white dark:bg-[#161a20] rounded-2xl border-2 border-dashed border-gray-300 relative overflow-hidden flex items-center justify-center group shadow-md transition-[box-shadow,border-color] hover:shadow-xl hover:border-primary/40"
         >
-          <!-- LOGIC HIỂN THỊ ẢNH THÔNG MINH -->
+          <!-- Poster preview with fallback -->
           @if (form.get("poster")?.value) {
             <img
               [src]="form.get('poster')?.value"
@@ -298,7 +298,7 @@
   </form>
 </nz-spin>
 
-<!-- Error Alert (Giữ nguyên logic cũ) -->
+<!-- Error alert -->
 @if (error(); as currentError) {
   <div class="mt-4">
     <nz-alert

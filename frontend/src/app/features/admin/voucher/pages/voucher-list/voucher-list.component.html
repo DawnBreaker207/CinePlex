@@ -182,19 +182,9 @@
               </td>
               <!--     Status  -->
               <td class="text-center">
-                @if (!item.isActive) {
-                  <nz-tag nzColor="default">{{
-                    "voucher.status.paused" | translate
-                  }}</nz-tag>
-                } @else if (isExpired(item.endAt)) {
-                  <nz-tag nzColor="error">{{
-                    "voucher.status.expired" | translate
-                  }}</nz-tag>
-                } @else {
-                  <nz-tag nzColor="success">{{
-                    "voucher.status.active" | translate
-                  }}</nz-tag>
-                }
+                <nz-tag [nzColor]="statusColor(item.status)">
+                  {{ statusLabel(item.status) | translate }}
+                </nz-tag>
               </td>
               <!--     Action  -->
               <td class="text-center">

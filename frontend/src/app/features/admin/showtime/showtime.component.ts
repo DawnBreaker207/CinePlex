@@ -46,7 +46,7 @@ import {
 import { TheaterActions } from '@domain/theater/data-access/theater.actions';
 import { selectAllTheaters } from '@domain/theater/data-access/theater.selectors';
 import { ShowtimeActions } from '@domain/showtime/data-access/showtime.actions';
-import { formatDate } from '@shared/utils/date.helper';
+import { formatDate, timeFormat } from '@shared/utils/date.helper';
 import { FormShowtimeComponent } from '@features/admin/showtime/form/showtime-form.component';
 import { LoadingComponent } from '@shared/components/loading/loading.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -83,6 +83,7 @@ import { HEADER_COLUMNS } from '@core/constants/column';
   providers: [NzModalService],
 })
 export class ShowtimeComponent implements OnInit {
+  protected readonly timeFormat = timeFormat;
 private modalService = inject(NzModalService);
 private store = inject(Store);
 private fb = inject(NonNullableFormBuilder);
