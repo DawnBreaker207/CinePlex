@@ -1,23 +1,55 @@
 <svg
   [attr.width]="size()"
   [attr.height]="size()"
-  viewBox="0 0 512 512"
+  [attr.viewBox]="variant() === 'couple' ? '0 0 1024 512' : '0 0 512 512'"
   fill="none"
   xmlns="http://www.w3.org/2000/svg"
   [class]="className()"
 >
-  <path
-    [attr.fill]="outline() ? 'none' : 'currentColor'"
-    [attr.stroke]="outline() ? 'currentColor' : 'none'"
-    [attr.stroke-width]="outline() ? 28 : 0"
-    [attr.stroke-dasharray]="outline() ? '40 24' : null"
-    d="M70 335 L70 180 C70 120 130 110 256 110 C382 110 442 120 442 180 L442 335 Q 442 355 422 358 Q 256 390 90 358 Q 70 355 70 335 Z"
-  />
-  <path
-    [attr.fill]="outline() ? 'none' : 'currentColor'"
-    [attr.stroke]="outline() ? 'currentColor' : 'none'"
-    [attr.stroke-width]="outline() ? 28 : 0"
-    [attr.stroke-dasharray]="outline() ? '40 24' : null"
-    d="M70 385 Q 256 425 442 385 C 442 385 442 435 422 455 Q 256 495 90 455 C 70 435 70 385 70 385 Z"
-  />
+  @if (variant() === 'couple') {
+    <path
+      [attr.fill]="outline() ? 'none' : 'currentColor'"
+      [attr.stroke]="outline() ? 'currentColor' : 'none'"
+      [attr.stroke-width]="outline() ? 28 : 0"
+      [attr.stroke-dasharray]="outline() ? '40 24' : null"
+      d="M70 335 L70 180 C70 120 220 110 512 110 C804 110 954 120 954 180 L954 335 Q 954 355 934 358 Q 512 390 90 358 Q 70 355 70 335 Z"
+    />
+    <path
+      [attr.fill]="outline() ? 'none' : 'currentColor'"
+      [attr.stroke]="outline() ? 'currentColor' : 'none'"
+      [attr.stroke-width]="outline() ? 28 : 0"
+      [attr.stroke-dasharray]="outline() ? '40 24' : null"
+      d="M70 385 Q 512 425 954 385 C 954 385 954 435 934 455 Q 512 495 90 455 C 70 435 70 385 70 385 Z"
+    />
+  } @else if (variant() === 'vip') {
+    <path
+      [attr.fill]="outline() ? 'none' : 'currentColor'"
+      [attr.stroke]="outline() ? 'currentColor' : 'none'"
+      [attr.stroke-width]="outline() ? 28 : 0"
+      [attr.stroke-dasharray]="outline() ? '40 24' : null"
+      d="M70 335 L70 180 C70 120 130 110 256 110 C382 110 442 120 442 180 L442 335 Q 442 355 422 358 Q 256 390 90 358 Q 70 355 70 335 Z"
+    />
+    <path
+      [attr.fill]="outline() ? 'none' : 'currentColor'"
+      [attr.stroke]="outline() ? 'currentColor' : 'none'"
+      [attr.stroke-width]="outline() ? 28 : 0"
+      [attr.stroke-dasharray]="outline() ? '40 24' : null"
+      d="M70 385 Q 256 425 442 385 C 442 385 442 435 422 455 Q 256 495 90 455 C 70 435 70 385 70 385 Z"
+    />
+  } @else {
+    <path
+      [attr.fill]="outline() ? 'none' : 'currentColor'"
+      [attr.stroke]="outline() ? 'currentColor' : 'none'"
+      [attr.stroke-width]="outline() ? 28 : 0"
+      [attr.stroke-dasharray]="outline() ? '40 24' : null"
+      d="M92 335 L92 180 C92 120 145 110 256 110 C367 110 420 120 420 180 L420 335 Q 420 355 402 358 Q 256 390 110 358 Q 92 355 92 335 Z"
+    />
+    <path
+      [attr.fill]="outline() ? 'none' : 'currentColor'"
+      [attr.stroke]="outline() ? 'currentColor' : 'none'"
+      [attr.stroke-width]="outline() ? 28 : 0"
+      [attr.stroke-dasharray]="outline() ? '40 24' : null"
+      d="M92 385 Q 256 425 420 385 C 420 385 420 435 402 455 Q 256 495 110 455 C 92 435 92 385 92 385 Z"
+    />
+  }
 </svg>

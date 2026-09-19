@@ -57,25 +57,27 @@
             <button
               class="w-[112px] rounded-lg border bg-white p-3 text-center transition-all"
               [class]="
-                st.availableSeats <= 0
+                st.availableSeats === 0
                   ? 'cursor-not-allowed border-slate-200 opacity-50'
-                  : st.availableSeats < 5
+                  : st.availableSeats > 0 && st.availableSeats < 5
                     ? 'cursor-pointer border-[var(--color-gold)] hover:shadow-sm'
                     : 'cursor-pointer border-slate-300 hover:border-[var(--color-primary)]'
               "
-              [disabled]="st.availableSeats <= 0"
+              [disabled]="st.availableSeats === 0"
               (click)="book(st)"
             >
               <div class="text-lg font-bold text-slate-900">
-                {{ st.showTime | date: "HH:mm" }}
+                {{ timeFormat(st.showTime) }}
               </div>
-              <div class="mt-1 text-[10px] font-medium text-slate-500">
-                {{
-                  st.availableSeats > 0
-                    ? st.availableSeats + ("detail.seatsAvailable" | translate)
-                    : ("detail.soldOut" | translate)
-                }}
-              </div>
+              @if (st.availableSeats !== null && st.availableSeats !== undefined && st.availableSeats >= 0) {
+                <div class="mt-1 text-[10px] font-medium text-slate-500">
+                  {{
+                    st.availableSeats > 0
+                      ? st.availableSeats + ("detail.seatsAvailable" | translate)
+                      : ("detail.soldOut" | translate)
+                  }}
+                </div>
+              }
             </button>
           }
         </div>

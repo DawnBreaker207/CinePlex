@@ -28,10 +28,13 @@
                 }
               }
               @case (1) {
-                <app-combo (next)="onComboNext()" />
+                <app-combo
+                  (changed)="combos.set($event)"
+                  (next)="onComboNext()"
+                />
               }
               @case (2) {
-                <app-confirm />
+                <app-confirm [combos]="combos()" />
               }
             }
           </div>

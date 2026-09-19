@@ -18,10 +18,10 @@ import { ReservationStore } from '@features/client/reservation/reservation.store
 import { toSignal } from '@angular/core/rxjs-interop';
 import { TicketStubComponent } from '@shared/components/ticket-stub/ticket-stub.component';
 import { selectSelectedShowtime } from '@domain/showtime/data-access/showtime.selectors';
-import { DatePipe } from '@angular/common';
+import { formatDate } from '@angular/common';
 import { PaymentService } from '@domain/payment/data-access/payment.service';
 import { ToastService } from '@core/services/toast/toast.service';
-import { environment } from '@env/environment';
+import { timeFormat } from '@shared/utils/date.helper';
 
 @Component({
   selector: 'app-payment-result',
@@ -41,13 +41,11 @@ export class PaymentResultComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private destroyRef = inject(DestroyRef);
-  private datePipe = inject(DatePipe);
 private translate = inject(TranslateService);
 
   readonly reservationStore = inject(ReservationStore);
   private paymentService = inject(PaymentService);
   private toast = inject(ToastService);
-  readonly params = toSignal(this.route.queryParams);
   readonly showtime = toSignal(this.store.select(selectSelectedShowtime));
 
   status = signal<'success' | 'error' | 'info'>('info');
@@ -62,7 +60,7 @@ private translate = inject(TranslateService);
   ngOnInit() {
     const state =
       this.storageService.getItem<ReservationRequest>('reservationState');
-    const query = this.params();
+    const query = this.route.snapshot.queryParams;
 
     if (!state || !query) {
       this.status.set('error');
@@ -121,11 +119,7 @@ private translate = inject(TranslateService);
       provider: string;
       reservationId: string;
     }>('lastPayment');
-    if (!code || this.rechecking()) return;
-    if (environment.useMock || !last) {
-      this.applySuccess(code);
-      return;
-    }
+    if (!code || !last || this.rechecking()) return;
     this.rechecking.set(true);
     this.paymentService
       .reCheck(last.provider.toLowerCase(), last.reservationId)
@@ -178,9 +172,9 @@ private translate = inject(TranslateService);
       { label: t('checkin.movieTitle'), value: st.movieTitle },
       {
         label: t('booking.showDate'),
-        value: this.datePipe?.transform(st.showDate, 'dd/MM/yyyy') ?? '',
+        value: st.showDate ? formatDate(st.showDate, 'dd/MM/yyyy', 'en-US') : '',
       },
-      { label: t('booking.showtime'), value: st.showTime.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }), accent: true },
+      { label: t('booking.showtime'), value: timeFormat(st.showTime), accent: true },
       { label: t('checkin.theater'), value: st.theaterName },
     ];
   }

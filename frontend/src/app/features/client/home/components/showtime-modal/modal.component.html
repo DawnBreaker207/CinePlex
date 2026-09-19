@@ -29,16 +29,18 @@
                 'border-primary bg-primary-light':
                   st.id === selectedShowtimeId(),
                 'border-gray-200 hover:border-primary/40':
-                  st.id !== selectedShowtimeId() && st.availableSeats > 0,
+                  st.id !== selectedShowtimeId() && st.availableSeats !== 0,
                 'bg-gray-100 opacity-50 cursor-not-allowed':
                   st.availableSeats === 0,
               }"
             >
               <span class="text-sm">{{ formatShowTime(st.showTime) }}</span>
-              <span class="text-[10px] text-gray-600">
-                {{ st?.availableSeats }}/{{ st?.totalSeats }}
-                {{ "home.seats" | translate }}
-              </span>
+              @if (st.availableSeats !== null && st.availableSeats !== undefined && st.availableSeats >= 0) {
+                <span class="text-[10px] text-gray-600">
+                  {{ st.availableSeats }}/{{ st.totalSeats }}
+                  {{ "home.seats" | translate }}
+                </span>
+              }
 
               @if (st.id === selectedShowtimeId()) {
                 <nz-icon

@@ -2,6 +2,7 @@ import {
   Component,
   computed,
   inject,
+  input,
   ChangeDetectionStrategy,
 } from '@angular/core';
 import { Store } from '@ngrx/store';
@@ -16,6 +17,7 @@ import { selectJwt } from '@core/auth/auth.selectors';
 import { TranslatePipe } from '@ngx-translate/core';
 import { VoucherStore } from '@domain/voucher/data-access/voucher.store';
 import { SeatStore } from '@features/client/reservation/components/seat/seat.store';
+import { ComboSelection } from '@features/client/reservation/components/combo/combo.component';
 
 interface SuggestedVoucher {
   code: string;
@@ -26,8 +28,9 @@ interface PaymentOption {
   value: string;
   label: string;
   desc?: string;
-  icon: string;
+  icon?: string;
   alt: string;
+  disabled?: boolean;
 }
 
 @Component({
@@ -51,6 +54,10 @@ export class ConfirmComponent {
   readonly voucherStore = inject(VoucherStore);
   readonly seatStore = inject(SeatStore);
   user = this.store.selectSignal(selectJwt);
+  readonly combos = input<ComboSelection[]>([]);
+  readonly comboTotal = computed(() =>
+    this.combos().reduce((sum, c) => sum + c.price * c.qty, 0),
+  );
   radioValue = 'vnpay';
   voucherCode = '';
 
@@ -83,6 +90,7 @@ export class ConfirmComponent {
       label: 'confirm.pay.zalopay',
       icon: 'assets/payment/zalopay.png',
       alt: 'ZaloPay',
+      disabled: true,
     },
     {
       value: 'atm',
@@ -97,6 +105,12 @@ export class ConfirmComponent {
       desc: 'confirm.pay.visaDesc',
       icon: 'assets/payment/ic-card-gb.png',
       alt: 'VISA',
+    },
+    {
+      value: 'mock',
+      label: 'confirm.pay.mock',
+      desc: 'confirm.pay.mockDesc',
+      alt: 'Mock',
     },
   ];
 

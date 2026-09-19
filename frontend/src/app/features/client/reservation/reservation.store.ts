@@ -26,7 +26,6 @@ import { SeatStore } from '@features/client/reservation/components/seat/seat.sto
 import { selectJwt } from '@core/auth/auth.selectors';
 import { selectSelectedShowtime } from '@domain/showtime/data-access/showtime.selectors';
 import { selectSelectedTheater } from '@domain/theater/data-access/theater.selectors';
-import { environment } from '@env/environment';
 import { TranslateService } from '@ngx-translate/core';
 import { errorMessage } from '@shared/utils/error.helper';
 
@@ -38,6 +37,8 @@ function toPaymentMethod(value: string): PaymentMethod {
       return 'ZALOPAY';
     case 'cash':
       return 'CASH';
+    case 'mock':
+      return 'MOCK';
     case 'atm':
     case 'visa':
     case 'vnpay':
@@ -215,16 +216,27 @@ export const ReservationStore = signalStore(
             ...payload,
             theaterId: theater.id,
           });
-          const api = store as unknown as {
-            holdSeat: (args: { reservation: ReservationRequest }) => void;
-          };
-          patchState(store, { holdingSeats: true });
-          api.holdSeat({ reservation: payload });
+          patchState(store, {
+            holdingSeats: true,
+            loading: true,
+            saving: true,
+            error: null,
+          });
+          reservationService.holdReservationSeat(payload).subscribe({
+            next: () => patchState(store, { loading: false, saving: false }),
+            error: (err) =>
+              patchState(store, {
+                error: errorMessage(err),
+                loading: false,
+                saving: false,
+                holdingSeats: false,
+              }),
+          });
         },
         //
-        pay: (radioValue: string, voucherCode?: string) => {
+        pay: (radioValue: string, voucherCode?: string, comboAmount = 0) => {
           const resId = store.reservationId();
-          const total = seatStore.totalPrice();
+          const total = seatStore.totalPrice() + comboAmount;
           const count = seatStore.selectSeatsCount();
           if (!resId || !total || !count) return;
 
@@ -242,18 +254,8 @@ export const ReservationStore = signalStore(
                 translate.instant('reservation.paymentFailed'),
             });
 
-          const api = store as unknown as {
-            confirm: (reservationId: string) => void;
-          };
           const doPayment = (paymentUrl: string) => {
-            if (environment.useMock) {
-              api.confirm(resId);
-              storageService.removeItem('reservationState');
-              patchState(store, { submittingPayment: false });
-              router.navigateByUrl(paymentUrl);
-            } else {
-              document.defaultView?.open(paymentUrl, '_self');
-            }
+            document.defaultView?.open(paymentUrl, '_self');
           };
           const startPayment = () =>
             paymentService
@@ -272,32 +274,6 @@ export const ReservationStore = signalStore(
             startPayment();
           }
         },
-        //
-        holdSeat: rxMethod<{ reservation: ReservationRequest }>(
-          pipe(
-            tap(() =>
-              patchState(store, { loading: true, saving: true, error: null }),
-            ),
-            switchMap(({ reservation }) => {
-              return reservationService.holdReservationSeat(reservation).pipe(
-                tapResponse({
-                  next: () =>
-                    patchState(store, {
-                      loading: false,
-                      saving: false,
-                    }),
-                  error: (err) =>
-                    patchState(store, {
-                      error: errorMessage(err),
-                      loading: false,
-                      saving: false,
-                      holdingSeats: false,
-                    }),
-                }),
-              );
-            }),
-          ),
-        ),
         //
         confirm: (reservationId: string) => {
           stopCountdown();

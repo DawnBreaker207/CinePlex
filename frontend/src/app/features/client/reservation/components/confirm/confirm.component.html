@@ -61,6 +61,34 @@
     </div>
   </div>
 
+  <!-- COMBO SUMMARY -->
+  @if (combos().length > 0) {
+    <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+      <div class="bg-gray-50/50 px-6 py-4 border-b border-gray-100 flex items-center gap-2">
+        <span class="w-8 h-8 rounded-full bg-primary-light flex items-center justify-center text-primary">
+          <nz-icon nzType="shopping" nzTheme="outline" />
+        </span>
+        <h3 class="text-lg font-bold text-gray-800 m-0">
+          {{ "reservation.stepCombo" | translate }}
+        </h3>
+      </div>
+      <ul class="p-6 pt-4 space-y-2">
+        @for (c of combos(); track c.name) {
+          <li class="flex items-center justify-between text-sm">
+            <span class="text-gray-700">{{ c.name }} × {{ c.qty }}</span>
+            <span class="font-semibold text-gray-900">
+              {{ c.price * c.qty | currency: "VND" }}
+            </span>
+          </li>
+        }
+        <li class="flex items-center justify-between border-t border-gray-100 pt-2 text-sm font-bold">
+          <span>{{ "reservation.comboTotal" | translate }}</span>
+          <span class="text-primary">{{ comboTotal() | currency: "VND" }}</span>
+        </li>
+      </ul>
+    </div>
+  }
+
   <!-- VOUCHER -->
   <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
     <div
@@ -184,18 +212,38 @@
       <nz-radio-group id="payment-group" [(ngModel)]="radioValue">
         @for (opt of paymentOptions; track opt.value) {
           <!-- eslint-disable-next-line @angular-eslint/template/label-has-associated-control -- nz-radio injects the input into the label at runtime -->
-          <label nz-radio [nzValue]="opt.value" class="radio-card">
+          <label
+            nz-radio
+            [nzValue]="opt.value"
+            [nzDisabled]="opt.disabled"
+            class="radio-card"
+            [nzTooltipTitle]="opt.disabled ? ('payment.soon' | translate) : null"
+            nz-tooltip
+          >
             <div
               class="w-10 h-10 flex items-center justify-center rounded-lg border border-gray-100 bg-white p-1 shrink-0"
             >
-              <img
-                [src]="opt.icon"
-                [alt]="opt.alt"
-                class="w-full h-full object-contain"
-              />
+              @if (opt.icon) {
+                <img
+                  [src]="opt.icon"
+                  [alt]="opt.alt"
+                  class="w-full h-full object-contain"
+                />
+              } @else {
+                <nz-icon nzType="experiment" class="text-xl text-primary" />
+              }
             </div>
               <div class="flex-1 min-w-0">
-                <div class="font-bold text-gray-800 text-sm">{{ opt.label | translate }}</div>
+                <div class="font-bold text-gray-800 text-sm">
+                  {{ opt.label | translate }}
+                  @if (opt.disabled) {
+                    <span
+                      class="ml-1 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-bold text-gray-500"
+                    >
+                      {{ "payment.soon" | translate }}
+                    </span>
+                  }
+                </div>
                 @if (opt.desc) {
                   <div class="text-xs text-gray-500 truncate">
                     {{ opt.desc | translate }}

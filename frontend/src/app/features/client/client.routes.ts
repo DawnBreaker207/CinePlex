@@ -56,6 +56,7 @@ export const CLIENT_ROUTES: Routes = [
       {
         path: 'profile',
         title: 'client.profile',
+        canMatch: [AuthGuard],
         component: ProfileComponent,
       },
       {

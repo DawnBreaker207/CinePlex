@@ -21,13 +21,13 @@
             y2="0%"
           >
             <stop offset="0%" stop-color="#161A20" stop-opacity="0.3" />
-            <!-- Tối 2 bên -->
+            <!-- Dark sides -->
             <stop offset="50%" stop-color="#e2e8f0" stop-opacity="1" />
-            <!-- Sáng giữa -->
+            <!-- Bright center -->
             <stop offset="100%" stop-color="#161A20" stop-opacity="0.3" />
           </linearGradient>
 
-          <!-- Gradient Mặt kính -->
+          <!-- Glass gradient -->
           <linearGradient
             id="screenGlassGradient"
             x1="0%"
@@ -64,71 +64,121 @@
   <!-- SEAT MAP -->
   <div class="flex-1 overflow-auto flex justify-center items-start pb-8 px-4">
     <div class="space-y-2">
-      @for (row of seatStore.groupedSeats(); track $index) {
-        <div class="flex justify-center flex-nowrap">
-          @for (seat of row; track $index) {
+      @for (row of seatStore.groupedSeats(); track row.row) {
+        <div class="flex justify-center-safe flex-nowrap">
+          <span class="w-10 h-10 shrink-0" aria-hidden="true"></span>
+          @for (cell of row.cells; track cell.number) {
+            @if (cell.seats.length === 0) {
+              <span class="w-10 h-10 shrink-0" aria-hidden="true"></span>
+            } @else {
+              @if (cell.seats[0]; as seat) {
             <button
-              (click)="toggleSeat(seat)"
-              [disabled]="seat.status === 'BOOKED'"
-              class="group relative w-10 h-10 flex items-center justify-center border-none bg-transparent outline-none p-0"
+              (click)="toggleCell(cell.seats)"
+              [disabled]="isCellDisabled(cell.seats)"
+              class="group relative h-10 flex items-center justify-center border-none bg-transparent outline-none p-0"
+              [class.w-10]="cell.span === 1"
+              [class.w-20]="cell.span > 1"
             >
               <app-seat-icon
                 [ngClass]="getSeatClass(seat)"
                 [outline]="seat.status === 'HOLD'"
+                [variant]="iconVariant(cell, seat)"
               ></app-seat-icon>
               <span
-                class="absolute left-1/2 top-1/3 -translate-x-1/2 -translate-y-[15%] z-10 text-[10px] text-white font-bold select-none cursor-pointer"
+                class="absolute left-1/2 top-1/3 -translate-x-1/2 -translate-y-[15%] z-10 text-xs font-bold select-none cursor-pointer"
+                [class.text-white]="seat.status !== 'HOLD'"
+                [class.text-warning]="seat.status === 'HOLD'"
               >
-                {{ seat.seatNumber }}
+                {{ cell.span > 1 ? row.row + cell.label : seat.seatNumber }}
               </span>
             </button>
+              }
+            }
           }
+          <span class="w-10 h-10 shrink-0" aria-hidden="true"></span>
         </div>
       }
     </div>
   </div>
 
-  <!-- LEGEND -->
+  <!-- LEGEND: color = status, shape = seat type -->
   <div class="w-fit mx-auto mt-auto pt-4 border-t border-gray-400">
-    <div class="flex flex-wrap justify-center gap-x-6 gap-y-2">
-      <!-- AVAILABLE -->
-      <div class="flex items-center gap-2">
-        <div class="w-6 h-6 shrink-0 flex items-center justify-center">
-          <app-seat-icon [className]="'shrink-0 text-gray-400'"></app-seat-icon>
-        </div>
-        <span class="text-sm text-gray-600 whitespace-nowrap">{{
-          "reservation.available" | translate
+    <div class="flex flex-col items-center gap-3 sm:flex-row sm:gap-8">
+      <div class="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
+        <span class="text-xs font-bold uppercase tracking-wider text-gray-400">{{
+          "reservation.legendStatus" | translate
         }}</span>
+        <!-- AVAILABLE -->
+        <div class="flex items-center gap-2">
+          <div class="w-6 h-6 shrink-0 flex items-center justify-center">
+            <app-seat-icon [className]="'shrink-0 text-gray-400'"></app-seat-icon>
+          </div>
+          <span class="text-sm text-gray-600 whitespace-nowrap">{{
+            "reservation.available" | translate
+          }}</span>
+        </div>
+        <!-- SELECTED -->
+        <div class="flex items-center gap-2">
+          <div class="w-6 h-6 shrink-0 flex items-center justify-center">
+            <app-seat-icon [className]="'shrink-0 text-success'"></app-seat-icon>
+          </div>
+          <span class="text-sm text-gray-600 whitespace-nowrap">{{
+            "reservation.selected" | translate
+          }}</span>
+        </div>
+        <!-- HOLD -->
+        <div class="flex items-center gap-2">
+          <div class="w-6 h-6 shrink-0 flex items-center justify-center">
+            <app-seat-icon
+              [outline]="true"
+              [className]="'shrink-0 text-warning'"
+            ></app-seat-icon>
+          </div>
+          <span class="text-sm text-gray-600 whitespace-nowrap">{{
+            "reservation.holding" | translate
+          }}</span>
+        </div>
+        <!-- BOOKED -->
+        <div class="flex items-center gap-2">
+          <div class="w-6 h-6 shrink-0 flex items-center justify-center">
+            <app-seat-icon [className]="'shrink-0 text-danger'"></app-seat-icon>
+          </div>
+          <span class="text-sm text-gray-600 whitespace-nowrap">{{
+            "reservation.booked" | translate
+          }}</span>
+        </div>
       </div>
-      <!-- SELECTED -->
-      <div class="flex items-center gap-2">
-        <div class="w-6 h-6 shrink-0 flex items-center justify-center">
-          <app-seat-icon [className]="'shrink-0 text-primary'"></app-seat-icon>
-        </div>
-        <span class="text-sm text-gray-600 whitespace-nowrap">{{
-          "reservation.selected" | translate
+      <div class="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
+        <span class="text-xs font-bold uppercase tracking-wider text-gray-400">{{
+          "reservation.legendType" | translate
         }}</span>
-      </div>
-      <!-- HOLD -->
-      <div class="flex items-center gap-2">
-        <div class="w-6 h-6 shrink-0 flex items-center justify-center">
-          <app-seat-icon
-            [outline]="true"
-            [className]="'shrink-0 text-warning'"
-          ></app-seat-icon>
+        <!-- NORMAL -->
+        <div class="flex items-center gap-2">
+          <div class="w-6 h-6 shrink-0 flex items-center justify-center">
+            <app-seat-icon [className]="'shrink-0 text-gray-400'"></app-seat-icon>
+          </div>
+          <span class="text-sm text-gray-600 whitespace-nowrap">{{
+            "reservation.seatNormal" | translate
+          }}</span>
         </div>
-        <span class="text-sm text-gray-600 whitespace-nowrap">{{
-          "reservation.holding" | translate
-        }}</span>
-      </div>
-      <!-- BOOKED -->
-      <div class="flex items-center gap-2">
-        <div class="w-6 h-6 shrink-0 flex items-center justify-center">
-          <app-seat-icon [className]="'shrink-0 text-danger'"></app-seat-icon>
+        <!-- VIP -->
+        <div class="flex items-center gap-2">
+          <div class="w-6 h-6 shrink-0 flex items-center justify-center">
+            <app-seat-icon [className]="'shrink-0 text-gray-400'" [variant]="'vip'"></app-seat-icon>
+          </div>
+          <span class="text-sm text-gray-600 whitespace-nowrap">{{
+            "reservation.seatVIP" | translate
+          }}</span>
         </div>
-        <span class="text-sm text-gray-600 whitespace-nowrap">{{
-          "reservation.booked" | translate
-        }}</span>
+        <!-- COUPLE -->
+        <div class="flex items-center gap-2">
+          <div class="w-10 h-6 shrink-0 flex items-center justify-center">
+            <app-seat-icon [className]="'shrink-0 text-gray-400'" [variant]="'couple'"></app-seat-icon>
+          </div>
+          <span class="text-sm text-gray-600 whitespace-nowrap">{{
+            "reservation.seatCouple" | translate
+          }}</span>
+        </div>
       </div>
     </div>
   </div>

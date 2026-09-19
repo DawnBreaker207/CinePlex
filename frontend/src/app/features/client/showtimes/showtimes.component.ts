@@ -26,6 +26,7 @@ import { ReservationStore } from '@features/client/reservation/reservation.store
 import { selectJwt } from '@core/auth/auth.selectors';
 import { Showtime } from '@domain/showtime/models/showtime.model';
 import { Theater } from '@domain/theater/models/theater.model';
+import { timeFormat } from '@shared/utils/date.helper';
 import { finalize } from 'rxjs';
 import dayjs from 'dayjs';
 
@@ -81,6 +82,8 @@ export class ShowtimesComponent implements OnInit {
       ),
     }));
   });
+
+  protected readonly timeFormat = timeFormat;
 
   constructor() {
     effect(() => {
@@ -139,7 +142,7 @@ export class ShowtimesComponent implements OnInit {
   }
 
   book(showtime: Showtime) {
-    if (showtime.availableSeats <= 0) return;
+    if (showtime.availableSeats === 0) return;
     const user = this.store.selectSignal(selectJwt)();
     if (!user) {
       this.router.navigate(['/login'], {

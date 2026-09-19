@@ -125,7 +125,7 @@ export class DetailComponent implements OnInit {
         groupTheater.get(theater.id)!.showtimes.push({
           id: st.id,
           time: st.showTime.toString().substring(0, 5),
-          availableSeats: st.availableSeats,
+          availableSeats: st.availableSeats ?? -1,
           totalSeats: st.totalSeats || 100,
         });
       }

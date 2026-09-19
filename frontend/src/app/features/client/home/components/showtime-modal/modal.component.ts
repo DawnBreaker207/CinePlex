@@ -10,7 +10,7 @@ import { NzModalRef } from 'ng-zorro-antd/modal';
 import { DatePipe, NgClass } from '@angular/common';
 import { NzButtonComponent } from 'ng-zorro-antd/button';
 import { Showtime } from '@domain/showtime/models/showtime.model';
-import { formatDate } from '@shared/utils/date.helper';
+import { formatDisplayDate } from '@shared/utils/date.helper';
 import { NzIconDirective } from 'ng-zorro-antd/icon';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs';
@@ -42,7 +42,7 @@ export class ShowtimeModalComponent implements OnInit {
 
     listShowtimes.forEach((st) => {
       const raw = new Date(st.showDate);
-      const label = formatDate(st.showDate);
+      const label = formatDisplayDate(st.showDate);
       const rawDate = new Date(
         raw.getFullYear(),
         raw.getMonth(),
@@ -86,7 +86,10 @@ export class ShowtimeModalComponent implements OnInit {
 
   formatShowTime(time: string | Date): string {
     if (!time) return '-';
-    return dayjs(time, 'HH:mm:ss').format('HH:mm');
+    const parsed =
+      time instanceof Date ? dayjs(time) : dayjs(time, 'HH:mm:ss');
+    const fallback = parsed.isValid() ? parsed : dayjs(time);
+    return fallback.isValid() ? fallback.format('HH:mm') : '-';
   }
 
   onSelect(showtimeId: number) {

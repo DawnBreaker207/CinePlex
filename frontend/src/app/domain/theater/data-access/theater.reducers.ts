@@ -182,5 +182,11 @@ export const theaterReducer = createReducer(
   on(TheaterActions.setSelectedTheaterId, (state, { theaterId }) => ({
     ...state,
     selectedTheaterId: theaterId,
+    // Keep id and object in sync: resolve from the loaded list.
+    selectedTheater:
+      theaterId == null
+        ? null
+        : (state.theaters.find((t) => t.id === theaterId) ??
+          state.selectedTheater),
   })),
 );

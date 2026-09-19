@@ -6,6 +6,7 @@ export interface Seat {
   id: number;
   showtimeId: number;
   seatNumber: string;
+  seatType: string;
   status: SeatStatus;
 }
 

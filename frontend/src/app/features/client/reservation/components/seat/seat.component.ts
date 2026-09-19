@@ -44,8 +44,12 @@ export class SeatComponent {
     });
   }
 
-  toggleSeat(seat: Seat) {
-    this.seatStore.toggleSeat(seat);
+  toggleCell(seats: Seat[]) {
+    this.seatStore.toggleSeats(seats);
+  }
+
+  isCellDisabled(seats: Seat[]): boolean {
+    return seats.some((s) => s.status === 'BOOKED' || s.status === 'HOLD');
   }
 
   getSeatClass(seat: Seat): string {
@@ -56,9 +60,17 @@ export class SeatComponent {
       case 'HOLD':
         return `${base} text-warning cursor-not-allowed`;
       case 'SELECTED':
-        return `${base} text-primary cursor-pointer scale-110 drop-shadow-sm`;
+        return `${base} text-success cursor-pointer scale-110 drop-shadow-sm`;
       default:
+        // Color carries status only; the icon shape carries the seat type.
         return `${base} text-muted cursor-pointer hover:text-success hover:scale-105`;
     }
+  }
+
+  // Shape carries the type in every status: couple units render the
+  // long bench, VIP seats the full chair, everything else pinched single.
+  iconVariant(cell: { span: number }, seat: Seat): 'single' | 'couple' | 'vip' {
+    if (cell.span > 1) return 'couple';
+    return seat.seatType === 'VIP' ? 'vip' : 'single';
   }
 }

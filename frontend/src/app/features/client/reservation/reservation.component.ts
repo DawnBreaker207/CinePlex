@@ -1,5 +1,6 @@
 import {
   Component,
+  computed,
   effect,
   HostListener,
   inject,
@@ -26,7 +27,7 @@ import { SeatComponent } from '@features/client/reservation/components/seat/seat
 import { DetailFilmComponent } from '@features/client/reservation/components/detail-film/detail-film.component';
 import { CurrencyPipe } from '@angular/common';
 import { ConfirmComponent } from '@features/client/reservation/components/confirm/confirm.component';
-import { ComboComponent } from '@features/client/reservation/components/combo/combo.component';
+import { ComboComponent, ComboSelection } from '@features/client/reservation/components/combo/combo.component';
 import { SeatStore } from '@features/client/reservation/components/seat/seat.store';
 import { ReservationStore } from '@features/client/reservation/reservation.store';
 import { ReservationRequest } from '@domain/reservation/models/reservation.model';
@@ -72,6 +73,10 @@ export class ReservationComponent implements OnInit {
   readonly theater = this.store.selectSignal(selectSelectedTheater);
   index = signal(0);
   steps = signal([0, 1, 2]);
+  readonly combos = signal<ComboSelection[]>([]);
+  readonly comboTotal = computed(() =>
+    this.combos().reduce((sum, c) => sum + c.price * c.qty, 0),
+  );
 
   @HostListener('window:beforeunload', ['$event'])
   onBeforeUnload(event: BeforeUnloadEvent) {
@@ -130,10 +135,12 @@ export class ReservationComponent implements OnInit {
 
   onPay() {
     if (this.reservationStore.submittingPayment()) return;
+    const seatsTotal = this.seatStore.totalPrice();
+    const grandTotal = seatsTotal + this.comboTotal();
     this.modalService.confirm({
       nzTitle: this.translate.instant('reservation.payTitle'),
       nzContent: this.translate.instant('reservation.payContent', {
-        amount: this.seatStore.totalPrice().toLocaleString('vi-VN'),
+        amount: grandTotal.toLocaleString('vi-VN'),
         count: this.seatStore.selectSeatsCount(),
       }),
       nzOkText: this.translate.instant('reservation.payNow'),
@@ -142,6 +149,7 @@ export class ReservationComponent implements OnInit {
         this.reservationStore.pay(
           this.confirmComponent().radioValue,
           this.confirmComponent().appliedVoucher()?.code || undefined,
+          this.comboTotal(),
         );
       },
     });

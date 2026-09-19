@@ -28,7 +28,7 @@ export interface ReservationInitRequest {
 
 export interface ReservationInitResponse {
   reservationCode: string;
-  /** @deprecated BE cũ trả reservationId; giữ để tương thích mock. */
+  /** @deprecated Legacy BE returned reservationId; kept for mock compat. */
   reservationId?: string;
   showtimeId: number;
   ttl: number;

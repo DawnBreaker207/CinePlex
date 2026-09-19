@@ -31,6 +31,7 @@ export const HomeStore = signalStore(
       storageService = inject(StorageService),
       reservationStore = inject(ReservationStore),
       translate = inject(TranslateService),
+      destroyRef = inject(DestroyRef),
     ) => {
       const theaters = ngrxStore.selectSignal(selectAllTheaters);
       const showtimes = ngrxStore.selectSignal(selectAllShowtimes);
@@ -161,7 +162,6 @@ export const HomeStore = signalStore(
             nzData: { showtimes: movieShowtimes, movieTitle: movie?.title },
             nzFooter: null,
           });
-          const destroyRef = inject(DestroyRef);
           modal.afterClose.pipe(takeUntilDestroyed(destroyRef)).subscribe((stId) => {
             if (stId) this.proceedToReservation(stId);
           });

@@ -39,9 +39,9 @@
                 <div
                   class="group relative w-[112px] overflow-hidden rounded-lg border bg-white p-3 text-center transition-all"
                   [ngClass]="
-                    show.availableSeats <= 0
+                    show.availableSeats === 0
                       ? 'cursor-not-allowed border-slate-200 opacity-50'
-                      : show.availableSeats < 5
+                      : show.availableSeats > 0 && show.availableSeats < 5
                         ? 'cursor-pointer border-[var(--color-gold)] hover:shadow-sm'
                         : 'cursor-pointer border-slate-300 hover:border-[var(--color-primary)]'
                   "
@@ -55,9 +55,9 @@
                     <div
                       class="h-1.5 w-1.5 rounded-full"
                       [ngClass]="
-                        show.availableSeats <= 0
+                        show.availableSeats === 0
                           ? 'bg-slate-300'
-                          : show.availableSeats < 5
+                          : show.availableSeats > 0 && show.availableSeats < 5
                             ? 'bg-[var(--color-gold)]'
                             : 'bg-emerald-500'
                       "
@@ -65,12 +65,14 @@
                     <span
                       class="text-[10px] font-medium text-slate-500 group-hover:text-[var(--color-primary)]"
                     >
-                      {{
-                        show.availableSeats > 0
-                          ? show.availableSeats +
-                            ('detail.seatsAvailable' | translate)
-                          : ('detail.soldOut' | translate)
-                      }}
+                      @if (show.availableSeats >= 0) {
+                        {{
+                          show.availableSeats > 0
+                            ? show.availableSeats +
+                              ('detail.seatsAvailable' | translate)
+                            : ('detail.soldOut' | translate)
+                        }}
+                      }
                     </span>
                   </div>
                 </div>

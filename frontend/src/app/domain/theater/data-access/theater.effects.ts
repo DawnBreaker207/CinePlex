@@ -1,15 +1,18 @@
 import { inject, Injectable } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
-import { catchError, map, of, switchMap, tap } from 'rxjs';
+import { Store } from '@ngrx/store';
+import { catchError, map, of, switchMap, tap, withLatestFrom, EMPTY } from 'rxjs';
 import { TheaterService } from '@domain/theater/data-access/theater.service';
 import { StorageService } from '@core/services/storage/storage.service';
 import { TheaterActions } from '@domain/theater/data-access/theater.actions';
+import { selectSelectedTheaterId } from '@domain/theater/data-access/theater.selectors';
 
 @Injectable()
 export class TheaterEffects {
   private actions$ = inject(Actions);
   private theaterService = inject(TheaterService);
   private storageService = inject(StorageService);
+  private store = inject(Store);
 
   loadTheaters$ = createEffect(() => {
     return this.actions$.pipe(
@@ -82,7 +85,6 @@ export class TheaterEffects {
       ),
     );
   });
-
   setSelectedTheaterId$ = createEffect(
     () => {
       return this.actions$.pipe(
@@ -98,5 +100,23 @@ export class TheaterEffects {
     },
     { dispatch: false },
   );
+
+  // Restore selection after F5 / deep-link: prefer saved theater, else first.
+  // Runs once on loadTheatersSuccess (dispatched at boot).
+  restoreSelection$ = createEffect(() => {
+    return this.actions$.pipe(
+      ofType(TheaterActions.loadTheatersSuccess),
+      withLatestFrom(this.store.select(selectSelectedTheaterId)),
+      switchMap(([{ theaters }, selectedId]) => {
+        if (selectedId || theaters.length === 0) return EMPTY;
+        const saved = this.storageService.getSelectedTheaterId();
+        const id =
+          saved != null && theaters.some((t) => t.id === saved)
+            ? saved
+            : theaters[0].id;
+        return of(TheaterActions.setSelectedTheaterId({ theaterId: id }));
+      }),
+    );
+  });
 }
 

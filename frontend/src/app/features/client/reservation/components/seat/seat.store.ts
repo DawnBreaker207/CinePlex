@@ -1,4 +1,5 @@
 import { Seat } from '@domain/seat/models/seat.model';
+import { buildFixedRow, trimOuterEmptyCells } from '@shared/utils/seat-layout';
 import {
   patchState,
   signalStore,
@@ -61,15 +62,26 @@ export const SeatStore = signalStore(
           {} as Record<string, Seat[]>,
         );
 
+        // Fixed 15-column frame shared with the admin layout editor:
+        // empty columns render as spacers, adjacent COUPLE seats merge
+        // into one double-wide unit labeled "5+6".
         return Object.keys(groups)
           .sort()
-          .map((row) =>
-            groups[row].sort(
-              (a, b) =>
-                parseInt(a.seatNumber.slice(1)) -
-                parseInt(b.seatNumber.slice(1)),
-            ),
-          );
+          .map((row) => ({
+            row,
+            cells: trimOuterEmptyCells(
+              buildFixedRow(
+                groups[row].map((s) => ({
+                  seatNumber: parseInt(s.seatNumber.slice(1)),
+                  seatType: s.seatType ?? 'NORMAL',
+                  ref: s,
+                })),
+              ),
+            ).map((cell) => ({
+              ...cell,
+              seats: cell.seats.map((c) => c.ref),
+            })),
+          }));
       }),
     };
   }),
@@ -82,9 +94,47 @@ export const SeatStore = signalStore(
       sseService = inject(SseService),
       translate = inject(TranslateService),
       toast = inject(ToastService),
-    ) => ({
-      loadSeats: rxMethod<{ showtimeId: number }>(
-        pipe(
+    ) => {
+      // Toggle a whole cell: a merged couple selects/deselects both halves.
+      const toggleSeatsImpl = (seats: Seat[]) => {
+        const ids = new Set(seats.map((s) => s.id));
+        const current = new Map(store.seats().map((s) => [s.id, s]));
+        const targets = [...ids]
+          .map((id) => current.get(id))
+          .filter((s): s is Seat => !!s)
+          .filter((s) => s.status !== 'BOOKED' && s.status !== 'HOLD');
+        if (targets.length === 0) return;
+        const turningOn = targets.filter((s) => s.status !== 'SELECTED').length;
+        if (turningOn > 0) {
+          const count = store
+            .seats()
+            .filter((s) => s.status === 'SELECTED').length;
+          if (count + turningOn > 8) {
+            toast.createNotification({
+              type: 'warning',
+              title: translate.instant('reservation.maxSeatsTitle'),
+              message: translate.instant('reservation.maxSeats'),
+              position: 'top',
+            });
+            return;
+          }
+        }
+        patchState(store, (state) => ({
+          seats: state.seats.map((s) =>
+            ids.has(s.id) && s.status !== 'BOOKED' && s.status !== 'HOLD'
+              ? {
+                  ...s,
+                  status: (s.status === 'SELECTED'
+                    ? 'AVAILABLE'
+                    : 'SELECTED') as SeatStatus,
+                }
+              : s,
+          ),
+        }));
+      };
+
+      return {
+      loadSeats: rxMethod<{ showtimeId: number }>(        pipe(
           tap(() =>
             patchState(store, { loading: true, error: null, seats: [] }),
           ),
@@ -262,34 +312,13 @@ export const SeatStore = signalStore(
       //
 
       toggleSeat(seat: Seat) {
-        if (seat.status === 'BOOKED' || seat.status === 'HOLD') return;
-        if (seat.status !== 'SELECTED') {
-          const count = store
-            .seats()
-            .filter((s) => s.status === 'SELECTED').length;
-          if (count >= 8) {
-            toast.createNotification({
-              type: 'warning',
-              title: translate.instant('reservation.maxSeatsTitle'),
-              message: translate.instant('reservation.maxSeats'),
-              position: 'top',
-            });
-            return;
-          }
-        }
-        patchState(store, (state) => ({
-          seats: state.seats.map((s) =>
-            s.id === seat.id
-              ? {
-                  ...s,
-                  status: (s.status === 'SELECTED'
-                    ? 'AVAILABLE'
-                    : 'SELECTED') as SeatStatus,
-                }
-              : s,
-          ),
-        }));
+        toggleSeatsImpl([seat]);
       },
-    }),
+      // Toggle a whole cell: a merged couple selects/deselects both halves.
+      toggleSeats(seats: Seat[]) {
+        toggleSeatsImpl(seats);
+      },
+      };
+    },
   ),
 );
