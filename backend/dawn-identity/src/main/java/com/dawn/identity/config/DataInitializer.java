@@ -1,10 +1,13 @@
 package com.dawn.identity.config;
 
 import com.dawn.common.core.constant.ErrorCode;
+import com.dawn.common.core.constant.PermissionKey;
 import com.dawn.common.core.constant.URole;
 import com.dawn.common.core.exception.wrapper.ResourceNotFoundException;
+import com.dawn.identity.model.AdminPermission;
 import com.dawn.identity.model.Role;
 import com.dawn.identity.model.User;
+import com.dawn.identity.repository.AdminPermissionRepository;
 import com.dawn.identity.repository.RoleRepository;
 import com.dawn.identity.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +32,8 @@ public class DataInitializer implements ApplicationRunner {
     private final RoleRepository roleRepository;
 
     private final PasswordEncoder passwordEncoder;
+
+    private final AdminPermissionRepository adminPermissionRepository;
 
     @Value("${dawn.app.setup.admin.username}")
     private String adminUsername;
@@ -80,7 +85,15 @@ public class DataInitializer implements ApplicationRunner {
                 .emailVerified(true)
                 .build();
 
-        userRepository.save(user);
+        User saved = userRepository.save(user);
+        for (PermissionKey key : PermissionKey.values()) {
+            if (!adminPermissionRepository.existsByUserIdAndPermissionKey(saved.getId(), key)) {
+                adminPermissionRepository.save(AdminPermission.builder()
+                        .userId(saved.getId())
+                        .permissionKey(key)
+                        .build());
+            }
+        }
 
         log.info("========================================");
         log.info("   DEMO ADMIN ACCOUNT CREATED");

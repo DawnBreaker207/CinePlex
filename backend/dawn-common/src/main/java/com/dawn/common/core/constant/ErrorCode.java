@@ -28,6 +28,7 @@ public enum ErrorCode {
 
     // Showtime
     SHOWTIME_NOT_FOUND("Showtime not found"),
+    SHOWTIME_OVERLAP("Showtime overlaps with an existing showtime in this room"),
 
     // Theater
     THEATER_NOT_FOUND("Theater not found"),
@@ -90,6 +91,8 @@ public enum ErrorCode {
     PERMISSION_NOT_ENOUGH("You permission not enough (Must higher than this person)"),
     MOMO_PAYMENT_FAILED("MoMo payment failed or payUrl is null"),
     VOUCHER_ALREADY_EXISTED("This voucher already existed"),
+    VOUCHER_SELF_APPROVAL("Cannot approve your own voucher"),
+    VOUCHER_NOT_PENDING("Voucher is not pending approval"),
     MIN_ORDER_NOT_MET("Order total is less than minimum requirement"),
     SEAT_CAPACITY_EXCEEDED("Total seats cannot be greater than capacity of {0}"),
 
@@ -101,6 +104,8 @@ public enum ErrorCode {
     LOGIN_TOO_MANY_ATTEMPTS("Too many login attempts, please try again later"),
     EMAIL_NOT_VERIFIED("Email not verified, please check your inbox"),
     EMAIL_VERIFICATION_INVALID("Verification link expired or invalid"),
+    PASSWORD_RESET_INVALID("Password reset link expired or invalid"),
+    PASSWORD_TOO_SHORT("Password must be at least 6 characters"),
     REGISTER_TOO_MANY_ATTEMPTS("Too many registration attempts, please try again later"),
     INVALID_STATE_TRANSITION("Invalid state transition from {0} to {1}"),
 
