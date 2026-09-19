@@ -33,6 +33,8 @@ CREATE TABLE user_voucher (
     used_at          DATETIME NULL,
     reservation_code VARCHAR(20) NULL,
     expired_at       DATETIME NOT NULL,
+    created_at       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at       DATETIME NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_uv_user    FOREIGN KEY (user_id)    REFERENCES users(id)    ON DELETE CASCADE,
     CONSTRAINT fk_uv_voucher FOREIGN KEY (voucher_id) REFERENCES vouchers(id) ON DELETE CASCADE,
     INDEX idx_uv_user (user_id),

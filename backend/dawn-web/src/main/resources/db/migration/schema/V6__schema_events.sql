@@ -39,5 +39,14 @@ CREATE TABLE audit_log (
     new_value  TEXT NULL,
     INDEX idx_audit_entity (entity, entity_id),
     INDEX idx_audit_created (created_at),
-    INDEX idx_audit_status (status)
+    INDEX idx_audit_status (status),
+    INDEX idx_audit_action_created (action, created_at),
+    INDEX idx_audit_actor_id (actor_id, created_at)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
+
+-- Audit log is append-only: block UPDATE/DELETE for all DB users.
+-- NOTE: manual cleanups touching audit_log rows must DROP these triggers first.
+CREATE TRIGGER trg_audit_log_no_update BEFORE UPDATE ON audit_log
+FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'audit_log is append-only';
+CREATE TRIGGER trg_audit_log_no_delete BEFORE DELETE ON audit_log
+FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'audit_log is append-only';

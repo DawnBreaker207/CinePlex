@@ -23,6 +23,8 @@ CREATE TABLE reservation (
     INDEX idx_reservation_user_id (user_id),
     INDEX idx_reservation_status (status),
     INDEX idx_reservation_showtime_id (showtime_id),
+    INDEX idx_reservation_user_status_created (user_id, status, created_at),
+    INDEX idx_reservation_status_expired (status, expired_at),
     CONSTRAINT ck_reservation_paid_status CHECK (
         (status = 'CONFIRMED' AND is_paid = 1) OR (status <> 'CONFIRMED' AND is_paid = 0)
     )
