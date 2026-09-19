@@ -52,4 +52,30 @@ public class RabbitConfig {
                 .to(exchange)
                 .with(RabbitMQConstants.RK_NOTIFICATION_EMAIL_VERIFICATION);
     }
+
+    @Bean
+    public Queue queuePasswordReset() {
+        return new Queue(RabbitMQConstants.QUEUE_NOTIFICATION_PASSWORD_RESET);
+    }
+
+    @Bean
+    public Binding bindingPasswordReset(Queue queuePasswordReset, TopicExchange exchange) {
+        return BindingBuilder
+                .bind(queuePasswordReset)
+                .to(exchange)
+                .with(RabbitMQConstants.RK_NOTIFICATION_PASSWORD_RESET);
+    }
+
+    @Bean
+    public Queue queueShowtimeCanceled() {
+        return new Queue(RabbitMQConstants.QUEUE_NOTIFICATION_SHOWTIME_CANCELED);
+    }
+
+    @Bean
+    public Binding bindingShowtimeCanceled(Queue queueShowtimeCanceled, TopicExchange exchange) {
+        return BindingBuilder
+                .bind(queueShowtimeCanceled)
+                .to(exchange)
+                .with(RabbitMQConstants.RK_NOTIFICATION_SHOWTIME_CANCELED);
+    }
 }

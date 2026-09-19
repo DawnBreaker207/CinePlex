@@ -90,4 +90,48 @@ public class EmailService {
         }
     }
 
+    public void sendPasswordResetEmail(String to, String resetLink) {
+        MimeMessagePreparator messagePreparator = mimeMessage -> {
+            MimeMessageHelper messageHelper = new MimeMessageHelper(mimeMessage, true);
+            messageHelper.setFrom("demo@gmail.com");
+            messageHelper.setTo(to);
+            messageHelper.setSubject("[CinePlex] Reset your password / Đặt lại mật khẩu");
+            messageHelper.setText(
+                    "<p>Reset your password by clicking the link below (valid for 30 minutes):</p>"
+                            + "<p><a href=\"" + resetLink + "\">Reset password</a></p>"
+                            + "<p>If you did not request this, ignore this email.</p>",
+                    true);
+        };
+
+        try {
+            mailSender.send(messagePreparator);
+        } catch (MailException ex) {
+            log.error("Exception occurred when sending password reset email to {} with message: {}", to, ex.getMessage(), ex);
+        }
+    }
+
+    public void sendShowtimeCanceledEmail(String to, String movieTitle, String showtimeInfo,
+            String reservationCode, boolean wasPaid) {
+        MimeMessagePreparator messagePreparator = mimeMessage -> {
+            MimeMessageHelper messageHelper = new MimeMessageHelper(mimeMessage, true);
+            messageHelper.setFrom("demo@gmail.com");
+            messageHelper.setTo(to);
+            messageHelper.setSubject("[CinePlex] Showtime canceled / Suất chiếu đã bị hủy");
+            String refundNote = wasPaid
+                    ? "<p>Your payment will be refunded. Our team will contact you about the refund.</p>"
+                    : "<p>No payment was taken for this reservation.</p>";
+            messageHelper.setText(
+                    "<p>Showtime " + showtimeInfo + " of \"" + movieTitle + "\" has been canceled.</p>"
+                            + "<p>Reservation: " + reservationCode + "</p>"
+                            + refundNote,
+                    true);
+        };
+
+        try {
+            mailSender.send(messagePreparator);
+        } catch (MailException ex) {
+            log.error("Exception occurred when sending showtime-canceled email to {} with message: {}", to, ex.getMessage(), ex);
+        }
+    }
+
 }

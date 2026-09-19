@@ -2,6 +2,7 @@ package com.dawn.notification.service;
 
 import com.dawn.common.core.constant.RabbitMQConstants;
 import com.dawn.common.core.dto.event.EmailVerificationEvent;
+import com.dawn.common.core.dto.event.PasswordResetEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -26,6 +27,18 @@ public class VerificationMailListener {
             log.info("[Notification] Verification email sent to {}", event.to());
         } catch (Exception e) {
             log.error("[Notification] Failed to send verification email to {}: {}",
+                    event.to(), e.getMessage(), e);
+        }
+    }
+
+    @RabbitListener(queues = RabbitMQConstants.QUEUE_NOTIFICATION_PASSWORD_RESET)
+    public void handlePasswordReset(PasswordResetEvent event) {
+        try {
+            String link = frontendUrl + "/reset-password?token=" + event.token();
+            emailService.sendPasswordResetEmail(event.to(), link);
+            log.info("[Notification] Password reset email sent to {}", event.to());
+        } catch (Exception e) {
+            log.error("[Notification] Failed to send password reset email to {}: {}",
                     event.to(), e.getMessage(), e);
         }
     }

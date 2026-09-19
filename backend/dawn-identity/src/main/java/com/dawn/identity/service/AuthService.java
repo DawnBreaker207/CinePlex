@@ -14,6 +14,10 @@ public interface AuthService {
 
     void resendVerification(String email);
 
+    void forgotPassword(String email);
+
+    void resetPassword(String token, String newPassword);
+
     JwtResponse login(LoginRequest user);
 
     TokenRefreshResponse refreshToken(String refreshToken);

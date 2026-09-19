@@ -5,6 +5,7 @@ import com.dawn.common.core.constant.Constants;
 import com.dawn.common.core.constant.RabbitMQConstants;
 import com.dawn.common.core.constant.URole;
 import com.dawn.common.core.dto.event.EmailVerificationEvent;
+import com.dawn.common.core.dto.event.PasswordResetEvent;
 import com.dawn.common.core.exception.wrapper.InvalidRequestException;
 import com.dawn.common.core.exception.wrapper.PermissionDeniedException;
 import com.dawn.common.core.exception.wrapper.ResourceAlreadyExistedException;
@@ -72,6 +73,8 @@ public class AuthServiceImpl implements AuthService {
     private static final String LOGIN_FAIL_PREFIX = "login:fail:";
     private static final String VERIFY_EMAIL_PREFIX = "verify:email:";
     private static final Duration VERIFY_EMAIL_TTL = Duration.ofHours(24);
+    private static final String RESET_PASSWORD_PREFIX = "reset:password:";
+    private static final Duration RESET_PASSWORD_TTL = Duration.ofMinutes(30);
 
     @Override
     @Transactional
@@ -196,6 +199,53 @@ public class AuthServiceImpl implements AuthService {
             return Long.parseLong(String.valueOf(raw));
         } catch (NumberFormatException e) {
             return null;
+        }
+    }
+
+    @Override
+    public void forgotPassword(String email) {
+        var userOpt = userRepository.findByEmail(email);
+        if (userOpt.isEmpty()) {
+            log.info("Password reset requested for unknown email");
+            return;
+        }
+        User user = userOpt.get();
+        try {
+            String token = UUID.randomUUID().toString();
+            redisService.set(RESET_PASSWORD_PREFIX + token, user.getId().toString(), RESET_PASSWORD_TTL);
+            rabbitTemplate.convertAndSend(
+                    RabbitMQConstants.EXCHANGE_NOTIFICATION,
+                    RabbitMQConstants.RK_NOTIFICATION_PASSWORD_RESET,
+                    PasswordResetEvent.builder().to(user.getEmail()).token(token).build());
+        } catch (RuntimeException e) {
+            log.warn("Password reset mail not queued for user {}", user.getId(), e);
+        }
+    }
+
+    @Override
+    @Transactional
+    public void resetPassword(String token, String newPassword) {
+        if (newPassword == null || newPassword.length() < 6) {
+            throw new InvalidRequestException(ErrorCode.PASSWORD_TOO_SHORT);
+        }
+        Object raw = null;
+        try {
+            raw = redisService.get(RESET_PASSWORD_PREFIX + token);
+        } catch (RuntimeException e) {
+            log.warn("Password reset lookup failed for token", e);
+        }
+        Long userId = parseUserId(raw);
+        if (userId == null) {
+            throw new InvalidRequestException(ErrorCode.PASSWORD_RESET_INVALID);
+        }
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.EMAIL_NOT_FOUND.format()));
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+        try {
+            redisService.delete(RESET_PASSWORD_PREFIX + token);
+        } catch (RuntimeException e) {
+            log.warn("Password reset token cleanup failed for user {}", userId, e);
         }
     }
 

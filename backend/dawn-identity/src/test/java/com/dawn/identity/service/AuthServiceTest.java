@@ -37,6 +37,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -157,7 +158,6 @@ class AuthServiceTest {
     @Nested
     @DisplayName("resendVerification")
     class Resend {
-
         @Test
         @DisplayName("already verified → no-op")
         void alreadyVerified_noop() {
@@ -211,6 +211,72 @@ class AuthServiceTest {
                     .isInstanceOf(InvalidRequestException.class)
                     .matches(e -> ((InvalidRequestException) e).getErrorCode() == ErrorCode.EMAIL_NOT_VERIFIED);
             verify(jWTUtils, never()).generateToken(anyString(), anyString(), any());
+        }
+    }
+
+    @Nested
+    @DisplayName("forgotPassword")
+    class ForgotPassword {
+
+        @Test
+        @DisplayName("known email → token queued")
+        void knownEmail_queued() {
+            User user = User.builder().email("a@example.com").build();
+            user.setId(5L);
+            when(userRepository.findByEmail("a@example.com")).thenReturn(Optional.of(user));
+
+            service.forgotPassword("a@example.com");
+
+            verify(redisService).set(anyString(), eq("5"), any());
+            verify(rabbitTemplate).convertAndSend(anyString(), anyString(), (Object) any());
+        }
+
+        @Test
+        @DisplayName("unknown email → silent success, nothing queued")
+        void unknownEmail_silent() {
+            when(userRepository.findByEmail("ghost@example.com")).thenReturn(Optional.empty());
+
+            service.forgotPassword("ghost@example.com");
+
+            verify(rabbitTemplate, never()).convertAndSend(anyString(), anyString(), (Object) any());
+        }
+    }
+
+    @Nested
+    @DisplayName("resetPassword")
+    class ResetPassword {
+
+        @Test
+        @DisplayName("valid token → password changed, token consumed")
+        void validToken_changed() {
+            User user = User.builder().email("a@example.com").build();
+            user.setId(5L);
+            when(redisService.get("reset:password:t-1")).thenReturn("5");
+            when(userRepository.findById(5L)).thenReturn(Optional.of(user));
+            when(passwordEncoder.encode("newsecret")).thenReturn("enc2");
+
+            service.resetPassword("t-1", "newsecret");
+
+            verify(userRepository).save(user);
+            verify(redisService).delete("reset:password:t-1");
+        }
+
+        @Test
+        @DisplayName("expired token → throws")
+        void expiredToken_throws() {
+            when(redisService.get("reset:password:old")).thenReturn(null);
+
+            assertThatThrownBy(() -> service.resetPassword("old", "newsecret"))
+                    .isInstanceOf(InvalidRequestException.class)
+                    .matches(e -> ((InvalidRequestException) e).getErrorCode() == ErrorCode.PASSWORD_RESET_INVALID);
+        }
+
+        @Test
+        @DisplayName("short password → throws")
+        void shortPassword_throws() {
+            assertThatThrownBy(() -> service.resetPassword("t-1", "123"))
+                    .isInstanceOf(InvalidRequestException.class)
+                    .matches(e -> ((InvalidRequestException) e).getErrorCode() == ErrorCode.PASSWORD_TOO_SHORT);
         }
     }
 }

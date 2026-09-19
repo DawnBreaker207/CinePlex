@@ -42,6 +42,18 @@ public class AuthController {
         return ResponseObject.success("");
     }
 
+    @PostMapping("/forgot-password")
+    public ResponseObject<String> forgotPassword(@RequestParam String email) {
+        authService.forgotPassword(email);
+        return ResponseObject.success("");
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseObject<String> resetPassword(@RequestParam String token, @RequestParam String newPassword) {
+        authService.resetPassword(token, newPassword);
+        return ResponseObject.success("Password reset");
+    }
+
     @PostMapping("/login")
     public ResponseObject<JwtResponse> login(@Valid @RequestBody LoginRequest user) {
         JwtResponse jwt = authService.login(user);
