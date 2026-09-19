@@ -4,6 +4,7 @@ import com.dawn.common.core.model.AbstractMappedEntity;
 import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -47,4 +48,8 @@ public class Showtime extends AbstractMappedEntity {
 
     @Column(name = "vip_price")
     private BigDecimal vipPrice;
+
+    @Column(name = "status", nullable = false)
+    @Builder.Default
+    private String status = "ACTIVE";
 }

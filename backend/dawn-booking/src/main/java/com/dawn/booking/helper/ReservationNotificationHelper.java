@@ -12,6 +12,7 @@ import com.dawn.identity.api.IdentityModuleApi;
 import com.dawn.identity.dto.response.UserResponse;
 import com.dawn.common.core.constant.RabbitMQConstants;
 import com.dawn.common.core.dto.event.BookingCompleteEvent;
+import com.dawn.common.core.dto.event.ShowtimeCanceledMailEvent;
 import com.dawn.common.core.outbox.Outbox;
 import com.dawn.common.core.outbox.OutboxRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -87,6 +88,23 @@ public class ReservationNotificationHelper {
                     Collections.singletonMap(Constants.SSE_FIELD_ACTION, "REFRESH"));
         } catch (Exception e) {
             log.error("Failed to send notification for reservation {} ", reservation.getId(), e);
+        }
+    }
+
+    public void handleShowtimeCanceled(Reservation reservation, String movieTitle, String showtimeInfo) {
+        try {
+            UserResponse user = userService.findUserById(reservation.getUserId());
+            ShowtimeCanceledMailEvent event = ShowtimeCanceledMailEvent.builder()
+                    .to(user.getEmail())
+                    .movieTitle(movieTitle)
+                    .showtimeInfo(showtimeInfo)
+                    .reservationCode(reservation.getReservationCode())
+                    .wasPaid(Boolean.TRUE.equals(reservation.getIsPaid()))
+                    .build();
+            enqueue(RabbitMQConstants.RK_NOTIFICATION_SHOWTIME_CANCELED,
+                    "SHOWTIME_CANCELED", reservation.getReservationCode(), event);
+        } catch (Exception e) {
+            log.error("Failed to enqueue showtime-canceled mail for reservation {}", reservation.getId(), e);
         }
     }
 

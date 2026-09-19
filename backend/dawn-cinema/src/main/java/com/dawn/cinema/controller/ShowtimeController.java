@@ -97,4 +97,11 @@ public class ShowtimeController {
         showtimeService.delete(id);
         return ResponseObject.deleted();
     }
+
+    @PostMapping("/{id}/cancel")
+    @Operation(summary = "Cancel a showtime", description = "Marks the showtime canceled; booked tickets are released and refund-flagged (Admin only)")
+    public ResponseObject<ShowtimeResponse> cancel(@PathVariable Long id) {
+        log.info("Canceling showtime with id: {}", id);
+        return ResponseObject.success(showtimeService.cancelShowtime(id));
+    }
 }

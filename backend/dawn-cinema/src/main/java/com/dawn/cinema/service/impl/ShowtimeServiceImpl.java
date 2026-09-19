@@ -11,11 +11,15 @@ import com.dawn.cinema.repository.*;
 import com.dawn.cinema.service.ShowtimeService;
 import com.dawn.common.core.constant.Constants;
 import com.dawn.common.core.constant.ErrorCode;
+import com.dawn.common.core.constant.RabbitMQConstants;
 import com.dawn.common.core.constant.SeatStatus;
+import com.dawn.common.core.dto.event.ShowtimeCanceledEvent;
 import com.dawn.common.core.dto.response.ResponsePage;
+import com.dawn.common.core.exception.wrapper.InvalidRequestException;
 import com.dawn.common.core.exception.wrapper.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.data.domain.Page;
@@ -24,9 +28,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -47,6 +54,10 @@ public class ShowtimeServiceImpl implements ShowtimeService {
     private final SeatTemplateRepository seatTemplateRepository;
 
     private final SeatInstanceRepository seatInstanceRepository;
+
+    private final RabbitTemplate rabbitTemplate;
+
+    private static final String STATUS_CANCELED = "CANCELED";
 
     private void enrichSeatCounts(List<ShowtimeResponse> responses) {
         if (responses.isEmpty()) return;
@@ -218,6 +229,9 @@ public class ShowtimeServiceImpl implements ShowtimeService {
         }
         Room room = rooms.getFirst();
 
+        checkNoOverlap(room.getId(), showtimeRequest.getShowDate(), showtimeRequest.getShowTime(),
+                movie.getDuration(), null);
+
         Showtime showtime = Showtime
                 .builder()
                 .movieId(movie.getId())
@@ -270,10 +284,40 @@ public class ShowtimeServiceImpl implements ShowtimeService {
             showtime.setPrice(showtimeDetails.getPrice());
         }
 
+        MovieResponse durationSource = showtimeDetails.getMovieId() != null
+                ? movie
+                : catalogModuleApi.findMovieById(showtime.getMovieId());
+        checkNoOverlap(showtime.getRoomId(), showtime.getShowDate(), showtime.getShowTime(),
+                durationSource != null ? durationSource.getDuration() : null, id);
+
         Showtime updatedShowtime = showtimeRepository.save(showtime);
         log.info("Updated showtime with ID: {}", updatedShowtime.getId());
         Theater theater = resolveTheater(updatedShowtime.getRoomId());
         return ShowtimeMappingHelper.map(updatedShowtime, movie, theater);
+    }
+
+    @Override
+    @Transactional
+    @CacheEvict(value = SHOWTIME_CACHE, key = "'id:' + #id")
+    public ShowtimeResponse cancelShowtime(Long id) {
+        Showtime showtime = showtimeRepository
+                .findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.SHOWTIME_NOT_FOUND.format()));
+        if (!STATUS_CANCELED.equals(showtime.getStatus())) {
+            showtime.setStatus(STATUS_CANCELED);
+            showtimeRepository.save(showtime);
+            try {
+                rabbitTemplate.convertAndSend(
+                        RabbitMQConstants.EXCHANGE_CINEMA,
+                        RabbitMQConstants.RK_CINEMA_SHOWTIME_CANCELED,
+                        ShowtimeCanceledEvent.builder().showtimeId(id).build());
+            } catch (RuntimeException e) {
+                log.warn("Showtime canceled event not queued for {}", id, e);
+            }
+        }
+        Theater theater = resolveTheater(showtime.getRoomId());
+        MovieResponse movie = catalogModuleApi.findMovieById(showtime.getMovieId());
+        return ShowtimeMappingHelper.map(showtime, movie, theater);
     }
 
     @Override
@@ -296,8 +340,37 @@ public class ShowtimeServiceImpl implements ShowtimeService {
         log.info("Deleted showtime with ID: {}", id);
     }
 
-    private void createSeatInstances(Showtime showtime) {
-        List<SeatTemplate> templates = seatTemplateRepository.findByRoomId(showtime.getRoomId());
+    private static final int FALLBACK_DURATION_MINUTES = 120;
+
+    private void checkNoOverlap(Long roomId, LocalDate date, LocalTime start,
+            Integer durationMinutes, Long excludeId) {
+        if (roomId == null || date == null || start == null) {
+            return;
+        }
+        LocalDateTime newStart = LocalDateTime.of(date, start);
+        LocalDateTime newEnd = newStart.plusMinutes(durationMinutes != null ? durationMinutes : FALLBACK_DURATION_MINUTES);
+        List<Showtime> existing = showtimeRepository.findByRoomIdAndShowDate(roomId, date);
+        Map<Long, Integer> durations = catalogModuleApi
+                .findMoviesByIds(existing.stream()
+                        .map(Showtime::getMovieId).filter(Objects::nonNull).distinct().toList())
+                .stream()
+                .collect(Collectors.toMap(MovieResponse::getId, MovieResponse::getDuration, (a, b) -> a));
+        for (Showtime s : existing) {
+            if ((excludeId != null && excludeId.equals(s.getId()))
+                    || s.getShowTime() == null
+                    || STATUS_CANCELED.equals(s.getStatus())) {
+                continue;
+            }
+            LocalDateTime sStart = LocalDateTime.of(s.getShowDate(), s.getShowTime());
+            Integer d = durations.get(s.getMovieId());
+            LocalDateTime sEnd = sStart.plusMinutes(d != null ? d : FALLBACK_DURATION_MINUTES);
+            if (newStart.isBefore(sEnd) && sStart.isBefore(newEnd)) {
+                throw new InvalidRequestException(ErrorCode.SHOWTIME_OVERLAP);
+            }
+        }
+    }
+
+    private void createSeatInstances(Showtime showtime) {        List<SeatTemplate> templates = seatTemplateRepository.findByRoomId(showtime.getRoomId());
         List<SeatInstance> seats = new ArrayList<>();
 
         for (SeatTemplate template : templates) {

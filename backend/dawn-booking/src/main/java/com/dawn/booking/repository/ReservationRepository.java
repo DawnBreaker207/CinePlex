@@ -22,6 +22,7 @@ import java.util.Optional;
 public interface ReservationRepository extends JpaRepository<Reservation, Long> {
 
     Optional<Reservation> findByReservationCode(String reservationCode);
+
     @Query(value = """
               SELECT DISTINCT r FROM Reservation AS r
                    WHERE
@@ -40,6 +41,9 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
     Page<Reservation> findAllWithFilter(ReservationFilterRequest reservation, Instant startDate, Instant endDate, Pageable pageable);
 
     Page<Reservation> findAllByUserIdAndReservationStatusOrderByCreatedAtDesc(Long userId, ReservationStatus status, Pageable pageable);
+
+    List<Reservation> findByShowtimeIdAndReservationStatusIn(Long showtimeId,
+            List<ReservationStatus> statuses);
 
     Optional<Reservation> findByIdempotencyKey(String idempotencyKey);
 

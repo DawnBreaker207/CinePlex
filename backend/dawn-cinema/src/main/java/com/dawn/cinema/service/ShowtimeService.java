@@ -28,6 +28,8 @@ public interface ShowtimeService {
 
     ShowtimeResponse add(ShowtimeRequest showtime);
 
+    ShowtimeResponse cancelShowtime(Long id);
+
     ShowtimeResponse update(Long id, ShowtimeRequest showtimeDetails);
 
     void delete(Long id);

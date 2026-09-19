@@ -78,4 +78,26 @@ public class BookingRabbitConfig {
                 .to(paymentDlx)
                 .with(RabbitMQConstants.QUEUE_BOOKING_PAYMENT_FAILED_DLQ);
     }
+
+    // cinema.showtime.canceled
+    @Bean
+    public TopicExchange cinemaExchange() {
+        return new TopicExchange(RabbitMQConstants.EXCHANGE_CINEMA);
+    }
+
+    @Bean
+    public Queue bookingShowtimeCanceledQueue() {
+        return QueueBuilder.durable(RabbitMQConstants.QUEUE_CINEMA_SHOWTIME_CANCELED).build();
+    }
+
+    @Bean
+    public Binding bookingShowtimeCanceledBinding(
+            Queue bookingShowtimeCanceledQueue,
+            TopicExchange cinemaExchange
+    ) {
+        return BindingBuilder
+                .bind(bookingShowtimeCanceledQueue)
+                .to(cinemaExchange)
+                .with(RabbitMQConstants.RK_CINEMA_SHOWTIME_CANCELED);
+    }
 }
