@@ -34,4 +34,8 @@ public class Review extends AbstractMappedEntity {
     @Column(name = "is_active", nullable = false)
     @Builder.Default
     private Boolean isActive = true;
+
+    @Column(name = "moderated", nullable = false)
+    @Builder.Default
+    private Boolean moderated = false;
 }
