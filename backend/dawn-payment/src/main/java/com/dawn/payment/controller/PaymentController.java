@@ -60,4 +60,10 @@ public class PaymentController {
         Boolean isPaid = paymentService.manualCheck(provider, id);
         return isPaid ? ResponseObject.success("PAID") : ResponseObject.success("PENDING");
     }
+
+    @PostMapping("/refunds/{reservationId}/approve")
+    public ResponseObject<String> approveRefund(@PathVariable String reservationId) {
+        paymentService.approveRefund(reservationId);
+        return ResponseObject.success("REFUNDED");
+    }
 }

@@ -6,6 +6,7 @@ import com.dawn.common.core.exception.wrapper.ResourceNotFoundException;
 import com.dawn.common.core.outbox.Outbox;
 import com.dawn.common.core.outbox.OutboxRepository;
 import com.dawn.common.core.service.AuditLogService;
+import com.dawn.identity.service.PermissionService;
 import com.dawn.payment.dto.request.PaymentRequest;
 import com.dawn.payment.dto.response.PaymentHandlerResponse;
 import com.dawn.payment.dto.response.PaymentResponse;
@@ -49,6 +50,9 @@ class PaymentServiceImplTest {
     @Mock
     AuditLogService auditLogService;
 
+    @Mock
+    PermissionService permissionService;
+
     PaymentServiceImpl service;
 
     ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
@@ -69,6 +73,7 @@ class PaymentServiceImplTest {
                 paymentRepository,
                 outboxRepository,
                 objectMapper,
+                permissionService,
                 auditLogService);
     }
 
@@ -445,11 +450,12 @@ class PaymentServiceImplTest {
                     .thenReturn("https://weird.test");
 
             PaymentServiceImpl svcWithWeird = new PaymentServiceImpl(
-                    List.of(vnpayHandler, momoHandler, weirdHandler),
-                    paymentRepository,
-                    outboxRepository,
-                    objectMapper,
-                    auditLogService);
+List.of(vnpayHandler, momoHandler, weirdHandler),
+                paymentRepository,
+                outboxRepository,
+                objectMapper,
+                permissionService,
+                auditLogService);
 
             PaymentRequest req = buildRequest("WEIRD", 100_000);
             svcWithWeird.createPayment(req, "127.0.0.1");
@@ -457,6 +463,45 @@ class PaymentServiceImplTest {
             ArgumentCaptor<Payment> captor = ArgumentCaptor.forClass(Payment.class);
             verify(paymentRepository).save(captor.capture());
             assertThat(captor.getValue().getMethod()).isEqualTo(PaymentMethod.UNKNOWN);
+        }
+    }
+
+    @Nested
+    @DisplayName("markRefundPending")
+    class MarkRefundPending {
+
+        @Test
+        @DisplayName("PAID → REFUND_PENDING")
+        void paid_markedRefundPending() {
+            Payment paid = buildPayment(RES_ID, PaymentStatus.PAID, PaymentMethod.VNPAY);
+            when(paymentRepository.findByReservationId(RES_ID)).thenReturn(Optional.of(paid));
+
+            service.markRefundPending(RES_ID);
+
+            ArgumentCaptor<Payment> captor = ArgumentCaptor.forClass(Payment.class);
+            verify(paymentRepository).save(captor.capture());
+            assertThat(captor.getValue().getStatus()).isEqualTo(PaymentStatus.REFUND_PENDING);
+        }
+
+        @Test
+        @DisplayName("not PAID → untouched")
+        void notPaid_untouched() {
+            Payment pending = buildPayment(RES_ID, PaymentStatus.PENDING, PaymentMethod.VNPAY);
+            when(paymentRepository.findByReservationId(RES_ID)).thenReturn(Optional.of(pending));
+
+            service.markRefundPending(RES_ID);
+
+            verify(paymentRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("missing payment → no-op")
+        void missing_noop() {
+            when(paymentRepository.findByReservationId(RES_ID)).thenReturn(Optional.empty());
+
+            service.markRefundPending(RES_ID);
+
+            verify(paymentRepository, never()).save(any());
         }
     }
 

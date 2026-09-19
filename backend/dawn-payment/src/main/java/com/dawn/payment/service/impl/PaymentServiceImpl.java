@@ -3,13 +3,18 @@ package com.dawn.payment.service.impl;
 import com.dawn.common.core.constant.ErrorCode;
 import com.dawn.common.core.constant.PaymentMethod;
 import com.dawn.common.core.constant.PaymentStatus;
+import com.dawn.common.core.constant.PermissionKey;
 import com.dawn.common.core.constant.RabbitMQConstants;
 import com.dawn.common.core.dto.event.PaymentCompletedEvent;
 import com.dawn.common.core.dto.event.PaymentFailedEvent;
+import com.dawn.common.core.exception.wrapper.InvalidRequestException;
+import com.dawn.common.core.exception.wrapper.PermissionDeniedException;
 import com.dawn.common.core.exception.wrapper.ResourceNotFoundException;
 import com.dawn.common.core.outbox.Outbox;
 import com.dawn.common.core.outbox.OutboxRepository;
 import com.dawn.common.core.service.AuditLogService;
+import com.dawn.common.core.utils.SecurityUtils;
+import com.dawn.identity.service.PermissionService;
 import com.dawn.payment.dto.request.PaymentRequest;
 import com.dawn.payment.dto.response.PaymentDetailDTO;
 import com.dawn.payment.dto.response.PaymentHandlerResponse;
@@ -50,6 +55,8 @@ public class PaymentServiceImpl implements PaymentService {
     private final OutboxRepository outboxRepository;
 
     private final ObjectMapper objectMapper;
+
+    private final PermissionService permissionService;
 
     private final AuditLogService auditLogService;
 
@@ -216,6 +223,38 @@ public class PaymentServiceImpl implements PaymentService {
                 .findByReservationId(id)
                 .map(payment -> payment.getStatus() == PaymentStatus.PAID)
                 .orElse(false);
+    }
+
+    @Override
+    @Transactional
+    public void markRefundPending(String reservationId) {
+        paymentRepository.findByReservationId(reservationId).ifPresent(payment -> {
+            if (PaymentStatus.PAID.equals(payment.getStatus())) {
+                payment.setStatus(PaymentStatus.REFUND_PENDING);
+                paymentRepository.save(payment);
+                log.info("Payment marked REFUND_PENDING for reservation {}", reservationId);
+            }
+        });
+    }
+
+    @Override
+    @Transactional
+    public void approveRefund(String reservationId) {
+        Long approverId = SecurityUtils.getCurrentUserId();
+        if (!permissionService.hasPermission(approverId, PermissionKey.FINANCE)) {
+            throw new PermissionDeniedException(ErrorCode.PERMISSION_NOT_ENOUGH);
+        }
+        Payment payment = paymentRepository.findByReservationId(reservationId)
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.PAYMENT_NOT_FOUND.format()));
+        if (payment.getStatus() != PaymentStatus.REFUND_PENDING) {
+            throw new InvalidRequestException(ErrorCode.INVALID_STATE_TRANSITION,
+                    payment.getStatus(), PaymentStatus.REFUNDED);
+        }
+        payment.setStatus(PaymentStatus.REFUNDED);
+        paymentRepository.save(payment);
+        auditLogService.record("REFUND_APPROVED", "PAYMENT", reservationId, null,
+                PaymentStatus.REFUND_PENDING.name(), PaymentStatus.REFUNDED.name(),
+                "approver=" + approverId, "SUCCESS", AuditLogService.clientIp(), null, null);
     }
 
     private PaymentHandler findHandler(String provider) {

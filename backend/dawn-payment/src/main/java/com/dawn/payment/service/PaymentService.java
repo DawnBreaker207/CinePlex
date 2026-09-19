@@ -15,5 +15,9 @@ public interface PaymentService {
 
     Boolean manualCheck(String provider, String id);
 
+    void approveRefund(String reservationId);
+
+    void markRefundPending(String reservationId);
+
     Optional<PaymentDetailDTO> findPaymentByReservationId(String reservationId);
 }
