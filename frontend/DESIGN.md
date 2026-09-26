@@ -226,6 +226,9 @@ NG-ZORRO Ant Design underpins forms, tables, modals, and drawers; Tailwind owns 
 ### Signature Component: Confirm Flow (Reservation)
 - Payment radio group with `radiogroup` semantics; voucher input with error/success washes; `aria-live` countdown timer.
 
+### Signature Component: Ticket Stub
+- Renders like a real paper ticket: barcode (≤160px) + mono booking code, perforation-style divider, two-column metadata, total in Marquee Red. Barcode generation failure falls back to the text code — never left blank.
+
 ## Do's and Don'ts
 
 ### Do:
