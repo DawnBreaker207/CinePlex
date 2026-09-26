@@ -50,6 +50,7 @@ class VoucherApplicationServiceImplTest {
         ReservationRedisDTO redisData = ReservationRedisDTO.builder()
                 .id("RES-001").userId(1L).showtimeId(10L).theaterId(5L)
                 .seatsIds(List.of(101L, 102L)).build();
+        when(reservationRedisService.getReservationTtl("RES-001")).thenReturn(900L);
         when(reservationRedisService.getReservationSession("RES-001")).thenReturn(redisData);
         when(cinemaApi.findShowtimeById(10L)).thenReturn(ReservationTestData.buildShowtime(10L)); // price 100_000
         when(cinemaApi.findSeatsByIds(List.of(101L, 102L))).thenReturn(List.of(
@@ -77,12 +78,23 @@ class VoucherApplicationServiceImplTest {
     @Test
     @DisplayName("applyVoucher → Redis session missing → ApiException, no NPE")
     void applyVoucher_noRedis_shouldThrowNotFound() {
-        when(reservationRedisService.getReservationSession("RES-001")).thenReturn(null);
+        when(reservationRedisService.getReservationTtl("RES-001")).thenReturn(null);
 
         assertThatThrownBy(() -> service.applyVoucher("RES-001", "DAWN10"))
                 .isInstanceOf(ApiException.class);
 
         verify(catalogApi, never()).calculateVoucher(anyString(), any());
+    }
+
+    @Test
+    @DisplayName("S4: applyVoucher → dead hold (ttl=0) → 409 RESERVATION_EXPIRED")
+    void applyVoucher_deadHold_shouldRefuse() {
+        when(reservationRedisService.getReservationTtl("RES-001")).thenReturn(0L);
+
+        assertThatThrownBy(() -> service.applyVoucher("RES-001", "DAWN10"))
+                .isInstanceOf(ApiException.class)
+                .hasMessageContaining("expired");
+        verify(reservationRedisService, never()).getReservationSession(anyString());
     }
 
     @Test

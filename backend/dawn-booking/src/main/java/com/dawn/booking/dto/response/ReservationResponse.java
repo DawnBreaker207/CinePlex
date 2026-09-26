@@ -8,6 +8,7 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,4 +35,8 @@ public class ReservationResponse extends BaseResponse {
     private Boolean isDeleted;
 
     private Boolean isPaid;
+
+    private Boolean checkedIn;
+
+    private Instant checkedInAt;
 }

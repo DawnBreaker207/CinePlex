@@ -14,7 +14,8 @@ public class RefundRequestListener {
 
     private final PaymentService paymentService;
 
-    @RabbitListener(queues = RabbitMQConstants.QUEUE_PAYMENT_REFUND_REQUESTED)
+    @RabbitListener(queues = RabbitMQConstants.QUEUE_PAYMENT_REFUND_REQUESTED,
+            containerFactory = "paymentListenerContainerFactory")
     public void handleRefundRequested(RefundRequestedEvent event) {
         try {
             paymentService.markRefundPending(event.reservationCode());

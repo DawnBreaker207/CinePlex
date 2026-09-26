@@ -20,4 +20,8 @@ public class PaymentRequest {
 
     @NotBlank
     private String paymentType;
+
+    // Snapshot of seats being paid for (C4 reconciliation). Nullable for
+    // backward compatibility with clients that only send amount.
+    private java.util.List<Long> seatIds;
 }

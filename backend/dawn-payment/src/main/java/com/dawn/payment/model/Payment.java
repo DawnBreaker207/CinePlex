@@ -58,6 +58,10 @@ public class Payment extends AbstractMappedEntity {
     @Column(name = "paid_at")
     private Instant paidAt;
 
+    // JSON array of seat ids paid for (C4 reconciliation snapshot, V16).
+    @Column(name = "seat_snapshot", columnDefinition = "TEXT")
+    private String seatSnapshot;
+
     @Column(name = "status_reason")
     private String statusReason;
 

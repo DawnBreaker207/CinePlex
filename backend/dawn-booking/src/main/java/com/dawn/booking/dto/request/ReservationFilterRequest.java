@@ -21,6 +21,8 @@ public class ReservationFilterRequest extends DatetimeFilterRequest {
 
     private String username;
 
+    private Long userId;
+
     private ReservationStatus reservationStatus;
 
     private Boolean isPaid;

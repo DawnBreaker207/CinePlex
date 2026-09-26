@@ -1,5 +1,6 @@
 package com.dawn.common.infra.security;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 import org.springframework.web.cors.CorsConfiguration;
@@ -10,16 +11,23 @@ import java.util.List;
 
 @Component
 public class CorsConfig {
-    private static final List<String> ALLOWED_DOMAINS = List.of(
-            "http://localhost:3000",
-            "http://localhost:4200",
-            "http://localhost:5173");
+    // Comma-separated in CORS_ALLOWED_ORIGINS. Prod MUST set the real FE
+    // origin here — the localhost defaults below are dev-only.
+    @Value("${cors.allowed-origins:http://localhost:3000,http://localhost:4200,http://localhost:5173,http://127.0.0.1:4200}")
+    private String allowedOrigins;
+
+    private List<String> allowedDomains() {
+        return Arrays.stream(allowedOrigins.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .toList();
+    }
 
     @Bean
     public UrlBasedCorsConfigurationSource config() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
-        config.setAllowedOrigins(ALLOWED_DOMAINS);
+        config.setAllowedOrigins(allowedDomains());
 
         config.setAllowedHeaders(Arrays.asList(
                 "Authorization",

@@ -27,6 +27,8 @@ public interface ReservationMappingHelper {
                                 .toList())
                         .isDeleted(reservation.getIsDeleted())
                         .isPaid(ReservationStatus.CONFIRMED.equals(reservation.getReservationStatus()) || ReservationStatus.REFUNDED.equals(reservation.getReservationStatus()))
+                        .checkedIn(reservation.getCheckedIn())
+                        .checkedInAt(reservation.getCheckedInAt())
                         .createdAt(reservation.getCreatedAt())
                         .updatedAt(reservation.getUpdatedAt())
                         .build();

@@ -41,6 +41,14 @@ public class VoucherApplicationServiceImpl implements VoucherApplicationService 
 
     @Override
     public VoucherDiscountDTO applyVoucher(String reservationId, String code) {
+        // S4: refuse to discount a dead hold (laptop sleep / expired TTL).
+        // Matches the createPayment guard in the payment module.
+        Long holdTtl = reservationRedisService.getReservationTtl(reservationId);
+        if (holdTtl == null || holdTtl <= 0) {
+            log.warn("Voucher refused for reservation {}: hold already expired", reservationId);
+            throw new ApiException(org.springframework.http.HttpStatus.CONFLICT,
+                    com.dawn.common.core.constant.ErrorCode.RESERVATION_EXPIRED.format());
+        }
         ReservationRedisDTO redisData = reservationRedisService.getReservationSession(reservationId);
         if (redisData == null) {
             throw new ApiException(org.springframework.http.HttpStatus.NOT_FOUND, com.dawn.common.core.constant.ErrorCode.RESERVATION_NOT_FOUND.format());

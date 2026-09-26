@@ -22,6 +22,8 @@ public interface ReservationService {
 
     ReservationResponse confirm(String reservationId);
 
+    ReservationResponse checkIn(String reservationCode);
+
     void cancel(String reservationId);
 
     void fail(String reservationId);

@@ -5,6 +5,7 @@ import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
 import org.springframework.amqp.core.DirectExchange;
 import org.springframework.amqp.core.Queue;
+import org.springframework.amqp.core.QueueBuilder;
 import org.springframework.amqp.core.TopicExchange;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -23,7 +24,16 @@ public class PaymentRabbitConfig {
 
     @Bean
     public Queue paymentRefundRequestedQueue() {
-        return new Queue(RabbitMQConstants.QUEUE_PAYMENT_REFUND_REQUESTED);
+        return QueueBuilder.durable(RabbitMQConstants.QUEUE_PAYMENT_REFUND_REQUESTED)
+                .withArgument("x-dead-letter-exchange", RabbitMQConstants.EXCHANGE_PAYMENT_DLX)
+                .withArgument("x-dead-letter-routing-key",
+                        RabbitMQConstants.QUEUE_PAYMENT_REFUND_REQUESTED_DLQ)
+                .build();
+    }
+
+    @Bean
+    public Queue refundRequestedDlq() {
+        return QueueBuilder.durable(RabbitMQConstants.QUEUE_PAYMENT_REFUND_REQUESTED_DLQ).build();
     }
 
     @Bean
@@ -31,6 +41,23 @@ public class PaymentRabbitConfig {
         return BindingBuilder
                 .bind(paymentRefundRequestedQueue)
                 .to(paymentExchange)
+                .with(RabbitMQConstants.RK_PAYMENT_REFUND_REQUESTED);
+    }
+
+    @Bean
+    public Binding refundRequestedDlxBinding(Queue refundRequestedDlq, DirectExchange paymentDlx) {
+        return BindingBuilder
+                .bind(refundRequestedDlq)
+                .to(paymentDlx)
+                .with(RabbitMQConstants.QUEUE_PAYMENT_REFUND_REQUESTED_DLQ);
+    }
+
+    // Original-rk DLQ binding for recoverer-republished messages.
+    @Bean
+    public Binding refundRequestedRecovererBinding(Queue refundRequestedDlq, DirectExchange paymentDlx) {
+        return BindingBuilder
+                .bind(refundRequestedDlq)
+                .to(paymentDlx)
                 .with(RabbitMQConstants.RK_PAYMENT_REFUND_REQUESTED);
     }
 }

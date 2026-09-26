@@ -163,6 +163,23 @@ class RedisServiceTest {
         assertThat(stringRedisTemplate.opsForValue().get(SEAT_KEY_1)).startsWith(OWNER_A + ":");
     }
 
+    @Test
+    @DisplayName("lockMulti: owner khác với epoch mới hơn KHÔNG được cướp lock (e2e race proof)")
+    void lockMulti_newerEpochByOther_shouldNotSteal() {
+        List<String> keys = Collections.singletonList(SEAT_KEY_1);
+        // Holder locks first (stored value carries an older epoch).
+        List first = redisService.lockMulti(keys, OWNER_A, Duration.ofMinutes(15));
+        assertThat(first.getFirst()).isEqualTo(1L);
+        String holderValue = stringRedisTemplate.opsForValue().get(SEAT_KEY_1);
+
+        // A different owner retrying later always carries a newer epoch
+        // (System.currentTimeMillis) — it must still be rejected.
+        List steal = redisService.lockMulti(keys, OWNER_B, Duration.ofMinutes(15));
+
+        assertThat(steal.getFirst()).isEqualTo(0L);
+        assertThat(stringRedisTemplate.opsForValue().get(SEAT_KEY_1)).isEqualTo(holderValue);
+    }
+
 
     @Test
     @DisplayName("releaseLock: đúng owner → unlock thành công, trả về true")

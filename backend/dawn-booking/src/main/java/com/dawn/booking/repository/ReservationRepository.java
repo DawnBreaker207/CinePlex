@@ -26,7 +26,8 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
     @Query(value = """
               SELECT DISTINCT r FROM Reservation AS r
                    WHERE
-                         (:#{#reservation.getQuery()} IS NULL OR r.reservationCode LIKE CONCAT('%', :#{#reservation.getQuery()}, '%') )
+                          (:#{#reservation.getQuery()} IS NULL OR r.reservationCode LIKE CONCAT('%', :#{#reservation.getQuery()}, '%') )
+                          AND (:#{#reservation.getUserId()} IS NULL OR r.userId = :#{#reservation.getUserId()})
                          AND (:#{#reservation.getReservationStatus()} IS NULL OR r.reservationStatus = :#{#reservation.getReservationStatus()})
                          AND (
                             :#{#reservation.getStartDate()} IS NULL

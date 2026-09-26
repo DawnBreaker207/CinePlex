@@ -27,4 +27,9 @@ public class BookingModuleApiImpl implements BookingModuleApi {
                 .toList();
         return redisService.getLockedSeatsByShowtime(showtimeId, allShowtimeSeatIds);
     }
+
+    @Override
+    public Long getHoldTtlSeconds(String reservationCode) {
+        return redisService.getReservationTtl(reservationCode);
+    }
 }

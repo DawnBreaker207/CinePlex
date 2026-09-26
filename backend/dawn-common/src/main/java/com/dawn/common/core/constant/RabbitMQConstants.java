@@ -23,6 +23,7 @@ public class RabbitMQConstants {
     public static final String RK_PAYMENT_FAILED = "payment.failed";
     public static final String RK_PAYMENT_REFUND_REQUESTED = "payment.refund.requested";
     public static final String QUEUE_PAYMENT_REFUND_REQUESTED = "payment.refund.requested";
+    public static final String QUEUE_PAYMENT_REFUND_REQUESTED_DLQ = "payment.refund.requested.dlq";
 
     // Reservation Flow
     public static final String QUEUE_BOOKING_PAYMENT_COMPLETED = "booking.payment.completed";

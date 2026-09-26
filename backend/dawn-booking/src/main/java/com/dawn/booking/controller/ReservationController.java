@@ -101,6 +101,13 @@ public class ReservationController {
         return ResponseObject.created(reservationService.confirm(reservationId));
     }
 
+    @PostMapping("/{reservationCode}/checkin")
+    @PreAuthorize("hasAnyRole('STAFF','MANAGER','ADMIN','OWNER')")
+    @Operation(summary = "Check in ticket", description = "Single-use entry verification at the box office")
+    public ResponseObject<ReservationResponse> reservationCheckIn(@PathVariable String reservationCode) {
+        return ResponseObject.success(reservationService.checkIn(reservationCode));
+    }
+
     @PostMapping("/{reservationId}/cancel")
     @PreAuthorize("hasRole('USER')")
     @Operation(summary = "Cancel reservation after payment ", description = "Cancel reservation after booking seats and payment failed")

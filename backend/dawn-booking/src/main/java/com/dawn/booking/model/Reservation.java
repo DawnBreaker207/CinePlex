@@ -63,6 +63,13 @@ public class Reservation extends AbstractMappedEntity {
     @Builder.Default
     private Boolean isPaid = false;
 
+    @Column(name = "checked_in", nullable = false)
+    @Builder.Default
+    private Boolean checkedIn = false;
+
+    @Column(name = "checked_in_at")
+    private Instant checkedInAt;
+
     @Column(name = "is_deleted", nullable = false)
     @Builder.Default
     private Boolean isDeleted = false;

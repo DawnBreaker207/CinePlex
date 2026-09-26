@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.dawn.common.core.constant.ReservationStatus;
 import com.dawn.common.core.constant.SeatStatus;
 import com.dawn.common.core.exception.ApiException;
+import com.dawn.common.core.exception.wrapper.ResourceNotFoundException;
 import com.dawn.common.core.exception.wrapper.SeatUnavailableException;
 import com.dawn.common.core.service.AuditLogService;
 import org.junit.jupiter.api.BeforeEach;
@@ -304,6 +305,63 @@ class ReservationServiceImplTest {
 
             assertThatThrownBy(() -> service.confirm("RES-001"))
                     .isInstanceOf(IllegalStateException.class);
+        }
+    }
+
+    @Nested
+    @DisplayName("checkIn")
+    class CheckIn {
+
+        @Test
+        @DisplayName("CONFIRMED + not checked → marks checked in")
+        void checkIn_confirmed_shouldMarkCheckedIn() {
+            when(reservationRepository.findByReservationCode("RES-001"))
+                    .thenReturn(Optional.of(ReservationTestData.buildReservation("RES-001", true)));
+            when(cinemaApi.findSeatsByReservationId(1L)).thenReturn(List.of());
+            when(cinemaApi.findShowtimeById(10L)).thenReturn(ReservationTestData.buildShowtime(10L));
+            when(identityApi.findUserById(1L)).thenReturn(ReservationTestData.buildUser(1L));
+
+            ReservationResponse result = service.checkIn("RES-001");
+
+            assertThat(result.getCheckedIn()).isTrue();
+            assertThat(result.getCheckedInAt()).isNotNull();
+            ArgumentCaptor<Reservation> captor = ArgumentCaptor.forClass(Reservation.class);
+            verify(reservationRepository).save(captor.capture());
+            assertThat(captor.getValue().getCheckedIn()).isTrue();
+        }
+
+        @Test
+        @DisplayName("already checked in → conflict, no save")
+        void checkIn_alreadyChecked_shouldThrow() {
+            Reservation checked = ReservationTestData.buildReservation("RES-001", true);
+            checked.setCheckedIn(true);
+            when(reservationRepository.findByReservationCode("RES-001"))
+                    .thenReturn(Optional.of(checked));
+
+            assertThatThrownBy(() -> service.checkIn("RES-001"))
+                    .isInstanceOf(ApiException.class);
+            verify(reservationRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("not CONFIRMED → conflict, no save")
+        void checkIn_notConfirmed_shouldThrow() {
+            when(reservationRepository.findByReservationCode("RES-001"))
+                    .thenReturn(Optional.of(ReservationTestData.buildReservation("RES-001", false)));
+
+            assertThatThrownBy(() -> service.checkIn("RES-001"))
+                    .isInstanceOf(ApiException.class);
+            verify(reservationRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("missing reservation → not found")
+        void checkIn_missing_shouldThrow() {
+            when(reservationRepository.findByReservationCode("RES-001"))
+                    .thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> service.checkIn("RES-001"))
+                    .isInstanceOf(ResourceNotFoundException.class);
         }
     }
 

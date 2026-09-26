@@ -184,6 +184,29 @@ public class ReservationServiceImpl implements ReservationService {
     }
 
     @Override
+    @Transactional
+    public ReservationResponse checkIn(String reservationCode) {
+        Reservation reservation = reservationRepository
+                .findByReservationCode(reservationCode)
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.RESERVATION_NOT_FOUND.format()));
+        if (reservation.getReservationStatus() != ReservationStatus.CONFIRMED) {
+            throw new ApiException(HttpStatus.CONFLICT, ErrorCode.RESERVATION_INVALID_STATUS.format());
+        }
+        if (Boolean.TRUE.equals(reservation.getCheckedIn())) {
+            throw new ApiException(HttpStatus.CONFLICT, ErrorCode.RESERVATION_ALREADY_CHECKED_IN.format());
+        }
+        reservation.setCheckedIn(true);
+        reservation.setCheckedInAt(Instant.now());
+        reservationRepository.save(reservation);
+        log.info("Ticket checked in for reservation {}", reservationCode);
+
+        List<SeatResponse> seats = cinemaApi.findSeatsByReservationId(reservation.getId());
+        ShowtimeResponse showtime = cinemaApi.findShowtimeById(reservation.getShowtimeId());
+        UserResponse user = identityApi.findUserById(reservation.getUserId());
+        return ReservationMappingHelper.map(reservation, user, showtime, seats);
+    }
+
+    @Override
     public Optional<ReservationDetailResponse> findDetailByCode(String reservationCode) {
         return reservationRepository.findByReservationCode(reservationCode)
                 .map(r -> ReservationDetailResponse.builder()

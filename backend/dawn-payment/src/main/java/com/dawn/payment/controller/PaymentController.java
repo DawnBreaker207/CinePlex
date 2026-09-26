@@ -3,6 +3,7 @@ package com.dawn.payment.controller;
 import com.dawn.common.core.dto.response.ResponseObject;
 import com.dawn.payment.dto.request.PaymentRequest;
 import com.dawn.payment.dto.response.PaymentHandlerResponse;
+import com.dawn.payment.dto.response.PaymentRefundDTO;
 import com.dawn.payment.dto.response.PaymentResponse;
 import com.dawn.payment.service.impl.PaymentServiceImpl;
 import com.dawn.payment.utils.VNPayUtils;
@@ -15,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -65,5 +67,21 @@ public class PaymentController {
     public ResponseObject<String> approveRefund(@PathVariable String reservationId) {
         paymentService.approveRefund(reservationId);
         return ResponseObject.success("REFUNDED");
+    }
+
+    @GetMapping("/refunds/pending")
+    public ResponseObject<List<PaymentRefundDTO>> pendingRefunds() {
+        return ResponseObject.success(paymentService.listRefundRequests());
+    }
+
+    @PostMapping("/refunds/{reservationId}/reject")
+    public ResponseObject<String> rejectRefund(@PathVariable String reservationId) {
+        paymentService.rejectRefund(reservationId);
+        return ResponseObject.success("REJECTED");
+    }
+
+    @GetMapping("/failed")
+    public ResponseObject<List<PaymentRefundDTO>> failedPayments() {
+        return ResponseObject.success(paymentService.listFailedPayments());
     }
 }

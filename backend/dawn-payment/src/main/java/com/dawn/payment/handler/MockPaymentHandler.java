@@ -2,13 +2,17 @@ package com.dawn.payment.handler;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.util.Map;
 import java.util.UUID;
 
+// Test-only gateway that confirms any payment. MUST stay disabled in prod
+// (app.payment.mock-enabled=false) or anyone can book for free.
 @Component
+@ConditionalOnProperty(name = "dawn.app.payment.mock-enabled", havingValue = "true", matchIfMissing = true)
 @Slf4j
 public class MockPaymentHandler implements PaymentHandler {
 

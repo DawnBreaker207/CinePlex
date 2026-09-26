@@ -79,6 +79,30 @@ public class BookingRabbitConfig {
                 .with(RabbitMQConstants.QUEUE_BOOKING_PAYMENT_FAILED_DLQ);
     }
 
+    // Original-rk DLQ bindings: RepublishMessageRecoverer re-sends exhausted
+    // transient retries with the original routing key (see RabbitMQConfig).
+    @Bean
+    public Binding bookingPaymentCompletedRecovererBinding(
+            Queue bookingPaymentCompletedDlq,
+            DirectExchange paymentDlx
+    ) {
+        return BindingBuilder
+                .bind(bookingPaymentCompletedDlq)
+                .to(paymentDlx)
+                .with(RabbitMQConstants.RK_PAYMENT_COMPLETED);
+    }
+
+    @Bean
+    public Binding bookingPaymentFailedRecovererBinding(
+            Queue bookingPaymentFailedDlq,
+            DirectExchange paymentDlx
+    ) {
+        return BindingBuilder
+                .bind(bookingPaymentFailedDlq)
+                .to(paymentDlx)
+                .with(RabbitMQConstants.RK_PAYMENT_FAILED);
+    }
+
     // cinema.showtime.canceled
     @Bean
     public TopicExchange cinemaExchange() {
