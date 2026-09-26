@@ -8,7 +8,9 @@ import {
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { CurrencyPipe, NgClass } from '@angular/common';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { SettingsService } from '@core/services/settings/settings.service';
+import { inject } from '@angular/core';
 
 export interface ComboItem {
   name: string;
@@ -32,17 +34,36 @@ export class ComboComponent {
   readonly next = output<void>();
   readonly changed = output<ComboSelection[]>();
 
-  readonly combos: ComboItem[] = [
-    { name: 'Combo 1', desc: '1 bắp + 1 nước', price: 79000 },
-    { name: 'Combo 2', desc: '2 bắp + 2 nước', price: 139000 },
-    { name: 'Combo 3', desc: '1 ly nước lớn', price: 35000 },
-  ];
+  private translate = inject(TranslateService);
+  private settings = inject(SettingsService);
+
+  // computed over settings.lang() so names re-translate live on language switch.
+  readonly combos = computed<ComboItem[]>(() => {
+    void this.settings.lang();
+    return [
+      {
+        name: this.translate.instant('combo.item1.name'),
+        desc: this.translate.instant('combo.item1.desc'),
+        price: 79000,
+      },
+      {
+        name: this.translate.instant('combo.item2.name'),
+        desc: this.translate.instant('combo.item2.desc'),
+        price: 139000,
+      },
+      {
+        name: this.translate.instant('combo.item3.name'),
+        desc: this.translate.instant('combo.item3.desc'),
+        price: 35000,
+      },
+    ];
+  });
 
   private qtyMap = signal<Record<string, number>>({});
   readonly selections = computed<ComboSelection[]>(() =>
-    this.combos
-      .map((c) => ({ name: c.name, price: c.price, qty: this.qtyMap()[c.name] ?? 0 }))
-      .filter((s) => s.qty > 0),
+    this.combos()
+      .map((c: ComboItem) => ({ name: c.name, price: c.price, qty: this.qtyMap()[c.name] ?? 0 }))
+      .filter((s: ComboSelection) => s.qty > 0),
   );
   readonly comboTotal = computed(() =>
     this.selections().reduce((sum, s) => sum + s.price * s.qty, 0),

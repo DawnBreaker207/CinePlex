@@ -1,32 +1,33 @@
 <nz-result
-  class="bg-background max-w-lg mx-auto rounded-lg p-8"
+  class="bg-bg max-w-lg mx-auto rounded-lg p-8"
   [nzIcon]="Icon"
   [nzTitle]="Title"
   [nzSubTitle]="Subtitle"
 >
   <div nz-result-extra>
-    <button nz-button nzType="primary" nzShape="round" (click)="goToHomePage()">
+    <button nz-button nzType="primary" (click)="goToHomePage()">
       {{ "error.home" | translate }}
     </button>
   </div>
 </nz-result>
 
 <ng-template #Title>
-  <h1 class="ant-result-title text-4xl font-bold">
+  <h1 class="ant-result-title text-3xl font-bold">
     {{ "error.serverError" | translate }}
   </h1>
 </ng-template>
 
 <ng-template #Subtitle>
-  <h1 class="ant-result-subtitle text-sm">
+  <p class="ant-result-subtitle text-sm">
     {{ "error.serverErrorText" | translate }}
-  </h1>
+  </p>
 </ng-template>
 
 <ng-template #Icon>
   <img
     src="assets/illustrations/500.svg"
-    alt="500 Server Error Illustration"
+    alt=""
+    aria-hidden="true"
     loading="lazy"
     class="w-full h-full"
   />

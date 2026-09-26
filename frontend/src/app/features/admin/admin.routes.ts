@@ -11,6 +11,8 @@ import { VoucherListComponent } from '@features/admin/voucher/pages/voucher-list
 import { CheckInComponent } from '@features/admin/check-in/check-in.component';
 import { AuditComponent } from '@features/admin/audit/audit.component';
 import { RoomsComponent } from '@features/admin/theater/rooms/rooms.component';
+import { RefundComponent } from '@features/admin/refund/refund.component';
+import { PermissionComponent } from '@features/admin/permission/permission.component';
 
 export const ADMIN_ROUTES: Routes = [
   {
@@ -76,6 +78,16 @@ export const ADMIN_ROUTES: Routes = [
         path: 'audit-logs',
         title: 'admin.audit.title',
         component: AuditComponent,
+      },
+      {
+        path: 'refund',
+        title: 'admin.refund',
+        component: RefundComponent,
+      },
+      {
+        path: 'permission',
+        title: 'admin.permission',
+        component: PermissionComponent,
       },
     ],
   },

@@ -121,10 +121,14 @@ export class FormMovieComponent implements OnInit {
 
   readonly submitting = signal(false);
   readonly uploading = signal(false);
+  readonly posterBroken = signal(false);
   private initialFormValue: MovieRequest | null = null;
 
   ngOnInit() {
     this.initForm();
+    this.form.controls.poster.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.posterBroken.set(false));
     const { mode, movieId } = this.modelRef.getConfig().nzData;
     this.mode = mode;
     this.movieId = movieId;

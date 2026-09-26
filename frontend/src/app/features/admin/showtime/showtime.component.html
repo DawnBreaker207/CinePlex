@@ -4,7 +4,7 @@
     class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8"
   >
     <div>
-      <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-0">
+      <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-0">
         {{ "admin.showtime.manage" | translate }}
       </h1>
       <p class="text-gray-500 dark:text-gray-400 text-sm mt-1">
@@ -15,6 +15,7 @@
       nz-button
       nzType="primary"
       nzShape="circle"
+      [attr.aria-label]="'common.add' | translate"
       nz-tooltip
       [nzTooltipTitle]="'common.add' | translate"
       class=""
@@ -98,9 +99,9 @@
           <tr>
             @for (item of headerColumn; track item) {
               <th
-                [nzWidth]="'300px'"
+                [nzWidth]="'180px'"
                 [nzAlign]="'center'"
-                class="font-semibold text-gray-700 dark:text-gray-300"
+                class="font-semibold text-gray-600 dark:text-gray-300"
               >
                 {{ item | translate }}
               </th>
@@ -142,8 +143,8 @@
               <td class="text-center">
                 <div class="flex flex-col items-center">
                   <nz-tag
-                    nzColor="red"
-                    class="mb-0 font-bold text-sm px-3"
+                    nzColor="default"
+                    class="mb-0 font-bold font-mono tabular-nums text-sm px-3"
                   >
                     {{ timeFormat(item.showTime) }}
                   </nz-tag>
@@ -198,9 +199,11 @@
 
                   <nz-progress
                     [nzPercent]="
-                      ((item.totalSeats - item.availableSeats) /
-                        item.totalSeats) *
-                      100
+                      item.totalSeats > 0
+                        ? ((item.totalSeats - item.availableSeats) /
+                            item.totalSeats) *
+                          100
+                        : 0
                     "
                     [nzShowInfo]="false"
                     nzSize="small"
@@ -271,3 +274,5 @@
     </nz-alert>
   }
 </div>
+
+

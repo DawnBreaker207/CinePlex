@@ -9,7 +9,8 @@ interface CacheEntry {
 const cache = new Map<string, CacheEntry>();
 const TTL = 300_000;
 
-// Never cache realtime-varying data.
+// Never cache realtime-varying data. /user and /permissions are excluded too:
+// admin mutations (status toggle, grant/revoke) must read fresh on next load.
 const NO_CACHE = [
   '/seats/',
   '/reservation',
@@ -19,6 +20,8 @@ const NO_CACHE = [
   '/dashboard/',
   '/notification/',
   '/audit-logs',
+  '/user',
+  '/permissions/',
 ];
 
 export const CacheInterceptor: HttpInterceptorFn = (req, next) => {

@@ -22,7 +22,7 @@ export class UserService {
         }
       });
     }
-    return this.http.get<ApiRes<ResponsePage<User[]>>>(`${this.URL}`).pipe(
+    return this.http.get<ApiRes<ResponsePage<User[]>>>(`${this.URL}`, { params }).pipe(
       map((res) => res.data),
       catchError(this.handleError<ResponsePage<User[]>>('Get users')),
     );

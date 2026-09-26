@@ -34,8 +34,14 @@ export class ShowtimeSectionComponent {
   readonly selectedDate = input.required<Date>();
   readonly cinemas = input.required<CinemaGroup[]>();
   readonly dateChange = output<Date>();
+  readonly showtimeSelect = output<{ showtimeId: number; theaterId: number }>();
 
   selectDate(date: Date) {
     this.dateChange.emit(date);
+  }
+
+  selectShowtime(cinemaId: number, show: CinemaShowtime) {
+    if (show.availableSeats === 0) return;
+    this.showtimeSelect.emit({ showtimeId: show.id, theaterId: cinemaId });
   }
 }

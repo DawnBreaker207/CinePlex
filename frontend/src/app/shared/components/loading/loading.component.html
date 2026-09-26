@@ -1,16 +1,16 @@
 <nz-spin
- class="relative w-full h-full min-h-[19rem] transition-all duration-300"
- [nzSpinning]="!!isLoading() || loadingService.isLoading()"
- [nzIndicator]="indicator"
-  [nzTip]="tip() | translate"
+  class="relative w-full h-full min-h-[19rem] transition-opacity duration-300"
+  [nzSpinning]="!!isLoading() || loadingService.isLoading()"
+  [nzIndicator]="indicator"
+   [nzTip]="tip() | translate"
 >
- <ng-content></ng-content>
+  <ng-content></ng-content>
 </nz-spin>
 
 <ng-template #indicator>
- <div
- class="absolute inset-0 flex flex-col items-center justify-center z-50 pointer-events-none bg-white/10 backdrop-blur-[1px]"
- >
+  <div
+  class="absolute inset-0 flex flex-col items-center justify-center z-[60] bg-bg/60 dark:bg-black/50 backdrop-blur-[1px]"
+  >
  <app-spinner />
  @if (tip()) {
  <p

@@ -8,7 +8,10 @@ export class StatusTagsPipe implements PipeTransform {
     CONFIRMED: 'green',
     CANCELED: 'red',
     PENDING: 'orange',
+    FAILED: 'red',
+    EXPIRED: 'default',
     REFUNDED: 'gray',
+    REFUND_PENDING: 'orange',
 
     MOMO: 'purple',
     VNPAY: 'blue',

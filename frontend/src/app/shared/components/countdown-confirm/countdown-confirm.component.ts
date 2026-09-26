@@ -42,7 +42,7 @@ export class CountdownConfirmComponent implements OnInit, OnDestroy {
     this.timer = setInterval(() => {
       const next = this.remaining() - 1;
       if (next <= 0) {
-        this.modalRef.destroy();
+        this.modalRef.destroy({ confirmed: false, timedOut: true });
         return;
       }
       this.remaining.set(next);

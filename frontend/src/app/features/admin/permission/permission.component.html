@@ -1,0 +1,106 @@
+<div class="min-h-screen bg-[var(--color-bg-admin)] py-10 px-4 sm:px-6 lg:px-8">
+  <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+    <div>
+      <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">
+        {{ "permission.title" | translate }}
+      </h1>
+      <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+        {{ "permission.subtitle" | translate }}
+      </p>
+    </div>
+  </div>
+
+  <app-loading [isLoading]="store.loading()">
+    <div
+      class="bg-white dark:bg-[#161a20] rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-6 overflow-x-auto"
+    >
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-gray-100 dark:border-gray-700 text-left font-semibold text-gray-600 dark:text-gray-300">
+            <th class="py-3 px-2">
+              {{ "common.name" | translate }}
+            </th>
+            <th class="py-3 px-2">
+              {{ "common.email" | translate }}
+            </th>
+            <th class="py-3 px-2">
+              {{ "common.role" | translate }}
+            </th>
+            <th class="py-3 px-2 text-center">
+              {{ "permission.permissions" | translate }}
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (store.staff().length === 0) {
+            <tr>
+              <td
+                colspan="4"
+                class="py-10 text-center text-gray-500 dark:text-gray-400"
+              >
+                {{ "permission.empty" | translate }}
+              </td>
+            </tr>
+          }
+          @for (user of store.staff(); track trackByUser($index, user)) {
+            <tr
+              class="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+            >
+              <td class="py-3 px-2">
+                <div class="flex items-center gap-3">
+                  <nz-avatar
+                    nzSize="small"
+                    [nzText]="user.username.charAt(0).toUpperCase()"
+                    class="bg-primary/10 text-primary shrink-0"
+                  ></nz-avatar>
+                  <span
+                    class="font-medium text-gray-900 dark:text-gray-100 truncate"
+                    >{{ user.username }}</span
+                  >
+                </div>
+              </td>
+              <td class="py-3 px-2 text-gray-600 dark:text-gray-400">
+                {{ user.email }}
+              </td>
+              <td class="py-3 px-2">
+                <nz-tag [nzColor]="roleColor(user.role)">{{ user.role }}</nz-tag>
+              </td>
+              <td class="py-3 px-2">
+                <div class="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
+                  @for (key of keys; track key) {
+                    <label
+                      class="flex flex-col items-center gap-1 cursor-pointer"
+                      [class.opacity-50]="store.saving()"
+                    >
+                      <nz-switch
+                        [ngModel]="hasPerm(user.userId, key)"
+                        [nzDisabled]="store.saving() || store.denied()"
+                        (ngModelChange)="onToggle(user.userId, key, $event)"
+                      ></nz-switch>
+                      <span class="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400"
+                        ><nz-icon [nzType]="icons[key]" nzTheme="outline" />{{
+                          labels[key] | translate
+                        }}</span
+                      >
+                    </label>
+                  }
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </app-loading>
+
+  @if (store.error()) {
+    <nz-alert
+      nzType="error"
+      [nzMessage]="store.error()"
+      nzShowIcon
+      nzCloseable
+      (nzOnClose)="store.clearError()"
+    >
+    </nz-alert>
+  }
+</div>

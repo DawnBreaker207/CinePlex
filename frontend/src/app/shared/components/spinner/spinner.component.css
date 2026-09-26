@@ -12,14 +12,14 @@
   inset: 0;
   border-radius: 50%;
   border: 3px solid transparent;
-  border-top-color: var(--color-primary, #e53e3e);
+  border-top-color: var(--color-primary, #e4002b);
   animation: spin 0.8s linear infinite;
 }
 
 .spinner__ring--inner {
   inset: 6px;
   border-width: 2px;
-  border-top-color: var(--color-primary-dark, #c53030);
+  border-top-color: var(--color-primary-dark, #b4001f);
   animation-duration: 1.2s;
   animation-direction: reverse;
 }

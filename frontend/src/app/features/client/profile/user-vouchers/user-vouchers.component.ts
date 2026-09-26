@@ -1,5 +1,6 @@
 import {
   Component,
+  effect,
   inject,
   OnInit,
   signal,
@@ -36,6 +37,17 @@ import { ErrorStateComponent } from '@shared/components/error-state/error-state.
 export class UserVouchersComponent implements OnInit {
   readonly voucherStore = inject(VoucherStore);
   readonly code = signal('');
+  private seenCount = 0;
+
+  constructor() {
+    // Clear the input only when a claim actually lands (not on error —
+    // the user would have to retype the code).
+    effect(() => {
+      const n = this.voucherStore.userVouchers().length;
+      if (n > this.seenCount && this.code() !== '') this.code.set('');
+      this.seenCount = n;
+    });
+  }
 
   ngOnInit() {
     this.voucherStore.loadUserVouchers();
@@ -43,9 +55,8 @@ export class UserVouchersComponent implements OnInit {
 
   claim() {
     const code = this.code().trim().toUpperCase();
-    if (!code) return;
+    if (!code || this.voucherStore.saving()) return;
     this.voucherStore.claimVoucher(code);
-    this.code.set('');
   }
 
   statusColor(status: string): string {

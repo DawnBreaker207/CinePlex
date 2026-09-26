@@ -17,11 +17,32 @@
       <app-navbar [breadcrumbs]="breadcrumbs()" />
     </nz-header>
 
+    <!-- MOBILE NAV: sider is hidden below md -->
+    <nav
+      class="md:hidden shrink-0 border-b border-slate-200 dark:border-gray-700 bg-white dark:bg-[#161a20] overflow-x-auto"
+      [attr.aria-label]="'adminLayout.title' | translate"
+    >
+      <ul class="flex gap-1 px-3 py-2 min-w-max">
+        @for (item of mobileNav; track item.path) {
+          <li>
+            <a
+              [routerLink]="item.path"
+              routerLinkActive="text-primary bg-primary-light/60 dark:bg-primary/10"
+              [routerLinkActiveOptions]="{ exact: item.path === '/admin/dashboard' }"
+              class="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-slate-600 dark:text-gray-300 whitespace-nowrap"
+            >
+              <nz-icon [nzType]="item.icon" nzTheme="outline" aria-hidden="true" />
+              {{ item.label | translate }}
+            </a>
+          </li>
+        }
+      </ul>
+    </nav>
+
     <!-- CONTENT AREA -->
     <nz-content
       id="main-content"
       class="flex-1 overflow-y-auto overflow-x-hidden bg-slate-50 dark:bg-[#0b0d10]"
-      style="content-visibility: auto"
     >
       <router-outlet />
       <nz-footer class="text-center text-slate-400 bg-transparent py-6">

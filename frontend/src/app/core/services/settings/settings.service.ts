@@ -48,8 +48,9 @@ export class SettingsService {
   private readTheme(): boolean {
     const saved = localStorage.getItem(THEME_KEY);
     if (saved === 'dark') return true;
-    if (saved === 'light') return false;
-    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    // DESIGN.md Class-Dark Rule: theme follows the stored user choice only,
+    // never the OS media query. Default to light.
+    return false;
   }
 }
 

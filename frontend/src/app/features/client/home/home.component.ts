@@ -21,6 +21,7 @@ import { HomeStore } from '@features/client/home/home.store';
 import { RecommendationService } from '@domain/movie/data-access/recommendation.service';
 import { Movie } from '@domain/movie/models/movie.model';
 import { TranslatePipe } from '@ngx-translate/core';
+import { ErrorStateComponent } from '@shared/components/error-state/error-state.component';
 import { NzTabsModule } from 'ng-zorro-antd/tabs';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { MovieItemComponent } from '@shared/components/movie-item/movie-item.component';
@@ -40,6 +41,7 @@ import { MovieItemComponent } from '@shared/components/movie-item/movie-item.com
     SliderComponent,
     TranslatePipe,
     MovieItemComponent,
+    ErrorStateComponent,
   ],
   providers: [NzImageService, HomeStore],
   templateUrl: './home.component.html',
@@ -69,6 +71,11 @@ export class HomeComponent implements OnInit {
   }
 
   ngOnInit() {
+    this.homeStore.initData();
+  }
+
+  reload() {
+    this.homeStore.clearError();
     this.homeStore.initData();
   }
 

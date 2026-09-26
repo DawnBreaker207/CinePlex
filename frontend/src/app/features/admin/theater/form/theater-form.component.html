@@ -3,8 +3,8 @@
     <!--  Poster-->
     <nz-col [nzSpan]="8">
       <nz-form-item class="mt-8">
-        <nz-form-label>{{ "common.theaterName" | translate }}</nz-form-label>
-        <nz-form-control>
+        <nz-form-label nzRequired>{{ "common.theaterName" | translate }}</nz-form-label>
+        <nz-form-control [nzErrorTip]="'admin.theater.namePlaceholder' | translate">
           <input
             nz-input
             formControlName="name"
@@ -17,8 +17,8 @@
       </nz-form-item>
 
       <nz-form-item class="mt-8">
-        <nz-form-label>{{ "common.location" | translate }}</nz-form-label>
-        <nz-form-control>
+        <nz-form-label nzRequired>{{ "common.location" | translate }}</nz-form-label>
+        <nz-form-control [nzErrorTip]="'admin.theater.locationPlaceholder' | translate">
           <input
             nz-input
             formControlName="location"
@@ -30,17 +30,20 @@
         </nz-form-control>
       </nz-form-item>
       <nz-form-item class="mt-8">
-        <nz-form-label>{{ "common.capacity" | translate }}</nz-form-label>
+        <nz-form-label nzRequired>{{ "common.capacity" | translate }}</nz-form-label>
 
-        <nz-select
-          formControlName="capacity"
-          [nzDisabled]="mode === 'view'"
-          [nzPlaceHolder]="'admin.theater.selectCapacity' | translate"
-        >
-          <nz-option [nzLabel]="40" [nzValue]="40"></nz-option>
-          <nz-option [nzLabel]="50" [nzValue]="50"></nz-option>
-          <nz-option [nzLabel]="60" [nzValue]="60"></nz-option>
-        </nz-select>
+        <nz-form-control [nzErrorTip]="'admin.theater.selectCapacity' | translate">
+          <nz-select
+            formControlName="capacity"
+            class="w-full"
+            [nzDisabled]="mode === 'view'"
+            [nzPlaceHolder]="'admin.theater.selectCapacity' | translate"
+          >
+            <nz-option [nzLabel]="40" [nzValue]="40"></nz-option>
+            <nz-option [nzLabel]="50" [nzValue]="50"></nz-option>
+            <nz-option [nzLabel]="60" [nzValue]="60"></nz-option>
+          </nz-select>
+        </nz-form-control>
       </nz-form-item>
     </nz-col>
   </nz-row>

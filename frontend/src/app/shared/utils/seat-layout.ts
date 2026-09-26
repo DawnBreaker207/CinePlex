@@ -20,15 +20,17 @@ export function trimOuterEmptyCells<T>(cells: FixedCell<T>[]): FixedCell<T>[] {
 }
 
 // Background/border/text classes per seat type (single source of truth for
-// the admin editor grid and legend).
+// the admin editor grid and legend). COUPLE purple is the one quarantined
+// non-token hue (DESIGN.md); everything else rides tokens with dark variants.
 export function seatTypeClass(seatType: string): string {
   switch (seatType) {
     case 'VIP':
-      return 'bg-[var(--color-gold)] text-white border-[var(--color-gold)]';
+      // Fixed ink on gold (both modes): white-on-gold fails contrast.
+      return 'bg-[var(--color-gold)] text-[#1a1a1a] border-[var(--color-gold)]';
     case 'COUPLE':
       return 'bg-purple-500 text-white border-purple-500';
     default:
-      return 'bg-slate-200 text-slate-600 border-slate-300 dark:bg-slate-700 dark:text-slate-200';
+      return 'bg-slate-200 text-slate-600 border-slate-300 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600';
   }
 }
 

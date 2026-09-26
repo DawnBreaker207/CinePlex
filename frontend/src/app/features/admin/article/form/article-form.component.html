@@ -29,7 +29,7 @@
       <nz-form-label nzRequired
         >{{ "admin.article.imageUrl" | translate }}
       </nz-form-label>
-      <nz-form-control>
+      <nz-form-control [nzErrorTip]="'common.required' | translate">
         <input
           nz-input
           formControlName="thumbnail"
@@ -68,7 +68,7 @@
       <nz-form-label nzRequired
         >{{ "admin.article.form.summary" | translate }}
       </nz-form-label>
-      <nz-form-control>
+      <nz-form-control [nzErrorTip]="'common.required' | translate">
         <textarea
           nz-input
           formControlName="summary"
@@ -85,14 +85,14 @@
     <nz-form-label nzRequired>{{
       "admin.article.form.content" | translate
     }}</nz-form-label>
-    <nz-form-control [nzSpan]="24">
+    <nz-form-control [nzSpan]="24" [nzErrorTip]="'common.required' | translate">
       <quill-editor
         formControlName="content"
         [modules]="quillConfig"
         [styles]="{
           height: '25rem',
-          backgroundColor: 'f0f0f0',
-          color: 'black',
+          backgroundColor: 'var(--color-surface-card)',
+          color: 'var(--color-surface)',
         }"
         class="block-lg"
       ></quill-editor>
@@ -103,7 +103,7 @@
   <div class="grid grid-cols-2 gap-6">
     <nz-form-item>
       <nz-form-label>{{ "common.category" | translate }}</nz-form-label>
-      <nz-form-control>
+      <nz-form-control [nzErrorTip]="'common.required' | translate">
         <nz-select formControlName="type">
           <nz-option
             [nzValue]="ArticleType.UNKNOWN"
@@ -123,7 +123,7 @@
 
     <nz-form-item>
       <nz-form-label>{{ "common.status" | translate }} </nz-form-label>
-      <nz-form-control>
+      <nz-form-control [nzErrorTip]="'common.required' | translate">
         <nz-select formControlName="status">
           <nz-option
             [nzValue]="ArticleStatus.DRAFT"
@@ -149,7 +149,7 @@
       nz-button
       nzType="primary"
       [nzLoading]="isLoading()"
-      [disabled]="form.invalid"
+      [disabled]="form.invalid || isLoading()"
       (click)="submit()"
     >
       {{

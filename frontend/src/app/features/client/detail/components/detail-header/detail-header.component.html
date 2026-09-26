@@ -5,12 +5,12 @@
         [style.backgroundImage]="
           'url(' +
           (movie().backdrop ||
-            'https://placehold.co/1400x700/1A202C/F8FAFC?text=Dawn+Cinema') +
+            'https://placehold.co/1400x700/1A202C/F8FAFC?text=CinePlex') +
           ')'
         "
       ></div>
       <div
-        class="absolute inset-0 bg-gradient-to-t from-[#111827] via-[#111827]/80 to-black/20"
+        class="absolute inset-0 bg-gradient-to-t from-[#0b0d10] via-[#0b0d10]/80 to-black/20"
       ></div>
       <div
         class="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-slate-50 to-transparent"
@@ -20,11 +20,12 @@
         class="relative mx-auto flex h-full max-w-5xl items-end gap-8 px-4 pb-10 md:px-6"
       >
         <div
-          class="hidden w-56 shrink-0 translate-y-14 overflow-hidden rounded-xl border border-white/15 shadow-2xl md:block"
+          class="hidden w-56 shrink-0 translate-y-14 overflow-hidden rounded-xl border border-white/15 md:block"
         >
           <img
             [src]="movie().poster || movie().backdrop"
             [alt]="movie().title"
+            loading="lazy"
             class="h-full w-full object-cover"
           />
         </div>
@@ -34,7 +35,7 @@
             class="mb-2 flex flex-wrap items-center gap-3 text-sm text-slate-200"
           >
             <span>{{ movie().releaseDate | date: 'dd/MM/yyyy' }}</span>
-            <span>• {{ movie().duration }} phút</span>
+            <span>• {{ movie().duration }} {{ 'detail.minutes' | translate }}</span>
           </div>
 
           <h1
@@ -61,7 +62,8 @@
             <button
               nz-button
               nzType="primary"
-              class="rounded-lg border-none bg-[var(--color-primary)] px-6 font-semibold text-white hover:bg-[#C53030]"
+              (click)="bookNow.emit()"
+              class="rounded-lg border-none bg-primary px-6 font-semibold text-white min-h-11"
             >
               {{ 'detail.bookNow' | translate }}
             </button>
@@ -69,9 +71,10 @@
             <button
               nz-button
               nzType="default"
-              class="rounded-lg border border-white/50 bg-white/10 px-6 text-white hover:border-white hover:bg-white/20"
+              (click)="soon()"
+              class="rounded-lg border border-white/50 bg-white/10 px-6 text-white hover:border-white hover:bg-white/20 min-h-11"
             >
-              <nz-icon nzType="play-circle" nzTheme="fill" class="mr-2" />
+              <nz-icon nzType="play-circle" nzTheme="fill" class="mr-2" aria-hidden="true" />
               {{ 'detail.watchTrailer' | translate }}
             </button>
           </div>

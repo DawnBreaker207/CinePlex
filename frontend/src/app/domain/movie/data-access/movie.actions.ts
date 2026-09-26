@@ -7,7 +7,7 @@ export const MovieActions = createActionGroup({
   events: {
     // API
     // Load all
-    'Load Movies': props<{ page: number; size: number }>(),
+    'Load Movies': props<{ page: number; size: number; sort?: string }>(),
     'Load Movies Success': props<{ movies: Movie[]; pagination: Pagination }>(),
     'Load Movies Failed': props<{ error: unknown }>(),
 

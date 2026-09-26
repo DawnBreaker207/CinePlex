@@ -1,0 +1,132 @@
+<div class="min-h-screen bg-[var(--color-bg-admin)] py-10 px-4 sm:px-6 lg:px-8">
+  <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+    <div>
+      <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">
+        {{ "refund.title" | translate }}
+      </h1>
+      <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+        {{ "refund.subtitle" | translate }}
+      </p>
+    </div>
+    <button
+      nz-button
+      nzType="default"
+      nz-tooltip
+      [nzTooltipTitle]="'common.reload' | translate"
+      [nzLoading]="store.loading()"
+      (click)="store.loadRefunds()"
+    >
+      <nz-icon nzType="reload" nzTheme="outline" />
+      {{ "common.reload" | translate }}
+    </button>
+  </div>
+
+  <app-loading [isLoading]="store.loading()">
+    <div
+      class="bg-white dark:bg-[#161a20] rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-6 overflow-x-auto"
+    >
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-gray-100 dark:border-gray-700 text-left font-semibold text-gray-600 dark:text-gray-300">
+            <th class="py-3 px-2">
+              {{ "refund.reservation" | translate }}
+            </th>
+            <th class="py-3 px-2 text-right">
+              {{ "refund.amount" | translate }}
+            </th>
+            <th class="py-3 px-2">
+              {{ "refund.method" | translate }}
+            </th>
+            <th class="py-3 px-2">
+              {{ "refund.paidAt" | translate }}
+            </th>
+            <th class="py-3 px-2">
+              {{ "refund.requestedAt" | translate }}
+            </th>
+            <th class="py-3 px-2 text-center">
+              {{ "common.actions" | translate }}
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (!store.hasRefunds()) {
+            <tr>
+              <td
+                colspan="6"
+                class="py-10 text-center text-gray-500 dark:text-gray-400"
+              >
+                {{ "refund.empty" | translate }}
+              </td>
+            </tr>
+          }
+          @for (item of store.refunds(); track item.reservationId) {
+            <tr
+              class="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+            >
+              <td class="py-3 px-2">
+                <span
+                  class="bg-info/10 text-info text-xs px-2 py-0.5 rounded border border-info/20 font-mono"
+                >
+                  {{ item.reservationId }}
+                </span>
+              </td>
+              <td
+                class="py-3 px-2 text-right font-semibold text-warning"
+              >
+                {{ item.amount | currencyFormat }}
+              </td>
+              <td class="py-3 px-2">
+                <nz-tag nzColor="default">{{ item.method }}</nz-tag>
+              </td>
+              <td class="py-3 px-2 text-gray-600 dark:text-gray-400">
+                {{ item.paidAt | date: "dd/MM/yyyy HH:mm" }}
+              </td>
+              <td class="py-3 px-2 text-gray-600 dark:text-gray-400">
+                {{ item.createdAt | date: "dd/MM/yyyy HH:mm" }}
+              </td>
+              <td class="py-3 px-2 text-center">
+                <div class="flex justify-center gap-2">
+                  <button
+                    nz-button
+                    nzType="primary"
+                    nzSize="small"
+                    nz-tooltip
+                    [nzTooltipTitle]="'refund.approve' | translate"
+                    [nzLoading]="store.saving()"
+                    [disabled]="store.saving()"
+                    (click)="onApprove(item.reservationId)"
+                  >
+                    <nz-icon nzType="check-circle" nzTheme="outline" />
+                    {{ "refund.approve" | translate }}
+                  </button>
+                  <button
+                    nz-button
+                    nzSize="small"
+                    nzDanger
+                    nz-tooltip
+                    [nzTooltipTitle]="'refund.reject' | translate"
+                    [disabled]="store.saving()"
+                    (click)="onReject(item.reservationId)"
+                  >
+                    {{ "refund.reject" | translate }}
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </app-loading>
+
+  @if (store.error()) {
+    <nz-alert
+      nzType="error"
+      [nzMessage]="store.error()"
+      nzShowIcon
+      nzCloseable
+      (nzOnClose)="store.clearError()"
+    >
+    </nz-alert>
+  }
+</div>

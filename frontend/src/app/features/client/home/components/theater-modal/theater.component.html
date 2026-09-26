@@ -1,10 +1,14 @@
 <div>
   <div class="mb-4">
-    <div class="block font-semibold mb-2">
+    <label
+      for="theater-modal-select"
+      class="block font-semibold mb-2 text-gray-800 dark:text-gray-100"
+    >
       {{ "home.selectTheater" | translate }}
-    </div>
+    </label>
     <select
-      class="w-full p-2 border border-gray-300 rounded"
+      id="theater-modal-select"
+      class="w-full p-2 border border-border rounded-lg bg-white dark:bg-[#161a20] text-gray-800 dark:text-gray-100 min-h-11"
       (change)="onSelect($event)"
       [value]="selectedTheaterId() ?? ''"
     >

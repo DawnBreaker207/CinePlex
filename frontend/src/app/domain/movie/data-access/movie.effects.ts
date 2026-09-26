@@ -24,12 +24,15 @@ export class MovieEffects {
   loadMovies$ = createEffect(() => {
     return this.actions$.pipe(
       ofType(MovieActions.loadMovies),
-      switchMap(({ page, size }) => {
+      switchMap(({ page, size, sort }) => {
         const cache$ = from(this.storage.getMovies(page, size)).pipe(
           filter((res) => res.content.length > 0),
         );
 
-        const network$ = this.movieService.getMovieLists({ page, size }).pipe(
+        // Spring Pageable reads `sort=field,dir`; FilterSort has no such key.
+        const network$ = this.movieService
+          .getMovieLists({ page, size, ...(sort ? { sort } : {}) })
+          .pipe(
           tap(({ content }) => this.storage.cacheMovie(content)),
           catchError((err) => {
             console.error('Network error ', err);

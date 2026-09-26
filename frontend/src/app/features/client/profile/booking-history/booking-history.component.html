@@ -1,4 +1,4 @@
-<div class="p-6 md:p-8 h-full overflow-y-auto max-h-[800px]">
+<div class="p-6 md:p-8 h-full overflow-y-auto max-h-[70vh]">
   <h2
     class="text-lg font-bold text-gray-800 mb-6 border-b border-gray-100 pb-2"
   >
@@ -12,13 +12,14 @@
   <div class="grid grid-cols-1 gap-4">
     @for (ticket of tickets(); track ticket.reservationId) {
       <div
-        class="group flex flex-col sm:flex-row bg-white order border-gray-200 rounded-xl overflow-hidden hover:border-primary/50 hover:shadow-md transition-all duration-300"
+        class="group flex flex-col sm:flex-row bg-white dark:bg-[#161a20] border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden transition-colors"
       >
         <!-- Poster -->
-        <div class="sm:w-32 h-40 sm:h-auto bg-gray-100 relative shrink-0">
+        <div class="sm:w-32 h-40 sm:h-auto bg-gray-100 dark:bg-gray-800 relative shrink-0">
           <img
             [src]="ticket.moviePoster"
             [alt]="ticket.movieTitle"
+            loading="lazy"
             class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           />
         </div>
@@ -27,33 +28,33 @@
         <div class="flex-1 p-4 flex flex-col justify-between">
           <div>
             <div class="flex justify-between items-start">
-              <h3 class="font-bold text-gray-900 text-lg line-clamp-1">
+              <h3 class="font-bold text-gray-900 dark:text-gray-100 text-lg line-clamp-1">
                 {{ ticket.movieTitle }}
               </h3>
               <span
-                class="text-xs font-mono text-gray-400 bg-gray-50 px-2 py-1 rounded"
+                class="text-xs font-mono tabular-nums text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 px-2 py-1 rounded"
                 >#{{ ticket.reservationId }}</span
               >
             </div>
 
-            <div class="mt-2 space-y-1 text-sm text-gray-600">
+            <div class="mt-2 space-y-1 text-sm text-gray-600 dark:text-gray-300">
               <p class="flex items-center gap-2">
-                <nz-icon nzType="environment" class="text-gray-400" />
+                <nz-icon nzType="environment" class="text-gray-400" aria-hidden="true" />
                 {{ ticket.theater }}
-                <!-- - {{ ticket.showtime }}-->
               </p>
 
               <p class="flex items-center gap-2">
-                <nz-icon nzType="calendar" class="text-gray-400" />
+                <nz-icon nzType="calendar" class="text-gray-400" aria-hidden="true" />
                 {{ ticket.date | date: "dd/MM/yyyy" }} -
-                <span class="font-semibold text-primary">
+                <span class="font-semibold font-mono tabular-nums text-primary">
                   {{ ticket.time }}
                 </span>
               </p>
 
               <p class="flex items-center gap-2">
-                <nz-icon nzType="appstore" class="text-gray-400" />
-                {{ "booking.seat" | translate }}: {{ ticket.seats.join(",") }}
+                <nz-icon nzType="appstore" class="text-gray-400" aria-hidden="true" />
+                {{ "booking.seat" | translate }}:
+                <span class="font-mono tabular-nums">{{ ticket.seats.join(", ") }}</span>
               </p>
             </div>
           </div>
@@ -85,6 +86,7 @@
     [nzFooter]="null"
     (nzOnCancel)="closeTicketDetail()"
     [nzWidth]="400"
+    [nzStyle]="{ maxWidth: 'calc(100vw - 2rem)' }"
     [nzCentered]="true"
   >
     <ng-container *nzModalContent>

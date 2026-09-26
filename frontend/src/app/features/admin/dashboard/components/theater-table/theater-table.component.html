@@ -2,27 +2,31 @@
   <nz-table nzTemplateMode class="w-full min-w-[300px]">
     <thead>
       <tr>
-        <th>{{ "common.theater" | translate }}</th>
-        <th>{{ "common.ticket" | translate }}</th>
-        <th>{{ "admin.dashboard.revenue" | translate }}</th>
+        <th class="font-semibold text-gray-600 dark:text-gray-300">{{ "common.theater" | translate }}</th>
+        <th class="font-semibold text-gray-600 dark:text-gray-300">{{ "common.ticket" | translate }}</th>
+        <th class="font-semibold text-gray-600 dark:text-gray-300">{{ "admin.dashboard.revenue" | translate }}</th>
       </tr>
     </thead>
     <tbody>
       @for (item of data(); track item; let i = $index) {
         <tr>
           <td>
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 min-w-0">
               <span
-                class="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold text-white shrink-0"
-                [class]="i < 3 ? 'bg-primary' : 'bg-gray-400 dark:bg-gray-600'"
+                class="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold tabular-nums shrink-0"
+                [class]="
+                  i < 3
+                    ? 'bg-gray-800 dark:bg-gray-200 text-white dark:text-gray-900'
+                    : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+                "
               >
                 {{ i + 1 }}
               </span>
-              {{ item.theaterName }}
+              <span class="truncate" [title]="item.theaterName">{{ item.theaterName }}</span>
             </div>
           </td>
-          <td>{{ item.ticketsSold }}</td>
-          <td>{{ item.totalRevenue | currencyFormat }}</td>
+          <td class="font-mono tabular-nums">{{ item.ticketsSold }}</td>
+          <td class="font-mono tabular-nums">{{ item.totalRevenue | currencyFormat }}</td>
         </tr>
       } @empty {
         <tr>

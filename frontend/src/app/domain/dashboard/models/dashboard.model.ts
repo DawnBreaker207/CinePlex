@@ -33,11 +33,19 @@ export interface RevenuePoint {
 
 export interface Operation {
   id: string;
-  type: 'FAILED_PAYMENT' | 'REFUND_REQUEST' | 'LOW_OCCUPANCY';
+  type: 'FAILED_PAYMENT' | 'REFUND_REQUEST';
   title: string;
   detail: string;
   amount?: number;
+  method?: string;
   time: string;
+}
+
+export interface OperationAction {
+  id: string;
+  type: Operation['type'];
+  action: 'retry' | 'approve' | 'reject';
+  method?: string;
 }
 
 export interface DashboardSummary {

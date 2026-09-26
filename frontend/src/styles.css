@@ -13,6 +13,7 @@
   --color-muted: #6b6b6b;
   --color-border: #e9e6e1;
   --color-bg: #f7f6f4;
+  --color-bg-admin: #f7f6f4;
   --color-success: #2d7d46;
   --color-warning: #d97706;
   --color-info: #2563eb;
@@ -49,6 +50,7 @@
   --color-muted: #a0aec0;
   --color-border: #2d3748;
   --color-bg: #0b0d10;
+  --color-bg-admin: #0b0d10;
   --color-surface: #edf2f7;
   --color-surface-card: #161a20;
   --color-text-secondary: #a0aec0;
@@ -266,7 +268,7 @@
   background-color: #161a20;
 }
 .dark .ant-modal-mask {
-  background-color: rgba(0, 0, 0, 0.6);
+  background-color: rgba(0, 0, 0, 0.45);
 }
 .dark .ant-modal .text-gray-900,
 .dark .ant-modal .text-gray-800 {
@@ -419,22 +421,7 @@ h6 {
   }
 }
 
-/* Admin dashboard tabs: brand theme sync */
-.dashboard-tabs .ant-tabs-tab-btn {
-  color: var(--color-text-secondary, #6b7280);
-}
-.dashboard-tabs .ant-tabs-tab:hover .ant-tabs-tab-btn {
-  color: var(--color-primary);
-}
-.dashboard-tabs .ant-tabs-tab-active .ant-tabs-tab-btn {
-  color: var(--color-primary) !important;
-  font-weight: 600;
-}
-.dashboard-tabs .ant-tabs-ink-bar {
-  background: var(--color-primary) !important;
-}
-
-/* Dashboard tabs: brand theming */
+/* Dashboard tabs: brand theming (single source) */
 .dashboard-tabs .ant-tabs-tab-btn {
   color: var(--color-text-secondary);
 }
@@ -487,10 +474,10 @@ h6 {
     .ant-picker-cell-range-start
   ):not(.ant-picker-cell-range-end):not(.ant-picker-cell-disabled):hover
   .ant-picker-cell-inner {
-  background: rgba(228, 0, 43, 0.12) !important;
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent) !important;
 }
 .ant-picker-dropdown .ant-picker-week-panel-row-selected td {
-  background: rgba(228, 0, 43, 0.12) !important;
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent) !important;
 }
 .ant-picker-dropdown .ant-picker-ok button {
   background: var(--color-primary);

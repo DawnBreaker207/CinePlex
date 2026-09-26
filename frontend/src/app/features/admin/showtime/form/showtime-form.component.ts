@@ -20,6 +20,9 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NzSelectModule } from 'ng-zorro-antd/select';
 import { NzTimePickerModule } from 'ng-zorro-antd/time-picker';
 import { NzIconModule } from 'ng-zorro-antd/icon';
+import { NzInputNumberModule } from 'ng-zorro-antd/input-number';
+import { NzTagModule } from 'ng-zorro-antd/tag';
+import { NzButtonModule } from 'ng-zorro-antd/button';
 import { selectAllTheaters } from '@domain/theater/data-access/theater.selectors';
 import { selectAllMovies } from '@domain/movie/data-access/movie.selectors';
 import { TheaterActions } from '@domain/theater/data-access/theater.actions';
@@ -58,6 +61,9 @@ import {
     NzSelectModule,
     NzTimePickerModule,
     NzIconModule,
+    NzInputNumberModule,
+    NzTagModule,
+    NzButtonModule,
     SlicePipe,
     TranslatePipe,
   ],
@@ -141,6 +147,11 @@ export class FormShowtimeComponent implements OnInit {
           this.isSearching.set(false);
         }
       });
+  }
+
+  clearSelectedMovie() {
+    this.selectedMovie.set(null);
+    this.form.controls.movieId.setValue(null);
   }
 
   selectMovie(movie: Movie) {

@@ -8,18 +8,26 @@ export const ErrorInterceptor: HttpInterceptorFn = (req, next) => {
   const errorService = inject(GlobalErrorService);
   const { maxRetries } = errorService.RETRY_CONFIG;
 
-  return next(req).pipe(
-    retry({
-      count: maxRetries,
-      delay: (error: HttpErrorResponse, retryCount) => {
-        if (errorService.shouldRetry(error.status)) {
-          const delayTime = errorService.getRetryDelay(retryCount);
+  // Retry is safe only for idempotent reads — never replay POST/PUT/DELETE
+  // (payment, refund, check-in) where a replay can double-charge or double-apply.
+  const withRetry =
+    req.method === 'GET'
+      ? next(req).pipe(
+          retry({
+            count: maxRetries,
+            delay: (error: HttpErrorResponse, retryCount) => {
+              if (errorService.shouldRetry(error.status)) {
+                const delayTime = errorService.getRetryDelay(retryCount);
 
-          return timer(delayTime);
-        }
-        return throwError(() => error);
-      },
-    }),
+                return timer(delayTime);
+              }
+              return throwError(() => error);
+            },
+          }),
+        )
+      : next(req);
+
+  return withRetry.pipe(
     catchError((error: HttpErrorResponse) => {
       const shouldSkip = req.context.get(SKIP_ERROR_NOTIFICATION);
       errorService.handleError(error, shouldSkip);

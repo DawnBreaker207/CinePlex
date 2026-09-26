@@ -40,7 +40,7 @@ RouterLink,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SidebarComponent {
-  isCollapsed = input<boolean>(true);
+  isCollapsed = input<boolean>(false);
   triggerCollapsed = output<boolean>();
   private readonly router = inject(Router);
   private readonly currentUrl = signal(this.router.url);
@@ -55,6 +55,9 @@ export class SidebarComponent {
   }
 
   isActive(path: string): boolean {
-    return this.currentUrl().split('?')[0] === path;
+    const url = this.currentUrl().split('?')[0];
+    // Prefix match so children (e.g. /admin/theater/:id/rooms) keep the
+    // parent highlighted; dashboard stays exact to avoid always-on state.
+    return path === '/admin/dashboard' ? url === path : url.startsWith(path);
   }
 }

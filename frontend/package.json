@@ -91,5 +91,12 @@
     "prettier-plugin-organize-imports": "^4.3.0",
     "prettier-plugin-tailwindcss": "^0.7.2",
     "typescript": "~5.8.2"
+  },
+  "allowScripts": {
+    "@parcel/watcher@2.5.1": true,
+    "@tailwindcss/oxide@4.1.11": true,
+    "esbuild@0.25.5": true,
+    "lmdb@3.4.1": true,
+    "msgpackr-extract@3.0.3": true
   }
 }

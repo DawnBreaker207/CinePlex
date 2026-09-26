@@ -35,8 +35,12 @@
 }
 
 :host ::ng-deep .ant-radio-wrapper-checked {
-  border-color: var(--color-primary, #e53e3e);
-  background-color: var(--color-primary-light, rgba(229, 62, 62, 0.08));
+  border-color: var(--color-primary, #e4002b);
+  background-color: var(--color-primary-light, #feecf0);
+}
+
+.dark :host ::ng-deep .ant-radio-wrapper-checked {
+  background-color: color-mix(in srgb, var(--color-primary) 12%, transparent);
 }
 
 :host ::ng-deep .ant-radio-wrapper .ant-radio {

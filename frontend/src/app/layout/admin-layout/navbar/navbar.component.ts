@@ -1,8 +1,10 @@
 import {
   Component,
+  ElementRef,
   inject,
   input,
   signal,
+  viewChild,
   ChangeDetectionStrategy,
 } from '@angular/core';
 import { NgClass } from '@angular/common';
@@ -21,7 +23,7 @@ import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
 import { AuthMenuComponent } from '@shared/components/auth-menu/auth-menu.component';
 import { Breadcrumb } from '../admin-layout.component';
 import { Router, RouterLink } from '@angular/router';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { InsightService } from '@domain/ai/data-access/insight.service';
 import { Insight } from '@domain/ai/models/insight.model';
 import { SocketService } from '@core/services/socket/socket.service';
@@ -47,16 +49,19 @@ export interface NavSuggestion {
   query?: string;
 }
 
-const ADMIN_PAGES: NavSuggestion[] = [
-  { kind: 'page', title: 'Phim', icon: 'play-square', route: ['/admin/movie'] },
-  { kind: 'page', title: 'Rạp', icon: 'shop', route: ['/admin/theater'] },
-  { kind: 'page', title: 'Suất chiếu', icon: 'calendar', route: ['/admin/showtime'] },
-  { kind: 'page', title: 'Vé đã đặt', icon: 'ordered-list', route: ['/admin/reservation'] },
-  { kind: 'page', title: 'Check-in', icon: 'scan', route: ['/admin/checkin'] },
-  { kind: 'page', title: 'Voucher', icon: 'tags', route: ['/admin/voucher'] },
-  { kind: 'page', title: 'Người dùng', icon: 'team', route: ['/admin/user'] },
-  { kind: 'page', title: 'Bài viết', icon: 'file-text', route: ['/admin/article'] },
-  { kind: 'page', title: 'Nhật ký hoạt động', icon: 'audit', route: ['/admin/audit-logs'] },
+const ADMIN_PAGES: { kind: 'page'; titleKey: string; icon: string; route: string[] }[] = [
+  { kind: 'page', titleKey: 'admin.dashboard', icon: 'appstore', route: ['/admin/dashboard'] },
+  { kind: 'page', titleKey: 'common.movies', icon: 'play-square', route: ['/admin/movie'] },
+  { kind: 'page', titleKey: 'sidebar.theaters', icon: 'shop', route: ['/admin/theater'] },
+  { kind: 'page', titleKey: 'sidebar.showtimes', icon: 'calendar', route: ['/admin/showtime'] },
+  { kind: 'page', titleKey: 'sidebar.bookings', icon: 'ordered-list', route: ['/admin/reservation'] },
+  { kind: 'page', titleKey: 'sidebar.checkin', icon: 'scan', route: ['/admin/checkin'] },
+  { kind: 'page', titleKey: 'profile.voucher', icon: 'tags', route: ['/admin/voucher'] },
+  { kind: 'page', titleKey: 'sidebar.refunds', icon: 'transaction', route: ['/admin/refund'] },
+  { kind: 'page', titleKey: 'sidebar.users', icon: 'team', route: ['/admin/user'] },
+  { kind: 'page', titleKey: 'sidebar.articles', icon: 'file-text', route: ['/admin/article'] },
+  { kind: 'page', titleKey: 'sidebar.audit', icon: 'audit', route: ['/admin/audit-logs'] },
+  { kind: 'page', titleKey: 'sidebar.permissions', icon: 'safety-certificate', route: ['/admin/permission'] },
 ];
 
 @Component({
@@ -87,12 +92,14 @@ export class NavbarComponent {
   private readonly socket = inject(SocketService);
   private readonly movieSvc = inject(MovieService);
   private readonly theaterSvc = inject(TheaterService);
+  private readonly translate = inject(TranslateService);
   readonly unreadInsights = this.insightsSvc.unread;
   readonly searchTerm = signal('');
   readonly suggestions = signal<NavSuggestion[]>([]);
   readonly suggestionsOpen = signal(false);
   readonly activeIndex = signal(0);
   private readonly search$ = new Subject<string>();
+  private searchRoot = viewChild<ElementRef>('searchRoot');
 
   constructor() {
     this.insightsSvc.load().subscribe();
@@ -230,17 +237,26 @@ export class NavbarComponent {
     }
   }
 
-  closeSuggestions() {
-    setTimeout(() => this.suggestionsOpen.set(false), 150);
+  closeSuggestions(event?: FocusEvent) {
+    // No setTimeout race: mousedown on a suggestion fires before blur, and
+    // focus moving inside the search root keeps the list open.
+    const next = event?.relatedTarget as HTMLElement | null;
+    if (next && this.searchRoot()?.nativeElement.contains(next)) return;
+    this.suggestionsOpen.set(false);
   }
 
   private matchPages(q: string): NavSuggestion[] {
     const term = normalize(q);
     if (!term) return [];
     return ADMIN_PAGES.filter((p) => {
-      const t = normalize(p.title);
+      const t = normalize(this.translate.instant(p.titleKey));
       return t.includes(term) || term.includes(t);
-    });
+    }).map((p) => ({
+      kind: p.kind,
+      title: this.translate.instant(p.titleKey),
+      icon: p.icon,
+      route: p.route,
+    }));
   }
 }
 

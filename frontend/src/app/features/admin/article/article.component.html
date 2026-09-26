@@ -15,6 +15,7 @@
       nzType="primary"
       nzSize="large"
       nzShape="circle"
+      [attr.aria-label]="'common.add' | translate"
       nz-tooltip
       [nzTooltipTitle]="'common.add' | translate"
       (click)="openDrawer()"
@@ -52,7 +53,7 @@
         <thead>
           <tr>
             @for (header of headerColumn; track header) {
-              <th>{{ header | translate }}</th>
+              <th class="font-semibold text-gray-600 dark:text-gray-300">{{ header | translate }}</th>
             }
           </tr>
         </thead>
@@ -82,7 +83,7 @@
                 </div>
               </td>
               <td>
-                <nz-tag [nzColor]="'#e53e3e'">
+                <nz-tag nzColor="default">
                   {{ item.type }}
                 </nz-tag>
               </td>
@@ -153,3 +154,5 @@
     </div>
   </app-loading>
 </div>
+
+

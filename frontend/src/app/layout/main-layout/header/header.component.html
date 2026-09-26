@@ -5,7 +5,7 @@
   class="sticky top-0 z-40 shadow-sm"
 >
     <div
-      class="w-full bg-[url('/assets/bg-header.png')] bg-repeat-x bg-bottom h-[7.5rem] bg-[#f7f6f4] dark:bg-[#0b0d10]"
+      class="w-full bg-[url('/assets/bg-header.png')] bg-repeat-x bg-bottom h-[7.5rem] bg-bg"
     >
     <div
       class="max-w-5xl mx-auto flex gap-6 items-center justify-between h-full"
@@ -22,35 +22,73 @@
             class="text-3xl text-primary group-hover:scale-110 transition-transform"
           />
           <span
-            class="text-2xl font-bold tracking-tighter text-gray-900 hidden sm:block"
+            class="text-2xl font-bold tracking-tighter text-gray-900 dark:text-gray-100 hidden sm:block"
             >CINE<span class="text-primary">PLEX</span></span
           >
         </a>
 
-        <div class="hidden md:block h-8 w-px bg-gray-300"></div>
+        <div class="hidden md:block h-8 w-px bg-gray-300 dark:bg-gray-700"></div>
 
         <app-theater-select />
       </div>
 
       <!-- MIDDLE: Navigation-->
       <div
-        class="hidden lg:flex items-center gap-8 font-medium text-gray-600 text-sm xl:text-base"
+        class="hidden lg:flex items-center gap-8 font-medium text-gray-600 dark:text-gray-300 text-sm xl:text-base"
       >
         @for (header of headers; track header) {
           <a
-            class="font-bold hover:text-primary transition-colors py-2"
+            class="font-bold uppercase hover:text-primary transition-colors py-2"
             [routerLink]="header.path"
             routerLinkActive="text-primary"
+            [routerLinkActiveOptions]="{ exact: header.path === '/home' }"
+            ariaCurrentWhenActive="page"
           >
-            {{ header.name | translate | uppercase }}
+            {{ header.name | translate }}
           </a>
         }
       </div>
 
       <!-- RIGHT SIDE -->
-      <div class="flex items-center gap-3 h-10 shrink-8">
+      <div class="flex items-center gap-3 h-10 shrink-0">
+        <button
+          type="button"
+          nz-button
+          nzType="text"
+          class="lg:hidden"
+          [attr.aria-label]="'layout.quickSearch' | translate"
+          [attr.aria-expanded]="mobileOpen()"
+          (click)="mobileOpen.set(!mobileOpen())"
+        >
+          <nz-icon [nzType]="mobileOpen() ? 'close' : 'menu'" class="text-xl" />
+        </button>
         <app-auth-menu />
       </div>
     </div>
+
+    <!-- MOBILE NAV -->
+    @if (mobileOpen()) {
+      <nav
+        class="lg:hidden border-t border-gray-200 dark:border-gray-700 bg-bg"
+        [attr.aria-label]="'layout.quickSearch' | translate"
+      >
+        <ul class="max-w-5xl mx-auto px-4 py-2 flex flex-col">
+          @for (header of headers; track header) {
+            <li>
+              <a
+                class="block font-bold uppercase text-sm text-gray-700 dark:text-gray-200 hover:text-primary transition-colors py-3 border-b border-gray-100 dark:border-gray-800 last:border-0"
+                [routerLink]="header.path"
+                routerLinkActive="text-primary"
+                [routerLinkActiveOptions]="{ exact: header.path === '/home' }"
+                ariaCurrentWhenActive="page"
+                (click)="mobileOpen.set(false)"
+              >
+                {{ header.name | translate }}
+              </a>
+            </li>
+          }
+        </ul>
+      </nav>
+    }
   </div>
 </nz-header>

@@ -1,7 +1,7 @@
 export const environment = {
-  apiUrl: 'http://localhost:8888/api/v1',
-  // TEMP-TEST: skip AuthGuard/AdminGuard for local testing — set false before commit
-  bypassAuth: true,
+  // 127.0.0.1, not localhost: localhost resolves to ::1 on some stacks
+  // while dev servers listen IPv4-only, breaking API calls intermittently.
+  apiUrl: 'http://127.0.0.1:8888/api/v1',
   tmbd: {
     apiUrl: 'https://api.themoviedb.org/3',
     imageUrl: 'https://image.tmdb.org/t/p/original',

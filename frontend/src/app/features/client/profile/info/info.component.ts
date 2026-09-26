@@ -81,10 +81,10 @@ export class InfoComponent implements OnInit {
       email: [{ value: this.user().email, disabled: true }],
       avatar: [''],
       phone: [
-        '0912345678',
+        this.user().phone ?? '',
         [Validators.required, Validators.pattern(/^[0-9]{10}$/)],
       ],
-      address: ['Hà Nội, Việt Nam'],
+      address: [this.user().address ?? ''],
     });
   }
 

@@ -10,6 +10,8 @@ import {
   ActivatedRoute,
   NavigationEnd,
   Router,
+  RouterLink,
+  RouterLinkActive,
   RouterOutlet,
 } from '@angular/router';
 import { filter } from 'rxjs';
@@ -20,6 +22,7 @@ import {
 } from 'ng-zorro-antd/layout';
 import { SidebarComponent } from './sidebar/sidebar.component';
 import { NavbarComponent } from './navbar/navbar.component';
+import { NzIconDirective } from 'ng-zorro-antd/icon';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TranslatePipe } from '@ngx-translate/core';
 import { ChatComponent } from '@shared/components/chat/chat.component';
@@ -34,8 +37,11 @@ export interface Breadcrumb {
   imports: [
     NzContentComponent,
     NzLayoutModule,
+    RouterLink,
+    RouterLinkActive,
     RouterOutlet,
     NzFooterComponent,
+    NzIconDirective,
     SidebarComponent,
     NavbarComponent,
     TranslatePipe,
@@ -67,6 +73,23 @@ export class AdminLayoutComponent implements OnInit {
   breadcrumbs = signal<Breadcrumb[]>([]);
   isCollapsed = false;
   protected readonly date = new Date();
+
+  // Mobile fallback: the sider is hidden below md, so the same destinations
+  // ride a horizontal strip. Labels/icons mirror sidebar.component.html.
+  readonly mobileNav = [
+    { path: '/admin/dashboard', icon: 'appstore', label: 'sidebar.statistics' },
+    { path: '/admin/movie', icon: 'play-square', label: 'common.movies' },
+    { path: '/admin/theater', icon: 'shop', label: 'sidebar.theaters' },
+    { path: '/admin/showtime', icon: 'calendar', label: 'sidebar.showtimes' },
+    { path: '/admin/reservation', icon: 'ordered-list', label: 'sidebar.bookings' },
+    { path: '/admin/checkin', icon: 'scan', label: 'sidebar.checkin' },
+    { path: '/admin/voucher', icon: 'tags', label: 'profile.voucher' },
+    { path: '/admin/refund', icon: 'transaction', label: 'sidebar.refunds' },
+    { path: '/admin/user', icon: 'team', label: 'sidebar.users' },
+    { path: '/admin/article', icon: 'file-text', label: 'sidebar.articles' },
+    { path: '/admin/audit-logs', icon: 'audit', label: 'sidebar.audit' },
+    { path: '/admin/permission', icon: 'safety-certificate', label: 'sidebar.permissions' },
+  ];
 
   toggleCollapse(collapsed: boolean) {
     this.isCollapsed = collapsed;

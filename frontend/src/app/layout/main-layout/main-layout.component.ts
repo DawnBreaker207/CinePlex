@@ -6,6 +6,10 @@ import {
 } from '@angular/core';
 import { NzContentComponent, NzLayoutComponent } from 'ng-zorro-antd/layout';
 import {
+  NavigationCancel,
+  NavigationEnd,
+  NavigationError,
+  NavigationStart,
   RouteConfigLoadEnd,
   RouteConfigLoadStart,
   Router,
@@ -42,9 +46,17 @@ export class MainLayoutComponent {
 
   constructor() {
     this.router.events.pipe(takeUntilDestroyed()).subscribe((event) => {
-      if (event instanceof RouteConfigLoadStart) {
+      if (
+        event instanceof RouteConfigLoadStart ||
+        event instanceof NavigationStart
+      ) {
         this.loading.set(true);
-      } else if (event instanceof RouteConfigLoadEnd) {
+      } else if (
+        event instanceof RouteConfigLoadEnd ||
+        event instanceof NavigationEnd ||
+        event instanceof NavigationCancel ||
+        event instanceof NavigationError
+      ) {
         this.loading.set(false);
       }
     });

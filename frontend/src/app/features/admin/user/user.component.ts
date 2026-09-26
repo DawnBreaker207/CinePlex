@@ -17,7 +17,8 @@ import { NzAlertModule } from 'ng-zorro-antd/alert';
 import { IsDeletedPipe } from '@shared/pipes/is-deleted.pipe';
 import { LoadingComponent } from '@shared/components/loading/loading.component';
 import { UserStore } from '@domain/user/data-access/user.store';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { NzModalService } from 'ng-zorro-antd/modal';
 import { HEADER_COLUMNS } from '@core/constants/column';
 
 @Component({
@@ -40,9 +41,12 @@ DatePipe,
   ],
   templateUrl: './user.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  providers: [NzModalService],
 })
 export class UserComponent implements OnInit {
   readonly userStore = inject(UserStore);
+  private modalService = inject(NzModalService);
+  private translate = inject(TranslateService);
 
   headerColumns = HEADER_COLUMNS.USER;
   pageIndex = 1;
@@ -57,7 +61,16 @@ export class UserComponent implements OnInit {
   }
 
   updateStatus(id: number, isActive: boolean) {
-    this.userStore.updateUserStatus({ id: id, isActive: isActive });
+    // Disabling an account locks the user out — confirm first. The switch
+    // is bound to store state, so cancelling snaps it back automatically.
+    this.modalService.confirm({
+      nzTitle: this.translate.instant('admin.user.statusTitle'),
+      nzContent: this.translate.instant('admin.user.statusContent'),
+      nzOkText: this.translate.instant('common.confirm'),
+      nzOkDanger: !isActive,
+      nzCancelText: this.translate.instant('common.cancel'),
+      nzOnOk: () => this.userStore.updateUserStatus({ id, isActive }),
+    });
   }
 
   onQueryParamsChange(params: NzTableQueryParams) {

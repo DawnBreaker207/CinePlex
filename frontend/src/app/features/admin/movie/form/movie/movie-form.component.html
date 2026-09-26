@@ -255,17 +255,18 @@
           class="w-full aspect-[2/3] bg-white dark:bg-[#161a20] rounded-2xl border-2 border-dashed border-gray-300 relative overflow-hidden flex items-center justify-center group shadow-md transition-[box-shadow,border-color] hover:shadow-xl hover:border-primary/40"
         >
           <!-- Poster preview with fallback -->
-          @if (form.get("poster")?.value) {
+          @if (form.get("poster")?.value && !posterBroken()) {
             <img
               [src]="form.get('poster')?.value"
+              (error)="posterBroken.set(true)"
               loading="lazy"
               class="w-full h-full object-cover transition-transform duration-500"
-              alt="Poster Preview"
+              [alt]="'common.poster' | translate"
             />
-
+          } @else if (form.get("poster")?.value) {
             <!-- Fallback -->
             <div
-              class="absolute inset-0 hidden flex-col items-center justify-center text-gray-500 dark:text-gray-400 bg-gray-100"
+              class="absolute inset-0 flex flex-col items-center justify-center text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800"
             >
               <nz-icon
                 nzType="frown"

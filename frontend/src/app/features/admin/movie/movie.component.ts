@@ -89,6 +89,7 @@ export class MovieComponent {
   readonly headerColumn = HEADER_COLUMNS.MOVIE;
   readonly ICON_COLORS = ICON_COLORS;
   readonly searchCtrl = this.fb.control('');
+  readonly sortCtrl = this.fb.control<'newest' | 'oldest'>('newest');
 
   isSearching = signal(false);
   readonly selectedMovie = this.store.selectSignal(selectSelectedMovie);
@@ -104,6 +105,10 @@ export class MovieComponent {
   });
 
   constructor() {
+    this.sortCtrl.valueChanges
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => this.onSortChange());
+
     debouncedSearch(this.searchCtrl, 500)
       .pipe(takeUntilDestroyed())
       .subscribe((search) => {
@@ -134,17 +139,38 @@ export class MovieComponent {
     this.searchCtrl.setValue('', { emitEvent: false });
   }
 
+  sortParam(): string {
+    return this.sortCtrl.value === 'oldest'
+      ? 'releaseDate,asc'
+      : 'releaseDate,desc';
+  }
+
+  onSortChange(): void {
+    this.store.dispatch(
+      MovieActions.loadMovies({ page: 0, size: 10, sort: this.sortParam() }),
+    );
+  }
+
   onQueryParamsChange(params: NzTableQueryParams) {
     const { pageIndex, pageSize } = params;
     this.store.dispatch(
-      MovieActions.loadMovies({ page: pageIndex - 1, size: pageSize }),
+      MovieActions.loadMovies({
+        page: pageIndex - 1,
+        size: pageSize,
+        sort: this.sortParam(),
+      }),
     );
   }
 
   openMovieModal(mode: 'add' | 'edit' | 'view', id?: string | number) {
     const modal = this.modalService.create({
       nzContent: FormMovieComponent,
-      nzTitle: mode,
+      nzTitle:
+        mode === 'add'
+          ? this.translate.instant('movie.form.newTitle')
+          : mode === 'edit'
+            ? this.translate.instant('movie.form.editTitle')
+            : this.translate.instant('common.viewDetail'),
       nzClosable: true,
       nzData: {
         mode: mode,

@@ -9,7 +9,6 @@ import {
   provideZonelessChangeDetection,
 } from '@angular/core';
 import {
-  PreloadAllModules,
   provideRouter,
   Router,
   TitleStrategy,
@@ -19,6 +18,7 @@ import {
   withPreloading,
   withViewTransitions,
 } from '@angular/router';
+import { SelectivePreloadingStrategy } from '@core/config/selective-preloading.strategy';
 import { routes } from './app.routes';
 import { Store } from '@ngrx/store';
 import { AuthService } from '@core/auth/auth.service';
@@ -92,7 +92,7 @@ export const appConfig: ApplicationConfig = {
       }),
       withComponentInputBinding(),
       withViewTransitions(),
-      withPreloading(PreloadAllModules),
+      withPreloading(SelectivePreloadingStrategy),
       withNavigationErrorHandler((error) => {
         console.error('Navigation error:', error);
         inject(Router).navigate(['/errors/500']);
@@ -119,8 +119,8 @@ export const appConfig: ApplicationConfig = {
       store.dispatch(MovieActions.loadMovies({ page: 0, size: 100 }));
       store.dispatch(TheaterActions.loadTheaters({ page: 0, size: 10 }));
       // Restore session after F5: valid httpOnly cookie refetches access token.
-      // Fire-and-forget, never blocks boot; guests fail silently.
-      inject(AuthService).silentRefresh().subscribe();
+      // Fire-and-forget, never blocks boot; guests fail silently by design.
+      inject(AuthService).silentRefresh().subscribe({ error: () => {} });
     }),
     provideTranslateService({
       fallbackLang: 'vi',

@@ -4,9 +4,9 @@
   <div class="mb-6 text-center">
     @if (status() === "success") {
       <div
-        class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100"
+        class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-success/10"
       >
-        <nz-icon nzType="check" class="text-3xl text-green-500" />
+        <nz-icon nzType="check" class="text-3xl text-success" aria-hidden="true" />
       </div>
       <h2 class="mb-1 text-xl font-semibold text-gray-800 dark:text-gray-100">
         {{ "reservation.success" | translate }}
@@ -17,9 +17,9 @@
       </p>
     } @else {
       <div
-        class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-100"
+        class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-danger/10"
       >
-        <nz-icon nzType="close" class="text-3xl text-primary" />
+        <nz-icon nzType="close" class="text-3xl text-danger" aria-hidden="true" />
       </div>
       <h2 class="mb-1 text-xl font-semibold text-gray-800 dark:text-gray-100">
         {{ "reservation.paymentFailed" | translate }}
@@ -63,13 +63,15 @@
       {{ "reservation.backHome" | translate }}
     </button>
     @if (status() === "success" && autoRedirect()) {
-      <p class="text-center text-xs text-gray-400">
-        {{ "reservation.autoRedirect" | translate }} {{ countdown() }}s
+      <p class="text-center text-xs text-gray-500 dark:text-gray-400">
+        <span aria-live="polite" class="font-mono tabular-nums"
+          >{{ "reservation.autoRedirect" | translate }} {{ countdown() }}s</span
+        >
         <button
           nz-button
           nzType="link"
-          nzSize="small"
           (click)="cancelAutoRedirect()"
+          class="min-h-11"
         >
           {{ "reservation.cancelAuto" | translate }}
         </button>

@@ -73,6 +73,15 @@ export class ReservationService {
     );
   }
 
+  checkIn(code: string) {
+    return this.http
+      .post<ApiRes<Reservation>>(`${this.URL}/${code}/checkin`, {})
+      .pipe(
+        map((res) => res.data),
+        catchError(this.handleError<Reservation>('Check in')),
+      );
+  }
+
   getUserReservation(id: number, status: ReservationStatus = 'CONFIRMED') {
     const params = new HttpParams().set('userId', id).set('status', status);
     return this.http

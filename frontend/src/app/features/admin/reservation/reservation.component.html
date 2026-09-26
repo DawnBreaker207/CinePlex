@@ -34,12 +34,29 @@
           </nz-input-group>
         </div>
 
+        <!--  User ID  -->
+        <div class="">
+          <nz-form-label
+            class="font-semibold text-sm text-gray-700 dark:text-gray-300"
+            >{{ "admin.reservation.userId" | translate }}</nz-form-label
+          >
+          <nz-input-group nzPrefixIcon="user" class="w-full rounded-lg">
+            <input
+              formControlName="userId"
+              nz-input
+              [placeholder]="'admin.reservation.userId' | translate"
+              [attr.aria-label]="'admin.reservation.userId' | translate"
+              inputmode="numeric"
+            />
+          </nz-input-group>
+        </div>
+
         <!--  Status  -->
         <div class="">
           <nz-form-label
             class="font-semibold text-sm text-gray-700 dark:text-gray-300"
-            >{{ "admin.reservation.orderStatus" | translate }}
-          </nz-form-label>
+            >{{ "admin.reservation.orderStatus" | translate }}</nz-form-label
+          >
           <nz-select
             formControlName="reservationStatus"
             class="w-full"
@@ -47,7 +64,7 @@
             nzAllowClear
           >
             @for (s of reservationStatus; track s) {
-              <nz-option [nzLabel]="s.label" [nzValue]="s.value"></nz-option>
+              <nz-option [nzLabel]="s.label | translate" [nzValue]="s.value"></nz-option>
             }
           </nz-select>
         </div>
@@ -75,8 +92,9 @@
               formControlName="totalAmount"
               nz-input
               [placeholder]="'common.price' | translate"
+              [attr.aria-label]="'common.total' | translate"
               type="number"
-              class="w-full sm:w-[100px]"
+              class="w-full sm:min-w-[140px]"
             />
           </nz-input-group>
         </div>
@@ -114,6 +132,7 @@
           <button
             nz-button
             nzType="default"
+            type="button"
             (click)="clearFilter()"
             class="flex-1"
           >
@@ -146,7 +165,7 @@
           <thead class="bg-gray-50 dark:bg-gray-800">
             <tr>
               @for (item of headerColumn; track item) {
-                <th nzAlign="center">
+                <th nzAlign="center" class="font-semibold text-gray-600 dark:text-gray-300">
                   {{ item | translate }}
                 </th>
               }

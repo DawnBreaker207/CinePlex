@@ -1,31 +1,33 @@
 <div class="mx-auto w-full max-w-5xl px-4 pb-12 pt-6 md:px-6">
-  <h1 class="text-2xl font-bold text-gray-900 sm:text-3xl">
+  <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100 sm:text-3xl">
     {{ "nav.news" | translate }}
   </h1>
 
   @if (vouchers().length > 0) {
-    <h2 class="mb-3 mt-6 text-xl font-bold text-slate-900">
+    <h2 class="mb-3 mt-6 text-xl font-bold text-slate-900 dark:text-gray-100">
       {{ "news.offers" | translate }}
     </h2>
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
       @for (v of vouchers(); track v.id) {
-        <div class="rounded-xl border-2 border-dashed border-[var(--color-primary)] bg-[var(--color-primary-light)]/40 p-4">
+        <div class="rounded-xl border-2 border-solid border-primary bg-primary-light/40 dark:bg-primary/10 p-4">
           <div class="flex items-center justify-between gap-2">
-            <span class="font-mono text-lg font-extrabold text-[var(--color-primary)]">
+            <span class="font-mono text-lg font-extrabold tabular-nums text-primary">
               {{ v.code }}
             </span>
             <button
               nz-button
               nzType="primary"
               nzSize="small"
-              class="rounded-lg font-semibold"
+              class="rounded-lg font-semibold min-h-11"
+              [nzLoading]="voucherStore.saving()"
+              [disabled]="voucherStore.saving()"
               (click)="claim(v.code)"
             >
               {{ "news.claim" | translate }}
             </button>
           </div>
-          <p class="mt-1 text-sm font-semibold text-slate-800">{{ v.name }}</p>
-          <p class="text-xs text-slate-500">
+          <p class="mt-1 text-sm font-semibold text-slate-800 dark:text-gray-100">{{ v.name }}</p>
+          <p class="text-xs font-mono tabular-nums text-slate-500 dark:text-gray-400">
             −{{ v.discountValue | currency: "VND" }}
             · {{ "voucher.validPeriod" | translate }}:
             {{ v.endAt | date: "dd/MM/yyyy" }}
@@ -35,24 +37,34 @@
     </div>
   }
 
-  <h2 class="mb-3 mt-8 text-xl font-bold text-slate-900">
+  <h2 class="mb-3 mt-8 text-xl font-bold text-slate-900 dark:text-gray-100">
     {{ "news.articles" | translate }}
   </h2>
 
   @if (loading()) {
     <nz-skeleton [nzActive]="true" [nzParagraph]="{ rows: 4 }" class="mt-6 block" />
+  } @else if (articlesError()) {
+    <app-error-state
+      [message]="'home.loadFailed' | translate"
+      (retry)="loadArticles()"
+      class="mt-6 block"
+    />
   } @else if (published().length === 0) {
-    <div class="mt-6 rounded-xl border border-slate-200 bg-white p-10 text-center">
+    <div class="mt-6 rounded-xl border border-slate-200 dark:border-gray-700 bg-white dark:bg-[#161a20] p-10 text-center">
       <nz-empty [nzNotFoundContent]="'admin.article.empty' | translate" />
     </div>
   } @else {
     <div class="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
       @for (a of published(); track a.id) {
         <article
-          class="cursor-pointer overflow-hidden rounded-xl border border-slate-200 bg-white transition-colors hover:border-[var(--color-primary)]"
+          class="cursor-pointer overflow-hidden rounded-xl border border-slate-200 dark:border-gray-700 bg-white dark:bg-[#161a20] transition-colors hover:border-primary"
           (click)="toggle(a.id)"
           (keyup.enter)="toggle(a.id)"
+          (keyup.space)="toggle(a.id)"
           tabindex="0"
+          role="button"
+          [attr.aria-expanded]="expandedId() === a.id"
+          [attr.aria-label]="a.title"
         >
           @if (a.thumbnail) {
             <img
@@ -63,15 +75,15 @@
             />
           }
           <div class="p-4">
-            <nz-tag nzColor="red">{{ a.type }}</nz-tag>
-            <h2 class="mt-2 text-lg font-bold text-slate-900">{{ a.title }}</h2>
-            <p class="mt-1 text-sm text-slate-500">
+            <nz-tag nzColor="default">{{ a.type }}</nz-tag>
+            <h2 class="mt-2 text-lg font-bold text-slate-900 dark:text-gray-100">{{ a.title }}</h2>
+            <p class="mt-1 text-sm text-slate-500 dark:text-gray-400">
               {{ a.summary }}
               @if (expandedId() !== a.id) {
                 <span>…</span>
               }
             </p>
-            <p class="mt-2 text-xs text-slate-400">
+            <p class="mt-2 text-xs font-mono tabular-nums text-slate-500 dark:text-gray-400">
               {{ a.author }} · {{ a.createdAt | date: "dd/MM/yyyy" }} ·
               {{ a.views }} {{ "article.views" | translate }}
             </p>

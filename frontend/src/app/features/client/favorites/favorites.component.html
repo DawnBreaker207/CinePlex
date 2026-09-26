@@ -1,6 +1,6 @@
 
     <div class="mx-auto w-full max-w-5xl px-4 py-8 md:px-6">
-      <h1 class="mb-6 text-3xl font-bold uppercase tracking-wide text-slate-900 dark:text-gray-100">
+      <h1 class="mb-6 text-3xl font-bold tracking-wide text-slate-900 dark:text-gray-100">
         {{ 'favorites.title' | translate }}
       </h1>
 
@@ -10,10 +10,11 @@
             @for (movie of movies; track movie.id) {
               <div nz-col [nzXs]="24" [nzSm]="12" [nzMd]="8" [nzLg]="6">
                 <div class="group overflow-hidden rounded-xl border border-border bg-white dark:bg-[#161a20]">
-                  <a [routerLink]="['/movie/detail', movie.id]" class="block h-44 bg-gray-100">
+                  <a [routerLink]="['/movie/detail', movie.id]" class="block h-44 bg-gray-100 dark:bg-gray-800" [attr.aria-label]="movie.title">
                     <img
                       [src]="movie.backdrop || movie.poster"
                       [alt]="movie.title"
+                      loading="lazy"
                       class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                     />
                   </a>
@@ -29,13 +30,15 @@
                       nz-button
                       nzType="text"
                       nzShape="circle"
-                      class="shrink-0"
-                      [attr.aria-label]="'favorites.remove' | translate"
+                      class="shrink-0 min-w-11 min-h-11 flex items-center justify-center"
+                      [attr.aria-label]="('favorites.remove' | translate) + ': ' + movie.title"
                       nz-tooltip
                       [nzTooltipTitle]="'favorites.remove' | translate"
+                      nzTooltipTrigger="click"
+                      nzTooltipPlacement="top"
                       (click)="remove(movie.id)"
                     >
-                      <nz-icon nzType="heart" nzTheme="fill" class="text-primary" />
+                      <nz-icon nzType="heart" nzTheme="fill" class="text-primary" aria-hidden="true" />
                     </button>
                   </div>
                 </div>

@@ -16,6 +16,7 @@
         nz-input
         class="rounded-lg"
         [placeholder]="'admin.audit.action' | translate"
+        [attr.aria-label]="'admin.audit.action' | translate"
         [ngModel]="action()"
         (ngModelChange)="action.set($event)"
       />
@@ -23,12 +24,14 @@
         nz-input
         class="rounded-lg"
         [placeholder]="'admin.audit.entity' | translate"
+        [attr.aria-label]="'admin.audit.entity' | translate"
         [ngModel]="entity()"
         (ngModelChange)="entity.set($event)"
       />
       <nz-select
         class="w-full"
         [nzPlaceHolder]="'common.status' | translate"
+        [attr.aria-label]="'common.status' | translate"
         [ngModel]="status()"
         (ngModelChange)="status.set($event)"
         nzAllowClear
@@ -58,7 +61,7 @@
 
   <app-loading [isLoading]="loading()">
     <div
-      class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-[#161a20]"
+      class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-[#161a20] overflow-x-auto"
     >
       <nz-table
         [nzData]="logs()"
@@ -71,22 +74,25 @@
       >
         <thead>
           <tr>
-            <th>{{ "common.time" | translate }}</th>
-            <th>{{ "admin.audit.actor" | translate }}</th>
-            <th>{{ "admin.audit.action" | translate }}</th>
-            <th>{{ "admin.audit.entity" | translate }}</th>
-            <th>{{ "common.status" | translate }}</th>
+            <th class="font-semibold text-gray-600 dark:text-gray-300">{{ "common.time" | translate }}</th>
+            <th class="font-semibold text-gray-600 dark:text-gray-300">{{ "admin.audit.actor" | translate }}</th>
+            <th class="font-semibold text-gray-600 dark:text-gray-300">{{ "admin.audit.action" | translate }}</th>
+            <th class="font-semibold text-gray-600 dark:text-gray-300">{{ "admin.audit.entity" | translate }}</th>
+            <th class="font-semibold text-gray-600 dark:text-gray-300">{{ "common.status" | translate }}</th>
           </tr>
         </thead>
         <tbody>
           @for (log of logs(); track log.id) {
             <tr>
-              <td class="font-mono text-xs">
-                {{ log.createdAt | date: "dd/MM HH:mm" }}
+              <td
+                class="font-mono text-xs whitespace-nowrap"
+                [title]="log.createdAt | date: 'dd/MM/yyyy HH:mm:ss'"
+              >
+                {{ log.createdAt | date: "dd/MM/yyyy HH:mm" }}
               </td>
               <td class="font-mono text-xs">#{{ log.actorId }}</td>
               <td>
-                <nz-tag [nzColor]="isRisky(log.action) ? 'gold' : 'default'">
+                <nz-tag [nzColor]="isRisky(log.action) ? 'orange' : 'default'" class="font-mono">
                   {{ log.action }}
                 </nz-tag>
               </td>

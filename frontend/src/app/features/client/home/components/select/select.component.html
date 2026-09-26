@@ -1,48 +1,52 @@
 <div
- class="hidden md:flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2 py-1 shadow-sm transition hover:border-[#E53E3E]/40"
+  class="hidden md:flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-gray-700 bg-white dark:bg-[#161a20] px-2 py-1 transition-colors hover:border-primary/40"
 >
 
- <nz-icon
- nzType="environment"
- nzTheme="outline"
- class="text-base text-[#E53E3E]"
- />
+  <nz-icon
+  nzType="environment"
+  nzTheme="outline"
+  class="text-base text-primary"
+  aria-hidden="true"
+  />
 
- <a
- nz-dropdown
- [nzDropdownMenu]="cinemaMenu"
- nzTrigger="click"
- class="flex cursor-pointer select-none items-center gap-1.5 py-0.5 text-xs font-semibold text-slate-700 transition-colors hover:text-[#E53E3E]"
- >
- <span class="max-w-[140px] truncate lg:max-w-[180px]">
-  {{ selectTheaterName() }}
- </span>
- <nz-icon
- nzType="down"
- class="text-[10px] text-slate-400 group-hover:text-[#E53E3E]"
- />
- </a>
+  <a
+  nz-dropdown
+  [nzDropdownMenu]="cinemaMenu"
+  nzTrigger="click"
+  class="flex cursor-pointer select-none items-center gap-1.5 py-0.5 text-xs font-semibold text-slate-700 dark:text-gray-200 transition-colors hover:text-primary"
+  >
+  <span class="max-w-[140px] truncate lg:max-w-[180px]">
+   {{ selectTheaterName() }}
+  </span>
+  <nz-icon
+  nzType="down"
+  class="text-xs text-slate-500"
+  aria-hidden="true"
+  />
+  </a>
 
- <nz-dropdown-menu #cinemaMenu="nzDropdownMenu">
- @if (theaterList(); as theaters) {
- <ul
- nz-menu
- class="my-2 max-h-64 w-full min-w-[220px] overflow-y-auto rounded-xl border border-slate-100 p-1.5 shadow-xl"
- >
- @for (theater of theaters; track theater.id) {
- <li
- nz-menu-item
- class="rounded-lg px-3 py-2 text-[13px] font-medium text-slate-700 transition-colors hover:bg-red-50 hover:text-[#E53E3E]"
- (click)="onSelect(theater.id)"
- (keyup.enter)="onSelect(theater.id)"
- tabindex="0"
- role="tab"
- [nzSelected]="currentTheaterId() === theater.id"
- >
- {{ theater.name }}
- </li>
- }
- </ul>
- }
- </nz-dropdown-menu>
+  <nz-dropdown-menu #cinemaMenu="nzDropdownMenu">
+  @if (theaterList(); as theaters) {
+  <ul
+  nz-menu
+  role="menu"
+  class="my-2 max-h-64 w-full min-w-[220px] overflow-y-auto rounded-xl border border-slate-100 dark:border-gray-700 p-1.5 shadow-xl"
+  >
+  @for (theater of theaters; track theater.id) {
+  <li
+  nz-menu-item
+  class="rounded-lg px-3 py-2 text-sm font-medium text-slate-700 dark:text-gray-200 transition-colors hover:bg-primary-light dark:hover:bg-primary/10 hover:text-primary min-h-11 flex items-center"
+  (click)="onSelect(theater.id)"
+  (keyup.enter)="onSelect(theater.id)"
+  (keyup.space)="onSelect(theater.id)"
+  tabindex="0"
+  role="menuitem"
+  [nzSelected]="currentTheaterId() === theater.id"
+  >
+  {{ theater.name }}
+  </li>
+  }
+  </ul>
+  }
+  </nz-dropdown-menu>
 </div>

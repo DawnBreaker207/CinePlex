@@ -3,12 +3,9 @@ import { inject } from '@angular/core';
 import { ToastService } from '@core/services/toast/toast.service';
 import { AuthService } from '@core/auth/auth.service';
 import { TranslateService } from '@ngx-translate/core';
-import { Observable, map, of } from 'rxjs';
-import { environment } from '@env/environment';
+import { Observable, map } from 'rxjs';
 
 export const AuthGuard: CanMatchFn = (_route, _segments): Observable<boolean | UrlTree> => {
-  // TEMP-TEST: bypass auth for local testing — remove before commit
-  if (environment.bypassAuth) return of(true);
   const toast = inject(ToastService);
   const router = inject(Router);
   const authService = inject(AuthService);

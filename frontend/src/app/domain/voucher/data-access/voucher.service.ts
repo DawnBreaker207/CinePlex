@@ -56,6 +56,13 @@ export class VoucherService {
     );
   }
 
+  approve(id: number) {
+    return this.http.put<ApiRes<Voucher>>(`${this.URL}/${id}/approve`, null).pipe(
+      map((res) => res.data),
+      catchError(this.handleError<Voucher>('voucher')),
+    );
+  }
+
   delete(id: number) {
     return this.http
       .delete<void>(`${this.URL}/${id}`)
@@ -96,8 +103,7 @@ export class VoucherService {
   private handleError<T>(operation = 'operation') {
     return (error: unknown): Observable<T> => {
       console.error(`${operation} failed:`, error);
-      const message = errorMessage(error) || `L?i ${operation}`;
-      return throwError(() => ({ message }));
+      return throwError(() => ({ message: errorMessage(error) }));
     };
   }
 }

@@ -18,9 +18,10 @@ import {
 import { computed, inject } from '@angular/core';
 import { Operation } from '@domain/dashboard/models/dashboard.model';
 import { DashboardService } from '@domain/dashboard/data-access/dashboard.service';
+import { PaymentService } from '@domain/payment/data-access/payment.service';
 import { SocketService } from '@core/services/socket/socket.service';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { catchError, finalize, of, pipe, switchMap, tap } from 'rxjs';
+import { catchError, finalize, forkJoin, of, pipe, switchMap, tap } from 'rxjs';
 import { formatDate } from '@shared/utils/date.helper';
 import { TranslateService } from '@ngx-translate/core';
 
@@ -126,6 +127,7 @@ export const DashboardStore = signalStore(
     (
       store,
       dashboardService = inject(DashboardService),
+      paymentService = inject(PaymentService),
       socketService = inject(SocketService),
       translate = inject(TranslateService),
     ) => {
@@ -155,7 +157,7 @@ export const DashboardStore = signalStore(
                 patchState(store, { operations: [] });
               }),
               catchError(() => {
-                patchState(store, { error: translate.instant('dashboard.loadFailed') });
+                patchState(store, { error: translate.instant('admin.dashboard.loadFailed') });
                 return of(null);
               }),
               finalize(() => patchState(store, { isLoading: false })),
@@ -191,10 +193,41 @@ export const DashboardStore = signalStore(
           });
           loadSummary();
         },
-        resolveOperation: (id: string) =>
-          patchState(store, {
-            operations: store.operations().filter((op) => op.id !== id),
-          }),
+        loadOperations: rxMethod<void>(
+          pipe(
+            switchMap(() =>
+              forkJoin({
+                refunds: paymentService.getRefundPending().pipe(catchError(() => of([]))),
+                failed: paymentService.getFailedPayments().pipe(catchError(() => of([]))),
+              }).pipe(
+                tap(({ refunds, failed }) =>
+                  patchState(store, {
+                    operations: [
+                      ...failed.map((p) => ({
+                        id: p.reservationId,
+                        type: 'FAILED_PAYMENT' as const,
+                        title: p.reservationId,
+                        detail: [p.method, p.statusReason].filter(Boolean).join(' • '),
+                        amount: p.amount,
+                        method: p.method,
+                        time: new Date(p.createdAt).toLocaleString('vi-VN'),
+                      })),
+                      ...refunds.map((p) => ({
+                        id: p.reservationId,
+                        type: 'REFUND_REQUEST' as const,
+                        title: p.reservationId,
+                        detail: p.method,
+                        amount: p.amount,
+                        method: p.method,
+                        time: new Date(p.createdAt).toLocaleString('vi-VN'),
+                      })),
+                    ],
+                  }),
+                ),
+              ),
+            ),
+          ),
+        ),
         toggleAutoUpdate: () => {
           const state = !store.isAutoUpdate();
           patchState(store, { isAutoUpdate: state });
@@ -223,6 +256,7 @@ export const DashboardStore = signalStore(
     onInit(store) {
       store.loadSummary();
       store.loadForecast();
+      store.loadOperations();
       store.listenRealtime();
     },
   }),

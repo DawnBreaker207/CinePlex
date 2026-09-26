@@ -2,9 +2,9 @@
   <div
     class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8"
   >
-    <div class="text-3xl font-bold text-gray-900 dark:text-gray-100">
+    <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">
       {{ "admin.user.manage" | translate }}
-    </div>
+    </h1>
   </div>
 
   @if (userStore.error(); as error) {
@@ -20,7 +20,7 @@
 
   <app-loading [isLoading]="userStore.loading()">
     <div
-      class="bg-white dark:bg-[#161a20] rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-6 overflow-hidden"
+      class="bg-white dark:bg-[#161a20] rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm p-6 overflow-x-auto"
     >
       <nz-table
         [nzData]="userStore.users()"
@@ -36,7 +36,7 @@
         <thead>
           <tr>
             @for (item of headerColumns; track item) {
-              <th>{{ item | translate }}</th>
+              <th class="font-semibold text-gray-600 dark:text-gray-300">{{ item | translate }}</th>
             }
           </tr>
         </thead>
@@ -59,12 +59,13 @@
               <td>
                 @let tag = !item.isActive | isDeleted;
                 <nz-tag [nzColor]="tag.color">
-                  {{ tag.label }}
+                  {{ tag.label | translate }}
                 </nz-tag>
               </td>
               <td>
                 <nz-switch
                   [ngModel]="item.isActive"
+                  [attr.aria-label]="'admin.user.toggleStatus' | translate"
                   (ngModelChange)="updateStatus(item.userId, $event)"
                   nz-tooltip
                   [nzTooltipTitle]="'admin.user.toggleStatus' | translate"

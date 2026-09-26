@@ -15,7 +15,7 @@
                 "
                 loading="lazy"
                 class="w-full h-full object-cover block"
-                alt=""
+                [alt]="selectedMovie()?.title || ('common.noImage' | translate)"
               />
             } @else {
               <div
@@ -58,6 +58,38 @@
               </nz-input-group>
             </nz-form-control>
           </nz-form-item>
+          @if (selectedMovie(); as picked) {
+            <div class="mt-2 flex items-center gap-3 rounded-lg border border-primary/40 bg-primary-light/40 p-2">
+              <img
+                [src]="picked.poster || 'https://via.placeholder.com/150x200'"
+                [alt]="picked.title"
+                loading="lazy"
+                class="w-10 h-14 object-cover rounded bg-gray-200 shrink-0"
+              />
+              <div class="min-w-0 flex-1">
+                <p class="font-bold text-gray-800 dark:text-gray-100 text-sm truncate">
+                  {{ picked.title }}
+                </p>
+                <p class="text-xs text-gray-500 dark:text-gray-400">
+                  {{ picked.releaseDate | date: "yyyy" }}
+                </p>
+              </div>
+              <button
+                type="button"
+                nz-button
+                nzType="text"
+                nzSize="small"
+                [attr.aria-label]="'common.delete' | translate"
+                (click)="clearSelectedMovie()"
+              >
+                <nz-icon nzType="close" />
+              </button>
+            </div>
+          } @else if (form.get("movieId")?.dirty && form.get("movieId")?.invalid) {
+            <p class="mt-2 text-xs text-danger">
+              {{ "admin.showtime.selectMovie" | translate }}
+            </p>
+          }
           @let results = searchResults();
           @if (results.length > 0) {
             <div
@@ -68,16 +100,18 @@
                   <li
                     (click)="selectMovie(movie)"
                     (keyup.enter)="selectMovie(movie)"
+                    (keyup.space)="selectMovie(movie)"
                     tabindex="0"
-                    role="tab"
-                    class="px-4 py-3 hover:bg-primary-light cursor-pointer flex gap-4 items-center border-b border-gray-50 last:border-0 transition-colors"
+                    role="option"
+                    [attr.aria-selected]="selectedMovie()?.id === movie.id"
+                    class="px-4 py-3 hover:bg-primary-light dark:hover:bg-primary/10 cursor-pointer flex gap-4 items-center border-b border-gray-50 dark:border-gray-700 last:border-0 transition-colors min-h-11"
                     [class.bg-primary-light]="selectedMovie()?.id === movie.id"
                   >
                     <img
                       [src]="
                         movie.poster || 'https://via.placeholder.com/150x200'
                       "
-                      alt=""
+                      [alt]="movie.title"
                       loading="lazy"
                       class="w-10 h-14 object-cover rounded bg-gray-200 shrink-0"
                     />
@@ -215,25 +249,14 @@
           <nz-form-control
             [nzErrorTip]="'admin.showtime.selectSeats' | translate"
           >
-            <nz-select
+            <nz-input-number
               formControlName="totalSeats"
               [nzDisabled]="mode === 'view'"
+              [nzMin]="1"
+              [nzMax]="1000"
               [nzPlaceHolder]="'admin.reservation.selectQuantity' | translate"
-              class="rounded-lg"
-            >
-              <nz-option
-                [nzLabel]="'admin.reservation.seats40' | translate"
-                [nzValue]="40"
-              ></nz-option>
-              <nz-option
-                [nzLabel]="'admin.reservation.seats50' | translate"
-                [nzValue]="50"
-              ></nz-option>
-              <nz-option
-                [nzLabel]="'admin.reservation.seats60' | translate"
-                [nzValue]="60"
-              ></nz-option>
-            </nz-select>
+              class="rounded-lg w-full"
+            ></nz-input-number>
           </nz-form-control>
         </nz-form-item>
       </div>

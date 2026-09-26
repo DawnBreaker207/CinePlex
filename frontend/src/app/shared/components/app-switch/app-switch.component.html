@@ -4,7 +4,7 @@
       role="switch"
       [attr.aria-checked]="checked()"
       (click)="toggle()"
-      class="inline-flex h-7 w-12 shrink-0 cursor-pointer items-center rounded-full border border-transparent outline-none transition-colors focus-visible:ring-2 focus-visible:ring-primary/50"
+      class="inline-flex h-7 w-12 min-w-12 min-h-7 shrink-0 cursor-pointer items-center rounded-full border border-transparent outline-none transition-colors focus-visible:ring-2 focus-visible:ring-focus"
       [class.bg-primary]="checked()"
       [class.bg-gray-300]="!checked()"
       [class.dark:bg-primary]="checked()"

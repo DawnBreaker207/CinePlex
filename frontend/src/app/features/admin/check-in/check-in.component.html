@@ -1,7 +1,7 @@
 
     <div class="min-h-screen bg-[var(--color-bg-admin)] px-4 py-10 sm:px-6 lg:px-8">
       <div class="mx-auto max-w-2xl">
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-gray-100">
           {{ 'checkin.title' | translate }}
         </h1>
         <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
@@ -28,7 +28,7 @@
               {{ 'common.search' | translate }}
             </button>
           </div>
-          <p class="mt-2 text-xs text-gray-400">
+          <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
             {{ 'checkin.hint' | translate }}
           </p>
         </div>
@@ -45,7 +45,7 @@
             <app-ticket-stub
               [title]="res.showtime.movieTitle"
               [subtitle]="res.showtime.theaterName"
-              [code]="res.id"
+              [code]="res.reservationCode || res.id"
               [amount]="res.totalAmount.toLocaleString('vi-VN') + ' đ'"
               [meta]="ticketMeta(res)"
             />
@@ -63,6 +63,8 @@
                 nzBlock
                 nzSize="large"
                 class="h-12 rounded-xl"
+                [nzLoading]="loading()"
+                [disabled]="loading()"
                 (click)="confirm()"
               >
                 <nz-icon nzType="check-circle" class="mr-2" />

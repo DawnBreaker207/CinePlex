@@ -18,6 +18,7 @@ import {
 } from '@domain/voucher/model/voucher.model';
 import { VoucherService } from '@domain/voucher/data-access/voucher.service';
 import { TranslateService } from '@ngx-translate/core';
+import { ToastService } from '@core/services/toast/toast.service';
 import { errorMessage } from '@shared/utils/error.helper';
 
 export interface VoucherState {
@@ -53,7 +54,13 @@ export const VoucherStore = signalStore(
     ),
   })),
 
-  withMethods((store, voucherService = inject(VoucherService), translate = inject(TranslateService)) => ({
+  withMethods(
+    (
+      store,
+      voucherService = inject(VoucherService),
+      translate = inject(TranslateService),
+      toast = inject(ToastService),
+    ) => ({
     setSelectedVoucher(voucher: Voucher | null) {
       patchState(store, { selectVoucher: voucher, error: null });
     },
@@ -187,6 +194,29 @@ export const VoucherStore = signalStore(
       ),
     ),
     //
+    approveVoucher: rxMethod<number>(
+      pipe(
+        tap(() => patchState(store, { saving: true, error: null })),
+        switchMap((id) =>
+          voucherService.approve(id).pipe(
+            tapResponse({
+              next: (voucher) => {
+                patchState(store, (state) => ({
+                  vouchers: state.vouchers.map((v) =>
+                    v.id === voucher.id ? voucher : v,
+                  ),
+                  selectVoucher: voucher,
+                  saving: false,
+                }));
+              },
+              error: (error) =>
+                patchState(store, { error: errorMessage(error), saving: false }),
+            }),
+          ),
+        ),
+      ),
+    ),
+    //
     calculateDiscount: rxMethod<{ code: string; total: number }>(
       pipe(
         tap(() =>
@@ -236,10 +266,16 @@ export const VoucherStore = signalStore(
           voucherService.claimVoucher(code).pipe(
             finalize(() => patchState(store, { saving: false })),
             tapResponse({
-              next: (claimed) =>
+              next: (claimed) => {
                 patchState(store, (s) => ({
                   userVouchers: [claimed, ...s.userVouchers],
-                })),
+                }));
+                toast.createNotification({
+                  type: 'success',
+                  title: claimed.code,
+                  message: translate.instant('voucher.claimed'),
+                });
+              },
               error: (error) =>
                 patchState(store, { error: errorMessage(error) }),
             }),

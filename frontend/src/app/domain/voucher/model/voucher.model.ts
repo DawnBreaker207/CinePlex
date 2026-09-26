@@ -15,7 +15,8 @@ export type VoucherStatus =
   | 'ACTIVE'
   | 'PAUSED'
   | 'EXPIRED'
-  | 'EXHAUSTED';
+  | 'EXHAUSTED'
+  | 'PENDING_APPROVAL';
 
 export interface Voucher extends DateModel {
   id: number;

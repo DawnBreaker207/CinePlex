@@ -114,7 +114,7 @@ private translate = inject(TranslateService);
   }
 
   ngOnInit() {
-    this.store.dispatch(TheaterActions.loadTheaters({ page: 0, size: 10 }));
+    this.store.dispatch(TheaterActions.loadTheaters({ page: 0, size: 200 }));
     this.store
       .select(selectAllTheaters)
       .pipe(

@@ -24,10 +24,14 @@ export class BarcodeComponent implements OnInit {
     const code = this.value();
     const el = this.barcodeEl()?.nativeElement;
     if (code && el) {
+      // Ink follows the theme: pure black vanishes on dark ticket cards.
+      const dark =
+        typeof document !== 'undefined' &&
+        document.documentElement.classList.contains('dark');
       try {
         JsBarcode(el, code, {
           format: 'CODE128',
-          lineColor: '#000',
+          lineColor: dark ? '#edf2f7' : '#1a1a1a',
           width: 2,
           height: 50,
           displayValue: false,

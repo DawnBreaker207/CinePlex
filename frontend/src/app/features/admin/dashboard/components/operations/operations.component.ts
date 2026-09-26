@@ -18,11 +18,10 @@ import {
   NzTrDirective,
 } from 'ng-zorro-antd/table';
 import { NzButtonModule } from 'ng-zorro-antd/button';
-import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { CurrencyFormatPipe } from '@shared/pipes/currency-format.pipe';
 import { CHART_COLORS } from '@shared/utils/colors';
-import { Operation } from '@domain/dashboard/models/dashboard.model';
-import { inject } from '@angular/core';
+import { Operation, OperationAction } from '@domain/dashboard/models/dashboard.model';
 
 type Filter = 'ALL' | Operation['type'];
 
@@ -47,9 +46,7 @@ type Filter = 'ALL' | Operation['type'];
 export class OperationsComponent {
   operations = input<Operation[]>([]);
   occupancy = input(0);
-  readonly resolve = output<string>();
-
-  private translate = inject(TranslateService);
+  readonly resolve = output<OperationAction>();
 
   readonly filter = signal<Filter>('ALL');
 
@@ -57,8 +54,6 @@ export class OperationsComponent {
     FAILED_PAYMENT: this.operations().filter((o) => o.type === 'FAILED_PAYMENT')
       .length,
     REFUND_REQUEST: this.operations().filter((o) => o.type === 'REFUND_REQUEST')
-      .length,
-    LOW_OCCUPANCY: this.operations().filter((o) => o.type === 'LOW_OCCUPANCY')
       .length,
   }));
 
@@ -99,46 +94,11 @@ export class OperationsComponent {
     ],
   }));
 
-  readonly funnelOptions = computed<EChartsCoreOption>(() => ({
-    tooltip: {
-      trigger: 'item',
-      formatter: (p: unknown) => {
-        const d = p as { name?: string; value?: number };
-        return `${this.translate.instant(d.name ?? '')}: ${d.value ?? 0}%`;
-      },
-    },
-    series: [
-      {
-        type: 'funnel',
-        left: '10%',
-        width: '80%',
-        sort: 'descending',
-        gap: 2,
-        label: {
-          show: true,
-          position: 'inside',
-          formatter: (p: unknown) => {
-            const d = p as { name?: string; value?: number };
-            return `${this.translate.instant(d.name ?? '')}: ${d.value ?? 0}%`;
-          },
-        },
-        color: [
-          CHART_COLORS.primary(),
-          CHART_COLORS.warning(),
-          CHART_COLORS.info(),
-          CHART_COLORS.muted(),
-        ],
-        data: [
-          { name: 'admin.dashboard.operations.stageInit', value: 100 },
-          { name: 'admin.dashboard.operations.stageConfirm', value: 82 },
-          { name: 'admin.dashboard.operations.stagePaid', value: 64 },
-          { name: 'admin.dashboard.operations.stageRefund', value: 3 },
-        ],
-      },
-    ],
-  }));
-
   setFilter(filter: Filter) {
     this.filter.set(filter);
+  }
+
+  act(op: Operation, action: OperationAction['action']) {
+    this.resolve.emit({ id: op.id, type: op.type, action, method: op.method });
   }
 }

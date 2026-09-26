@@ -20,9 +20,11 @@
           @for (crum of breadcrumbs(); track crum.url; let last = $last) {
             <nz-breadcrumb-item>
               @if (last) {
-                <span class="font-semibold text-gray-800 dark:text-gray-100">{{
-                  crum.label
-                }}</span>
+                <span
+                  class="font-semibold text-gray-800 dark:text-gray-100"
+                  aria-current="page"
+                  >{{ crum.label }}</span
+                >
               } @else {
                 <a
                   [routerLink]="crum.url"
@@ -39,7 +41,7 @@
     <!-- RIGHT SIDE: Search - Notify - Profile -->
     <div class="flex items-center gap-4 sm:gap-6">
       <!-- SEARCH BAR -->
-      <div class="relative hidden lg:block">
+      <div class="relative hidden md:block" #searchRoot>
         <div
           class="flex items-center w-[26rem] h-10 group"
           [class.rounded-t-2xl]="suggestionsOpen()"
@@ -62,8 +64,8 @@
               #quickSearch
               (input)="onSearchInput(quickSearch.value)"
               (keydown)="onKeydown($event)"
-              (blur)="closeSuggestions()"
-              class="w-full h-full bg-transparent border-none outline-none text-sm ml-3 text-slate-700 dark:text-gray-200 placeholder-slate-500 dark:placeholder-gray-400 p-0 focus:ring-0"
+              (blur)="closeSuggestions($event)"
+              class="w-full h-full bg-transparent border-none text-sm ml-3 text-slate-700 dark:text-gray-200 placeholder-slate-500 dark:placeholder-gray-400 p-0 focus-visible:outline-2 focus-visible:outline-[#5ec8ff] focus-visible:outline-offset-2 rounded"
             />
           </div>
         </div>
@@ -122,26 +124,26 @@
         }
       </div>
 
-      <div
-        class="relative w-10 h-10 rounded-full bg-slate-50 dark:bg-gray-800 border border-slate-100 dark:border-gray-700 flex items-center justify-center cursor-pointer text-slate-500 dark:text-gray-400 hover:text-primary hover:bg-primary-light transition-colors shadow-sm"
+      <button
+        type="button"
+        class="relative w-10 h-10 min-w-10 min-h-10 rounded-full bg-slate-50 dark:bg-gray-800 border border-slate-100 dark:border-gray-700 flex items-center justify-center cursor-pointer text-slate-500 dark:text-gray-400 hover:text-primary hover:bg-primary-light transition-colors"
         nz-dropdown
         [nzDropdownMenu]="notifyMenu"
         nzTrigger="click"
         nzPlacement="bottomRight"
         [attr.aria-label]="'navbar.notifications' | translate"
+        [attr.aria-haspopup]="true"
         nz-tooltip
         [nzTooltipTitle]="'navbar.notifications' | translate"
-        role="button"
-        tabindex="0"
       >
         <nz-badge
           [nzCount]="unreadInsights().length"
-          [nzStyle]="{ backgroundColor: 'var(--color-primary, #e53e3e)' }"
+          [nzStyle]="{ backgroundColor: 'var(--color-primary)' }"
           nzSize="small"
         >
-          <nz-icon nzType="bell" class="text-xl text-slate-500 dark:text-gray-400" />
+          <nz-icon nzType="bell" class="text-xl text-slate-500 dark:text-gray-400" aria-hidden="true" />
         </nz-badge>
-      </div>
+      </button>
 
       <nz-dropdown-menu #notifyMenu="nzDropdownMenu">
         <div
@@ -151,10 +153,13 @@
             class="px-4 py-2 border-b border-slate-100 dark:border-gray-700 font-bold text-slate-700 dark:text-gray-100 flex justify-between"
           >
             <span>{{ "navbar.notifications" | translate }}</span>
-            <span class="text-xs text-primary cursor-pointer"
-              (click)="markAllRead()">{{
-                "navbar.markRead" | translate
-              }}</span>
+            <button
+              type="button"
+              class="text-xs text-primary cursor-pointer bg-transparent border-none p-0"
+              (click)="markAllRead()"
+            >
+              {{ "navbar.markRead" | translate }}
+            </button>
           </div>
           <ul class="max-h-64 overflow-y-auto custom-scrollbar">
             @for (insight of unreadInsights(); track insight.title) {

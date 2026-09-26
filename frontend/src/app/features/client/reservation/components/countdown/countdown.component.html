@@ -1,8 +1,12 @@
 <span
+  role="timer"
+  aria-live="off"
+  [attr.aria-label]="'reservation.countdownHint' | translate"
   nz-tooltip
   [nzTooltipTitle]="'reservation.countdownHint' | translate"
-  aria-live="polite"
-  class="font-mono text-base md:text-lg font-bold text-warning tracking-wider"
+  nzTooltipTrigger="click"
+  class="font-mono text-base md:text-lg font-bold text-warning tracking-wider tabular-nums"
 >
   {{ reservationStore.formattedTTL() }}
 </span>
+<span class="sr-only" aria-live="polite">{{ announceMsg() }}</span>

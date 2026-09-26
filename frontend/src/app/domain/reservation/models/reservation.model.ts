@@ -8,15 +8,18 @@ import {
 import { User } from '@domain/user/models/user.model';
 import { Showtime } from '@domain/showtime/models/showtime.model';
 import { ReservationStatus } from '@core/constants/enum';
-import { Seat } from '@domain/seat/models/seat.model';
 
 export interface Reservation extends DateModel, IsDeleted {
   id: string;
+  reservationCode: string;
   user: User;
   showtime: Showtime;
   reservationStatus: ReservationStatus;
   totalAmount: number;
-  seats: Seat[];
+  // BE sends seat numbers (List<String>), not seat objects.
+  seats: string[];
+  checkedIn?: boolean;
+  checkedInAt?: string;
 }
 
 export interface ReservationInitRequest {

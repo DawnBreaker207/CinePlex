@@ -79,10 +79,10 @@
         <ng-template #memberTitle>
           <div
             class="flex items-center gap-2 px-2"
-            nz-tooltip
-            [nzTooltipTitle]="'profile.comingSoon' | translate"
+            aria-disabled="true"
+            [attr.aria-label]="(('profile.member' | translate) + ' — ' + ('profile.comingSoon' | translate))"
           >
-            <nz-icon nzType="crown" nzTheme="outline" />
+            <nz-icon nzType="crown" nzTheme="outline" aria-hidden="true" />
             {{ "profile.member" | translate }}
             <nz-tag nzColor="default">{{ "profile.soon" | translate }}</nz-tag>
           </div>
@@ -105,10 +105,10 @@
         <ng-template #settingTitle>
           <div
             class="flex items-center gap-2 px-2"
-            nz-tooltip
-            [nzTooltipTitle]="'profile.comingSoon' | translate"
+            aria-disabled="true"
+            [attr.aria-label]="(('profile.settings' | translate) + ' — ' + ('profile.comingSoon' | translate))"
           >
-            <nz-icon nzType="setting" />
+            <nz-icon nzType="setting" aria-hidden="true" />
             {{ "profile.settings" | translate }}
             <nz-tag nzColor="default">{{ "profile.soon" | translate }}</nz-tag>
           </div>

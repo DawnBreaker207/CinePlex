@@ -1,69 +1,74 @@
 
-    <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+    <div class="rounded-2xl border border-slate-200 dark:border-gray-700 bg-white dark:bg-[#161a20] p-6">
       <h2
-        class="mb-6 border-l-4 border-[var(--color-primary)] pl-3 text-2xl font-bold text-slate-900"
+        class="mb-6 border-l-4 border-primary pl-3 text-2xl font-bold text-slate-900 dark:text-gray-100"
       >
         {{ 'detail.showtimes' | translate }}
       </h2>
 
-      <div class="mb-6 flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+      <div class="mb-6 flex gap-3 overflow-x-auto pb-2 scrollbar-hide touch-manipulation">
         @for (date of dates(); track date) {
-          <div
+          <button
+            type="button"
             (click)="selectDate(date)"
-            (keyup)="selectDate(date)"
-            tabindex="0"
-            role="button"
-            class="min-w-[84px] cursor-pointer rounded-xl border p-3 text-center transition-all duration-200"
+            [attr.aria-pressed]="(selectedDate() | date: 'ddMMyy') === (date | date: 'ddMMyy')"
+            [attr.aria-label]="date | date: 'dd/MM/yyyy'"
+            class="min-w-[84px] min-h-11 cursor-pointer rounded-lg border p-3 text-center transition-colors duration-200"
             [ngClass]="
               (selectedDate() | date: 'ddMMyy') === (date | date: 'ddMMyy')
-                ? 'border-[var(--color-primary)] bg-[var(--color-primary)] text-white'
-                : 'border-slate-200 bg-slate-50 text-slate-500 hover:border-slate-300'
+                ? 'border-primary bg-primary text-white'
+                : 'border-slate-200 dark:border-gray-700 bg-slate-50 dark:bg-gray-800 text-slate-500 dark:text-gray-300 hover:border-slate-300'
             "
           >
-            <span class="text-2xl font-bold">{{ date | date: 'dd' }}</span>
-            /<span class="text-sm">{{ date | date: 'MM' }}</span>
-          </div>
+            <span class="text-2xl font-bold tabular-nums">{{ date | date: 'dd' }}</span>
+            /<span class="text-sm tabular-nums">{{ date | date: 'MM' }}</span>
+          </button>
         }
       </div>
 
       <div class="space-y-4">
         @for (cinema of cinemas(); track cinema.id) {
           <div
-            class="rounded-xl border border-slate-200 bg-slate-50 p-4 transition hover:border-slate-300"
+            class="rounded-xl border border-slate-200 dark:border-gray-700 bg-slate-50 dark:bg-gray-800/50 p-4 transition-colors hover:border-slate-300"
           >
-            <p class="mb-3 text-sm font-semibold text-slate-800">
+            <p class="mb-3 text-sm font-semibold text-slate-800 dark:text-gray-100">
               {{ cinema.name }}
             </p>
             <div class="flex flex-wrap gap-3">
-              @for (show of cinema.showtimes; track show.time) {
-                <div
-                  class="group relative w-[112px] overflow-hidden rounded-lg border bg-white p-3 text-center transition-all"
+              @for (show of cinema.showtimes; track show.id) {
+                <button
+                  type="button"
+                  (click)="selectShowtime(cinema.id, show)"
+                  [disabled]="show.availableSeats === 0"
+                  [attr.aria-label]="show.time + ' - ' + (show.availableSeats > 0 ? show.availableSeats : ('detail.soldOut' | translate))"
+                  class="group relative w-[112px] min-h-11 overflow-hidden rounded-lg border bg-white dark:bg-[#161a20] p-3 text-center transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                   [ngClass]="
                     show.availableSeats === 0
-                      ? 'cursor-not-allowed border-slate-200 opacity-50'
+                      ? 'border-slate-200 dark:border-gray-700'
                       : show.availableSeats > 0 && show.availableSeats < 5
-                        ? 'cursor-pointer border-[var(--color-gold)] hover:shadow-sm'
-                        : 'cursor-pointer border-slate-300 hover:border-[var(--color-primary)]'
+                        ? 'cursor-pointer border-warning'
+                        : 'cursor-pointer border-slate-300 dark:border-gray-600 hover:border-primary'
                   "
                 >
                   <div
-                    class="text-lg font-bold text-slate-900 group-hover:text-[var(--color-primary)]"
+                    class="text-lg font-bold font-mono tabular-nums text-slate-900 dark:text-gray-100 group-hover:text-primary"
                   >
                     {{ show.time }}
                   </div>
                   <div class="flex items-center gap-1.5 mt-1">
                     <div
                       class="h-1.5 w-1.5 rounded-full"
+                      aria-hidden="true"
                       [ngClass]="
                         show.availableSeats === 0
                           ? 'bg-slate-300'
                           : show.availableSeats > 0 && show.availableSeats < 5
-                            ? 'bg-[var(--color-gold)]'
-                            : 'bg-emerald-500'
+                            ? 'bg-warning'
+                            : 'bg-success'
                       "
                     ></div>
                     <span
-                      class="text-[10px] font-medium text-slate-500 group-hover:text-[var(--color-primary)]"
+                      class="text-xs font-medium text-slate-500 dark:text-gray-400 group-hover:text-primary"
                     >
                       @if (show.availableSeats >= 0) {
                         {{
@@ -75,26 +80,27 @@
                       }
                     </span>
                   </div>
-                </div>
+                </button>
               }
             </div>
           </div>
         } @empty {
           <div
-            class="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 py-16"
+            class="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 dark:border-gray-700 bg-slate-50 dark:bg-gray-800/50 py-16"
           >
             <nz-icon
               nzType="calendar"
               class="mb-4 text-5xl text-slate-400"
+              aria-hidden="true"
             ></nz-icon>
-            <p class="text-lg text-slate-500">
+            <p class="text-lg text-slate-500 dark:text-gray-400">
               {{ 'detail.noShowtimeToday' | translate }}
             </p>
             <button
               nz-button
               nzType="link"
               (click)="selectDate(dates()[0])"
-              class="text-[var(--color-primary)]"
+              class="text-primary min-h-11"
             >
               {{ 'detail.otherDates' | translate }}
             </button>
@@ -102,4 +108,3 @@
         }
       </div>
     </div>
-  

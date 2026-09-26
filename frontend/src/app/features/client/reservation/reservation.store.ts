@@ -105,12 +105,39 @@ export const ReservationStore = signalStore(
       translate = inject(TranslateService),
     ) => {
       let timerIdx: ReturnType<typeof setInterval> | null = null;
+      // S1: silent hold refresh while the user is still on the booking page.
+      // Interaction-only TTL refresh used to expire the hold mid-session.
+      let heartbeat: ReturnType<typeof setInterval> | null = null;
+      const HEARTBEAT_MS = 45_000;
 
       const stopCountdown = () => {
         if (timerIdx) {
           clearInterval(timerIdx);
           timerIdx = null;
         }
+        stopHeartbeat();
+      };
+
+      const stopHeartbeat = () => {
+        if (heartbeat) {
+          clearInterval(heartbeat);
+          heartbeat = null;
+        }
+      };
+
+      const startHeartbeat = () => {
+        stopHeartbeat();
+        heartbeat = setInterval(() => {
+          const resId = store.reservationId();
+          if (
+            !resId ||
+            seatStore.selectSeatsCount() === 0 ||
+            store.submittingPayment()
+          ) {
+            return;
+          }
+          holdSeatsImpl(true);
+        }, HEARTBEAT_MS);
       };
 
       const startCountdown = (ttl: number) => {
@@ -141,6 +168,61 @@ export const ReservationStore = signalStore(
               : null,
           }));
         }, 1000);
+      };
+
+      const holdSeatsImpl = (silent = false) => {
+        const selectedSeats = seatStore.selectedSeats();
+        const user = storeNgrx.selectSignal(selectJwt)();
+        const showtime = storeNgrx.selectSignal(selectSelectedShowtime)();
+        const theater = storeNgrx.selectSignal(selectSelectedTheater)();
+        const resId = store.reservationId();
+
+        if (
+          !selectedSeats.length ||
+          !user ||
+          !showtime ||
+          !resId ||
+          !theater
+        ) {
+          return;
+        }
+
+        const payload: ReservationRequest = {
+          reservationId: resId,
+          userId: user.userId,
+          showtimeId: showtime.id,
+          seatIds: selectedSeats.map((s) => s.id),
+        };
+
+        storageService.setItem('reservationState', {
+          ...payload,
+          theaterId: theater.id,
+        });
+        if (!silent) {
+          patchState(store, {
+            holdingSeats: true,
+            loading: true,
+            saving: true,
+            error: null,
+          });
+        }
+        reservationService.holdReservationSeat(payload).subscribe({
+          next: () => {
+            if (!silent) patchState(store, { loading: false, saving: false });
+          },
+          error: (err) => {
+            // S1/S4: a silent refresh that finds a dead hold surfaces the
+            // expiry instead of looping quietly; the countdown path already
+            // navigates home from this state.
+            if (silent) stopHeartbeat();
+            patchState(store, {
+              error: errorMessage(err),
+              loading: false,
+              saving: false,
+              holdingSeats: false,
+            });
+          },
+        });
       };
 
       return {
@@ -175,6 +257,7 @@ export const ReservationStore = signalStore(
                     });
 
                     startCountdown(res.ttl);
+                    startHeartbeat();
 
                     router.navigate([
                       `/reservation/${reservationId}/${req.showtimeId}`,
@@ -188,51 +271,7 @@ export const ReservationStore = signalStore(
           ),
         ),
         //
-        holdSeats: () => {
-          const selectedSeats = seatStore.selectedSeats();
-          const user = storeNgrx.selectSignal(selectJwt)();
-          const showtime = storeNgrx.selectSignal(selectSelectedShowtime)();
-          const theater = storeNgrx.selectSignal(selectSelectedTheater)();
-          const resId = store.reservationId();
-
-          if (
-            !selectedSeats.length ||
-            !user ||
-            !showtime ||
-            !resId ||
-            !theater
-          ) {
-            return;
-          }
-
-          const payload: ReservationRequest = {
-            reservationId: resId,
-            userId: user.userId,
-            showtimeId: showtime.id,
-            seatIds: selectedSeats.map((s) => s.id),
-          };
-
-          storageService.setItem('reservationState', {
-            ...payload,
-            theaterId: theater.id,
-          });
-          patchState(store, {
-            holdingSeats: true,
-            loading: true,
-            saving: true,
-            error: null,
-          });
-          reservationService.holdReservationSeat(payload).subscribe({
-            next: () => patchState(store, { loading: false, saving: false }),
-            error: (err) =>
-              patchState(store, {
-                error: errorMessage(err),
-                loading: false,
-                saving: false,
-                holdingSeats: false,
-              }),
-          });
-        },
+        holdSeats: (silent = false) => holdSeatsImpl(silent),
         //
         pay: (radioValue: string, voucherCode?: string, comboAmount = 0) => {
           const resId = store.reservationId();
@@ -246,13 +285,32 @@ export const ReservationStore = signalStore(
             reservationId: resId,
           });
 
-          const fail = (err: unknown) =>
+          const fail = (err: unknown) => {
+            // The payment never started: drop the stale marker so a later
+            // reconnect does not nag about a payment that never existed.
+            storageService.removeItem('lastPayment');
+            const status = (err as { status?: number })?.status;
+            if (status === 409) {
+              // S4: hold died between seat select and payment (sleep/expired
+              // TTL). Drop the dead session so the next booking starts clean.
+              storageService.removeItem('reservationState');
+              stopCountdown();
+              patchState(store, {
+                submittingPayment: false,
+                reservationId: null,
+                currentTTL: null,
+                paymentError: translate.instant('reservation.expired'),
+              });
+              router.navigate(['/home']);
+              return;
+            }
             patchState(store, {
               submittingPayment: false,
               paymentError:
                 errorMessage(err) ||
                 translate.instant('reservation.paymentFailed'),
             });
+          };
 
           const doPayment = (paymentUrl: string) => {
             document.defaultView?.open(paymentUrl, '_self');
@@ -263,6 +321,7 @@ export const ReservationStore = signalStore(
                 reservationId: resId,
                 amount: total,
                 paymentType: toPaymentMethod(radioValue),
+                seatIds: seatStore.selectedSeats().map((s) => s.id),
               })
               .subscribe({ next: doPayment, error: fail });
 
@@ -311,6 +370,7 @@ export const ReservationStore = signalStore(
                       loading: false,
                     });
                     startCountdown(res.ttl);
+                    startHeartbeat();
                   },
                   error: (err) => {
                     storageService.removeItem('reservationState');

@@ -60,8 +60,16 @@ private translate = inject(TranslateService);
   ngOnInit() {
     const state =
       this.storageService.getItem<ReservationRequest>('reservationState');
-    const query = this.route.snapshot.queryParams;
+    const query = this.route.snapshot.queryParams ?? {};
 
+    const status = query['status'];
+    const reservationCode = query['reservationId'];
+    this.reservationCode.set(reservationCode || '');
+
+    if (!state && reservationCode) {
+      // S2: landed via URL/bookmark without SPA state — resolve from server.
+      this.recheck();
+    }
     if (!state || !query) {
       this.status.set('error');
       this.errorMessage.set(
@@ -71,10 +79,6 @@ private translate = inject(TranslateService);
       return;
     }
     this.store.dispatch(ShowtimeActions.loadShowtime({ id: state.showtimeId }));
-
-    const status = query['status'];
-    const reservationCode = query['reservationId'];
-    this.reservationCode.set(reservationCode || '');
 
     if (reservationCode && status === 'success') {
       this.status.set('success');
@@ -88,6 +92,7 @@ private translate = inject(TranslateService);
       this.reservationStore.cancel();
     }
     this.startCountDown();
+    this.startPoll();
   }
 
   retryPayment() {
@@ -113,7 +118,9 @@ private translate = inject(TranslateService);
     if (this.intervalId) clearInterval(this.intervalId);
   }
 
-  recheck() {
+  // S2: manual button stays verbose; the auto-poll is quiet (only toasts
+  // on a real PAID transition, never spams "still pending").
+  recheck(quiet = false) {
     const code = this.reservationCode();
     const last = this.storageService.getItem<{
       provider: string;
@@ -127,8 +134,9 @@ private translate = inject(TranslateService);
         next: (state) => {
           this.rechecking.set(false);
           if (state === 'PAID') {
+            this.stopPoll();
             this.applySuccess(code);
-          } else {
+          } else if (!quiet) {
             this.toast.createNotification({
               type: 'info',
               title: this.translate.instant('reservation.recheck'),
@@ -141,11 +149,33 @@ private translate = inject(TranslateService);
       });
   }
 
+  private pollId: ReturnType<typeof setInterval> | null = null;
+
+  private stopPoll() {
+    if (this.pollId) {
+      clearInterval(this.pollId);
+      this.pollId = null;
+    }
+  }
+
+  private startPoll() {
+    this.stopPoll();
+    this.pollId = setInterval(() => {
+      if (this.status() === 'success' || !this.reservationCode()) {
+        this.stopPoll();
+        return;
+      }
+      this.recheck(true);
+    }, 4000);
+    this.destroyRef.onDestroy(() => this.stopPoll());
+  }
+
   private applySuccess(code: string) {
     this.status.set('success');
     this.errorMessage.set('');
     this.reservationStore.confirm(code);
     this.storageService.removeItem('reservationState');
+    this.storageService.removeItem('lastPayment');
     this.startCountDown();
   }
 

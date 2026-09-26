@@ -4,12 +4,9 @@ import { ToastService } from '@core/services/toast/toast.service';
 import { AuthService } from '@core/auth/auth.service';
 import { Role } from '@core/constants/enum';
 import { TranslateService } from '@ngx-translate/core';
-import { Observable, map, of } from 'rxjs';
-import { environment } from '@env/environment';
+import { Observable, map } from 'rxjs';
 
 export const AdminGuard: CanMatchFn = (_route, _segments): Observable<boolean | UrlTree> => {
-  // TEMP-TEST: bypass auth for local testing — remove before commit
-  if (environment.bypassAuth) return of(true);
   const toast = inject(ToastService);
   const router = inject(Router);
   const authService = inject(AuthService);
@@ -27,7 +24,7 @@ export const AdminGuard: CanMatchFn = (_route, _segments): Observable<boolean | 
         return router.parseUrl('/login');
       }
 
-      if (!authService.hasRole(Role.ADMIN.toString())) {
+      if (!authService.hasAnyRole([Role.ADMIN.toString(), Role.OWNER.toString()])) {
         toast.createNotification({
           type: 'error',
           title: translate.instant('guard.accessDenied.title'),

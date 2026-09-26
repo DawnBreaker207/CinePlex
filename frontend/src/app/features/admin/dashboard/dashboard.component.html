@@ -76,7 +76,7 @@
               [nzPlaceHolder]="'admin.dashboard.quarter' | translate"
               [attr.aria-label]="'admin.dashboard.selectQuarter' | translate"
             >
-              @for (q of quarters; track q.value) {
+              @for (q of quarters(); track q.value) {
                 <nz-option [nzLabel]="q.label" [nzValue]="q.value"></nz-option>
               }
             </nz-select>

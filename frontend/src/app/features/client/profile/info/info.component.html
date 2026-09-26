@@ -17,8 +17,10 @@
         class="relative shrink-0 group cursor-pointer"
         (click)="fileInput.click()"
         (keyup.enter)="fileInput.click()"
+        (keyup.space)="fileInput.click()"
         tabindex="0"
         role="button"
+        [attr.aria-label]="'profile.changePhoto' | translate"
       >
         <div
           class="w-32 h-32 rounded-full overflow-hidden border-[4px] border-white shadow-lg bg-gray-100 ring-1 ring-gray-200 relative"
@@ -84,7 +86,7 @@
         <div class="min-h-[24px]">
           @if (selectedFile) {
             <p
-              class="text-sm text-blue-600 font-semibold animate-pulse flex items-center justify-center sm:justify-start gap-2 bg-blue-50 py-1 px-3 rounded-lg w-fit"
+              class="text-sm text-info font-semibold animate-pulse flex items-center justify-center sm:justify-start gap-2 bg-info/10 py-1 px-3 rounded-lg w-fit"
             >
               <nz-icon nzType="info-circle" nzTheme="fill" />
               {{ "profile.unsavedChanges" | translate }}

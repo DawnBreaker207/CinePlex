@@ -12,6 +12,7 @@
       nzType="primary"
       nzSize="large"
       nzShape="circle"
+      [attr.aria-label]="'common.add' | translate"
       nz-tooltip
       [nzTooltipTitle]="'common.add' | translate"
       (click)="openMovieModal('add')"
@@ -28,10 +29,13 @@
         <input
           nz-input
           [placeholder]="'common.search' | translate"
+          [attr.aria-label]="'common.search' | translate"
           class="w-full"
           type="text"
           [formControl]="searchCtrl"
           (focus)="isSearching.set(true)"
+          (blur)="isSearching.set(false)"
+          (keydown.escape)="isSearching.set(false)"
         />
       </nz-input-group>
       @let results = searchResults();
@@ -47,11 +51,11 @@
           >
             <ng-template #item let-movie>
               <nz-list-item
-                (click)="selectMovie(movie.id)"
+                (mousedown)="selectMovie(movie.id)"
                 class="cursor-pointer transition p-2 rounded"
                 [ngClass]="{
-                  'bg-primary-light': selectedMovie()?.id === movie.id,
-                  'hover:bg-gray-100': selectedMovie()?.id !== movie.id,
+                  'bg-primary-light dark:bg-primary/10': selectedMovie()?.id === movie.id,
+                  'hover:bg-gray-100 dark:hover:bg-gray-800': selectedMovie()?.id !== movie.id,
                 }"
               >
                 <nz-list-item-meta
@@ -91,6 +95,8 @@
     <nz-select
       class="w-full sm:w-[150px]"
       [nzPlaceHolder]="'common.sort' | translate"
+      [attr.aria-label]="'common.sort' | translate"
+      [formControl]="sortCtrl"
     >
       <nz-option
         [nzLabel]="'admin.movie.sortNewest' | translate"
@@ -123,7 +129,7 @@
         <thead>
           <tr>
             @for (item of headerColumn; track item) {
-              <th>
+              <th class="font-semibold text-gray-600 dark:text-gray-300">
                 {{ item | translate }}
               </th>
             }
@@ -162,7 +168,7 @@
               <td class="text-center">
                 @let tag = item.isDeleted | isDeleted;
                 <nz-tag [nzColor]="tag.color">
-                  {{ tag.label }}
+                  {{ tag.label | translate }}
                 </nz-tag>
               </td>
               <td class="px-6 py-4 text-right">
@@ -224,3 +230,5 @@
     </nz-alert>
   }
 </div>
+
+

@@ -11,18 +11,22 @@
           {{ "footer.aboutText" | translate }}
         </p>
         <div class="flex gap-4 pt-2">
-          <a
-            href="#"
+          <button
+            type="button"
+            [attr.aria-label]="'Facebook'"
+            (click)="soon()"
             class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-primary hover:text-white transition-colors"
           >
-            <nz-icon nzType="facebook" nzTheme="fill" />
-          </a>
-          <a
-            href="#"
+            <nz-icon nzType="facebook" nzTheme="fill" aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            [attr.aria-label]="'Google'"
+            (click)="soon()"
             class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center hover:bg-primary hover:text-white transition-colors"
           >
-            <nz-icon nzType="google" />
-          </a>
+            <nz-icon nzType="google" aria-hidden="true" />
+          </button>
         </div>
       </div>
 
@@ -33,9 +37,13 @@
         </h4>
         <ul class="space-y-3 text-sm">
           <li>
-            <a href="#" class="hover:text-primary transition-colors">{{
-              "footer.about" | translate
-            }}</a>
+            <button
+              type="button"
+              (click)="soon()"
+              class="hover:text-primary transition-colors"
+            >
+              {{ "footer.about" | translate }}
+            </button>
           </li>
           <li>
             <a routerLink="/movies" class="hover:text-primary transition-colors">{{
@@ -48,9 +56,13 @@
             }}</a>
           </li>
           <li>
-            <a href="#" class="hover:text-primary transition-colors">{{
-              "footer.contact" | translate
-            }}</a>
+            <button
+              type="button"
+              (click)="soon()"
+              class="hover:text-primary transition-colors"
+            >
+              {{ "footer.contact" | translate }}
+            </button>
           </li>
         </ul>
       </div>
@@ -62,24 +74,40 @@
         </h4>
         <ul class="space-y-3 text-sm">
           <li>
-            <a href="#" class="hover:text-primary transition-colors">{{
-              "footer.privacy" | translate
-            }}</a>
+            <button
+              type="button"
+              (click)="soon()"
+              class="hover:text-primary transition-colors"
+            >
+              {{ "footer.privacy" | translate }}
+            </button>
           </li>
           <li>
-            <a href="#" class="hover:text-primary transition-colors">{{
-              "footer.terms" | translate
-            }}</a>
+            <button
+              type="button"
+              (click)="soon()"
+              class="hover:text-primary transition-colors"
+            >
+              {{ "footer.terms" | translate }}
+            </button>
           </li>
           <li>
-            <a href="#" class="hover:text-primary transition-colors">{{
-              "footer.faq" | translate
-            }}</a>
+            <button
+              type="button"
+              (click)="soon()"
+              class="hover:text-primary transition-colors"
+            >
+              {{ "footer.faq" | translate }}
+            </button>
           </li>
           <li>
-            <a href="#" class="hover:text-primary transition-colors">{{
-              "footer.supportCenter" | translate
-            }}</a>
+            <button
+              type="button"
+              (click)="soon()"
+              class="hover:text-primary transition-colors"
+            >
+              {{ "footer.supportCenter" | translate }}
+            </button>
           </li>
         </ul>
       </div>
@@ -92,24 +120,39 @@
         <p class="text-xs text-gray-400 mb-4 leading-relaxed">
           {{ "footer.subscribeText" | translate }}
         </p>
-        <div class="flex gap-2">
-          <input
-            type="text"
-            [placeholder]="'footer.emailPlaceholder' | translate"
-            class="bg-gray-500 border-none outline-none text-white text-sm px-4 py-2 rounded-l-lg w-full focus:ring-1 focus:ring-primary"
-          />
-          <button
-            class="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-r-lg font-bold"
-          >
-            <nz-icon nzType="mail" />
-          </button>
-        </div>
+        @if (subscribed()) {
+          <p class="text-sm text-success">
+            {{ "footer.subscribed" | translate }}
+          </p>
+        } @else {
+          <form class="flex gap-2" (ngSubmit)="onSubscribe()">
+            <label class="sr-only" for="newsletter-email">{{
+              "common.email" | translate
+            }}</label>
+            <input
+              id="newsletter-email"
+              type="email"
+              required
+              [(ngModel)]="email"
+              name="email"
+              [placeholder]="'footer.emailPlaceholder' | translate"
+              class="bg-gray-500 border-none outline-none text-white text-sm px-4 py-2 rounded-l-lg w-full focus-visible:ring-2 focus-visible:ring-[#5ec8ff]"
+            />
+            <button
+              type="submit"
+              [attr.aria-label]="'footer.subscribe' | translate"
+              class="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-r-lg font-bold min-w-11 min-h-11 flex items-center justify-center"
+            >
+              <nz-icon nzType="mail" aria-hidden="true" />
+            </button>
+          </form>
+        }
       </div>
     </div>
     <div
       class="max-w-full mx-auto px-6 mt-12 pt-8 border-t border-gray-800 text-center text-xs text-gray-400"
     >
-      &copy; {{ date.getFullYear() }} CineTicket.
+      &copy; {{ date.getFullYear() }} CinePlex.
       {{ "footer.copyright" | translate }}
     </div>
   </div>

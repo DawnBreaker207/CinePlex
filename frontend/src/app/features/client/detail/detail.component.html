@@ -1,14 +1,16 @@
 @if (movie(); as movie) {
   <div class="min-h-screen bg-transparent pb-16 text-slate-900">
-    <app-detail-header [movie]="movie" />
+    <app-detail-header [movie]="movie" (bookNow)="scrollToShowtimes()" />
 
     <div class="mx-auto mt-10 flex max-w-5xl flex-col gap-8 px-4 md:px-6">
       <div class="w-full space-y-8">
         <app-showtime-section
+          #showtimesSection
           [dates]="dates()"
           [selectedDate]="selectedDate()"
           [cinemas]="showtimes()"
           (dateChange)="selectDate($event)"
+          (showtimeSelect)="bookShowtime($event)"
         />
 
         <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -92,11 +94,14 @@
                   nzBlock
                   nzType="dashed"
                   disabled
-                  nz-tooltip
-                  [nzTooltipTitle]="'detail.reviewComingSoon' | translate"
-                  class="border-slate-300 text-slate-500"
+                  aria-disabled="true"
+                  [attr.aria-label]="(('detail.writeReview' | translate) + ' — ' + ('detail.reviewComingSoon' | translate))"
+                  class="border-slate-300 text-slate-500 min-h-11"
                 >
                   {{ "detail.writeReview" | translate }}
+                  <span class="ml-2 text-xs font-normal"
+                    >({{ "detail.reviewComingSoon" | translate }})</span
+                  >
                 </button>
               </div>
             </nz-tab>

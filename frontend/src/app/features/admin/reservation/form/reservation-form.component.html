@@ -1,7 +1,7 @@
 <app-loading [isLoading]="reservationStore.loading()">
   @if (reservationStore.reservation(); as reservation) {
     <div class="w-full h-full">
-      <div>{{ "common.ticketCode" | translate }}: {{ reservation.id }}</div>
+      <div>{{ "common.ticketCode" | translate }}: {{ reservation.reservationCode || reservation.id }}</div>
       <div>
         {{ "common.name" | translate }}: {{ reservation.user.username }}
       </div>
@@ -23,7 +23,7 @@
         {{ "common.bookingDate" | translate }}:
         {{ reservation.createdAt | date: "dd/MM/yyyy" }}
       </div>
-      <div>{{ "booking.seat" | translate }}: {{ reservation.seats }}</div>
+      <div>{{ "booking.seat" | translate }}: {{ reservation.seats.join(', ') }}</div>
     </div>
   } @else {
     <p>{{ "common.error" | translate }}</p>

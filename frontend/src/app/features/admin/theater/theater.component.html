@@ -11,6 +11,7 @@
       nz-button
       nzType="primary"
       nzShape="circle"
+      [attr.aria-label]="'common.add' | translate"
       nz-tooltip
       [nzTooltipTitle]="'common.add' | translate"
       (click)="openModal('add')"
@@ -53,16 +54,19 @@
     >
       <nz-table
         [nzData]="filteredTheaters()"
-        [nzFrontPagination]="true"
-        [nzPageSize]="10"
+        [nzFrontPagination]="false"
+        [nzTotal]="pagination()?.totalElements || 0"
+        [nzPageIndex]="(pagination()?.pageNumber ?? 0) + 1"
+        [nzPageSize]="pagination()?.pageSize ?? 10"
         nzShowPagination
         [nzShowSizeChanger]="true"
         [nzNoResult]="'admin.theater.empty' | translate"
+        (nzQueryParams)="onQueryParamsChange($event)"
       >
         <thead>
           <tr>
             @for (header of headerColumn; track header) {
-              <th>{{ header | translate }}</th>
+              <th class="font-semibold text-gray-600 dark:text-gray-300">{{ header | translate }}</th>
             }
           </tr>
         </thead>
@@ -162,3 +166,5 @@
     </nz-alert>
   }
 </div>
+
+
