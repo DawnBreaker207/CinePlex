@@ -19,6 +19,7 @@ services:
       - mysqld
       - --max_allowed_packet=128M
       - --innodb_buffer_pool_size=256M
+      - --binlog-expire-logs-seconds=604800
     ports:
       - '${MYSQL_PORT}:3306'
     volumes:
