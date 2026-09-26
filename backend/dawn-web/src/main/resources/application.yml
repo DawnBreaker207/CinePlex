@@ -102,6 +102,10 @@ payment:
 #Config JWT
 dawn:
   app:
+    # Test-only gateway. ALWAYS false in prod (DAWN_APP_PAYMENT_MOCK_ENABLED=false)
+    # or anyone can confirm payments for free.
+    payment:
+      mock-enabled: ${DAWN_APP_PAYMENT_MOCK_ENABLED:true}
     jwtCookieName: ${JWT_COOKIE_NAME}
     jwtRefreshCookieName: ${JWT_COOKIE_REFRESH_NAME}
     jwtSecret: ${JWT_SECRET}
@@ -122,6 +126,10 @@ dawn:
     cloudName: ${CLOUDINARY_CLOUD_NAME}
     apiKey: ${CLOUDINARY_API_KEY}
     apiSecret: ${CLOUDINARY_API_SECRET}
+# Dev-only kill switch for auth — never false outside local testing.
+app:
+  security:
+    enabled: ${APP_SECURITY_ENABLED:true}
 #Config Rate Limiter
 resilience4j:
   ratelimiter:

@@ -302,7 +302,7 @@ public class AuthServiceImpl implements AuthService {
                 .username(userDetails.getUsername())
                 .email(userDetails.getEmail())
                 .accessToken(jwt)
-                .refreshToken(refreshToken.getToken())
+                .refreshToken(refreshToken.getRawToken())
                 .build();
     }
 
@@ -348,20 +348,17 @@ public class AuthServiceImpl implements AuthService {
         if (refreshToken == null || refreshToken.isEmpty()) {
             throw new ResourceNotFoundException(ErrorCode.REFRESH_TOKEN_EXPIRED.format());
         }
-        return refreshTokenService.findByToken(refreshToken)
-                .map(refreshTokenService::verifyExpiration)
-                .map(RefreshToken::getUser)
-                .map(user -> {
-                    List<String> roles = user.getRoles() == null ? List.of() : user.getRoles()
-                            .stream()
-                            .map(r -> r.getName().name())
-                            .toList();
-                    String jwtCookie = jWTUtils.generateToken(user.getUsername(), user.getEmail(), roles);
-                    return TokenRefreshResponse
-                            .builder()
-                            .accessToken(jwtCookie)
-                            .build();
-                })
-                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.REFRESH_TOKEN_NOT_FOUND.format()));
+        RefreshToken rotated = refreshTokenService.rotateRefreshToken(refreshToken);
+        User user = rotated.getUser();
+        List<String> roles = user.getRoles() == null ? List.of() : user.getRoles()
+                .stream()
+                .map(r -> r.getName().name())
+                .toList();
+        String jwtCookie = jWTUtils.generateToken(user.getUsername(), user.getEmail(), roles);
+        return TokenRefreshResponse
+                .builder()
+                .accessToken(jwtCookie)
+                .refreshToken(rotated.getRawToken())
+                .build();
     }
 }

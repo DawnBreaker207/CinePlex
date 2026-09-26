@@ -7,6 +7,9 @@ public class AuthorizationExpressions {
     // Single ADMIN role: full system access
     public static final String ROLE_ADMIN = "@securityPolicy.hasRole('ADMIN')";
 
+    // Matches frontend AdminGuard: ADMIN or OWNER allowed into /admin
+    public static final String ROLE_ADMIN_OR_OWNER = "@securityPolicy.hasAnyRole('ADMIN', 'OWNER')";
+
     public static final String ROLE_MANAGER = "@securityPolicy.hasAnyRole('MANAGER', 'ADMIN')";
 
     // Reports, audit log, dashboard

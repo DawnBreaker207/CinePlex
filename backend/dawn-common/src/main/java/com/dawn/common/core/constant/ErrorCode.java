@@ -16,6 +16,7 @@ public enum ErrorCode {
     RESERVATION_NOT_ENOUGH_SEATS("Not enough available seats. Request: {0}, Available: {1}"),
     RESERVATION_INVALID_DATA("Invalid reservation data"),
     RESERVATION_INVALID_STATUS("Reservation is not in a confirmable state"),
+    RESERVATION_ALREADY_CHECKED_IN("Ticket already checked in"),
     RESERVATION_PROCESSING("Reservation is being processed, please try again"),
     HOLD_TOO_MANY_ATTEMPTS("Too many hold attempts, please try again later"),
     RESERVATION_SEATS_NOT_FOUND_DB("Some seats not found in database"),
@@ -48,6 +49,7 @@ public enum ErrorCode {
     // Refresh Token
     REFRESH_TOKEN_NOT_FOUND("Refresh token not found"),
     REFRESH_TOKEN_EXPIRED("Refresh token was expired, Please make a new log in request"),
+    REFRESH_TOKEN_REUSE_DETECTED("Refresh token reuse detected, all sessions have been revoked. Please log in again"),
 
     // User
     USER_NOT_FOUND("User not found"),
@@ -86,6 +88,7 @@ public enum ErrorCode {
     PAYMENT_INTERNAL_ERROR("Internal Error"),
     PAYMENT_INVALID_SIGNATURE("Invalid payment signature"),
     PAYMENT_AMOUNT_MISMATCH("Payment amount mismatch"),
+    PAYMENT_SEAT_MISMATCH("Seats were changed after payment"),
     CAN_NOT_FIND_USER_BY_USERNAME("Can not find this user"),
     USER_CANNOT_UPDATE_SELF("You can't update yourself"),
     PERMISSION_NOT_ENOUGH("You permission not enough (Must higher than this person)"),

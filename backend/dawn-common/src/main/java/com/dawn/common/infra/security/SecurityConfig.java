@@ -61,10 +61,14 @@ public class SecurityConfig {
                 .csrf(CsrfConfigurer::disable)
                 .exceptionHandling(this::configExceptionHandling)
                 .sessionManagement(this::configSession)
-                .authorizeHttpRequests(this::configAuth)
                 .logout(this::configLogout);
 
-        http.addFilterBefore(authTokenFilter, UsernamePasswordAuthenticationFilter.class);
+        if (SecurityPolicy.isEnabled()) {
+            http.authorizeHttpRequests(this::configAuth);
+            http.addFilterBefore(authTokenFilter, UsernamePasswordAuthenticationFilter.class);
+        } else {
+            http.authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
+        }
 
         return http.build();
     }
@@ -85,8 +89,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/auth/**").permitAll()
                 .requestMatchers("/api/v1/notification/**").permitAll()
                 .requestMatchers("/api/v1/payment/**").permitAll()
-                // Financial reports & revenue dashboard: ADMIN only
-                .requestMatchers("/api/v1/report/**", "/api/v1/dashboard/**").hasRole("ADMIN")
+                .requestMatchers("/ws/**").permitAll()
+                .requestMatchers("/api/v1/report/**", "/api/v1/dashboard/**").hasAnyRole("ADMIN", "OWNER")
                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/v1/movie/batch").permitAll()
                 .requestMatchers(HttpMethod.GET,
@@ -95,6 +99,9 @@ public class SecurityConfig {
                         "/api/v1/theater/**",
                         "/api/v1/showtime/**",
                         "/api/v1/seats/**",
+                        "/api/v1/ai/recommendations",
+                        "/api/v1/voucher",
+                        "/api/v1/voucher/calculate",
                         "/api/v1/rooms/**").permitAll()
                 .anyRequest().authenticated();
     }

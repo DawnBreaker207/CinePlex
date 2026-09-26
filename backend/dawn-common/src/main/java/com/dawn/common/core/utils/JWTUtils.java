@@ -40,10 +40,14 @@ public class JWTUtils {
         return generateCookie(jwtRefreshCookie, refreshToken, "/api/v1/auth/refresh-token");
     }
 
-    public void getCleanJwtRefreshCookie() {
-        ResponseCookie.from(jwtRefreshCookie)
+    public ResponseCookie clearJwtRefreshCookie() {
+        return ResponseCookie
+                .from(jwtRefreshCookie, "")
                 .path("/api/v1/auth/refresh-token")
                 .maxAge(0)
+                .httpOnly(true)
+                .secure(true)
+                .sameSite("Strict")
                 .build();
     }
 
@@ -114,6 +118,8 @@ public class JWTUtils {
                 .path(path)
                 .maxAge(refreshTokenExpirations)
                 .httpOnly(true)
+                .secure(true)
+                .sameSite("Strict")
                 .build();
     }
 

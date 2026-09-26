@@ -4,6 +4,7 @@ import com.dawn.cinema.dto.request.ShowtimeFilterRequest;
 import com.dawn.cinema.dto.request.ShowtimeRequest;
 import com.dawn.cinema.dto.response.ShowtimeResponse;
 import com.dawn.cinema.service.ShowtimeService;
+import com.dawn.common.core.constant.security.AuthorizationExpressions;
 import com.dawn.common.core.dto.response.ResponseObject;
 import com.dawn.common.core.dto.response.ResponsePage;
 import io.swagger.v3.oas.annotations.Operation;
@@ -13,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -77,6 +79,7 @@ public class ShowtimeController {
     }
 
     @PostMapping()
+    @PreAuthorize(AuthorizationExpressions.ROLE_ADMIN_OR_OWNER)
     @Operation(summary = "Add a new showtime", description = "Create a new showtime (Admin only)")
     public ResponseObject<ShowtimeResponse> add(@Valid @RequestBody ShowtimeRequest showtimeRequest) {
         log.info("Create showtime: {}", showtimeRequest);
@@ -84,6 +87,7 @@ public class ShowtimeController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize(AuthorizationExpressions.ROLE_ADMIN_OR_OWNER)
     @Operation(summary = "Update a showtime", description = "Updates an existing showtime (Admin only)")
     public ResponseObject<ShowtimeResponse> update(@PathVariable Long id, @Valid @RequestBody ShowtimeRequest showtimeDetails) {
         log.info("Updating showtime with id: {}", id);
@@ -91,6 +95,7 @@ public class ShowtimeController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize(AuthorizationExpressions.ROLE_ADMIN_OR_OWNER)
     @Operation(summary = "Delete a showtime", description = "Delete an existing theater (Admin only)")
     public ResponseObject<Void> delete(@PathVariable Long id) {
         log.info("Deleting showtime with id: {}", id);
@@ -99,6 +104,7 @@ public class ShowtimeController {
     }
 
     @PostMapping("/{id}/cancel")
+    @PreAuthorize(AuthorizationExpressions.ROLE_ADMIN_OR_OWNER)
     @Operation(summary = "Cancel a showtime", description = "Marks the showtime canceled; booked tickets are released and refund-flagged (Admin only)")
     public ResponseObject<ShowtimeResponse> cancel(@PathVariable Long id) {
         log.info("Canceling showtime with id: {}", id);

@@ -1,5 +1,6 @@
 package com.dawn.payment.service.impl;
 
+import com.dawn.booking.api.BookingModuleApi;
 import com.dawn.common.core.constant.ErrorCode;
 import com.dawn.common.core.constant.PaymentMethod;
 import com.dawn.common.core.constant.PaymentStatus;
@@ -7,6 +8,7 @@ import com.dawn.common.core.constant.PermissionKey;
 import com.dawn.common.core.constant.RabbitMQConstants;
 import com.dawn.common.core.dto.event.PaymentCompletedEvent;
 import com.dawn.common.core.dto.event.PaymentFailedEvent;
+import com.dawn.common.core.exception.ApiException;
 import com.dawn.common.core.exception.wrapper.InvalidRequestException;
 import com.dawn.common.core.exception.wrapper.PermissionDeniedException;
 import com.dawn.common.core.exception.wrapper.ResourceNotFoundException;
@@ -14,10 +16,11 @@ import com.dawn.common.core.outbox.Outbox;
 import com.dawn.common.core.outbox.OutboxRepository;
 import com.dawn.common.core.service.AuditLogService;
 import com.dawn.common.core.utils.SecurityUtils;
-import com.dawn.identity.service.PermissionService;
+import com.dawn.identity.api.IdentityModuleApi;
 import com.dawn.payment.dto.request.PaymentRequest;
 import com.dawn.payment.dto.response.PaymentDetailDTO;
 import com.dawn.payment.dto.response.PaymentHandlerResponse;
+import com.dawn.payment.dto.response.PaymentRefundDTO;
 import com.dawn.payment.dto.response.PaymentResponse;
 import com.dawn.payment.handler.PaymentHandler;
 import com.dawn.payment.model.Payment;
@@ -56,11 +59,50 @@ public class PaymentServiceImpl implements PaymentService {
 
     private final ObjectMapper objectMapper;
 
-    private final PermissionService permissionService;
+    private final IdentityModuleApi identityModuleApi;
 
     private final AuditLogService auditLogService;
 
+    private final BookingModuleApi bookingApi;
+
+    // S4 guard + C0 dedup + C4 snapshot in one place: the money entry point.
     public PaymentResponse createPayment(PaymentRequest req, String ip) {
+        // S4: refuse to send the user to the gateway with a dead hold
+        // (laptop sleep / expired TTL / abandoned session). FE catches 409
+        // RESERVATION_EXPIRED and re-inits a fresh reservation instead of
+        // paying into a hold that can never confirm.
+        Long holdTtl = bookingApi.getHoldTtlSeconds(req.getReservationId());
+        if (holdTtl == null || holdTtl <= 0) {
+            log.warn("Payment refused for reservation {}: hold already expired", req.getReservationId());
+            throw new ApiException(org.springframework.http.HttpStatus.CONFLICT,
+                    ErrorCode.RESERVATION_EXPIRED.format());
+        }
+
+        // C0: a retried / double-clicked / second-device payment must reuse the
+        // open row instead of inserting a duplicate (duplicates used to 500
+        // the gateway callback via single-result findByReservationId).
+        Optional<Payment> open = paymentRepository
+                .findFirstByReservationIdOrderByCreatedAtDesc(req.getReservationId());
+        if (open.isPresent()) {
+            Payment existing = open.get();
+            if (PaymentStatus.PAID.equals(existing.getStatus())) {
+                throw new ApiException(org.springframework.http.HttpStatus.CONFLICT,
+                        ErrorCode.PAYMENT_COMPLETE.format());
+            }
+            if (PaymentStatus.PENDING.equals(existing.getStatus())) {
+                PaymentHandler handler = findHandler(req.getPaymentType());
+                String url = handler.createPaymentUrl(req.getReservationId(), req.getAmount(), ip);
+                log.info("Reusing open payment row {} for reservation {}",
+                        existing.getId(), req.getReservationId());
+                return PaymentResponse.builder()
+                        .code("ok")
+                        .message("success")
+                        .paymentUrl(url)
+                        .build();
+            }
+            // FAILED / REFUNDED / others: fall through and open a fresh attempt.
+        }
+
         PaymentHandler handler = findHandler(req.getPaymentType());
         String url = handler.createPaymentUrl(req.getReservationId(), req.getAmount(), ip);
         Payment payment = Payment.builder()
@@ -70,6 +112,7 @@ public class PaymentServiceImpl implements PaymentService {
                 .status(PaymentStatus.PENDING)
                 .paymentIntentId(req.getReservationId())
                 .gatewayTxnRef(generateUniqueTxnRef())
+                .seatSnapshot(serializeSeatIds(req.getSeatIds()))
                 .createdAt(Instant.now())
                 .build();
         paymentRepository.save(payment);
@@ -79,6 +122,34 @@ public class PaymentServiceImpl implements PaymentService {
                 .message("success")
                 .paymentUrl(url)
                 .build();
+    }
+
+    // C4 snapshot: seats being paid for, carried into the completed event for
+    // post-payment reconciliation. Null-safe: legacy clients omit seatIds.
+    private String serializeSeatIds(java.util.List<Long> seatIds) {
+        if (seatIds == null || seatIds.isEmpty()) {
+            return null;
+        }
+        try {
+            return objectMapper.writeValueAsString(seatIds);
+        } catch (JsonProcessingException e) {
+            log.warn("Failed to serialize seat snapshot, reconciliation skipped: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    private java.util.List<Long> parseSeatIds(String snapshot) {
+        if (snapshot == null || snapshot.isBlank()) {
+            return null;
+        }
+        try {
+            return objectMapper.readValue(snapshot,
+                    new com.fasterxml.jackson.core.type.TypeReference<java.util.List<Long>>() {
+                    });
+        } catch (JsonProcessingException e) {
+            log.warn("Failed to parse seat snapshot, reconciliation skipped: {}", e.getMessage());
+            return null;
+        }
     }
 
     //  txnRef is UNIQUE (uk_payment_txn); a per-attempt token lets retry create a fresh payment row
@@ -96,8 +167,10 @@ public class PaymentServiceImpl implements PaymentService {
         PaymentHandler handler = findHandler(provider);
         String reservationId = handler.getId(params);
 
+        // C0: newest row wins (failed retries may leave older rows behind);
+        // single-result findBy used to 500 here on duplicates.
         Payment existing = paymentRepository
-                .findByReservationId(reservationId)
+                .findFirstByReservationIdOrderByCreatedAtDesc(reservationId)
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.PAYMENT_NOT_FOUND.format()));
 
         log.info("Callback received from {} for reservation {}: {}", provider, reservationId, params);
@@ -220,7 +293,7 @@ public class PaymentServiceImpl implements PaymentService {
     @Override
     public Boolean manualCheck(String provider, String id) {
         return paymentRepository
-                .findByReservationId(id)
+                .findFirstByReservationIdOrderByCreatedAtDesc(id)
                 .map(payment -> payment.getStatus() == PaymentStatus.PAID)
                 .orElse(false);
     }
@@ -228,7 +301,7 @@ public class PaymentServiceImpl implements PaymentService {
     @Override
     @Transactional
     public void markRefundPending(String reservationId) {
-        paymentRepository.findByReservationId(reservationId).ifPresent(payment -> {
+        paymentRepository.findFirstByReservationIdOrderByCreatedAtDesc(reservationId).ifPresent(payment -> {
             if (PaymentStatus.PAID.equals(payment.getStatus())) {
                 payment.setStatus(PaymentStatus.REFUND_PENDING);
                 paymentRepository.save(payment);
@@ -241,10 +314,10 @@ public class PaymentServiceImpl implements PaymentService {
     @Transactional
     public void approveRefund(String reservationId) {
         Long approverId = SecurityUtils.getCurrentUserId();
-        if (!permissionService.hasPermission(approverId, PermissionKey.FINANCE)) {
+        if (!identityModuleApi.hasPermission(approverId, PermissionKey.FINANCE)) {
             throw new PermissionDeniedException(ErrorCode.PERMISSION_NOT_ENOUGH);
         }
-        Payment payment = paymentRepository.findByReservationId(reservationId)
+        Payment payment = paymentRepository.findFirstByReservationIdOrderByCreatedAtDesc(reservationId)
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.PAYMENT_NOT_FOUND.format()));
         if (payment.getStatus() != PaymentStatus.REFUND_PENDING) {
             throw new InvalidRequestException(ErrorCode.INVALID_STATE_TRANSITION,
@@ -254,6 +327,60 @@ public class PaymentServiceImpl implements PaymentService {
         paymentRepository.save(payment);
         auditLogService.record("REFUND_APPROVED", "PAYMENT", reservationId, null,
                 PaymentStatus.REFUND_PENDING.name(), PaymentStatus.REFUNDED.name(),
+                "approver=" + approverId, "SUCCESS", AuditLogService.clientIp(), null, null);
+    }
+
+    @Override
+    public List<PaymentRefundDTO> listRefundRequests() {
+        Long currentId = SecurityUtils.getCurrentUserId();
+        if (!identityModuleApi.hasPermission(currentId, PermissionKey.FINANCE)) {
+            throw new PermissionDeniedException(ErrorCode.PERMISSION_NOT_ENOUGH);
+        }
+        return paymentRepository.findAllByStatusOrderByCreatedAtDesc(PaymentStatus.REFUND_PENDING).stream()
+                .map(this::toQueueDTO)
+                .toList();
+    }
+
+    @Override
+    public List<PaymentRefundDTO> listFailedPayments() {
+        Long currentId = SecurityUtils.getCurrentUserId();
+        if (!identityModuleApi.hasPermission(currentId, PermissionKey.FINANCE)) {
+            throw new PermissionDeniedException(ErrorCode.PERMISSION_NOT_ENOUGH);
+        }
+        return paymentRepository.findAllByStatusOrderByCreatedAtDesc(PaymentStatus.FAILED).stream()
+                .map(this::toQueueDTO)
+                .toList();
+    }
+
+    private PaymentRefundDTO toQueueDTO(Payment p) {
+        return PaymentRefundDTO.builder()
+                .reservationId(p.getReservationId())
+                .amount(p.getAmount())
+                .method(p.getMethod())
+                .status(p.getStatus())
+                .statusReason(p.getStatusReason())
+                .paidAt(p.getPaidAt())
+                .createdAt(p.getCreatedAt())
+                .build();
+    }
+
+    @Override
+    @Transactional
+    public void rejectRefund(String reservationId) {
+        Long approverId = SecurityUtils.getCurrentUserId();
+        if (!identityModuleApi.hasPermission(approverId, PermissionKey.FINANCE)) {
+            throw new PermissionDeniedException(ErrorCode.PERMISSION_NOT_ENOUGH);
+        }
+        Payment payment = paymentRepository.findFirstByReservationIdOrderByCreatedAtDesc(reservationId)
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.PAYMENT_NOT_FOUND.format()));
+        if (payment.getStatus() != PaymentStatus.REFUND_PENDING) {
+            throw new InvalidRequestException(ErrorCode.INVALID_STATE_TRANSITION,
+                    payment.getStatus(), PaymentStatus.PAID);
+        }
+        payment.setStatus(PaymentStatus.PAID);
+        paymentRepository.save(payment);
+        auditLogService.record("REFUND_REJECTED", "PAYMENT", reservationId, null,
+                PaymentStatus.REFUND_PENDING.name(), PaymentStatus.PAID.name(),
                 "approver=" + approverId, "SUCCESS", AuditLogService.clientIp(), null, null);
     }
 
@@ -291,7 +418,7 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     public Optional<PaymentDetailDTO> findPaymentByReservationId(String reservationId) {
-        return paymentRepository.findByReservationId(reservationId)
+        return paymentRepository.findFirstByReservationIdOrderByCreatedAtDesc(reservationId)
                 .map(p -> PaymentDetailDTO.builder()
                         .method(p.getMethod())
                         .status(p.getStatus())
@@ -316,6 +443,7 @@ public class PaymentServiceImpl implements PaymentService {
         return PaymentCompletedEvent.builder()
                 .eventId(UUID.randomUUID().toString())
                 .reservationCode(payment.getReservationId())
+                .seatIds(parseSeatIds(payment.getSeatSnapshot()))
                 .amount(payment.getAmount())
                 .method(checkPaymentMethod(provider))
                 .paidAt(Instant.now())

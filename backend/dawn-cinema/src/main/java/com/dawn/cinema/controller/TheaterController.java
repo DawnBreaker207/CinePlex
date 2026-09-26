@@ -3,6 +3,7 @@ package com.dawn.cinema.controller;
 import com.dawn.cinema.dto.request.TheaterRequest;
 import com.dawn.cinema.dto.response.TheaterResponse;
 import com.dawn.cinema.service.TheaterService;
+import com.dawn.common.core.constant.security.AuthorizationExpressions;
 import com.dawn.common.core.dto.response.ResponseObject;
 import com.dawn.common.core.dto.response.ResponsePage;
 import io.swagger.v3.oas.annotations.Operation;
@@ -11,6 +12,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -42,18 +44,21 @@ public class TheaterController {
     }
 
     @PostMapping("")
+    @PreAuthorize(AuthorizationExpressions.ROLE_ADMIN_OR_OWNER)
     @Operation(summary = "Add a new theater", description = "Create a new theater (Admin only)")
     public ResponseObject<TheaterResponse> create(@Valid @RequestBody TheaterRequest theater) {
         return ResponseObject.created(theaterService.create(theater));
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize(AuthorizationExpressions.ROLE_ADMIN_OR_OWNER)
     @Operation(summary = "Update a theater", description = "Updates an existing theater (Admin only)")
     public ResponseObject<TheaterResponse> update(@PathVariable Long id, @Valid @RequestBody TheaterRequest theater) {
         return ResponseObject.success(theaterService.update(id, theater));
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize(AuthorizationExpressions.ROLE_ADMIN_OR_OWNER)
     @Operation(summary = "Delete a theater", description = "Delete an existing theater (Admin only)")
     public ResponseObject<Void> remove(@PathVariable Long id) {
         theaterService.remove(id);

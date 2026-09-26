@@ -24,13 +24,28 @@ public class RefreshToken extends AbstractMappedEntity {
     @Column(name = "id")
     private Long id;
 
-    @OneToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(name = "token")
-    private String token;
+    @Column(name = "token_hash")
+    private String tokenHash;
 
     @Column(name = "expiry_date")
     private Instant expiryDate;
+
+    @Column(name = "revoked_at")
+    private Instant revokedAt;
+
+    // In-memory only (never persisted) — the value to put in the refresh cookie.
+    @Transient
+    private String rawToken;
+
+    public boolean isRevoked() {
+        return revokedAt != null;
+    }
+
+    public boolean isExpired() {
+        return expiryDate.isBefore(Instant.now());
+    }
 }

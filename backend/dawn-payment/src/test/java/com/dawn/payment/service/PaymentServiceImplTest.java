@@ -2,13 +2,18 @@ package com.dawn.payment.service;
 
 import com.dawn.common.core.constant.PaymentMethod;
 import com.dawn.common.core.constant.PaymentStatus;
+import com.dawn.common.core.constant.PermissionKey;
+import com.dawn.common.core.exception.wrapper.InvalidRequestException;
+import com.dawn.common.core.exception.wrapper.PermissionDeniedException;
 import com.dawn.common.core.exception.wrapper.ResourceNotFoundException;
 import com.dawn.common.core.outbox.Outbox;
 import com.dawn.common.core.outbox.OutboxRepository;
 import com.dawn.common.core.service.AuditLogService;
-import com.dawn.identity.service.PermissionService;
+import com.dawn.common.core.utils.SecurityUtils;
+import com.dawn.identity.api.IdentityModuleApi;
 import com.dawn.payment.dto.request.PaymentRequest;
 import com.dawn.payment.dto.response.PaymentHandlerResponse;
+import com.dawn.payment.dto.response.PaymentRefundDTO;
 import com.dawn.payment.dto.response.PaymentResponse;
 import com.dawn.payment.handler.PaymentHandler;
 import com.dawn.payment.model.Payment;
@@ -22,6 +27,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
@@ -51,7 +57,9 @@ class PaymentServiceImplTest {
     AuditLogService auditLogService;
 
     @Mock
-    PermissionService permissionService;
+    IdentityModuleApi identityModuleApi;
+    @Mock
+    com.dawn.booking.api.BookingModuleApi bookingApi;
 
     PaymentServiceImpl service;
 
@@ -68,13 +76,16 @@ class PaymentServiceImplTest {
         lenient().when(momoHandler.supports(MOMO)).thenReturn(true);
         lenient().when(momoHandler.supports(VNPAY)).thenReturn(false);
 
+        lenient().when(bookingApi.getHoldTtlSeconds(anyString())).thenReturn(900L);
+
         service = new PaymentServiceImpl(
                 List.of(vnpayHandler, momoHandler),
                 paymentRepository,
                 outboxRepository,
                 objectMapper,
-                permissionService,
-                auditLogService);
+                identityModuleApi,
+                auditLogService,
+                bookingApi);
     }
 
 
@@ -153,6 +164,60 @@ class PaymentServiceImplTest {
             assertThatThrownBy(() -> service.createPayment(req, "127.0.0.1"))
                     .isInstanceOf(ResourceNotFoundException.class);
         }
+
+        @Test
+        @DisplayName("C0: row PENDING đã có → tái dùng, KHÔNG chèn mới")
+        void createPayment_openPending_shouldReuse() {
+            Payment open = buildPayment(RES_ID, PaymentStatus.PENDING, PaymentMethod.VNPAY);
+            when(paymentRepository.findFirstByReservationIdOrderByCreatedAtDesc(RES_ID))
+                    .thenReturn(Optional.of(open));
+            when(vnpayHandler.createPaymentUrl(eq(RES_ID), anyInt(), anyString()))
+                    .thenReturn("https://vnpay.test/pay?reuse=1");
+
+            PaymentResponse response = service.createPayment(buildRequest(VNPAY, 100_000), "127.0.0.1");
+
+            assertThat(response.getPaymentUrl()).isEqualTo("https://vnpay.test/pay?reuse=1");
+            verify(paymentRepository, never()).save(any(Payment.class));
+        }
+
+        @Test
+        @DisplayName("C0: row PAID đã có → 409 PAYMENT_COMPLETE, không mở gateway lần 2")
+        void createPayment_alreadyPaid_shouldConflict() {
+            Payment paid = buildPayment(RES_ID, PaymentStatus.PAID, PaymentMethod.VNPAY);
+            when(paymentRepository.findFirstByReservationIdOrderByCreatedAtDesc(RES_ID))
+                    .thenReturn(Optional.of(paid));
+
+            assertThatThrownBy(() -> service.createPayment(buildRequest(VNPAY, 100_000), "127.0.0.1"))
+                    .isInstanceOf(com.dawn.common.core.exception.ApiException.class)
+                    .hasMessageContaining("Payment already");
+            verify(paymentRepository, never()).save(any(Payment.class));
+        }
+
+        @Test
+        @DisplayName("S4: hold đã chết → 409 RESERVATION_EXPIRED, chặn gửi gateway")
+        void createPayment_deadHold_shouldRefuse() {
+            when(bookingApi.getHoldTtlSeconds(RES_ID)).thenReturn(0L);
+
+            assertThatThrownBy(() -> service.createPayment(buildRequest(VNPAY, 100_000), "127.0.0.1"))
+                    .isInstanceOf(com.dawn.common.core.exception.ApiException.class)
+                    .hasMessageContaining("expired");
+            verify(paymentRepository, never()).save(any(Payment.class));
+        }
+
+        @Test
+        @DisplayName("C4: snapshot seatIds được lưu vào row")
+        void createPayment_withSeats_shouldSnapshot() {
+            when(vnpayHandler.createPaymentUrl(eq(RES_ID), anyInt(), anyString()))
+                    .thenReturn("https://vnpay.test/pay");
+
+            PaymentRequest req = buildRequest(VNPAY, 100_000);
+            req.setSeatIds(java.util.List.of(11L, 12L));
+            service.createPayment(req, "127.0.0.1");
+
+            ArgumentCaptor<Payment> captor = ArgumentCaptor.forClass(Payment.class);
+            verify(paymentRepository).save(captor.capture());
+            assertThat(captor.getValue().getSeatSnapshot()).isEqualTo("[11,12]");
+        }
     }
 
     // processCallback — idempotency
@@ -169,7 +234,7 @@ class PaymentServiceImplTest {
             when(vnpayHandler.verifySignature(params)).thenReturn(true);
 
             Payment paid = buildPayment(RES_ID, PaymentStatus.PAID, PaymentMethod.VNPAY);
-            when(paymentRepository.findByReservationId(RES_ID)).thenReturn(Optional.of(paid));
+            when(paymentRepository.findFirstByReservationIdOrderByCreatedAtDesc(RES_ID)).thenReturn(Optional.of(paid));
 
             PaymentHandlerResponse response = service.processCallback(VNPAY, params);
 
@@ -188,7 +253,7 @@ class PaymentServiceImplTest {
             when(vnpayHandler.verifySignature(params)).thenReturn(true);
 
             Payment paid = buildPayment(RES_ID, PaymentStatus.PAID, PaymentMethod.VNPAY);
-            when(paymentRepository.findByReservationId(RES_ID)).thenReturn(Optional.of(paid));
+            when(paymentRepository.findFirstByReservationIdOrderByCreatedAtDesc(RES_ID)).thenReturn(Optional.of(paid));
 
             service.processCallback(VNPAY, params);
             service.processCallback(VNPAY, params);
@@ -207,7 +272,7 @@ class PaymentServiceImplTest {
             when(vnpayHandler.getTxnRef(params)).thenReturn("TXN-999");
 
             Payment paid = buildPayment(RES_ID, PaymentStatus.PAID, PaymentMethod.VNPAY);
-            when(paymentRepository.findByReservationId(RES_ID)).thenReturn(Optional.of(paid));
+            when(paymentRepository.findFirstByReservationIdOrderByCreatedAtDesc(RES_ID)).thenReturn(Optional.of(paid));
 
             PaymentHandlerResponse response = service.processCallback(VNPAY, params);
 
@@ -226,7 +291,7 @@ class PaymentServiceImplTest {
             when(vnpayHandler.getTxnRef(params)).thenReturn(null);
 
             Payment paid = buildPayment(RES_ID, PaymentStatus.PAID, PaymentMethod.VNPAY);
-            when(paymentRepository.findByReservationId(RES_ID)).thenReturn(Optional.of(paid));
+            when(paymentRepository.findFirstByReservationIdOrderByCreatedAtDesc(RES_ID)).thenReturn(Optional.of(paid));
 
             PaymentHandlerResponse response = service.processCallback(VNPAY, params);
 
@@ -244,7 +309,7 @@ class PaymentServiceImplTest {
             when(vnpayHandler.getTxnRef(params)).thenReturn("TXN-123");
 
             Payment pending = buildPayment(RES_ID, PaymentStatus.PENDING, PaymentMethod.VNPAY);
-            when(paymentRepository.findByReservationId(RES_ID)).thenReturn(Optional.of(pending));
+            when(paymentRepository.findFirstByReservationIdOrderByCreatedAtDesc(RES_ID)).thenReturn(Optional.of(pending));
             when(paymentRepository.saveAndFlush(any())).thenReturn(pending);
             when(outboxRepository.existsByEventTypeAndAggregateId(anyString(), eq(RES_ID))).thenReturn(true);
 
@@ -271,7 +336,7 @@ class PaymentServiceImplTest {
             when(vnpayHandler.getTxnRef(params)).thenReturn("TXN-123");
 
             Payment pending = buildPayment(RES_ID, PaymentStatus.PENDING, PaymentMethod.VNPAY);
-            when(paymentRepository.findByReservationId(RES_ID)).thenReturn(Optional.of(pending));
+            when(paymentRepository.findFirstByReservationIdOrderByCreatedAtDesc(RES_ID)).thenReturn(Optional.of(pending));
             when(paymentRepository.saveAndFlush(any())).thenReturn(pending);
 
             PaymentHandlerResponse response = service.processCallback(VNPAY, params);
@@ -296,7 +361,7 @@ class PaymentServiceImplTest {
             when(momoHandler.getTxnRef(params)).thenReturn("TRANS-999");
 
             Payment pending = buildPayment(RES_ID, PaymentStatus.PENDING, PaymentMethod.MOMO);
-            when(paymentRepository.findByReservationId(RES_ID)).thenReturn(Optional.of(pending));
+            when(paymentRepository.findFirstByReservationIdOrderByCreatedAtDesc(RES_ID)).thenReturn(Optional.of(pending));
             when(paymentRepository.saveAndFlush(any())).thenReturn(pending);
 
             PaymentHandlerResponse response = service.processCallback(MOMO, params);
@@ -318,7 +383,7 @@ class PaymentServiceImplTest {
         void processCallback_paymentNotFound_shouldThrow() {
             Map<String, String> params = Map.of("vnp_TxnRef", RES_ID);
             when(vnpayHandler.getId(params)).thenReturn(RES_ID);
-            when(paymentRepository.findByReservationId(RES_ID)).thenReturn(Optional.empty());
+            when(paymentRepository.findFirstByReservationIdOrderByCreatedAtDesc(RES_ID)).thenReturn(Optional.empty());
 
             assertThatThrownBy(() -> service.processCallback(VNPAY, params))
                     .isInstanceOf(ResourceNotFoundException.class);
@@ -332,7 +397,7 @@ class PaymentServiceImplTest {
             when(vnpayHandler.verifySignature(params)).thenReturn(false);
 
             Payment pending = buildPayment(RES_ID, PaymentStatus.PENDING, PaymentMethod.VNPAY);
-            when(paymentRepository.findByReservationId(RES_ID)).thenReturn(Optional.of(pending));
+            when(paymentRepository.findFirstByReservationIdOrderByCreatedAtDesc(RES_ID)).thenReturn(Optional.of(pending));
 
             PaymentHandlerResponse response = service.processCallback(VNPAY, params);
 
@@ -350,7 +415,7 @@ class PaymentServiceImplTest {
             when(vnpayHandler.getAmount(params)).thenReturn(new BigDecimal("99999"));
 
             Payment pending = buildPayment(RES_ID, PaymentStatus.PENDING, PaymentMethod.VNPAY);
-            when(paymentRepository.findByReservationId(RES_ID)).thenReturn(Optional.of(pending));
+            when(paymentRepository.findFirstByReservationIdOrderByCreatedAtDesc(RES_ID)).thenReturn(Optional.of(pending));
 
             PaymentHandlerResponse response = service.processCallback(VNPAY, params);
 
@@ -370,7 +435,7 @@ class PaymentServiceImplTest {
             when(vnpayHandler.getTxnRef(params)).thenReturn("TXN-123");
 
             Payment pending = buildPayment(RES_ID, PaymentStatus.PENDING, PaymentMethod.VNPAY);
-            when(paymentRepository.findByReservationId(RES_ID)).thenReturn(Optional.of(pending));
+            when(paymentRepository.findFirstByReservationIdOrderByCreatedAtDesc(RES_ID)).thenReturn(Optional.of(pending));
             when(paymentRepository.saveAndFlush(any()))
                     .thenThrow(new RuntimeException("DB error"));
 
@@ -392,7 +457,7 @@ class PaymentServiceImplTest {
         @DisplayName("payment PAID → manualCheck trả về true")
         void manualCheck_paid_shouldReturnTrue() {
             Payment paid = buildPayment(RES_ID, PaymentStatus.PAID, PaymentMethod.VNPAY);
-            when(paymentRepository.findByReservationId(RES_ID)).thenReturn(Optional.of(paid));
+            when(paymentRepository.findFirstByReservationIdOrderByCreatedAtDesc(RES_ID)).thenReturn(Optional.of(paid));
 
             Boolean result = service.manualCheck(VNPAY, RES_ID);
 
@@ -403,7 +468,7 @@ class PaymentServiceImplTest {
         @DisplayName("payment PENDING → manualCheck trả về false")
         void manualCheck_pending_shouldReturnFalse() {
             Payment pending = buildPayment(RES_ID, PaymentStatus.PENDING, PaymentMethod.VNPAY);
-            when(paymentRepository.findByReservationId(RES_ID)).thenReturn(Optional.of(pending));
+            when(paymentRepository.findFirstByReservationIdOrderByCreatedAtDesc(RES_ID)).thenReturn(Optional.of(pending));
 
             Boolean result = service.manualCheck(VNPAY, RES_ID);
 
@@ -413,7 +478,7 @@ class PaymentServiceImplTest {
         @Test
         @DisplayName("không có payment → manualCheck trả về false")
         void manualCheck_noPayment_shouldReturnFalse() {
-            when(paymentRepository.findByReservationId(RES_ID)).thenReturn(Optional.empty());
+            when(paymentRepository.findFirstByReservationIdOrderByCreatedAtDesc(RES_ID)).thenReturn(Optional.empty());
 
             Boolean result = service.manualCheck(VNPAY, RES_ID);
 
@@ -454,8 +519,9 @@ List.of(vnpayHandler, momoHandler, weirdHandler),
                 paymentRepository,
                 outboxRepository,
                 objectMapper,
-                permissionService,
-                auditLogService);
+                identityModuleApi,
+                auditLogService,
+                bookingApi);
 
             PaymentRequest req = buildRequest("WEIRD", 100_000);
             svcWithWeird.createPayment(req, "127.0.0.1");
@@ -474,7 +540,7 @@ List.of(vnpayHandler, momoHandler, weirdHandler),
         @DisplayName("PAID → REFUND_PENDING")
         void paid_markedRefundPending() {
             Payment paid = buildPayment(RES_ID, PaymentStatus.PAID, PaymentMethod.VNPAY);
-            when(paymentRepository.findByReservationId(RES_ID)).thenReturn(Optional.of(paid));
+            when(paymentRepository.findFirstByReservationIdOrderByCreatedAtDesc(RES_ID)).thenReturn(Optional.of(paid));
 
             service.markRefundPending(RES_ID);
 
@@ -487,7 +553,7 @@ List.of(vnpayHandler, momoHandler, weirdHandler),
         @DisplayName("not PAID → untouched")
         void notPaid_untouched() {
             Payment pending = buildPayment(RES_ID, PaymentStatus.PENDING, PaymentMethod.VNPAY);
-            when(paymentRepository.findByReservationId(RES_ID)).thenReturn(Optional.of(pending));
+            when(paymentRepository.findFirstByReservationIdOrderByCreatedAtDesc(RES_ID)).thenReturn(Optional.of(pending));
 
             service.markRefundPending(RES_ID);
 
@@ -497,11 +563,220 @@ List.of(vnpayHandler, momoHandler, weirdHandler),
         @Test
         @DisplayName("missing payment → no-op")
         void missing_noop() {
-            when(paymentRepository.findByReservationId(RES_ID)).thenReturn(Optional.empty());
+            when(paymentRepository.findFirstByReservationIdOrderByCreatedAtDesc(RES_ID)).thenReturn(Optional.empty());
 
             service.markRefundPending(RES_ID);
 
             verify(paymentRepository, never()).save(any());
+        }
+    }
+
+
+    @Nested
+    @DisplayName("listRefundRequests")
+    class ListRefundRequests {
+
+        @Test
+        @DisplayName("without FINANCE → denied, no query")
+        void noFinance_denied() {
+            try (MockedStatic<SecurityUtils> mocked = mockStatic(SecurityUtils.class)) {
+                mocked.when(SecurityUtils::getCurrentUserId).thenReturn(7L);
+                when(identityModuleApi.hasPermission(7L, PermissionKey.FINANCE)).thenReturn(false);
+
+                assertThatThrownBy(() -> service.listRefundRequests())
+                        .isInstanceOf(PermissionDeniedException.class);
+                verify(paymentRepository, never()).findAllByStatusOrderByCreatedAtDesc(any());
+            }
+        }
+
+        @Test
+        @DisplayName("with FINANCE → mapped DTOs in repo order")
+        void finance_returnsMapped() {
+            Payment pending = buildPayment(RES_ID, PaymentStatus.REFUND_PENDING, PaymentMethod.VNPAY);
+            pending.setPaidAt(Instant.parse("2026-09-01T10:00:00Z"));
+            try (MockedStatic<SecurityUtils> mocked = mockStatic(SecurityUtils.class)) {
+                mocked.when(SecurityUtils::getCurrentUserId).thenReturn(7L);
+                when(identityModuleApi.hasPermission(7L, PermissionKey.FINANCE)).thenReturn(true);
+                when(paymentRepository.findAllByStatusOrderByCreatedAtDesc(PaymentStatus.REFUND_PENDING))
+                        .thenReturn(List.of(pending));
+
+                List<PaymentRefundDTO> result = service.listRefundRequests();
+
+                assertThat(result).hasSize(1);
+                assertThat(result.get(0).getReservationId()).isEqualTo(RES_ID);
+                assertThat(result.get(0).getAmount()).isEqualByComparingTo(new BigDecimal("100000"));
+                assertThat(result.get(0).getMethod()).isEqualTo(PaymentMethod.VNPAY);
+                assertThat(result.get(0).getStatus()).isEqualTo(PaymentStatus.REFUND_PENDING);
+                assertThat(result.get(0).getPaidAt()).isEqualTo(Instant.parse("2026-09-01T10:00:00Z"));
+            }
+        }
+
+        @Test
+        @DisplayName("none pending → empty list")
+        void none_empty() {
+            try (MockedStatic<SecurityUtils> mocked = mockStatic(SecurityUtils.class)) {
+                mocked.when(SecurityUtils::getCurrentUserId).thenReturn(7L);
+                when(identityModuleApi.hasPermission(7L, PermissionKey.FINANCE)).thenReturn(true);
+                when(paymentRepository.findAllByStatusOrderByCreatedAtDesc(PaymentStatus.REFUND_PENDING))
+                        .thenReturn(List.of());
+
+                assertThat(service.listRefundRequests()).isEmpty();
+            }
+        }
+    }
+
+    @Nested
+    @DisplayName("approveRefund")
+    class ApproveRefund {
+
+        @Test
+        @DisplayName("without FINANCE → denied")
+        void noFinance_denied() {
+            try (MockedStatic<SecurityUtils> mocked = mockStatic(SecurityUtils.class)) {
+                mocked.when(SecurityUtils::getCurrentUserId).thenReturn(7L);
+                when(identityModuleApi.hasPermission(7L, PermissionKey.FINANCE)).thenReturn(false);
+
+                assertThatThrownBy(() -> service.approveRefund(RES_ID))
+                        .isInstanceOf(PermissionDeniedException.class);
+                verify(paymentRepository, never()).save(any());
+            }
+        }
+
+        @Test
+        @DisplayName("missing payment → not found")
+        void missing_notFound() {
+            try (MockedStatic<SecurityUtils> mocked = mockStatic(SecurityUtils.class)) {
+                mocked.when(SecurityUtils::getCurrentUserId).thenReturn(7L);
+                when(identityModuleApi.hasPermission(7L, PermissionKey.FINANCE)).thenReturn(true);
+                when(paymentRepository.findFirstByReservationIdOrderByCreatedAtDesc(RES_ID)).thenReturn(Optional.empty());
+
+                assertThatThrownBy(() -> service.approveRefund(RES_ID))
+                        .isInstanceOf(ResourceNotFoundException.class);
+            }
+        }
+
+        @Test
+        @DisplayName("not REFUND_PENDING → invalid transition")
+        void wrongStatus_rejected() {
+            Payment paid = buildPayment(RES_ID, PaymentStatus.PAID, PaymentMethod.VNPAY);
+            try (MockedStatic<SecurityUtils> mocked = mockStatic(SecurityUtils.class)) {
+                mocked.when(SecurityUtils::getCurrentUserId).thenReturn(7L);
+                when(identityModuleApi.hasPermission(7L, PermissionKey.FINANCE)).thenReturn(true);
+                when(paymentRepository.findFirstByReservationIdOrderByCreatedAtDesc(RES_ID)).thenReturn(Optional.of(paid));
+
+                assertThatThrownBy(() -> service.approveRefund(RES_ID))
+                        .isInstanceOf(InvalidRequestException.class);
+                verify(paymentRepository, never()).save(any());
+            }
+        }
+
+        @Test
+        @DisplayName("REFUND_PENDING → REFUNDED + audit")
+        void pending_approved() {
+            Payment pending = buildPayment(RES_ID, PaymentStatus.REFUND_PENDING, PaymentMethod.VNPAY);
+            try (MockedStatic<SecurityUtils> mocked = mockStatic(SecurityUtils.class)) {
+                mocked.when(SecurityUtils::getCurrentUserId).thenReturn(7L);
+                when(identityModuleApi.hasPermission(7L, PermissionKey.FINANCE)).thenReturn(true);
+                when(paymentRepository.findFirstByReservationIdOrderByCreatedAtDesc(RES_ID)).thenReturn(Optional.of(pending));
+
+                service.approveRefund(RES_ID);
+
+                ArgumentCaptor<Payment> captor = ArgumentCaptor.forClass(Payment.class);
+                verify(paymentRepository).save(captor.capture());
+                assertThat(captor.getValue().getStatus()).isEqualTo(PaymentStatus.REFUNDED);
+                verify(auditLogService).record(eq("REFUND_APPROVED"), any(), any(), any(),
+                        any(), any(), any(), any(), any(), any(), any());
+            }
+        }
+    }
+
+
+    @Nested
+    @DisplayName("rejectRefund")
+    class RejectRefund {
+
+        @Test
+        @DisplayName("without FINANCE → denied")
+        void noFinance_denied() {
+            try (MockedStatic<SecurityUtils> mocked = mockStatic(SecurityUtils.class)) {
+                mocked.when(SecurityUtils::getCurrentUserId).thenReturn(7L);
+                when(identityModuleApi.hasPermission(7L, PermissionKey.FINANCE)).thenReturn(false);
+
+                assertThatThrownBy(() -> service.rejectRefund(RES_ID))
+                        .isInstanceOf(PermissionDeniedException.class);
+                verify(paymentRepository, never()).save(any());
+            }
+        }
+
+        @Test
+        @DisplayName("not REFUND_PENDING → invalid transition")
+        void wrongStatus_rejected() {
+            Payment paid = buildPayment(RES_ID, PaymentStatus.PAID, PaymentMethod.VNPAY);
+            try (MockedStatic<SecurityUtils> mocked = mockStatic(SecurityUtils.class)) {
+                mocked.when(SecurityUtils::getCurrentUserId).thenReturn(7L);
+                when(identityModuleApi.hasPermission(7L, PermissionKey.FINANCE)).thenReturn(true);
+                when(paymentRepository.findFirstByReservationIdOrderByCreatedAtDesc(RES_ID)).thenReturn(Optional.of(paid));
+
+                assertThatThrownBy(() -> service.rejectRefund(RES_ID))
+                        .isInstanceOf(InvalidRequestException.class);
+                verify(paymentRepository, never()).save(any());
+            }
+        }
+
+        @Test
+        @DisplayName("REFUND_PENDING → back to PAID + audit")
+        void pending_rejected() {
+            Payment pending = buildPayment(RES_ID, PaymentStatus.REFUND_PENDING, PaymentMethod.VNPAY);
+            try (MockedStatic<SecurityUtils> mocked = mockStatic(SecurityUtils.class)) {
+                mocked.when(SecurityUtils::getCurrentUserId).thenReturn(7L);
+                when(identityModuleApi.hasPermission(7L, PermissionKey.FINANCE)).thenReturn(true);
+                when(paymentRepository.findFirstByReservationIdOrderByCreatedAtDesc(RES_ID)).thenReturn(Optional.of(pending));
+
+                service.rejectRefund(RES_ID);
+
+                ArgumentCaptor<Payment> captor = ArgumentCaptor.forClass(Payment.class);
+                verify(paymentRepository).save(captor.capture());
+                assertThat(captor.getValue().getStatus()).isEqualTo(PaymentStatus.PAID);
+                verify(auditLogService).record(eq("REFUND_REJECTED"), any(), any(), any(),
+                        any(), any(), any(), any(), any(), any(), any());
+            }
+        }
+    }
+
+    @Nested
+    @DisplayName("listFailedPayments")
+    class ListFailedPayments {
+
+        @Test
+        @DisplayName("without FINANCE → denied, no query")
+        void noFinance_denied() {
+            try (MockedStatic<SecurityUtils> mocked = mockStatic(SecurityUtils.class)) {
+                mocked.when(SecurityUtils::getCurrentUserId).thenReturn(7L);
+                when(identityModuleApi.hasPermission(7L, PermissionKey.FINANCE)).thenReturn(false);
+
+                assertThatThrownBy(() -> service.listFailedPayments())
+                        .isInstanceOf(PermissionDeniedException.class);
+                verify(paymentRepository, never()).findAllByStatusOrderByCreatedAtDesc(any());
+            }
+        }
+
+        @Test
+        @DisplayName("with FINANCE → mapped FAILED DTOs")
+        void finance_returnsMapped() {
+            Payment failed = buildPayment(RES_ID, PaymentStatus.FAILED, PaymentMethod.MOMO);
+            try (MockedStatic<SecurityUtils> mocked = mockStatic(SecurityUtils.class)) {
+                mocked.when(SecurityUtils::getCurrentUserId).thenReturn(7L);
+                when(identityModuleApi.hasPermission(7L, PermissionKey.FINANCE)).thenReturn(true);
+                when(paymentRepository.findAllByStatusOrderByCreatedAtDesc(PaymentStatus.FAILED))
+                        .thenReturn(List.of(failed));
+
+                List<PaymentRefundDTO> result = service.listFailedPayments();
+
+                assertThat(result).hasSize(1);
+                assertThat(result.get(0).getReservationId()).isEqualTo(RES_ID);
+                assertThat(result.get(0).getStatus()).isEqualTo(PaymentStatus.FAILED);
+                verify(paymentRepository).findAllByStatusOrderByCreatedAtDesc(PaymentStatus.FAILED);
+            }
         }
     }
 

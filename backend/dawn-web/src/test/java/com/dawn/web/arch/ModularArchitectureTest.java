@@ -32,6 +32,14 @@ public class ModularArchitectureTest {
     }
 
     @Test
+    void payment_mustNotImportInternalOfOtherModules() {
+        ArchRule rule = noClasses().that().resideInAPackage("com.dawn.payment..")
+                .should().accessClassesThat().resideInAnyPackage(
+                        INTERNAL_OTHER_IDENTITY, "com.dawn.identity.service..", "com.dawn.identity.repository..");
+        rule.check(classes);
+    }
+
+    @Test
     void common_mustNotDependOnAnyModulePackage() {
         ArchRule rule = noClasses().that().resideInAPackage("com.dawn.common..")
                 .should().accessClassesThat().resideInAnyPackage(

@@ -1,19 +1,22 @@
 package com.dawn.identity.repository;
 
 import com.dawn.identity.model.RefreshToken;
-import com.dawn.identity.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
 import java.util.Optional;
 
 
 @Repository
 public interface RefreshTokenRepository extends JpaRepository<RefreshToken, Long> {
 
-    void deleteByToken(String token);
+    Optional<RefreshToken> findByTokenHash(String tokenHash);
 
-    Optional<RefreshToken> findByToken(String token);
-
-    void deleteByUser(User user);
+    @Modifying
+    @Query("UPDATE RefreshToken r SET r.revokedAt = :now WHERE r.user.id = :userId AND r.revokedAt IS NULL")
+    void revokeAllForUser(@Param("userId") Long userId, @Param("now") Instant now);
 }

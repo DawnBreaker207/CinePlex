@@ -3,6 +3,7 @@ package com.dawn.identity.config;
 import com.dawn.common.core.constant.ErrorCode;
 import com.dawn.common.core.exception.wrapper.PermissionDeniedException;
 import com.dawn.common.core.exception.wrapper.ResourceNotFoundException;
+import com.dawn.common.infra.security.SecurityPolicy;
 import com.dawn.identity.model.Role;
 import com.dawn.identity.model.User;
 import com.dawn.identity.repository.UserRepository;
@@ -19,6 +20,7 @@ public class UserRoleSecurity {
     private final UserRepository userRepository;
 
     public boolean canUpdate(Long userId, Authentication auth) {
+        if (!SecurityPolicy.isEnabled()) return true;
         String currentUsername = auth.getName();
         User currentUser = userRepository
                 .findByUsername(currentUsername)
@@ -45,6 +47,7 @@ public class UserRoleSecurity {
     }
 
     public boolean canUpdateProfile(Long userId, Authentication auth) {
+        if (!SecurityPolicy.isEnabled()) return true;
         String currentUsername = auth.getName();
         User currentUser = userRepository
                 .findByUsername(currentUsername)

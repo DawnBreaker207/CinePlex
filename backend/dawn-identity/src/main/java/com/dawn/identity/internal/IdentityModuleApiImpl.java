@@ -1,7 +1,9 @@
 package com.dawn.identity.internal;
 
+import com.dawn.common.core.constant.PermissionKey;
 import com.dawn.identity.api.IdentityModuleApi;
 import com.dawn.identity.dto.response.UserResponse;
+import com.dawn.identity.service.PermissionService;
 import com.dawn.identity.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -14,6 +16,8 @@ public class IdentityModuleApiImpl implements IdentityModuleApi {
 
     private final UserService userService;
 
+    private final PermissionService permissionService;
+
     @Override
     public UserResponse findUserById(Long id) {
         return userService.findOne(id);
@@ -22,5 +26,10 @@ public class IdentityModuleApiImpl implements IdentityModuleApi {
     @Override
     public List<UserResponse> findUsersByIds(List<Long> ids) {
         return userService.findAllByIds(ids);
+    }
+
+    @Override
+    public boolean hasPermission(Long userId, PermissionKey key) {
+        return permissionService.hasPermission(userId, key);
     }
 }

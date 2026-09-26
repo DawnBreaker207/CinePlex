@@ -3,12 +3,14 @@ package com.dawn.cinema.controller;
 import com.dawn.cinema.dto.request.SeatTemplateRequest;
 import com.dawn.cinema.dto.response.SeatTemplateResponse;
 import com.dawn.cinema.service.SeatLayoutService;
+import com.dawn.common.core.constant.security.AuthorizationExpressions;
 import com.dawn.common.core.dto.response.ResponseObject;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -29,6 +31,7 @@ public class SeatLayoutController {
     }
 
     @PostMapping("/{roomId}/seats")
+    @PreAuthorize(AuthorizationExpressions.ROLE_ADMIN_OR_OWNER)
     @Operation(summary = "Add seats to a room layout (Admin only)")
     public ResponseObject<List<SeatTemplateResponse>> addSeats(@PathVariable Long roomId,
                                                                @Valid @RequestBody List<SeatTemplateRequest> requests) {
@@ -36,6 +39,7 @@ public class SeatLayoutController {
     }
 
     @PutMapping("/{roomId}/seats/{templateId}")
+    @PreAuthorize(AuthorizationExpressions.ROLE_ADMIN_OR_OWNER)
     @Operation(summary = "Update a seat in the layout (Admin only)")
     public ResponseObject<SeatTemplateResponse> update(@PathVariable Long roomId,
                                                        @PathVariable Long templateId,
@@ -44,6 +48,7 @@ public class SeatLayoutController {
     }
 
     @DeleteMapping("/{roomId}/seats/{templateId}")
+    @PreAuthorize(AuthorizationExpressions.ROLE_ADMIN_OR_OWNER)
     @Operation(summary = "Remove a seat from the layout (Admin only)")
     public ResponseObject<Void> remove(@PathVariable Long roomId, @PathVariable Long templateId) {
         seatLayoutService.remove(roomId, templateId);
@@ -51,6 +56,7 @@ public class SeatLayoutController {
     }
 
     @PutMapping("/{roomId}/layout")
+    @PreAuthorize(AuthorizationExpressions.ROLE_ADMIN_OR_OWNER)
     @Operation(summary = "Replace the whole seat layout of a room (Admin only)")
     public ResponseObject<List<SeatTemplateResponse>> replaceLayout(@PathVariable Long roomId,
                                                                     @Valid @RequestBody List<SeatTemplateRequest> requests) {
