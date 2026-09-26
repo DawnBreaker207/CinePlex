@@ -10,9 +10,6 @@
 
 /* Let the browser handle tap/double-tap gestures natively inside the grid
    (blocks double-tap-zoom so double-tap merge always reaches the app). */
-
-/* Let the browser handle tap/double-tap gestures natively inside the grid
-   (blocks double-tap-zoom so double-tap merge always reaches the app). */
 .seat-grid {
   touch-action: manipulation;
 }

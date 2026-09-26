@@ -44,11 +44,14 @@ export class AuthMenuComponent {
   readonly settings = inject(SettingsService);
   readonly userStore = inject(UserStore);
   private readonly userIdSignal = this.store.selectSignal(selectUserId);
+  private lastLoadedUserId: number | null = null;
 
   constructor() {
     effect(() => {
       const userId = this.userIdSignal();
-      if (userId) {
+      // Skip redundant reloads if this effect re-runs for the same id.
+      if (userId && userId !== this.lastLoadedUserId) {
+        this.lastLoadedUserId = userId;
         this.userStore.loadUser(userId);
       }
     });

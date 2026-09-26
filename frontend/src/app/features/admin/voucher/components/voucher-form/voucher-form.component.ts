@@ -1,9 +1,13 @@
 import {
   Component,
+  DestroyRef,
+  effect,
   inject,
   OnInit,
+  signal,
   ChangeDetectionStrategy,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   FormControl,
   FormGroup,
@@ -29,6 +33,7 @@ import { NzDatePickerModule } from 'ng-zorro-antd/date-picker';
 import { NzSelectModule } from 'ng-zorro-antd/select';
 import { NzInputNumberModule } from 'ng-zorro-antd/input-number';
 import { NzButtonModule } from 'ng-zorro-antd/button';
+import { VoucherStatusPipe } from '@shared/pipes/voucher-status.pipe';
 
 @Component({
   selector: 'app-voucher-form',
@@ -43,6 +48,7 @@ import { NzButtonModule } from 'ng-zorro-antd/button';
     NzInputNumberModule,
     NzButtonModule,
     NzModalModule,
+    VoucherStatusPipe,
   ],
   templateUrl: './voucher-form.component.html',
   styleUrl: './voucher-form.component.css',
@@ -51,6 +57,7 @@ import { NzButtonModule } from 'ng-zorro-antd/button';
 export class FormVoucherComponent implements OnInit {
   private fb = inject(NonNullableFormBuilder);
   private modalRef = inject(NzModalRef);
+  private destroyRef = inject(DestroyRef);
   readonly voucherStore = inject(VoucherStore);
   readonly nzModalData = inject(NZ_MODAL_DATA, { optional: true });
 
@@ -70,6 +77,18 @@ export class FormVoucherComponent implements OnInit {
   }>;
   mode: Mode = 'view';
   voucherId?: number;
+  private submitted = signal(false);
+
+  constructor() {
+    effect(() => {
+      if (this.submitted() && !this.voucherStore.saving()) {
+        this.submitted.set(false);
+        if (!this.voucherStore.error()) {
+          this.modalRef.close(true);
+        }
+      }
+    });
+  }
 
   readonly VoucherCategory = VoucherCategory;
   readonly DiscountType = DiscountType;
@@ -86,8 +105,26 @@ export class FormVoucherComponent implements OnInit {
     const result = value.replace(/\D/g, '');
     return result ? Number(result) : 0;
   };
+
+  // The code pattern only allows uppercase — normalize as the user types
+  // instead of failing validation on lowercase input.
+  upper(event: Event): string {
+    return (event.target as HTMLInputElement).value.toUpperCase();
+  }
   ngOnInit() {
     this.initForm();
+    // PERCENT is capped at 100; FIXED only needs a positive value.
+    this.form.controls.discountType.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((type) => {
+        const ctrl = this.form.controls.discountValue;
+        ctrl.setValidators(
+          type === DiscountType.PERCENT
+            ? [Validators.required, Validators.min(1), Validators.max(100)]
+            : [Validators.required, Validators.min(1)],
+        );
+        ctrl.updateValueAndValidity();
+      });
 
     const { mode, id } = this.nzModalData || this.modalRef.getConfig().nzData;
     this.mode = mode;
@@ -106,7 +143,7 @@ export class FormVoucherComponent implements OnInit {
       category: [VoucherCategory.CAMPAIGN, [Validators.required]],
       quantityTotal: [100, [Validators.required, Validators.min(1)]],
       discountType: [DiscountType.FIXED, [Validators.required]],
-      discountValue: [0, [Validators.required, Validators.min(0)]],
+      discountValue: [0, [Validators.required, Validators.min(1)]],
       maxDiscountAmount: [0],
       minOrderValue: [0],
       conditions: [''],
@@ -177,8 +214,11 @@ export class FormVoucherComponent implements OnInit {
       });
     } else if (this.mode === 'add') {
       this.voucherStore.createVoucher(request);
+    } else {
+      return;
     }
-    this.modalRef.close(true);
+    // Close only when the save actually succeeds (not on error).
+    this.submitted.set(true);
   }
 
   close() {

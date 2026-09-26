@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { NetworkService } from '@core/services/network/network.service';
 
@@ -7,6 +7,7 @@ import { NetworkService } from '@core/services/network/network.service';
   imports: [RouterOutlet],
   templateUrl: './app.html',
   styleUrl: './app.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class App {
   private network = inject(NetworkService);

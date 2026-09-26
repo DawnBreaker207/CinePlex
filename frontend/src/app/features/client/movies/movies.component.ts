@@ -2,7 +2,6 @@ import {
   Component,
   computed,
   DestroyRef,
-  effect,
   inject,
   OnInit,
   signal,
@@ -25,10 +24,14 @@ import { MovieItemComponent } from '@shared/components/movie-item/movie-item.com
 import {
   selectAllMovies,
   selectMovieLoading,
+  selectMoviesError,
 } from '@domain/movie/data-access/movie.selectors';
+import { ErrorStateComponent } from '@shared/components/error-state/error-state.component';
+import { errorMessage } from '@shared/utils/error.helper';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs';
 import { Movie } from '@domain/movie/models/movie.model';
+import { MovieActions } from '@domain/movie/data-access/movie.actions';
 
 @Component({
   selector: 'app-movies',
@@ -44,6 +47,7 @@ import { Movie } from '@domain/movie/models/movie.model';
     NzSkeletonModule,
     NzSelectModule,
     MovieItemComponent,
+    ErrorStateComponent,
   ],
   templateUrl: './movies.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -56,6 +60,10 @@ export class MoviesComponent implements OnInit {
 
   readonly loading = this.store.selectSignal(selectMovieLoading);
   readonly allMovies = this.store.selectSignal(selectAllMovies);
+  readonly loadError = computed(() => {
+    const err = this.store.selectSignal(selectMoviesError)();
+    return err ? errorMessage(err) : null;
+  });
 
   readonly search = signal('');
   readonly tabIndex = signal(0);
@@ -102,30 +110,34 @@ export class MoviesComponent implements OnInit {
     this.filtered().slice(0, this.visibleCount()),
   );
 
-  constructor() {
-    effect(
-      () => {
-        this.search();
-        this.tabIndex();
-        this.sort();
-        this.visibleCount.set(18);
-      },
-      { allowSignalWrites: true },
-    );
-  }
-
   ngOnInit() {
     this.route.queryParams
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((params) => {
         const tab = params['tab'];
-        if (tab === 'now') this.tabIndex.set(1);
-        else if (tab === 'upcoming') this.tabIndex.set(2);
-        else this.tabIndex.set(0);
+        if (tab === 'now') this.onTabChange(1);
+        else if (tab === 'upcoming') this.onTabChange(2);
+        else this.onTabChange(0);
       });
     fromEvent(window, 'scroll')
       .pipe(throttleTime(200), takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.maybeGrow());
+  }
+
+  // Reset the infinite-scroll window whenever a filter changes.
+  onSearchChange(value: string) {
+    this.search.set(value);
+    this.visibleCount.set(18);
+  }
+
+  onTabChange(index: number) {
+    this.tabIndex.set(index);
+    this.visibleCount.set(18);
+  }
+
+  onSortChange(value: 'newest' | 'oldest') {
+    this.sort.set(value);
+    this.visibleCount.set(18);
   }
 
   maybeGrow() {
@@ -141,6 +153,11 @@ export class MoviesComponent implements OnInit {
     this.search.set('');
     this.tabIndex.set(0);
     this.sort.set('newest');
+    this.visibleCount.set(18);
+  }
+
+  reload() {
+    this.store.dispatch(MovieActions.loadMovies({ page: 0, size: 18 }));
   }
 
   isNowShowing(movie: Movie) {

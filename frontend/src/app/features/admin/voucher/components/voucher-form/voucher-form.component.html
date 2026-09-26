@@ -22,9 +22,10 @@
         <input
           nz-input
           formControlName="code"
-          class="uppercase"
-          [placeholder]="'VD: SALE50'"
+          class="uppercase font-mono"
+          [placeholder]="'voucher.form.codeExample' | translate"
           maxlength="50"
+          (input)="form.controls.code.setValue(upper($event))"
         />
       </nz-form-control>
     </nz-form-item>
@@ -44,7 +45,7 @@
   <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4">
     <nz-form-item>
       <nz-form-label nzRequired>{{ "voucher.discountType" | translate }}</nz-form-label>
-      <nz-form-control>
+      <nz-form-control [nzErrorTip]="'common.required' | translate">
         <nz-select formControlName="discountType">
           <nz-option
             [nzValue]="DiscountType.FIXED"
@@ -60,10 +61,11 @@
 
     <nz-form-item>
       <nz-form-label nzRequired>{{ "voucher.discountValue" | translate }}</nz-form-label>
-      <nz-form-control>
+      <nz-form-control [nzErrorTip]="'voucher.form.valuePositive' | translate">
         <nz-input-number
           formControlName="discountValue"
-          [nzMin]="0"
+          [nzMin]="1"
+          [nzMax]="form.get('discountType')?.value === 'PERCENT' ? 100 : 1000000000"
           [nzStep]="form.get('discountType')?.value === 'PERCENT' ? 1 : 1000"
           class="w-full"
           [nzFormatter]="
@@ -132,10 +134,10 @@
 
     <nz-form-item>
       <nz-form-label nzRequired>{{ "voucher.statusLabel" | translate }}</nz-form-label>
-      <nz-form-control>
+      <nz-form-control [nzErrorTip]="'common.required' | translate">
         <nz-select formControlName="status">
           @for (s of statuses; track s) {
-            <nz-option [nzValue]="s" [nzLabel]="s"></nz-option>
+            <nz-option [nzValue]="s" [nzLabel]="(s | voucherStatus).label | translate"></nz-option>
           }
         </nz-select>
       </nz-form-control>
@@ -167,8 +169,8 @@
         nz-button
         nzType="primary"
         (click)="submit()"
-        [nzLoading]="voucherStore.loading()"
-        [disabled]="form.invalid"
+        [nzLoading]="voucherStore.saving()"
+        [disabled]="form.invalid || voucherStore.saving()"
       >
         {{ "profile.saveChanges" | translate }}
       </button>

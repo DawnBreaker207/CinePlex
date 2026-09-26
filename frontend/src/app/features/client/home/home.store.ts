@@ -10,9 +10,13 @@ import { StorageService } from '@core/services/storage/storage.service';
 import {
   selectAllTheaters,
   selectSelectedTheaterId,
+  selectTheaterLoading,
 } from '@domain/theater/data-access/theater.selectors';
 import { selectAllShowtimes } from '@domain/showtime/data-access/showtime.selectors';
-import { selectAllMovies } from '@domain/movie/data-access/movie.selectors';
+import {
+  selectAllMovies,
+  selectMovieLoading,
+} from '@domain/movie/data-access/movie.selectors';
 import { selectJwt } from '@core/auth/auth.selectors';
 import { TheaterActions } from '@domain/theater/data-access/theater.actions';
 import { MovieActions } from '@domain/movie/data-access/movie.actions';
@@ -39,7 +43,13 @@ export const HomeStore = signalStore(
       const selectedTheaterId = ngrxStore.selectSignal(selectSelectedTheaterId);
       const user = ngrxStore.selectSignal(selectJwt);
 
-      const loading = signal(false);
+      // Real store flags — can't get stuck true when there's just no data.
+      const theaterLoading = ngrxStore.selectSignal(selectTheaterLoading);
+      const movieLoading = ngrxStore.selectSignal(selectMovieLoading);
+      const timedOut = signal(false);
+      const loading = computed(
+        () => (theaterLoading() || movieLoading()) && !timedOut(),
+      );
       const error = signal<string | null>(null);
 
       const showtimesForTheater = computed(() => {
@@ -66,21 +76,18 @@ export const HomeStore = signalStore(
         movies().filter((m) => dayjs(m.releaseDate).isAfter(dayjs(), 'day')),
       );
 
-      effect(() => {
-        if (movies().length > 0) {
-          untracked(() => loading.set(false));
-        }
-      });
-
+      // Failsafe: stop spinning and surface an error after 15s if hung.
       effect((onCleanup) => {
-        if (loading()) {
+        if (theaterLoading() || movieLoading()) {
           const timer = setTimeout(() => {
             untracked(() => {
-              loading.set(false);
+              timedOut.set(true);
               error.set(translate.instant('home.loadFailed'));
             });
           }, 15000);
           onCleanup(() => clearTimeout(timer));
+        } else {
+          untracked(() => timedOut.set(false));
         }
       });
 
@@ -92,19 +99,13 @@ export const HomeStore = signalStore(
         comingSoon,
         showtimesForTheater,
         user,
-        loading: loading.asReadonly(),
+        loading,
         error: error.asReadonly(),
         setError(msg: string) { error.set(msg); },
         clearError() { error.set(null); },
         initData() {
           const currentTheaters = theaters();
           const currentMovies = allMovies();
-
-          if (currentTheaters.length > 0 && currentMovies.length > 0) {
-            loading.set(false);
-          } else {
-            loading.set(true);
-          }
 
           if (currentTheaters.length === 0) {
             ngrxStore.dispatch(

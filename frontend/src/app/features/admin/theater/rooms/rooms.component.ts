@@ -2,7 +2,6 @@ import {
   Component,
   computed,
   ElementRef,
-  HostListener,
   inject,
   input,
   numberAttribute,
@@ -47,6 +46,8 @@ import { confirmDelete } from '@shared/utils/confirm-delete';
 import { errorMessage } from '@shared/utils/error.helper';
 import { ToastService } from '@core/services/toast/toast.service';
 import { CountdownConfirmComponent } from '@shared/components/countdown-confirm/countdown-confirm.component';
+import { RoomsTourService } from './rooms-tour.service';
+import { SeatHoldGestureService } from './seat-hold-gesture.service';
 
 @Component({
   selector: 'app-rooms',
@@ -69,7 +70,11 @@ import { CountdownConfirmComponent } from '@shared/components/countdown-confirm/
   templateUrl: './rooms.component.html',
   styleUrl: './rooms.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  providers: [NzModalService],
+  providers: [NzModalService, RoomsTourService, SeatHoldGestureService],
+  host: {
+    '(window:beforeunload)': 'onBeforeUnload($event)',
+    '(document:keydown.escape)': 'onEscape()',
+  },
 })
 export class RoomsComponent implements OnInit {
   private roomService = inject(RoomService);
@@ -78,8 +83,9 @@ export class RoomsComponent implements OnInit {
   private drawerService = inject(NzDrawerService);
   private translate = inject(TranslateService);
   private toast = inject(ToastService);
+  readonly tour = inject(RoomsTourService);
+  readonly gesture = inject(SeatHoldGestureService);
 
-  @HostListener('window:beforeunload', ['$event'])
   onBeforeUnload(event: BeforeUnloadEvent) {
     if (this.dirty()) event.preventDefault();
   }
@@ -108,37 +114,15 @@ export class RoomsComponent implements OnInit {
   readonly deletedGhosts = signal<Set<string>>(new Set());
   readonly totalSeats = computed(() => this.layout().length);
   readonly selectedCount = computed(() => this.selectedIds().size);
-  // Press-and-hold state (500ms to enter selection).
-  readonly holdSeatId = signal<number | null>(null);
-  readonly holdPct = signal(0);
   // Floating pill state.
   readonly pillPos = signal<{ top: number; left: number; below: boolean } | null>(null);
   readonly pillHiddenByScroll = signal(false);
   readonly typeListOpen = signal(false);
   readonly lastSelectedId = signal<number | null>(null);
-  private suppressClick = false;
-  private holdTimer: ReturnType<typeof setTimeout> | null = null;
-  private holdTick: ReturnType<typeof setInterval> | null = null;
-  private holdStart: { x: number; y: number } | null = null;
   private scrollTimer: ReturnType<typeof setTimeout> | null = null;
 
   @ViewChild('layoutPanel') layoutPanel?: ElementRef<HTMLElement>;
   @ViewChild('seatScroll') seatScroll?: ElementRef<HTMLElement>;
-  readonly guideVisible = signal(
-    typeof localStorage === 'undefined' ||
-      localStorage.getItem('rooms-guide-dismissed') !== '1',
-  );
-  // Interactive first-run tour: advances on real actions, skippable, once.
-  readonly tourStep = signal<number | null>(null);
-  // @if treats 0 as falsy, so the template reads this instead of tourStep().
-  readonly tourIndex = computed(() => this.tourStep() ?? -1);
-  private tourDone(): boolean {
-    try {
-      return localStorage.getItem('rooms-tour-done') === '1';
-    } catch {
-      return false;
-    }
-  }
   readonly roomName = signal('');
   readonly roomType = signal('2D');
   readonly copySourceId = signal<number | null>(null);
@@ -146,7 +130,6 @@ export class RoomsComponent implements OnInit {
   readonly pendingMerge = signal<SeatTemplate | null>(null);
   private lastTap: { id: number; time: number } | null = null;
 
-  @HostListener('document:keydown.escape')
   onEscape() {
     this.disarm();
     this.clearSelection();
@@ -434,7 +417,7 @@ export class RoomsComponent implements OnInit {
       this.clearSelection();
       return;
     }
-    this.maybeStartTour();
+    this.tour.maybeStart();
     // One-time hint: press-and-hold is the only undiscoverable gesture.
     try {
       if (!localStorage.getItem('rooms-hold-hint-shown')) {
@@ -448,56 +431,6 @@ export class RoomsComponent implements OnInit {
       }
     } catch {
       // storage may be unavailable — hint just reappears
-    }
-  }
-
-  startTour() {
-    this.tourStep.set(0);
-  }
-
-  skipTour() {
-    this.tourStep.set(null);
-    try {
-      localStorage.setItem('rooms-tour-done', '1');
-    } catch {
-      // storage may be unavailable — section just reappears
-    }
-  }
-
-  nextTourStep() {
-    const step = this.tourStep();
-    if (step === null) return;
-    if (step >= 2) {
-      this.skipTour();
-      return;
-    }
-    this.tourStep.set(step + 1);
-  }
-
-  private maybeStartTour() {
-    if (this.tourDone()) {
-      this.tourStep.set(null);
-      return;
-    }
-    this.tourStep.set(0);
-  }
-
-  private advanceTour(step: number) {
-    if (this.tourStep() === step) this.tourStep.set(step + 1 > 2 ? null : step + 1);
-    if (this.tourStep() === null && step === 2) {
-      try {
-        localStorage.setItem('rooms-tour-done', '1');
-      } catch {
-        // storage may be unavailable — section just reappears
-      }
-    }
-  }
-  dismissGuide() {
-    this.guideVisible.set(false);
-    try {
-      localStorage.setItem('rooms-guide-dismissed', '1');
-    } catch {
-      // storage may be unavailable — section just reappears
     }
   }
 
@@ -558,9 +491,8 @@ export class RoomsComponent implements OnInit {
   // No timers: a second tap on the same seat within 350ms is a double-tap.
   onSeatTap(seat: SeatTemplate) {
     if (!this.editing()) return;
-    if (this.suppressClick) {
+    if (this.gesture.consumeSuppressedClick()) {
       // Pointer release right after a completed press-and-hold.
-      this.suppressClick = false;
       this.lastTap = null;
       return;
     }
@@ -616,7 +548,7 @@ export class RoomsComponent implements OnInit {
     });
     this.lastSelectedId.set(ids[ids.length - 1]);
     this.schedulePill();
-    this.advanceTour(0);
+    this.tour.advance(0);
   }
 
   clearSelection() {
@@ -684,61 +616,24 @@ export class RoomsComponent implements OnInit {
   // wipe the pending A. Pending dies on hold completion and other actions.
   onSeatPointerDown(seat: SeatTemplate, event: PointerEvent) {
     if (!this.editing()) return;
-    if (event.pointerType === 'mouse' && event.button !== 0) return;
-    this.clearHoldTimers();
-    this.holdStart = { x: event.clientX, y: event.clientY };
-    this.holdSeatId.set(seat.id);
-    this.holdPct.set(0);
-    const started = Date.now();
-    this.holdTick = setInterval(() => {
-      this.holdPct.set(
-        Math.min(100, Math.round(((Date.now() - started) / 500) * 100)),
-      );
-    }, 50);
-    this.holdTimer = setTimeout(() => {
-      this.clearHoldTimers();
+    this.gesture.start(seat, event, (heldSeat) => {
       this.disarm();
-      this.suppressClick = true;
       this.lastTap = null;
-      if (seat.seatType === 'COUPLE') {
-        const partner = this.findPartner(seat);
-        this.addSelection(partner ? [seat.id, partner.id] : [seat.id]);
+      if (heldSeat.seatType === 'COUPLE') {
+        const partner = this.findPartner(heldSeat);
+        this.addSelection(partner ? [heldSeat.id, partner.id] : [heldSeat.id]);
       } else {
-        this.addSelection([seat.id]);
+        this.addSelection([heldSeat.id]);
       }
-      if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
-        try {
-          navigator.vibrate(15);
-        } catch {
-          // haptics best-effort only
-        }
-      }
-    }, 500);
+    });
   }
 
   onSeatPointerMove(event: PointerEvent) {
-    if (!this.holdStart || !this.holdTimer) return;
-    const dx = event.clientX - this.holdStart.x;
-    const dy = event.clientY - this.holdStart.y;
-    if (dx * dx + dy * dy > 576) this.clearHoldTimers();
+    this.gesture.move(event);
   }
 
   onSeatPointerUp() {
-    this.clearHoldTimers();
-  }
-
-  private clearHoldTimers() {
-    if (this.holdTimer) {
-      clearTimeout(this.holdTimer);
-      this.holdTimer = null;
-    }
-    if (this.holdTick) {
-      clearInterval(this.holdTick);
-      this.holdTick = null;
-    }
-    this.holdStart = null;
-    this.holdSeatId.set(null);
-    this.holdPct.set(0);
+    this.gesture.end();
   }
 
   toggleSelect(seat: SeatTemplate) {
@@ -751,7 +646,7 @@ export class RoomsComponent implements OnInit {
     });
     this.lastSelectedId.set(seat.id);
     this.schedulePill();
-    this.advanceTour(0);
+    this.tour.advance(0);
   }
 
   selectRow(rowLabel: string) {
@@ -896,7 +791,7 @@ export class RoomsComponent implements OnInit {
       this.selectedIds.set(new Set());
     }
     this.dirty.set(true);
-    this.advanceTour(1);
+    this.tour.advance(1);
   }
 
   private splitPair(seat: SeatTemplate) {
@@ -1040,7 +935,7 @@ export class RoomsComponent implements OnInit {
     }));
     this.layoutService.replaceLayout(room.id, payload).subscribe({
       next: (layout) => {
-        this.advanceTour(2);
+        this.tour.advance(2);
         // Spec case #7: selection is temporary UI state — remap it by seat
         // key so it survives the save instead of being cleared.
         const keys = new Set(

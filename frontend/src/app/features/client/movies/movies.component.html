@@ -1,13 +1,13 @@
 <div class="max-w-5xl mx-auto px-4 sm:px-6 py-8">
   <div class="flex flex-col gap-4 mb-6">
-    <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">
+    <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">
       {{ "home.movieList" | translate }}
     </h1>
     <div class="flex flex-col sm:flex-row gap-3 sm:items-center">
       <nz-tabset
         class="flex-1"
         [nzSelectedIndex]="tabIndex()"
-        (nzSelectedIndexChange)="tabIndex.set($event)"
+        (nzSelectedIndexChange)="onTabChange($event)"
       >
         <nz-tab [nzTitle]="tabTitles().all" />
         <nz-tab [nzTitle]="tabTitles().now" />
@@ -19,7 +19,7 @@
             nz-input
             [placeholder]="'home.searchMovie' | translate"
             [ngModel]="search()"
-            (ngModelChange)="search.set($event)"
+            (ngModelChange)="onSearchChange($event)"
             maxlength="255"
           />
         </nz-input-group>
@@ -27,7 +27,7 @@
       <nz-select
         class="w-full sm:w-[160px]"
         [ngModel]="sort()"
-        (ngModelChange)="sort.set($event)"
+        (ngModelChange)="onSortChange($event)"
         [ariaLabel]="'movies.sort' | translate"
       >
         <nz-option
@@ -55,6 +55,8 @@
         </div>
       }
     </div>
+  } @else if (loadError()) {
+    <app-error-state [message]="loadError() ?? ''" (retry)="reload()" class="mt-8 block" />
   } @else if (filtered().length === 0) {
     <div class="mt-16 text-center">
       <nz-empty [nzNotFoundContent]="'home.noMatch' | translate">

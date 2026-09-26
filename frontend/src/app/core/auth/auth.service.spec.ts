@@ -4,6 +4,7 @@ import { HttpTestingController } from '@angular/common/http/testing';
 import { AuthService } from './auth.service';
 
 import { testProviders } from '@shared/testing/test-providers';
+import { environment } from '@env/environment';
 
 interface ApiRes<T> {
   code: string;
@@ -67,7 +68,7 @@ describe('AuthService', () => {
       expect(res?.accessToken).toBe(token);
     });
 
-    ctrl.expectOne('/api/v1/auth/login').flush({
+    ctrl.expectOne(`${environment.apiUrl}/auth/login`).flush({
       code: 'OK',
       message: 'success',
       data: jwt,
@@ -100,10 +101,16 @@ describe('AuthService', () => {
     service.silentRefresh().subscribe(() => completed++);
 
     expect(completed).toBe(0);
-    ctrl.expectOne('/api/v1/auth/refresh-token').flush({
+    ctrl.expectOne(`${environment.apiUrl}/auth/refresh-token`).flush({
       code: 'OK',
       message: 'success',
       data: { accessToken: token },
+    });
+    // silentRefresh also resolves the userId by email.
+    ctrl.expectOne(`${environment.apiUrl}/user/email/admin@cineplex.vn`).flush({
+      code: 'OK',
+      message: 'success',
+      data: { userId: 1, username: 'admin', email: 'admin@cineplex.vn' },
     });
 
     expect(completed).toBe(3);
@@ -119,7 +126,7 @@ describe('AuthService', () => {
       .subscribe({ next: (v) => (result = v), error: () => (failed = true) });
 
     ctrl
-      .expectOne('/api/v1/auth/refresh-token')
+      .expectOne(`${environment.apiUrl}/auth/refresh-token`)
       .error(new ErrorEvent('network'), { status: 401 });
 
     expect(result).toBeNull();
@@ -132,7 +139,7 @@ describe('AuthService', () => {
 
     service.logout().subscribe({ error: () => undefined });
     ctrl
-      .expectOne('/api/v1/auth/logout')
+      .expectOne(`${environment.apiUrl}/auth/logout`)
       .error(new ErrorEvent('network'), { status: 500 });
 
     expect(service.accessToken()).toBeNull();

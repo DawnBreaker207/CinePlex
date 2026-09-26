@@ -27,6 +27,7 @@ import { selectJwt } from '@core/auth/auth.selectors';
 import { Showtime } from '@domain/showtime/models/showtime.model';
 import { Theater } from '@domain/theater/models/theater.model';
 import { timeFormat } from '@shared/utils/date.helper';
+import { ErrorStateComponent } from '@shared/components/error-state/error-state.component';
 import { finalize } from 'rxjs';
 import dayjs from 'dayjs';
 
@@ -40,6 +41,7 @@ import dayjs from 'dayjs';
     NzSkeletonModule,
     NzIconModule,
     TranslatePipe,
+    ErrorStateComponent,
   ],
   templateUrl: './showtimes.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -65,6 +67,7 @@ export class ShowtimesComponent implements OnInit {
   readonly selectedDate = signal<Date>(dayjs().startOf('day').toDate());
   readonly showtimes = signal<Showtime[]>([]);
   readonly loading = signal(false);
+  readonly loadError = signal(false);
 
   readonly grouped = computed(() => {
     const map = new Map<number, { title: string; items: Showtime[] }>();
@@ -85,16 +88,20 @@ export class ShowtimesComponent implements OnInit {
 
   protected readonly timeFormat = timeFormat;
 
+  // No-op until ngOnInit's own load resolves, so this can't race it.
+  private initialized = false;
+
   constructor() {
     effect(() => {
       const preset = this.presetTheaterId();
+      const stored = this.storedTheaterId();
+      if (!this.initialized) return;
       if (preset && preset !== this.theaterId()) {
         this.theaterId.set(preset);
         this.load();
         return;
       }
       if (this.embedded()) return;
-      const stored = this.storedTheaterId();
       if (stored && stored !== this.theaterId()) {
         this.theaterId.set(stored);
         this.load();
@@ -116,6 +123,7 @@ export class ShowtimesComponent implements OnInit {
           this.theaterId.set(first.id);
           this.load();
         }
+        this.initialized = true;
       },
     });
   }
@@ -129,6 +137,7 @@ export class ShowtimesComponent implements OnInit {
     const theaterId = this.theaterId();
     if (!theaterId) return;
     this.loading.set(true);
+    this.loadError.set(false);
     this.showtimeService
       .getShowtimeByTheater(theaterId, {
         startDate: dayjs(this.selectedDate()).format('YYYY-MM-DD'),
@@ -137,7 +146,10 @@ export class ShowtimesComponent implements OnInit {
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
         next: (page) => this.showtimes.set(page.content ?? []),
-        error: () => this.showtimes.set([]),
+        error: () => {
+          this.showtimes.set([]);
+          this.loadError.set(true);
+        },
       });
   }
 

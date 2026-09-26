@@ -57,10 +57,14 @@ export class DetailFilmComponent {
     this.seatStore.selectedSeats().map((s) => s.seatNumber.replace(/\s+/g, '')),
   );
 
+  private lastLoadedMovieId: number | null = null;
+
   constructor() {
     effect(() => {
       const movieId = this.showtime()?.movieId;
-      if (movieId) {
+      // Skip redundant reloads if this effect re-runs for the same movie.
+      if (movieId && movieId !== this.lastLoadedMovieId) {
+        this.lastLoadedMovieId = movieId as number;
         this.store.dispatch(MovieActions.loadMovie({ id: movieId as number }));
       }
     });

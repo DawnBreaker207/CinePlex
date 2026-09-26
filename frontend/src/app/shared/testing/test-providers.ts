@@ -3,7 +3,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { provideMockStore } from '@ngrx/store/testing';
 import { ScannedActionsSubject } from '@ngrx/store';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { DatePipe, CurrencyPipe } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { NzModalRef, NZ_MODAL_DATA } from 'ng-zorro-antd/modal';
@@ -54,5 +54,13 @@ export const testProviders = [
   { provide: NZ_MODAL_DATA, useValue: {} },
   { provide: NzDrawerRef, useValue: { close: () => {}, updateConfig: () => {} } },
   { provide: NZ_DRAWER_DATA, useValue: {} },
-  { provide: ActivatedRoute, useValue: { snapshot: { data: {}, children: [] }, root: { children: [] }, queryParams: of({}), params: of({}) } },
+  {
+    provide: ActivatedRoute,
+    useValue: {
+      snapshot: { data: {}, children: [], queryParamMap: convertToParamMap({}), paramMap: convertToParamMap({}) },
+      root: { children: [] },
+      queryParams: of({}),
+      params: of({}),
+    },
+  },
 ];

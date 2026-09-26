@@ -16,6 +16,7 @@ import { Store } from '@ngrx/store';
 import { AuthInterceptor } from './auth.interceptor';
 import { AuthService } from '../auth/auth.service';
 import { AuthActions } from '../auth/auth.actions';
+import { environment } from '@env/environment';
 
 const b64url = (input: string) =>
   btoa(unescape(encodeURIComponent(input)))
@@ -90,11 +91,17 @@ describe('AuthInterceptor', () => {
       .expectOne('/api/v1/movie')
       .flush(error401('Access token expired').body, { status: 401, statusText: 'Unauthorized' });
 
-    const refresh = ctrl.expectOne('/api/v1/auth/refresh-token');
+    const refresh = ctrl.expectOne(`${environment.apiUrl}/auth/refresh-token`);
     refresh.flush({
       code: 'OK',
       message: 'success',
       data: { accessToken: newToken },
+    });
+    // silentRefresh also resolves the userId by email.
+    ctrl.expectOne(`${environment.apiUrl}/user/email/admin@cineplex.vn`).flush({
+      code: 'OK',
+      message: 'success',
+      data: { userId: 1, username: 'admin', email: 'admin@cineplex.vn' },
     });
 
     const retried = ctrl.expectOne('/api/v1/movie');
@@ -117,7 +124,7 @@ describe('AuthInterceptor', () => {
     ctrl.expectOne('/api/v1/movie').flush(error401('Refresh token not found').body, { status: 401, statusText: 'Unauthorized' });
 
     expect(errored).toBeTrue();
-    ctrl.expectNone('/api/v1/auth/refresh-token');
+    ctrl.expectNone(`${environment.apiUrl}/auth/refresh-token`);
     expect(dispatchSpy).toHaveBeenCalledWith(AuthActions.loadLogout());
     expect(authService.accessToken()).toBeNull();
   });
@@ -134,7 +141,7 @@ describe('AuthInterceptor', () => {
 
     ctrl.expectOne('/api/v1/movie').flush(error401('Access token expired').body, { status: 401, statusText: 'Unauthorized' });
     ctrl
-      .expectOne('/api/v1/auth/refresh-token')
+      .expectOne(`${environment.apiUrl}/auth/refresh-token`)
       .flush(error401('Refresh token expired').body, { status: 401, statusText: 'Unauthorized' });
 
     expect(status).toBe(401);
@@ -152,6 +159,6 @@ describe('AuthInterceptor', () => {
       .expectOne('/api/v1/auth/login')
       .flush(error401('Sai email hoặc mật khẩu').body, { status: 401, statusText: 'Unauthorized' });
 
-    ctrl.expectNone('/api/v1/auth/refresh-token');
+    ctrl.expectNone(`${environment.apiUrl}/auth/refresh-token`);
   });
 });

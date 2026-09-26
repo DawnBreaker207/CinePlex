@@ -1,17 +1,20 @@
 import {
   Component,
   computed,
-  effect,
+  ElementRef,
   inject,
   input,
   linkedSignal,
   numberAttribute,
   OnInit,
-  signal,
+  viewChild,
   ChangeDetectionStrategy,
 } from '@angular/core';
 import { Store } from '@ngrx/store';
+import { Router } from '@angular/router';
 import { DatePipe, NgClass, NgOptimizedImage } from '@angular/common';
+import { selectJwt } from '@core/auth/auth.selectors';
+import { ReservationStore } from '@features/client/reservation/reservation.store';
 import { NzTabsModule } from 'ng-zorro-antd/tabs';
 import { NzAvatarModule } from 'ng-zorro-antd/avatar';
 import { NzRateModule } from 'ng-zorro-antd/rate';
@@ -20,7 +23,10 @@ import { selectMovieById } from '@domain/movie/data-access/movie.selectors';
 import { MovieActions } from '@domain/movie/data-access/movie.actions';
 import { LoadingComponent } from '@shared/components/loading/loading.component';
 import { NzSkeletonModule } from 'ng-zorro-antd/skeleton';
-import { selectAllShowtimes } from '@domain/showtime/data-access/showtime.selectors';
+import {
+  selectAllShowtimes,
+  selectShowtimeLoading,
+} from '@domain/showtime/data-access/showtime.selectors';
 import {
   selectAllTheaters,
   selectSelectedTheaterId,
@@ -70,13 +76,16 @@ interface Review {
 })
 export class DetailComponent implements OnInit {
   private store = inject(Store);
+  private router = inject(Router);
+  private reservationStore = inject(ReservationStore);
 
   id = input(0, { transform: numberAttribute });
   selectedDate = linkedSignal({
     source: this.id,
     computation: () => dayjs().startOf('day').toDate(),
   });
-  showtimesLoading = signal(true);
+  // Real store flag — can't get stuck true when a movie has zero showtimes.
+  showtimesLoading = this.store.selectSignal(selectShowtimeLoading);
 
   movie = computed(() => {
     const id = this.id();
@@ -133,18 +142,34 @@ export class DetailComponent implements OnInit {
     return Array.from(groupTheater.values());
   });
 
-  constructor() {
-    effect(() => {
-      if (this.allShowtimes().length > 0) {
-        this.showtimesLoading.set(false);
-      }
+  private showtimesSection = viewChild('showtimesSection', { read: ElementRef });
+
+  scrollToShowtimes(): void {
+    this.showtimesSection()?.nativeElement?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    });
+  }
+
+  bookShowtime(sel: { showtimeId: number; theaterId: number }): void {
+    const user = this.store.selectSignal(selectJwt)();
+    if (!user) {
+      this.router.navigate(['/login'], {
+        queryParams: { returnUrl: `/movie/detail/${this.id()}` },
+      });
+      return;
+    }
+    this.reservationStore.initReservation({
+      reservationId: '',
+      userId: user.userId,
+      showtimeId: sel.showtimeId,
+      theaterId: sel.theaterId,
     });
   }
 
   ngOnInit() {
     const id = this.id();
     if (id) {
-      this.showtimesLoading.set(true);
       this.store.dispatch(MovieActions.loadMovie({ id: id }));
       this.store.dispatch(
         ShowtimeActions.loadShowtimesByMovieId({

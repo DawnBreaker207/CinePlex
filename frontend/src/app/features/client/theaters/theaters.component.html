@@ -23,7 +23,17 @@
             @for (r of rooms(); track r.id) {
               <nz-tag>{{ r.name }} · {{ r.roomType }}</nz-tag>
             } @empty {
-              <span class="text-sm text-slate-400">—</span>
+              @if (roomsError()) {
+                <button
+                  type="button"
+                  (click)="reloadRooms()"
+                  class="text-sm text-danger hover:underline bg-transparent border-none p-0"
+                >
+                  {{ "home.loadFailed" | translate }}
+                </button>
+              } @else {
+                <span class="text-sm text-slate-500">—</span>
+              }
             }
           </div>
         </div>

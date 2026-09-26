@@ -1,7 +1,7 @@
 import {
+  afterRenderEffect,
   Component,
   DestroyRef,
-  effect,
   ElementRef,
   inject,
   signal,
@@ -63,12 +63,13 @@ export class ChatComponent {
   ]);
 
   constructor() {
-    effect(() => {
+    // Runs post-DOM-flush, so scrollHeight already reflects the new message.
+    afterRenderEffect(() => {
       const msgs = this.messages();
       const open = this.isOpen();
       const typing = this.isTyping();
       if (open && (msgs.length > 0 || typing)) {
-        setTimeout(() => this.scrollBottom(), 50);
+        this.scrollToBottom();
       }
     });
   }

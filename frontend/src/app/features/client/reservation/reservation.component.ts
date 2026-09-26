@@ -2,7 +2,6 @@ import {
   Component,
   computed,
   effect,
-  HostListener,
   inject,
   input,
   OnInit,
@@ -26,6 +25,7 @@ import { ShowtimeActions } from '@domain/showtime/data-access/showtime.actions';
 import { SeatComponent } from '@features/client/reservation/components/seat/seat.component';
 import { DetailFilmComponent } from '@features/client/reservation/components/detail-film/detail-film.component';
 import { CurrencyPipe } from '@angular/common';
+import { CurrencyFormatPipe } from '@shared/pipes/currency-format.pipe';
 import { ConfirmComponent } from '@features/client/reservation/components/confirm/confirm.component';
 import { ComboComponent, ComboSelection } from '@features/client/reservation/components/combo/combo.component';
 import { SeatStore } from '@features/client/reservation/components/seat/seat.store';
@@ -52,7 +52,8 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
   templateUrl: './reservation.component.html',
   styleUrl: './reservation.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  providers: [NzModalService],
+  providers: [NzModalService, CurrencyFormatPipe],
+  host: { '(window:beforeunload)': 'onBeforeUnload($event)' },
 })
 export class ReservationComponent implements OnInit {
   confirmComponent = viewChild.required(ConfirmComponent);
@@ -64,6 +65,7 @@ export class ReservationComponent implements OnInit {
   readonly reservationStore = inject(ReservationStore);
   private storageService = inject(StorageService);
   private translate = inject(TranslateService);
+  private currencyFormat = inject(CurrencyFormatPipe);
 
   reservationId = input<string>('');
   showtimeId = input<string>('');
@@ -78,7 +80,6 @@ export class ReservationComponent implements OnInit {
     this.combos().reduce((sum, c) => sum + c.price * c.qty, 0),
   );
 
-  @HostListener('window:beforeunload', ['$event'])
   onBeforeUnload(event: BeforeUnloadEvent) {
     if (this.seatStore.selectedSeats().length > 0) {
       event.preventDefault();
@@ -95,6 +96,21 @@ export class ReservationComponent implements OnInit {
         if (!this.reservationStore.error()) {
           this.index.set(1);
         }
+      }
+    });
+
+    // Owns seat-map init here so SeatComponent stays presentational.
+    effect(() => {
+      const currentShowtime = this.showtime();
+      const reservationState =
+        this.storageService.getItem<ReservationRequest>('reservationState');
+
+      if (currentShowtime) {
+        this.seatStore.initSeatMap({
+          showtimeId: currentShowtime.id,
+          userId: reservationState?.userId as number,
+          reservationId: reservationState?.reservationId || null,
+        });
       }
     });
   }
@@ -140,7 +156,7 @@ export class ReservationComponent implements OnInit {
     this.modalService.confirm({
       nzTitle: this.translate.instant('reservation.payTitle'),
       nzContent: this.translate.instant('reservation.payContent', {
-        amount: grandTotal.toLocaleString('vi-VN'),
+        amount: this.currencyFormat.transform(grandTotal),
         count: this.seatStore.selectSeatsCount(),
       }),
       nzOkText: this.translate.instant('reservation.payNow'),

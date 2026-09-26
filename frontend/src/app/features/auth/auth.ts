@@ -1,4 +1,4 @@
-import { Component, DestroyRef, ElementRef, inject, OnInit, signal, viewChild } from '@angular/core';
+import { afterNextRender, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, inject, Injector, OnInit, signal, viewChild } from '@angular/core';
 import { FormControl, FormGroup, FormsModule, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { matchValidator } from '@shared/utils/validators';
 import { NzButtonComponent } from 'ng-zorro-antd/button';
@@ -15,6 +15,7 @@ import { filter, take } from 'rxjs';
 import { NzCheckboxComponent } from 'ng-zorro-antd/checkbox';
 import { NzStringTemplateOutletDirective } from 'ng-zorro-antd/core/outlet';
 import { AuthActions } from '@core/auth/auth.actions';
+import { ToastService } from '@core/services/toast/toast.service';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { errorMessage } from '@shared/utils/error.helper';
 import { selectAuthError } from '@core/auth/auth.selectors';
@@ -30,6 +31,7 @@ import { selectAuthError } from '@core/auth/auth.selectors';
     NzCheckboxComponent, NzStringTemplateOutletDirective,
   ],
   templateUrl: './auth.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AuthComponent implements OnInit {
   activeTab = signal<'login' | 'register'>('login');
@@ -37,7 +39,6 @@ export class AuthComponent implements OnInit {
   registerError = signal<string | null>(null);
   registeredEmail = signal<string | null>(null);
   loginPasswordVisible = false;
-  registerPasswordVisible = false;
   isLoginLoading = signal(false);
   isRegisterLoading = signal(false);
 
@@ -46,7 +47,17 @@ export class AuthComponent implements OnInit {
   private router = inject(Router);
   private actions$ = inject(Actions);
   private translate = inject(TranslateService);
+  private toast = inject(ToastService);
   private destroyRef = inject(DestroyRef);
+  private injector = inject(Injector);
+
+  soon(): void {
+    this.toast.createNotification({
+      type: 'info',
+      title: this.translate.instant('common.soon'),
+      message: this.translate.instant('common.soonMessage'),
+    });
+  }
 
   formLogin!: FormGroup<{
     identifier: FormControl<string>;
@@ -90,7 +101,9 @@ export class AuthComponent implements OnInit {
     } else {
       this.formRegister.reset();
     }
-    setTimeout(() => this.firstInput()?.nativeElement?.focus(), 100);
+    afterNextRender(() => this.firstInput()?.nativeElement?.focus(), {
+      injector: this.injector,
+    });
   }
 
   private initializeLoginForm() {

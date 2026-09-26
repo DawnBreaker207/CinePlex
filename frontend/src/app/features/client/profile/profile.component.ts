@@ -1,6 +1,5 @@
 import {
   Component,
-  HostListener,
   inject,
   OnInit,
   signal,
@@ -63,6 +62,7 @@ import { TranslatePipe } from '@ngx-translate/core';
   templateUrl: './profile.component.html',
   styleUrl: './profile.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { '(window:resize)': 'onResize()' },
 })
 export class ProfileComponent implements OnInit {
   private store = inject(Store);
@@ -97,7 +97,6 @@ export class ProfileComponent implements OnInit {
     this.loadTickets();
   }
 
-  @HostListener('window:resize')
   onResize() {
     this.checkScreenSize();
   }

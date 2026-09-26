@@ -1,10 +1,5 @@
-import {
-  Component,
-  effect,
-  inject,
-  signal,
-  ChangeDetectionStrategy,
-} from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
+import { rxResource } from '@angular/core/rxjs-interop';
 import { NzEmptyModule } from 'ng-zorro-antd/empty';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzIconModule } from 'ng-zorro-antd/icon';
@@ -38,19 +33,18 @@ export class TheatersComponent {
 
   readonly theater = this.store.selectSignal(selectSelectedTheater);
   readonly theaterId = this.store.selectSignal(selectSelectedTheaterId);
-  readonly rooms = signal<Room[]>([]);
 
-  constructor() {
-    effect(() => {
-      const id = this.theaterId();
-      if (id) {
-        this.roomService.getByTheater(id).subscribe({
-          next: (rooms) => this.rooms.set(rooms),
-          error: () => this.rooms.set([]),
-        });
-      } else {
-        this.rooms.set([]);
-      }
-    });
+  // Keyed by theaterId — cancels the previous theater's in-flight request.
+  private readonly roomsResource = rxResource({
+    params: () => this.theaterId() ?? undefined,
+    stream: ({ params: id }) => this.roomService.getByTheater(id),
+    defaultValue: [] as Room[],
+  });
+
+  readonly rooms = this.roomsResource.value;
+  readonly roomsError = this.roomsResource.error;
+
+  reloadRooms(): void {
+    this.roomsResource.reload();
   }
 }

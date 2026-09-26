@@ -1,10 +1,13 @@
 import {
   Component,
   DestroyRef,
+  computed,
   inject,
   OnInit,
+  signal,
   ChangeDetectionStrategy,
 } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HEADER_COLUMNS } from '@core/constants/column';
 import {
@@ -29,6 +32,7 @@ import { NzProgressComponent } from 'ng-zorro-antd/progress';
 import { ICON_COLORS, CHART_COLORS } from '@shared/utils/colors';
 import { confirmDelete } from '@shared/utils/confirm-delete';
 import { CurrencyFormatPipe } from '@shared/pipes/currency-format.pipe';
+import { VoucherStatusPipe } from '@shared/pipes/voucher-status.pipe';
 import { NzTagModule } from 'ng-zorro-antd/tag';
 import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
 import { Mode } from '@core/constants/enum';
@@ -37,6 +41,7 @@ import { Mode } from '@core/constants/enum';
   selector: 'app-voucher-list',
   imports: [
     DatePipe,
+    FormsModule,
     LoadingComponent,
     NzAlertComponent,
     NzButtonModule,
@@ -51,9 +56,10 @@ import { Mode } from '@core/constants/enum';
     TranslatePipe,
     NzProgressComponent,
     CurrencyFormatPipe,
-NzTagModule,
-NzToolTipModule,
-],
+    VoucherStatusPipe,
+    NzTagModule,
+    NzToolTipModule,
+  ],
   templateUrl: './voucher-list.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [NzModalService],
@@ -66,18 +72,40 @@ private translate = inject(TranslateService);
   headerColumn = HEADER_COLUMNS.VOUCHER;
   readonly ICON_COLORS = ICON_COLORS;
   readonly chartColors = CHART_COLORS;
-  pageIndex = 1;
   pageSize = 10;
+
+  readonly searchText = signal('');
+  readonly statusFilter = signal<string | null>(null);
+  readonly sortOrder = signal<'newest' | 'oldest'>('newest');
+
+  // Voucher catalog is small (admin-created campaigns): load once, filter locally.
+  readonly filteredVouchers = computed(() => {
+    const q = this.searchText().toLowerCase().trim();
+    const status = this.statusFilter();
+    let list = this.voucherStore.vouchers();
+    if (q) {
+      list = list.filter(
+        (v) =>
+          v.name.toLowerCase().includes(q) || v.code.toLowerCase().includes(q),
+      );
+    }
+    if (status === 'PENDING') {
+      list = list.filter((v) => v.status === 'PENDING_APPROVAL');
+    } else if (status === 'true' || status === 'false') {
+      const active = status === 'true';
+      list = list.filter((v) => v.isActive === active);
+    }
+    return [...list].sort((a, b) =>
+      this.sortOrder() === 'newest' ? b.id - a.id : a.id - b.id,
+    );
+  });
 
   ngOnInit() {
     this.loadVouchers();
   }
 
   loadVouchers() {
-    this.voucherStore.loadVouchers({
-      page: this.pageIndex - 1,
-      size: this.pageSize,
-    });
+    this.voucherStore.loadVouchers({ page: 0, size: 200 });
   }
 
   openModal(mode: Mode, id?: number) {
@@ -102,46 +130,23 @@ private translate = inject(TranslateService);
   }
 
   onQueryParamsChange(params: NzTableQueryParams) {
-    const { pageIndex, pageSize } = params;
-    this.pageIndex = pageIndex;
-    this.pageSize = pageSize;
-    this.loadVouchers();
+    this.pageSize = params.pageSize;
   }
 
   isExpired(endDate: Date | string) {
     return new Date(endDate).getTime() < new Date().getTime();
   }
 
-  statusColor(status: string): string {
-    switch (status) {
-      case 'ACTIVE':
-        return 'success';
-      case 'PAUSED':
-      case 'SCHEDULED':
-        return 'default';
-      case 'EXPIRED':
-      case 'EXHAUSTED':
-        return 'error';
-      default:
-        return 'default';
-    }
-  }
-
-  statusLabel(status: string): string {
-    switch (status) {
-      case 'ACTIVE':
-        return 'voucher.status.active';
-      case 'PAUSED':
-        return 'voucher.status.paused';
-      case 'EXPIRED':
-        return 'voucher.status.expired';
-      case 'SCHEDULED':
-        return 'voucher.status.scheduled';
-      case 'EXHAUSTED':
-        return 'voucher.status.exhausted';
-      default:
-        return 'common.unknown';
-    }
+  onApprove(id: number) {
+    this.modalService.confirm({
+      nzTitle: this.translate.instant('voucher.approve'),
+      nzContent: this.translate.instant('voucher.approveConfirm'),
+      nzOkText: this.translate.instant('common.confirm'),
+      nzCancelText: this.translate.instant('common.cancel'),
+      nzOnOk: () => {
+        this.voucherStore.approveVoucher(id);
+      },
+    });
   }
   onDelete(id: number) {
     confirmDelete(this.modalService, this.translate, 'voucher.deleteTitle', () =>
