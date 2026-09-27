@@ -4,6 +4,7 @@ import com.dawn.cinema.dto.request.TheaterRequest;
 import com.dawn.cinema.dto.response.TheaterResponse;
 import com.dawn.cinema.helper.TheaterMappingHelper;
 import com.dawn.cinema.model.Theater;
+import com.dawn.cinema.repository.RoomRepository;
 import com.dawn.cinema.repository.ShowtimeRepository;
 import com.dawn.cinema.repository.TheaterRepository;
 import com.dawn.cinema.service.TheaterService;
@@ -33,6 +34,7 @@ public class TheaterServiceImpl implements TheaterService {
 
     private final TheaterRepository theaterRepository;
     private final ShowtimeRepository showtimeRepository;
+    private final RoomRepository roomRepository;
     private final com.dawn.common.core.service.AuditLogService auditLogService;
 
     private Map<Long, List<Long>> showtimeIdsByTheater(List<Long> theaterIds) {
@@ -42,13 +44,24 @@ public class TheaterServiceImpl implements TheaterService {
                         Collectors.mapping(row -> (Long) row[1], Collectors.toList())));
     }
 
+    private Map<Long, Integer> capacityByTheater(List<Long> theaterIds) {
+        return roomRepository.sumTotalSeatsByTheaterIds(theaterIds).stream()
+                .collect(Collectors.toMap(RoomRepository.TheaterCapacity::getTheaterId,
+                        c -> c.getCapacity().intValue()));
+    }
+
     private ResponsePage<TheaterResponse> mapPage(Page<Theater> page) {
         List<Long> theaterIds = page.getContent().stream().map(Theater::getId).toList();
         Map<Long, List<Long>> showtimeIdsByTheater = theaterIds.isEmpty()
                 ? Map.of()
                 : showtimeIdsByTheater(theaterIds);
+        Map<Long, Integer> capacityByTheater = theaterIds.isEmpty()
+                ? Map.of()
+                : capacityByTheater(theaterIds);
         return ResponsePage.of(page.map(theater ->
-                TheaterMappingHelper.map(theater, showtimeIdsByTheater.getOrDefault(theater.getId(), List.of()))));
+                TheaterMappingHelper.map(theater,
+                        showtimeIdsByTheater.getOrDefault(theater.getId(), List.of()),
+                        capacityByTheater.getOrDefault(theater.getId(), 0))));
     }
 
     @Override
@@ -71,7 +84,8 @@ public class TheaterServiceImpl implements TheaterService {
                 .findById(id)
                 .map(theater -> TheaterMappingHelper.map(
                         theater,
-                        showtimeRepository.findShowtimeByTheaterId(theater.getId())))
+                        showtimeRepository.findShowtimeByTheaterId(theater.getId()),
+                        capacityByTheater(List.of(theater.getId())).getOrDefault(theater.getId(), 0)))
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.THEATER_NOT_FOUND.format()));
     }
 

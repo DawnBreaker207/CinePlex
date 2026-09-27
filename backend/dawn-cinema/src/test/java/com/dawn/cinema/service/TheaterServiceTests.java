@@ -3,6 +3,7 @@ package com.dawn.cinema.service;
 import com.dawn.cinema.dto.request.TheaterRequest;
 import com.dawn.cinema.dto.response.TheaterResponse;
 import com.dawn.cinema.model.Theater;
+import com.dawn.cinema.repository.RoomRepository;
 import com.dawn.cinema.repository.ShowtimeRepository;
 import com.dawn.cinema.repository.TheaterRepository;
 import com.dawn.cinema.service.impl.TheaterServiceImpl;
@@ -36,6 +37,9 @@ public class TheaterServiceTests {
     @Mock
     private ShowtimeRepository showtimeRepository;
 
+    @Mock
+    private RoomRepository roomRepository;
+
     @InjectMocks
     private TheaterServiceImpl theaterService;
 
@@ -64,6 +68,7 @@ public class TheaterServiceTests {
                 .thenReturn(new PageImpl<>(List.of(theater), pageable, 1));
         when(showtimeRepository.findShowtimeByTheaterIds(List.of(1L)))
                 .thenReturn(List.<Object[]>of(new Object[]{1L, 10L}));
+        when(roomRepository.sumTotalSeatsByTheaterIds(List.of(1L))).thenReturn(List.of());
 
         List<TheaterResponse> result = theaterService
                 .findAll(pageable)
@@ -94,6 +99,7 @@ public class TheaterServiceTests {
     void findOne_GivenValidId_WhenCalled_ThenReturnTheaterDto() {
         when(theaterRepository.findById(1L)).thenReturn(Optional.of(theater));
         when(showtimeRepository.findShowtimeByTheaterId(1L)).thenReturn(List.of(10L));
+        when(roomRepository.sumTotalSeatsByTheaterIds(List.of(1L))).thenReturn(List.of());
 
         TheaterResponse result = theaterService.findOne(1L);
 
@@ -121,6 +127,7 @@ public class TheaterServiceTests {
                 .thenReturn(new PageImpl<>(List.of(theater), pageable, 1));
         when(showtimeRepository.findShowtimeByTheaterIds(List.of(1L)))
                 .thenReturn(List.of());
+        when(roomRepository.sumTotalSeatsByTheaterIds(List.of(1L))).thenReturn(List.of());
 
         List<TheaterResponse> result = theaterService
                 .findByLocation("HaNoi", pageable)

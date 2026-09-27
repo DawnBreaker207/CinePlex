@@ -513,4 +513,47 @@ class VoucherServiceImplTest {
             verify(permissionService, never()).hasPermission(any(), any());
         }
     }
+
+    @Nested
+    @DisplayName("delete")
+    class Delete {
+
+        @Test
+        @DisplayName("soft-deletes: archives instead of hard-deleting")
+        void delete_archivesVoucher() {
+            Voucher voucher = createVoucher(VoucherStatus.ACTIVE, DiscountType.FIXED,
+                    new BigDecimal("10000"), null, BigDecimal.ZERO,
+                    100, 0, Instant.now().minus(1, ChronoUnit.DAYS), Instant.now().plus(1, ChronoUnit.DAYS));
+            when(voucherRepository.findById(1L)).thenReturn(Optional.of(voucher));
+
+            service.delete(1L);
+
+            ArgumentCaptor<Voucher> captor = ArgumentCaptor.forClass(Voucher.class);
+            verify(voucherRepository).save(captor.capture());
+            verify(voucherRepository, never()).delete(any());
+            assertThat(captor.getValue().getStatus()).isEqualTo(VoucherStatus.ARCHIVED);
+        }
+
+        @Test
+        @DisplayName("missing voucher → ResourceNotFoundException")
+        void delete_missing_shouldThrow() {
+            when(voucherRepository.findById(1L)).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> service.delete(1L))
+                    .isInstanceOf(ResourceNotFoundException.class);
+            verify(voucherRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("archived voucher is rejected by calculate() same as any inactive voucher")
+        void archivedVoucher_rejectedByCalculate() {
+            Voucher voucher = createVoucher(VoucherStatus.ARCHIVED, DiscountType.FIXED,
+                    new BigDecimal("10000"), null, BigDecimal.ZERO,
+                    100, 0, Instant.now().minus(1, ChronoUnit.DAYS), Instant.now().plus(1, ChronoUnit.DAYS));
+            when(voucherRepository.findByCode("TEST10")).thenReturn(Optional.of(voucher));
+
+            assertThatThrownBy(() -> service.calculate("TEST10", new BigDecimal("50000")))
+                    .isInstanceOf(InvalidRequestException.class);
+        }
+    }
 }
