@@ -39,8 +39,25 @@ public class AuditLogAspect {
     private final EntityManager entityManager;
     private final SpelExpressionParser parser = new SpelExpressionParser();
 
+    // One @AuditLog-annotated call can invoke another on the same thread (e.g. a module-API
+    // call-through, or a future controller-level annotation stacking on a service-level one).
+    // Only the outermost call on the stack writes a log row, so one user action = one row.
+    private static final ThreadLocal<Boolean> IN_PROGRESS = ThreadLocal.withInitial(() -> false);
+
     @Around("@annotation(auditLog)")
     public Object record(ProceedingJoinPoint pjp, AuditLog auditLog) throws Throwable {
+        if (Boolean.TRUE.equals(IN_PROGRESS.get())) {
+            return pjp.proceed();
+        }
+        IN_PROGRESS.set(true);
+        try {
+            return doRecord(pjp, auditLog);
+        } finally {
+            IN_PROGRESS.remove();
+        }
+    }
+
+    private Object doRecord(ProceedingJoinPoint pjp, AuditLog auditLog) throws Throwable {
         Long actorId = SecurityUtils.getCurrentUserId();
         String username = SecurityUtils.getCurrentUsername();
         String ip = getClientIp();

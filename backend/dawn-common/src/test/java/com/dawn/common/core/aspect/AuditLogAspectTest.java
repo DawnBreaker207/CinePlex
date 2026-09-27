@@ -90,4 +90,34 @@ class AuditLogAspectTest {
         verify(service).record(eq("X"), eq("E"), eq("RES-1"), isNull(), isNull(), eq("NEW"),
                 any(), eq(LogConstant.Status.SUCCESS), eq(""), isNull(), isNull());
     }
+
+    @Test
+    void record_nestedAnnotatedCall_writesOnlyOneLog() throws Throwable {
+        AuditLog outer = mock(AuditLog.class);
+        when(outer.action()).thenReturn("'OUTER'");
+        when(outer.entity()).thenReturn("'E'");
+
+        AuditLog inner = mock(AuditLog.class);
+        when(inner.action()).thenReturn("'INNER'");
+        when(inner.entity()).thenReturn("'E'");
+
+        MethodSignature signature = mock(MethodSignature.class);
+        when(signature.getParameterNames()).thenReturn(new String[0]);
+
+        ProceedingJoinPoint innerPjp = mock(ProceedingJoinPoint.class);
+        when(innerPjp.getSignature()).thenReturn(signature);
+        when(innerPjp.getArgs()).thenReturn(new Object[0]);
+        when(innerPjp.proceed()).thenReturn("inner-ok");
+
+        ProceedingJoinPoint outerPjp = mock(ProceedingJoinPoint.class);
+        when(outerPjp.getSignature()).thenReturn(signature);
+        when(outerPjp.getArgs()).thenReturn(new Object[0]);
+        when(outerPjp.proceed()).thenAnswer(inv -> aspect.record(innerPjp, inner));
+
+        Object result = aspect.record(outerPjp, outer);
+
+        assertThat(result).isEqualTo("inner-ok");
+        verify(service, times(1)).record(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
+        verify(service).record(eq("OUTER"), any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
+    }
 }
