@@ -1,0 +1,1 @@
+ALTER TABLE outbox ADD COLUMN retry_cycle INT NOT NULL DEFAULT 0;

@@ -56,6 +56,10 @@ public class Outbox {
     @Column(name = "last_error")
     private String lastError;
 
+    @Column(name = "retry_cycle", nullable = false)
+    @Builder.Default
+    private Integer retryCycle = 0;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     @Builder.Default
     private Instant createdAt = Instant.now();
