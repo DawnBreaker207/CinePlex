@@ -10,6 +10,7 @@ import com.dawn.booking.repository.ReservationRepository;
 import com.dawn.booking.service.ReservationService;
 import com.dawn.booking.service.ReservationRedisService;
 import com.dawn.booking.service.ReservationStateMachine;
+import com.dawn.booking.service.TicketService;
 import com.dawn.booking.service.VoucherApplicationService;
 import com.dawn.catalog.api.CatalogModuleApi;
 import com.dawn.catalog.dto.response.MovieResponse;
@@ -68,6 +69,8 @@ public class ReservationServiceImpl implements ReservationService {
     ReservationRedisService reservationRedisService;
 
     VoucherApplicationService voucherApplicationService;
+
+    TicketService ticketService;
 
     @Override
     public ResponsePage<UserReservationResponse> findByUser(ReservationUserRequest request, Pageable pageable) {
@@ -350,6 +353,12 @@ public class ReservationServiceImpl implements ReservationService {
             }
 
             try {
+                ticketService.createTickets(savedReservation, seatEntities);
+            } catch (Exception e) {
+                log.error("Failed to create tickets for reservation {}", reservationId, e);
+            }
+
+            try {
                 reservationNotificationHelper.handleNotification(savedReservation, showtime, seatEntities);
             } catch (Exception e) {
                 log.warn("Failed to send notification for reservation {}", reservationId);
@@ -460,12 +469,7 @@ public class ReservationServiceImpl implements ReservationService {
             reservationRepository.save(reservation);
             log.info("Saved {} reservation: {}", newStatus, reservationId);
         } else {
-            Reservation r = existing.get();
-            r.setReservationStatus(newStatus);
-            //  ck_reservation_paid_status: only CONFIRMED may carry is_paid=true
-            r.setIsPaid(false);
-            reservationRepository.save(r);
-            log.info("Updated reservation {} to {}", reservationId, newStatus);
+            saveReleaseStatusWithRetry(reservationId, existing.get(), newStatus, action);
         }
 
         AuditLogContext.set("seats", seatIds);
@@ -488,6 +492,35 @@ public class ReservationServiceImpl implements ReservationService {
             voucherApplicationService.releaseVoucher(cachedData, existing);
         } catch (Exception e) {
             log.warn("Failed to release voucher for reservation {}", reservationId);
+        }
+    }
+
+    //  Retries once on OLE (concurrent write, e.g. ExpirationJob racing a user cancel): reload
+    //  the row and re-check the transition instead of surfacing a 5xx for a benign race.
+    private void saveReleaseStatusWithRetry(String reservationId, Reservation r, ReservationStatus newStatus,
+            ReservationStateMachine.Action action) {
+        r.setReservationStatus(newStatus);
+        //  ck_reservation_paid_status: only CONFIRMED may carry is_paid=true
+        r.setIsPaid(false);
+        try {
+            reservationRepository.save(r);
+            log.info("Updated reservation {} to {}", reservationId, newStatus);
+        } catch (ObjectOptimisticLockingFailureException e) {
+            log.warn("Optimistic lock failure releasing reservation {}, reloading and retrying once", reservationId);
+            Reservation latest = reservationRepository.findByReservationCode(reservationId).orElse(null);
+            if (latest == null) {
+                log.warn("Reservation {} disappeared during release retry, nothing to update", reservationId);
+                return;
+            }
+            if (!ReservationStateMachine.canTransition(latest.getReservationStatus(), action)) {
+                log.warn("Reservation {} already in final state {} after retry, skipping release", reservationId,
+                        latest.getReservationStatus());
+                return;
+            }
+            latest.setReservationStatus(newStatus);
+            latest.setIsPaid(false);
+            reservationRepository.save(latest);
+            log.info("Updated reservation {} to {} on retry", reservationId, newStatus);
         }
     }
 
