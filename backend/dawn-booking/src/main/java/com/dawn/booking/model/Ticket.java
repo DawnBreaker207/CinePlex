@@ -21,7 +21,7 @@ public class Ticket extends AbstractMappedEntity {
     private Long id;
 
     @Column(name = "reservation_id", nullable = false)
-    private String reservationId;
+    private Long reservationId;
 
     @Column(name = "seat_instance_id", nullable = false)
     private Long seatInstanceId;
