@@ -12,4 +12,6 @@ public interface IdentityModuleApi {
     List<UserResponse> findUsersByIds(List<Long> ids);
 
     boolean hasPermission(Long userId, PermissionKey key);
+
+    List<UserResponse> searchUsers(String keyword);
 }

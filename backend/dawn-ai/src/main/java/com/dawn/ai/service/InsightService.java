@@ -7,7 +7,7 @@ import com.dawn.report.dto.response.DashboardResponse;
 import com.dawn.report.dto.response.PaymentDistribution;
 import com.dawn.report.dto.response.TopMovieResponse;
 import com.dawn.report.dto.response.TopTheaterResponse;
-import com.dawn.report.service.DashboardService;
+import com.dawn.report.api.ReportingModuleApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -38,7 +38,7 @@ public class InsightService {
     private static final double HIGH_SATURATION = 90.0;
     private static final double PAYMENT_DOMINANCE = 0.5;
 
-    private final DashboardService dashboardService;
+    private final ReportingModuleApi reportingApi;
     private final ForecastService forecastService;
 
     public List<InsightResponse> insights() {
@@ -52,7 +52,7 @@ public class InsightService {
 
             CompletableFuture<DashboardResponse> summary = CompletableFuture.supplyAsync(() -> {
                 try {
-                    return dashboardService.getSummary(filter);
+                    return reportingApi.getSummary(filter);
                 } catch (RuntimeException e) {
                     log.warn("Insights summary unavailable", e);
                     return null;

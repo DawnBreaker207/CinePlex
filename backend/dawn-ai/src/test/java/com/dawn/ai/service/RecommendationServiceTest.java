@@ -1,12 +1,12 @@
 package com.dawn.ai.service;
 
+import com.dawn.booking.api.BookingModuleApi;
 import com.dawn.booking.dto.response.UserReservationResponse;
-import com.dawn.booking.service.ReservationService;
+import com.dawn.catalog.api.CatalogModuleApi;
 import com.dawn.catalog.dto.response.MovieResponse;
-import com.dawn.catalog.internal.MovieService;
 import com.dawn.common.core.dto.response.ResponsePage;
+import com.dawn.report.api.ReportingModuleApi;
 import com.dawn.report.dto.response.TopMovieResponse;
-import com.dawn.report.service.DashboardService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -31,11 +31,11 @@ import static org.mockito.Mockito.when;
 class RecommendationServiceTest {
 
     @Mock
-    MovieService movieService;
+    CatalogModuleApi catalogApi;
     @Mock
-    DashboardService dashboardService;
+    ReportingModuleApi reportingApi;
     @Mock
-    ReservationService reservationService;
+    BookingModuleApi bookingApi;
 
     @InjectMocks
     RecommendationService service;
@@ -48,7 +48,7 @@ class RecommendationServiceTest {
 
     private void stubCatalog(MovieResponse... movies) {
         List<MovieResponse> list = List.of(movies);
-        when(movieService.findAll(any(), any()))
+        when(catalogApi.findAllMovies(any()))
                 .thenReturn(new ResponsePage<>(new PageImpl<>(list, PageRequest.of(0, 200), list.size())));
     }
 
@@ -56,7 +56,7 @@ class RecommendationServiceTest {
         List<TopMovieResponse> top = java.util.Arrays.stream(names)
                 .map(n -> TopMovieResponse.builder().movieName(n).ticketSold(10L).build())
                 .toList();
-        when(dashboardService.getTopMovies(any())).thenReturn(top);
+        when(reportingApi.getTopMovies(any())).thenReturn(top);
     }
 
     @Nested
@@ -85,7 +85,7 @@ class RecommendationServiceTest {
                     movie(2L, "New Action", Set.of("Action"), LocalDate.now().minusDays(200)),
                     movie(3L, "New Drama", Set.of("Drama"), LocalDate.now().minusDays(200)));
             stubHot();
-            when(reservationService.findByUser(any(), any())).thenReturn(
+            when(bookingApi.findReservationHistory(any(), any())).thenReturn(
                     new ResponsePage<>(new PageImpl<>(
                             List.of(UserReservationResponse.builder().movieTitle("Watched Action").build()),
                             PageRequest.of(0, 50), 1)));
@@ -101,7 +101,7 @@ class RecommendationServiceTest {
         void reportingDown_fallback() {
             stubCatalog(
                     movie(1L, "Only Movie", Set.of("Drama"), LocalDate.now().minusDays(10)));
-            when(dashboardService.getTopMovies(any())).thenThrow(new RuntimeException("db down"));
+            when(reportingApi.getTopMovies(any())).thenThrow(new RuntimeException("db down"));
 
             List<MovieResponse> result = service.recommend(null, 5);
 

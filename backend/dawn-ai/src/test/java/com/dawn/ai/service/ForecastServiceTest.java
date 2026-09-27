@@ -1,7 +1,7 @@
 package com.dawn.ai.service;
 
+import com.dawn.report.api.ReportingModuleApi;
 import com.dawn.report.dto.response.RevenuePointResponse;
-import com.dawn.report.service.DashboardService;
 import com.dawn.ai.dto.DailyForecast;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -24,7 +24,7 @@ import static org.mockito.Mockito.when;
 class ForecastServiceTest {
 
     @Mock
-    DashboardService dashboardService;
+    ReportingModuleApi reportingApi;
 
     @InjectMocks
     ForecastService service;
@@ -46,7 +46,7 @@ class ForecastServiceTest {
         @Test
         @DisplayName("averages same weekday history")
         void averagesSameWeekday() {
-            when(dashboardService.getRevenueOverTime(any())).thenReturn(List.of(
+            when(reportingApi.getRevenueOverTime(any())).thenReturn(List.of(
                     point(pastMonday(1), 100L),
                     point(pastMonday(2), 300L)));
 
@@ -64,7 +64,7 @@ class ForecastServiceTest {
         @Test
         @DisplayName("history down → empty forecast")
         void historyDown_empty() {
-            when(dashboardService.getRevenueOverTime(any())).thenThrow(new RuntimeException("db down"));
+            when(reportingApi.getRevenueOverTime(any())).thenThrow(new RuntimeException("db down"));
 
             assertThat(service.forecastRevenue(7)).isEmpty();
         }
@@ -72,7 +72,7 @@ class ForecastServiceTest {
         @Test
         @DisplayName("days capped at 30")
         void daysCapped() {
-            when(dashboardService.getRevenueOverTime(any())).thenReturn(List.of());
+            when(reportingApi.getRevenueOverTime(any())).thenReturn(List.of());
 
             assertThat(service.forecastRevenue(500)).hasSize(30);
             assertThat(service.forecastRevenue(0)).hasSize(7);

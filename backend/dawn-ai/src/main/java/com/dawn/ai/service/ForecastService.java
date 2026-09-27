@@ -1,7 +1,7 @@
 package com.dawn.ai.service;
 
+import com.dawn.report.api.ReportingModuleApi;
 import com.dawn.report.dto.request.DashboardFilterRequest;
-import com.dawn.report.service.DashboardService;
 import com.dawn.ai.dto.DailyForecast;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,13 +24,13 @@ public class ForecastService {
     private static final int DEFAULT_DAYS = 7;
     private static final int MAX_DAYS = 30;
 
-    private final DashboardService dashboardService;
+    private final ReportingModuleApi reportingApi;
 
     public List<DailyForecast> forecastRevenue(Integer days) {
         int horizon = (days == null || days < 1) ? DEFAULT_DAYS : Math.min(days, MAX_DAYS);
         Map<DayOfWeek, double[]> totals = new EnumMap<>(DayOfWeek.class);
         try {
-            dashboardService.getRevenueOverTime(DashboardFilterRequest.builder()
+            reportingApi.getRevenueOverTime(DashboardFilterRequest.builder()
                             .startDate(LocalDate.now().minusDays(HISTORY_DAYS))
                             .endDate(LocalDate.now())
                             .build())

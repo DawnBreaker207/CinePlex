@@ -1,7 +1,7 @@
 package com.dawn.ai.service;
 
+import com.dawn.catalog.api.CatalogModuleApi;
 import com.dawn.catalog.dto.response.MovieResponse;
-import com.dawn.catalog.internal.MovieService;
 import dev.langchain4j.model.chat.ChatModel;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -25,7 +25,7 @@ class ContentToolsTest {
     @Mock
     ChatModel chatModel;
     @Mock
-    MovieService movieService;
+    CatalogModuleApi catalogApi;
 
     @InjectMocks
     ContentTools tools;
@@ -40,7 +40,7 @@ class ContentToolsTest {
             MovieResponse movie = MovieResponse.builder()
                     .id(3L).title("M").overview("O").duration(120).genres(Set.of("Action"))
                     .build();
-            when(movieService.findById(3L)).thenReturn(movie);
+            when(catalogApi.findMovieById(3L)).thenReturn(movie);
             when(chatModel.chat(anyString())).thenReturn("Draft text");
 
             assertThat(tools.generateMovieDescription(3L)).isEqualTo("Draft text");
@@ -50,7 +50,7 @@ class ContentToolsTest {
         @Test
         @DisplayName("model failure → fallback message")
         void failure_fallback() {
-            when(movieService.findById(3L)).thenThrow(new RuntimeException("down"));
+            when(catalogApi.findMovieById(3L)).thenThrow(new RuntimeException("down"));
 
             assertThat(tools.generateMovieDescription(3L)).contains("Could not generate");
         }

@@ -32,4 +32,9 @@ public class IdentityModuleApiImpl implements IdentityModuleApi {
     public boolean hasPermission(Long userId, PermissionKey key) {
         return permissionService.hasPermission(userId, key);
     }
+
+    @Override
+    public List<UserResponse> searchUsers(String keyword) {
+        return userService.searchUsers(keyword);
+    }
 }

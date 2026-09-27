@@ -1,7 +1,7 @@
 package com.dawn.ai.service;
 
+import com.dawn.catalog.api.CatalogModuleApi;
 import com.dawn.catalog.dto.response.MovieResponse;
-import com.dawn.catalog.internal.MovieService;
 import dev.langchain4j.agent.tool.Tool;
 import dev.langchain4j.model.chat.ChatModel;
 import lombok.RequiredArgsConstructor;
@@ -14,12 +14,12 @@ import org.springframework.stereotype.Component;
 public class ContentTools {
 
     private final ChatModel chatModel;
-    private final MovieService movieService;
+    private final CatalogModuleApi catalogApi;
 
     @Tool("Rewrite a more appealing movie description from catalog data (title, genres, overview, duration).")
     public String generateMovieDescription(Long movieId) {
         try {
-            MovieResponse movie = movieService.findById(movieId);
+            MovieResponse movie = catalogApi.findMovieById(movieId);
             String prompt = "Rewrite a short appealing Vietnamese cinema description (max 3 sentences) from: "
                     + "title=" + movie.getTitle()
                     + ", genres=" + movie.getGenres()

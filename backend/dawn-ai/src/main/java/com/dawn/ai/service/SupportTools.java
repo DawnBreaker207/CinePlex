@@ -1,10 +1,10 @@
 package com.dawn.ai.service;
 
-import com.dawn.booking.service.ReservationService;
+import com.dawn.booking.api.BookingModuleApi;
+import com.dawn.identity.api.IdentityModuleApi;
 import com.dawn.identity.dto.response.UserResponse;
-import com.dawn.identity.service.UserService;
+import com.dawn.payment.api.PaymentModuleApi;
 import com.dawn.payment.dto.response.PaymentDetailDTO;
-import com.dawn.payment.service.PaymentService;
 import dev.langchain4j.agent.tool.Tool;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,9 +18,9 @@ import java.util.stream.Collectors;
 @Slf4j
 public class SupportTools {
 
-    private final UserService userService;
-    private final ReservationService reservationService;
-    private final PaymentService paymentService;
+    private final IdentityModuleApi identityApi;
+    private final BookingModuleApi bookingApi;
+    private final PaymentModuleApi paymentApi;
 
     @Tool("""
             Tìm kiếm người dùng theo email, username hoặc ID.
@@ -31,7 +31,7 @@ public class SupportTools {
             return "Vui lòng nhập từ khóa tìm kiếm (email, username hoặc ID).";
         }
 
-        List<UserResponse> users = userService.searchUsers(keyword);
+        List<UserResponse> users = identityApi.searchUsers(keyword);
         if (users.isEmpty()) {
             return "Không tìm thấy người dùng nào khớp với \"" + keyword + "\".";
         }
@@ -49,13 +49,13 @@ public class SupportTools {
             return "Vui lòng cung cấp mã reservation.";
         }
 
-        var reservationOpt = reservationService.findDetailByCode(reservationId);
+        var reservationOpt = bookingApi.findReservationDetailByCode(reservationId);
         if (reservationOpt.isEmpty()) {
             return "Không tìm thấy reservation \"" + reservationId + "\".";
         }
 
         var r = reservationOpt.get();
-        var paymentOpt = paymentService.findPaymentByReservationId(reservationId);
+        var paymentOpt = paymentApi.findPaymentByReservationId(reservationId);
 
         StringBuilder sb = new StringBuilder();
         sb.append("**Reservation**: ").append(r.getReservationCode()).append("\n");
@@ -92,7 +92,7 @@ public class SupportTools {
             return "Vui lòng cung cấp mã reservation.";
         }
 
-        var reservationOpt = reservationService.findDetailByCode(reservationId);
+        var reservationOpt = bookingApi.findReservationDetailByCode(reservationId);
         if (reservationOpt.isEmpty()) {
             return "Không tìm thấy reservation \"" + reservationId + "\".";
         }
@@ -100,7 +100,7 @@ public class SupportTools {
         var r = reservationOpt.get();
 
         if (r.getReservationStatus() == com.dawn.common.core.constant.ReservationStatus.CONFIRMED) {
-            reservationService.forceCancel(reservationId);
+            bookingApi.forceCancelReservation(reservationId);
             return String.format("""
                     Đã hủy reservation **%s** (đã thanh toán).
                     - Lý do: %s
@@ -108,7 +108,7 @@ public class SupportTools {
                     """, reservationId, reason != null ? reason : "Không có lý do");
         }
 
-        reservationService.cancel(reservationId);
+        bookingApi.cancelReservation(reservationId);
         return String.format("""
                 Đã hủy reservation **%s** (chưa thanh toán) thành công.
                 - Lý do: %s

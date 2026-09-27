@@ -40,6 +40,18 @@ public class ModularArchitectureTest {
     }
 
     @Test
+    void ai_mustNotImportInternalOfOtherModules() {
+        ArchRule rule = noClasses().that().resideInAPackage("com.dawn.ai..")
+                .should().accessClassesThat().resideInAnyPackage(
+                        "com.dawn.identity.internal..", "com.dawn.identity.service..", "com.dawn.identity.repository..",
+                        "com.dawn.booking.internal..", "com.dawn.booking.service..", "com.dawn.booking.repository..",
+                        "com.dawn.payment.internal..", "com.dawn.payment.service..", "com.dawn.payment.repository..",
+                        "com.dawn.catalog.internal..", "com.dawn.catalog.repository..",
+                        "com.dawn.report.internal..", "com.dawn.report.service..", "com.dawn.report.repository..");
+        rule.check(classes);
+    }
+
+    @Test
     void common_mustNotDependOnAnyModulePackage() {
         ArchRule rule = noClasses().that().resideInAPackage("com.dawn.common..")
                 .should().accessClassesThat().resideInAnyPackage(

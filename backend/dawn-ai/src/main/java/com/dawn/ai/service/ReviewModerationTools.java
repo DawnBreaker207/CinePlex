@@ -1,7 +1,7 @@
 package com.dawn.ai.service;
 
-import com.dawn.catalog.model.Review;
-import com.dawn.catalog.repository.ReviewRepository;
+import com.dawn.catalog.api.CatalogModuleApi;
+import com.dawn.catalog.dto.response.ReviewResponse;
 import dev.langchain4j.agent.tool.Tool;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,11 +23,11 @@ public class ReviewModerationTools {
     private static final Set<String> TOXIC_HINTS = Set.of(
             "fuck", "shit", "bitch", "dm", "dmm", "cc", "vl", "vcl", "ngu ", "nguoi");
 
-    private final ReviewRepository reviewRepository;
+    private final CatalogModuleApi catalogApi;
 
     @Tool("List unmoderated reviews (newest first by id, up to 20).")
     public String getPendingReviews() {
-        List<Review> pending = reviewRepository.findTop20ByModeratedFalseOrderByIdAsc();
+        List<ReviewResponse> pending = catalogApi.findPendingReviews();
         if (pending.isEmpty()) {
             return "No pending reviews.";
         }
@@ -40,24 +40,21 @@ public class ReviewModerationTools {
 
     @Tool("Analyze one review: sentiment from rating, spam score and toxic flag from keyword scan.")
     public String analyzeReview(Long reviewId) {
-        return reviewRepository.findById(reviewId)
+        return catalogApi.findReviewById(reviewId)
                 .map(this::analyze)
                 .orElse("Review not found: " + reviewId);
     }
 
     @Tool("Approve or reject a review; approved stays visible, rejected is hidden. Marks it moderated.")
     public String approveReview(Long reviewId, boolean approve) {
-        return reviewRepository.findById(reviewId).map(review -> {
-            review.setModerated(true);
-            review.setIsActive(approve);
-            reviewRepository.save(review);
-            return "Review #" + reviewId + (approve ? " approved." : " rejected and hidden.");
-        }).orElse("Review not found: " + reviewId);
+        return catalogApi.moderateReview(reviewId, approve)
+                .map(review -> "Review #" + reviewId + (approve ? " approved." : " rejected and hidden."))
+                .orElse("Review not found: " + reviewId);
     }
 
     @Tool("Suggest an admin reply draft for a review based on its sentiment.")
     public String suggestReviewReply(Long reviewId) {
-        return reviewRepository.findById(reviewId).map(review -> {
+        return catalogApi.findReviewById(reviewId).map(review -> {
             String sentiment = sentimentOf(review.getRating());
             return switch (sentiment) {
                 case "POSITIVE" -> "Cảm ơn bạn đã đánh giá " + review.getRating()
@@ -70,7 +67,7 @@ public class ReviewModerationTools {
         }).orElse("Review not found: " + reviewId);
     }
 
-    private String analyze(Review review) {
+    private String analyze(ReviewResponse review) {
         String text = review.getComment() == null ? "" : review.getComment().toLowerCase(Locale.ROOT);
         long spamHits = SPAM_HINTS.stream().filter(text::contains).count();
         boolean toxic = TOXIC_HINTS.stream().anyMatch(text::contains);

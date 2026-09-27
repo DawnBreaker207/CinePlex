@@ -1,12 +1,11 @@
 package com.dawn.ai.service;
 
+import com.dawn.booking.api.BookingModuleApi;
 import com.dawn.booking.dto.request.ReservationUserRequest;
-import com.dawn.booking.service.ReservationService;
-import com.dawn.catalog.dto.request.MovieRequest;
+import com.dawn.catalog.api.CatalogModuleApi;
 import com.dawn.catalog.dto.response.MovieResponse;
-import com.dawn.catalog.internal.MovieService;
+import com.dawn.report.api.ReportingModuleApi;
 import com.dawn.report.dto.request.DashboardFilterRequest;
-import com.dawn.report.service.DashboardService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
@@ -37,13 +36,13 @@ public class RecommendationService {
     private static final int DEFAULT_LIMIT = 5;
     private static final int MAX_LIMIT = 20;
 
-    private final MovieService movieService;
-    private final DashboardService dashboardService;
-    private final ReservationService reservationService;
+    private final CatalogModuleApi catalogApi;
+    private final ReportingModuleApi reportingApi;
+    private final BookingModuleApi bookingApi;
 
     public List<MovieResponse> recommend(Long userId, Integer limit) {
         int take = (limit == null || limit < 1) ? DEFAULT_LIMIT : Math.min(limit, MAX_LIMIT);
-        List<MovieResponse> catalog = movieService.findAll(new MovieRequest(), Pageable.ofSize(CATALOG_PAGE_SIZE))
+        List<MovieResponse> catalog = catalogApi.findAllMovies(Pageable.ofSize(CATALOG_PAGE_SIZE))
                 .getContent();
         if (catalog.isEmpty()) {
             return List.of();
@@ -79,7 +78,7 @@ public class RecommendationService {
 
     private Map<String, Integer> hotRank() {
         try {
-            List<String> names = dashboardService.getTopMovies(DashboardFilterRequest.builder()
+            List<String> names = reportingApi.getTopMovies(DashboardFilterRequest.builder()
                             .startDate(LocalDate.now().minusDays(HOT_LIST_DAYS))
                             .endDate(LocalDate.now())
                             .build()).stream()
@@ -106,7 +105,7 @@ public class RecommendationService {
             req.setUserId(userId);
             Set<String> watched = new HashSet<>();
             Map<String, Long> genres = new HashMap<>();
-            reservationService.findByUser(req, Pageable.ofSize(HISTORY_PAGE_SIZE)).getContent().stream()
+            bookingApi.findReservationHistory(req, Pageable.ofSize(HISTORY_PAGE_SIZE)).getContent().stream()
                     .map(h -> byTitle.get(norm(h.getMovieTitle())))
                     .filter(m -> m != null)
                     .forEach(m -> {
