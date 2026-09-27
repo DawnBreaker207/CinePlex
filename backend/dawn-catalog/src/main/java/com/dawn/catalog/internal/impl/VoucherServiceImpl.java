@@ -157,7 +157,10 @@ public class VoucherServiceImpl implements VoucherService {
         Voucher voucher = voucherRepository
                 .findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.VOUCHER_NOT_FOUND.format()));
-        voucherRepository.delete(voucher);
+        // Soft delete: user_voucher rows keep a valid FK, and validateVoucher already
+        // rejects any non-ACTIVE status, so an archived voucher stops working immediately.
+        voucher.setStatus(VoucherStatus.ARCHIVED);
+        voucherRepository.save(voucher);
     }
 
     @Override
