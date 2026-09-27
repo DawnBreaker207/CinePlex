@@ -3,6 +3,8 @@ package com.dawn.common.infra.web;
 import com.dawn.common.core.constant.Constants;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
@@ -20,6 +22,9 @@ import java.time.Duration;
 @RequiredArgsConstructor
 @Slf4j
 public class WebConfig implements WebMvcConfigurer {
+
+    @Value("${app.internal.secret:}")
+    private String internalSecret;
 
     @Override
     public void configurePathMatch(PathMatchConfigurer configurer) {
@@ -39,11 +44,18 @@ public class WebConfig implements WebMvcConfigurer {
                 .builder()
                 .requestFactory(factory)
                 .defaultHeader("Content-Type", "application/json")
-//                .requestInterceptor((request, body, execution) -> {
-//                    log.info("[RestClient] {} {}", request.getMethod(), request.getURI());
-//                    return execution.execute(request, body);
-//                })
+                .defaultHeader(InternalCallFilter.HEADER, internalSecret)
                 .build();
+    }
+
+    // /api/v1/movie/batch is permitAll in SecurityConfig (internalRestClient carries no user JWT) —
+    // gate it with a shared secret instead of leaving it open to the internet.
+    @Bean
+    public FilterRegistrationBean<InternalCallFilter> internalCallFilter() {
+        FilterRegistrationBean<InternalCallFilter> registration = new FilterRegistrationBean<>();
+        registration.setFilter(new InternalCallFilter(internalSecret));
+        registration.addUrlPatterns("/api/v1/movie/batch");
+        return registration;
     }
 
     @Bean("externalRestClientBuilder")

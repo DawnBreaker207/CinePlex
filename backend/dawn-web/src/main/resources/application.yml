@@ -130,6 +130,10 @@ dawn:
 app:
   security:
     enabled: ${APP_SECURITY_ENABLED:true}
+  # Shared secret for internal-only HTTP endpoints (permitAll in SecurityConfig because
+  # internalRestClient carries no user JWT). Unset = endpoint denied to everyone.
+  internal:
+    secret: ${INTERNAL_API_SECRET:}
 #Config Rate Limiter
 resilience4j:
   ratelimiter:
