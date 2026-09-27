@@ -51,14 +51,14 @@ Managing high-traffic seat selection is the most critical part of the system. To
 Direct database row-locking is avoided to ensure high performance.
 
 - **Key-Value Storage:** When a user selects a seat, the system creates a **Redis Key-Value pair** with a 15-minute expiration. This reserves the seat during the checkout window.
-- **Pub/Sub Synchronization:** To keep the UI reactive, the backend leverages **Redis Pub/Sub**. Any status change (Lock/Unlock/Sold) is published to a channel. The Frontend listens to những update này qua WebSockets hoặc SSE, allowing all active users to see real-time seat changes without page refreshes.
+- **Pub/Sub Synchronization:** To keep the UI reactive, the backend leverages **Redis Pub/Sub**. Any status change (Lock/Unlock/Sold) is published to a channel. The frontend listens to these updates via WebSockets or SSE, allowing all active users to see real-time seat changes without page refreshes.
 
 #### 🎟️ 3.2. The 3-Phase Workflow
 
 The booking process is strictly divided into three phases to guarantee data integrity and keep the database clean:
 
 1.  **Phase 1: Order Initiation (Drafting)**
-    An **Order ID** is generated first. This pre-order state tracks the transaction intent before bất kỳ ghế nào được giữ, ensuring every payment attempt is traceable.
+    An **Order ID** is generated first. This pre-order state tracks the transaction intent before any seat is held, ensuring every payment attempt is traceable.
 2.  **Phase 2: The Soft Hold (Redis Phase)**
     Selected seats are pushed to **Redis**. They appear "Occupied" to other users but are not yet committed to the MySQL database. This prevents "failed transaction" data from cluttering the primary database tables.
 

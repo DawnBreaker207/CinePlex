@@ -1,53 +1,53 @@
 # Reservation State Machine
 
-> Mô tả hành vi THỰC TẾ của code (module `dawn-booking`), không phải thiết kế lý tưởng.
-> Enum: `com.dawn.common.core.constant.ReservationStatus`, lưu bằng `@Enumerated(EnumType.STRING)`.
-> `isPaid` là cột riêng (boolean), không suy ra từ state khi ghi — chỉ khi đọc response
+> Describes the ACTUAL behavior of the code (module `dawn-booking`), not an idealized design.
+> Enum: `com.dawn.common.core.constant.ReservationStatus`, stored via `@Enumerated(EnumType.STRING)`.
+> `isPaid` is a separate column (boolean), not derived from state on write — only on read
 > (`CONFIRMED || REFUNDED` → `isPaid=true`).
 
 ## 1. States
 
-| State | Ý nghĩa |
+| State | Meaning |
 |---|---|
-| `PENDING` | Đang giữ ghế (Redis lock), chưa thanh toán. Row DB upsert tại `holdReservationSeats` với `expiredAt = now + HOLD_TIMEOUT`. |
-| `CONFIRMED` | Thanh toán thành công, ghế đã book (`seat_status = BOOKED`), `isPaid = true`. |
-| `CANCELED` | Hủy — ghế nhả, voucher nhả (nếu có). |
-| `FAILED` | Thanh toán thất bại (`PaymentFailedEvent`) — xử lý giống cancel. |
-| `EXPIRED` | Hết thời gian giữ ghế — do job quét `expiredAt`. |
-| `REFUNDED` | **Dead state** — không có code nào chuyển sang trạng thái này; chỉ dùng để tính `isPaid` khi đọc. |
+| `PENDING` | Seat is being held (Redis lock), not yet paid. DB row upserted in `holdReservationSeats` with `expiredAt = now + HOLD_TIMEOUT`. |
+| `CONFIRMED` | Payment succeeded, seat is booked (`seat_status = BOOKED`), `isPaid = true`. |
+| `CANCELED` | Canceled — seat released, voucher released (if any). |
+| `FAILED` | Payment failed (`PaymentFailedEvent`) — handled the same way as cancel. |
+| `EXPIRED` | Seat hold time expired — set by the job that scans `expiredAt`. |
+| `REFUNDED` | **Dead state** — no code ever transitions into this state; used only to compute `isPaid` on read. |
 
 ## 2. Transition table
 
 | From | To | Trigger | Guard | Code |
 |---|---|---|---|---|
-| *(không có row)* | `PENDING` | `holdReservationSeats` (POST `/reservation/seatHold`) | Redis session + ownership + showtime + ghế hợp lệ, lock Redis thành công. **Không check trạng thái DB row hiện tại** — upsert đè mọi thứ. | `ReservationServiceImpl.holdReservationSeats` |
-| `PENDING` | `CONFIRMED` | POST `/reservation/confirm/{id}`, hoặc `PaymentCompletedEvent` → `PaymentCompletedListener.onPaymentCompleted` | Đã `CONFIRMED` → idempotent trả về cũ. State ≠ `PENDING` → 409. **Không có DB row** → bỏ qua guard, confirm dựa hoàn toàn vào Redis session. Có processing lock chống song song + CAS `bookSeats`. | `ReservationServiceImpl.confirmReservation` |
-| `PENDING` | `CANCELED` | POST `/reservation/{id}/cancel`, hoặc AI tool (nhánh không phải CONFIRMED) | Nếu state ∈ {`CONFIRMED`,`CANCELED`,`FAILED`,`EXPIRED`} → skip im lặng (log warn + return 200, không throw). **`REFUNDED` không nằm trong skip-list.** | `ReservationServiceImpl.cancelReservation` → `releaseReservation` |
-| `PENDING` | `FAILED` | `PaymentFailedEvent` → `onPaymentFailed` | Guard giống cancel (cùng thiếu `REFUNDED`). | `ReservationServiceImpl.failReservation` |
-| `PENDING` | `EXPIRED` | Có **2 job cùng làm việc này**: `service/ExpirationJob` (qua `expireReservation`, có guard/dọn Redis/broadcast/audit) và `job/ReservationExpirationJob` (set trực tiếp, không guard) | (a) guard giống cancel; (b) **không guard nào**. | Xem mục 3.1 |
-| `CONFIRMED` | `CANCELED` | AI tool `cancelAndRefundReservation` (admin, nhánh CONFIRMED) | Không guard trạng thái, set thẳng + `isDeleted=true`. Refund không tự động (xử lý thủ công qua cổng thanh toán). | `SupportTools.cancelAndRefundReservation` → `forceCancelReservation` |
-| — | `REFUNDED` | — | **Không tồn tại transition nào đặt state này.** | — |
+| *(no row)* | `PENDING` | `holdReservationSeats` (POST `/reservation/seatHold`) | Redis session + ownership + showtime + seat validity, Redis lock acquired successfully. **Does not check the current DB row status** — the upsert overwrites everything. | `ReservationServiceImpl.holdReservationSeats` |
+| `PENDING` | `CONFIRMED` | POST `/reservation/confirm/{id}`, or `PaymentCompletedEvent` → `PaymentCompletedListener.onPaymentCompleted` | If already `CONFIRMED` → idempotent, returns the existing record. State ≠ `PENDING` → 409. **No DB row** → guard is skipped, confirmation relies entirely on the Redis session. There is a processing lock against concurrent execution plus a CAS `bookSeats`. | `ReservationServiceImpl.confirmReservation` |
+| `PENDING` | `CANCELED` | POST `/reservation/{id}/cancel`, or the AI tool (non-CONFIRMED branch) | If state ∈ {`CONFIRMED`,`CANCELED`,`FAILED`,`EXPIRED`} → silently skipped (log warn + return 200, no throw). **`REFUNDED` is not in the skip-list.** | `ReservationServiceImpl.cancelReservation` → `releaseReservation` |
+| `PENDING` | `FAILED` | `PaymentFailedEvent` → `onPaymentFailed` | Same guard as cancel (same missing `REFUNDED`). | `ReservationServiceImpl.failReservation` |
+| `PENDING` | `EXPIRED` | `service/ExpirationJob` (via `expireReservation`, has guard/Redis cleanup/broadcast/audit) — the duplicate job `job/ReservationExpirationJob` has been removed | same guard as cancel | `ExpirationJob.expireReservation` |
+| `CONFIRMED` | `CANCELED` | AI tool `cancelAndRefundReservation` (admin, CONFIRMED branch) | No state guard, sets directly + `isDeleted=true`. Refund is not automatic (handled manually via the payment gateway). | `SupportTools.cancelAndRefundReservation` → `forceCancelReservation` |
+| — | `REFUNDED` | — | **No transition exists that sets this state.** | — |
 
-**Side effects theo transition** (giữ nguyên khi refactor):
+**Side effects per transition** (must be preserved when refactoring):
 - → `PENDING`: SSE broadcast seat-hold; audit `RESERVATION_HOLD`.
-- `PENDING` → `CONFIRMED`: CAS `bookSeats`; `useVoucher`; email; `cleanupRedisLocks`; audit; compensation unbook nếu save fail.
-- → `CANCELED`/`FAILED`/`EXPIRED` (release): xóa Redis seat locks + session; `unbookSeats` (CAS); SSE broadcast seat-release; `releaseVoucher`; audit (luôn ghi `from=null`, kể cả khi row có sẵn).
-- `CONFIRMED` → `CANCELED` (force): `unbookSeats` + xóa Redis locks + xóa reservation; **không audit, không broadcast, không nhả voucher**.
+- `PENDING` → `CONFIRMED`: CAS `bookSeats`; `useVoucher`; email; `cleanupRedisLocks`; audit; compensating unbook if save fails.
+- → `CANCELED`/`FAILED`/`EXPIRED` (release): removes Redis seat locks + session; `unbookSeats` (CAS); SSE broadcast seat-release; `releaseVoucher`; audit (always logs `from=null`, even when a row already exists).
+- `CONFIRMED` → `CANCELED` (force): `unbookSeats` + removes Redis locks + deletes the reservation; **no audit, no broadcast, no voucher release**.
 
-## 3. Bug / thiếu guard đã biết
+## 3. Known bugs / missing guards
 
-1. **Hai expiration job chạy song song, xử lý khác nhau.** Nếu job (b) `job/ReservationExpirationJob` chạy sau job (a) `service/ExpirationJob`, `releaseVoucher` có thể gọi 2 lần; nếu chạy trước, Redis locks/session không được dọn, audit thiếu nhất quán. Nghi là duplicate do merge nhánh — cần xác nhận job nào chính thức, xóa job còn lại.
-2. **`holdReservationSeats` upsert không check trạng thái DB hiện tại** — `save()` đè cả `reservationStatus` nếu row đã `CONFIRMED`. Chặn gián tiếp qua việc `cleanupRedisLocks` xóa session sau confirm, nhưng cửa sổ confirm→cleanup vẫn có race nhỏ.
-3. **Skip-list của `releaseReservation` thiếu `REFUNDED`** — vô hại hiện tại (không ai đặt `REFUNDED`), nhưng cần đóng khi state machine được tập trung hóa.
-4. **`confirmReservation` bỏ qua guard khi DB chưa có row** — dựa hoàn toàn vào Redis session, cần xác nhận có phải chủ đích (session-first).
-5. **User tự cancel reservation đã `CONFIRMED` bị bỏ qua im lặng**, trả 200 dù không làm gì — dễ gây hiểu nhầm ở phía client.
-6. **`forceCancelReservation` không guard/audit/nhả voucher/broadcast** — refund thủ công là chủ đích, nhưng phần còn lại có thể thiếu sót.
-7. **`applyVoucher` không null-check Redis session** — NPE nếu session hết hạn/bị xóa thay vì lỗi nghiệp vụ rõ ràng.
-8. **`REFUNDED` chưa từng được implement** — chưa có luồng hoàn tiền nào đặt state này.
+1. ~~Two expiration jobs running concurrently~~ — `job/ReservationExpirationJob` has been removed, only `service/ExpirationJob` remains.
+2. **`holdReservationSeats`'s upsert does not check the current DB status** — `save()` overwrites `reservationStatus` even if the row is already `CONFIRMED`. Indirectly mitigated by `cleanupRedisLocks` removing the session after confirmation, but there is still a small race window between confirm and cleanup.
+3. **`releaseReservation`'s skip-list is missing `REFUNDED`** — currently harmless (nothing ever sets `REFUNDED`), but needs to be closed once the state machine is centralized.
+4. **`confirmReservation` skips the guard when there is no DB row** — relies entirely on the Redis session; needs confirmation on whether this is intentional (session-first design).
+5. **A user canceling their own already-`CONFIRMED` reservation is silently ignored**, returning 200 even though nothing happened — this can easily mislead the client.
+6. **`forceCancelReservation` has no guard/audit/voucher-release/broadcast** — the manual refund is intentional, but the rest may be an oversight.
+7. **`applyVoucher` does not null-check the Redis session** — throws NPE if the session has expired/been removed, instead of a clear business error.
+8. **`REFUNDED` has never been implemented** — no refund flow exists that sets this state.
 
-## 4. Điểm kiểm soát đã hoạt động đúng (giữ nguyên)
+## 4. Controls that are known to work correctly (keep as-is)
 
-- Processing lock Redis chống confirm/release song song.
-- CAS `bookSeats`/`unbookSeats` sang cinema module (atomic khi đặt/nhả ghế).
-- Idempotent confirm: row đã `CONFIRMED` → trả dữ liệu cũ, không tạo mới.
-- Compensation: `saveAndFlush` confirm fail → `unbookSeats` ngược lại.
+- Redis processing lock preventing concurrent confirm/release.
+- CAS `bookSeats`/`unbookSeats` into the cinema module (atomic seat booking/release).
+- Idempotent confirm: a row already `CONFIRMED` → returns the existing data, does not create a new one.
+- Compensation: if `saveAndFlush` fails during confirm → `unbookSeats` rolls back.
