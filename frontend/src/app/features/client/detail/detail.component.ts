@@ -12,7 +12,7 @@ import {
 } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { Router } from '@angular/router';
-import { DatePipe, NgClass, NgOptimizedImage } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { selectJwt } from '@core/auth/auth.selectors';
 import { ReservationStore } from '@features/client/reservation/reservation.store';
 import { NzTabsModule } from 'ng-zorro-antd/tabs';
@@ -62,8 +62,6 @@ interface Review {
     FormsModule,
     LoadingComponent,
     NzSkeletonModule,
-    NgClass,
-    NgOptimizedImage,
     TranslatePipe,
     NzIconModule,
     NzButtonModule,

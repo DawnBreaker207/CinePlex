@@ -1,20 +1,22 @@
 <div
-  class="bg-white dark:bg-[#161a20] p-5 rounded-xl border border-gray-100 dark:border-gray-700 hover:shadow-md transition-shadow"
+  class="bento-card p-5 sm:p-6 transition-all duration-300 hover:border-primary/40 hover:-translate-y-0.5"
 >
-  <div class="flex justify-between items-start">
-    <div>
-      <p class="text-gray-600 dark:text-gray-300 text-sm font-medium">{{ title() }}</p>
-      <h3 class="text-2xl font-bold mt-1 text-gray-800 dark:text-gray-100">
+  <div class="flex justify-between items-start gap-4">
+    <div class="space-y-1.5 flex-1 min-w-0">
+      <p class="text-xs font-black uppercase tracking-wider text-gray-500 dark:text-gray-400 m-0 truncate">
+        {{ title() }}
+      </p>
+      <h3 class="text-2xl sm:text-3xl font-black font-mono tabular-nums text-slate-900 dark:text-white m-0 tracking-tight truncate">
         {{ value() }}
       </h3>
       @if (trend() !== null) {
-        <div class="mt-2 flex items-center gap-2">
+        <div class="pt-1.5 flex items-center gap-2">
           <span
-            class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold"
+            class="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-mono font-bold"
             [class]="
               (trend() ?? 0) >= 0
-                ? 'bg-success/10 text-success'
-                : 'bg-danger/10 text-danger'
+                ? 'bg-success/15 text-success'
+                : 'bg-danger/15 text-danger'
             "
           >
             <nz-icon
@@ -23,16 +25,16 @@
             />
             {{ (trend() ?? 0) >= 0 ? '+' : '' }}{{ trend()!.toFixed(1) }}%
           </span>
-          <span class="text-xs text-gray-500 dark:text-gray-400">{{
-            "admin.dashboard.vsPrevious" | translate
-          }}</span>
+          <span class="text-[11px] text-gray-400 dark:text-gray-400">
+            {{ "admin.dashboard.vsPrevious" | translate }}
+          </span>
         </div>
       }
     </div>
     <div
-      class="p-2.5 rounded-full bg-primary-light text-primary flex items-center justify-center"
+      class="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0 shadow-inner"
     >
-      <i-lucide [name]="icon()" class="text-xl" aria-hidden="true"></i-lucide>
+      <i-lucide [name]="icon()" class="text-2xl" aria-hidden="true"></i-lucide>
     </div>
   </div>
 </div>

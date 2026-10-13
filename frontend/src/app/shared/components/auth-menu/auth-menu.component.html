@@ -1,183 +1,155 @@
 
-    <div class="relative">
-      <!-- Trigger -->
-      <button
-        nz-dropdown
-        nzTrigger="click"
-        [nzDropdownMenu]="menu"
-        [nzPlacement]="'bottomRight'"
-        class="flex items-center justify-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-focus hover:ring-2 hover:ring-primary/20"
-        type="button"
-        nz-tooltip
-        [nzTooltipTitle]="'profileMenu.openMenu' | translate"
-        [nzTooltipPlacement]="'bottom'"
-      >
-        <span class="sr-only">{{ 'profileMenu.openMenu' | translate }}</span>
-        @if (authService.isAuthenticated()) {
-          @if (userStore.selectedUser(); as user) {
-            @if (user.avatar) {
-              <nz-avatar
-                [nzSize]="40"
-                [nzSrc]="user.avatar"
-                class="cursor-pointer border border-gray-200 dark:border-gray-700"
-              />
-            } @else {
-              <nz-avatar
-                [nzSize]="40"
-                [nzText]="(user.username || 'U').charAt(0).toUpperCase()"
-                class="cursor-pointer bg-primary text-white"
-              />
-            }
-          } @else {
-            <nz-avatar
-              [nzSize]="40"
-              nzIcon="user"
-              class="cursor-pointer bg-primary text-white"
-            />
-          }
+<div class="flex items-center gap-2">
+  @if (!authService.isAuthenticated()) {
+    <!-- GUEST: PROMINENT LOGIN BUTTON -->
+    <a
+      routerLink="/login"
+      class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider bg-gradient-to-r from-primary to-primary-dark hover:brightness-110 text-white shadow-lg marquee-glow-subtle transition-all duration-300 focus-visible:outline-none"
+    >
+      <nz-icon nzType="user" aria-hidden="true" />
+      <span>{{ 'header.login' | translate }}</span>
+    </a>
+
+    <!-- GUEST: QUICK SETTINGS DROPDOWN TRIGGER -->
+    <button
+      nz-dropdown
+      nzTrigger="click"
+      [nzDropdownMenu]="menu"
+      [nzPlacement]="'bottomRight'"
+      type="button"
+      nz-tooltip
+      [nzTooltipTitle]="'settings.theme' | translate"
+      class="w-9 h-9 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-gray-300 hover:text-white transition-colors cursor-pointer focus-visible:outline-none"
+    >
+      <i-lucide name="settings-2" class="w-4 h-4" aria-hidden="true" />
+    </button>
+  } @else {
+    <!-- AUTHENTICATED: LUXURY USER PILL CHIP -->
+    <button
+      nz-dropdown
+      nzTrigger="click"
+      [nzDropdownMenu]="menu"
+      [nzPlacement]="'bottomRight'"
+      type="button"
+      class="flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 transition-all cursor-pointer focus-visible:outline-none group shadow-md"
+    >
+      @if (userStore.selectedUser(); as user) {
+        @if (user.avatar) {
+          <nz-avatar
+            [nzSize]="32"
+            [nzSrc]="user.avatar"
+            class="shrink-0 border border-white/20 shadow-sm"
+          />
         } @else {
           <nz-avatar
-            [nzSize]="40"
-            nzIcon="user"
-            class="cursor-pointer bg-gray-100 text-slate-500 dark:bg-gray-700 dark:text-gray-300"
+            [nzSize]="32"
+            [nzText]="(user.username || 'U').charAt(0).toUpperCase()"
+            class="shrink-0 bg-primary text-white font-bold text-xs"
           />
         }
-      </button>
+        <div class="hidden sm:flex flex-col text-left leading-tight">
+          <span class="text-xs font-bold text-white group-hover:text-primary transition-colors truncate max-w-[110px]">
+            {{ user.username || 'Member' }}
+          </span>
+          <span class="text-[10px] font-mono uppercase tracking-wider text-gold font-bold">
+            {{ isAdmin() ? 'CineAdmin' : 'CineClub' }}
+          </span>
+        </div>
+      } @else {
+        <nz-avatar [nzSize]="32" nzIcon="user" class="bg-primary text-white" />
+      }
+      <i-lucide name="chevron-down" class="w-3.5 h-3.5 text-gray-400 group-hover:text-white transition-transform group-hover:translate-y-0.5" aria-hidden="true" />
+    </button>
+  }
 
-      <nz-dropdown-menu #menu="nzDropdownMenu">
-        <div
-          class="min-w-[220px] rounded-xl border border-border bg-white py-2 shadow-xl dark:border-gray-700 dark:bg-[#161a20]"
+  <!-- DROPDOWN MENU -->
+  <nz-dropdown-menu #menu="nzDropdownMenu">
+    <div
+      class="min-w-[240px] rounded-2xl glass-panel border border-white/15 py-2 shadow-2xl backdrop-blur-2xl bg-[#161a20]/95"
+    >
+      @if (authService.isAuthenticated()) {
+        @if (userStore.selectedUser(); as user) {
+          <!-- User info header -->
+          <div class="px-4 py-3 border-b border-white/10 bg-white/5">
+            <p class="truncate text-sm font-black text-white m-0">
+              {{ user.username || 'Member' }}
+            </p>
+            <p class="truncate text-xs font-mono text-gray-400 mt-0.5 m-0">
+              {{ user.email }}
+            </p>
+          </div>
+        }
+      }
+
+      <!-- Admin dashboard shortcut -->
+      @if (isAdmin()) {
+        <button
+          type="button"
+          (click)="goAdmin()"
+          class="flex w-full items-center gap-2.5 border-b border-white/10 px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-primary hover:bg-primary/10 transition-colors cursor-pointer"
         >
-          @if (authService.isAuthenticated(); as authed) {
-            @if (userStore.selectedUser(); as user) {
-              <div
-                class="flex items-center gap-3 border-b border-border bg-gray-50/50 px-4 py-3 dark:border-gray-700 dark:bg-gray-800/40"
-              >
-                @if (user.avatar) {
-                  <nz-avatar
-                    [nzSize]="40"
-                    [nzSrc]="user.avatar"
-                    class="shrink-0 border border-white dark:border-gray-600"
-                  />
-                } @else {
-                  <nz-avatar
-                    [nzSize]="40"
-                    [nzText]="(user.username || 'U').charAt(0).toUpperCase()"
-                    class="shrink-0 bg-primary text-white"
-                  />
-                }
-                <div class="min-w-0 flex-1">
-                  <p class="truncate text-sm font-bold text-gray-900 dark:text-gray-100">
-                    {{ user.username || 'User' }}
-                  </p>
-                  <p class="truncate text-xs text-gray-500 dark:text-gray-400">
-                    {{ user.email }}
-                  </p>
-                </div>
-              </div>
-            }
-          } @else {
-            <div
-              class="flex items-center gap-3 border-b border-border px-4 py-3 dark:border-gray-700"
-            >
-              <nz-avatar
-                [nzSize]="40"
-                nzIcon="user"
-                class="shrink-0 bg-gray-100 text-slate-500 dark:bg-gray-700 dark:text-gray-300"
-              />
-              <div class="min-w-0 flex-1">
-                <p class="text-sm font-bold text-gray-900 dark:text-gray-100">
-                  {{ 'profileMenu.guest' | translate }}
-                </p>
-                <button
-                  type="button"
-                  (click)="login()"
-                  class="text-xs font-semibold text-primary hover:underline bg-transparent border-none p-0"
-                  >{{ 'header.login' | translate }}</button
-                >
-              </div>
-            </div>
-          }
+          <nz-icon nzType="dashboard" nzTheme="outline" class="text-base" />
+          <span>{{ 'profileMenu.admin' | translate }}</span>
+          <i-lucide name="arrow-right" class="ml-auto h-3.5 w-3.5 opacity-80" aria-hidden="true" />
+        </button>
+      }
 
-          <!-- Admin -->
-          @if (isAdmin()) {
+      <!-- Quick theme & lang toggles -->
+      <div class="px-4 py-2.5 border-b border-white/10 flex items-center justify-between text-xs text-gray-300">
+        <span class="flex items-center gap-2">
+          <i-lucide name="moon" class="w-3.5 h-3.5 text-gray-400" aria-hidden="true" />
+          {{ 'settings.theme' | translate }}
+        </span>
+        <app-switch
+          [checked]="settings.theme()"
+          (checkedChange)="settings.toggleTheme()"
+          [attr.aria-label]="'settings.theme' | translate"
+        >
+          @if (settings.theme()) {
+            <i-lucide name="moon" class="size-3 text-gray-200" aria-hidden="true" />
+          } @else {
+            <i-lucide name="sun" class="size-3 text-amber-500" aria-hidden="true" />
+          }
+        </app-switch>
+      </div>
+
+      <div class="px-4 py-2.5 border-b border-white/10 flex items-center justify-between text-xs text-gray-300">
+        <span class="flex items-center gap-2">
+          <i-lucide name="languages" class="w-3.5 h-3.5 text-gray-400" aria-hidden="true" />
+          {{ 'settings.language' | translate }}
+        </span>
+        <app-switch
+          [checked]="settings.lang() === 'en'"
+          (checkedChange)="toggleLang($event)"
+          [attr.aria-label]="'settings.language' | translate"
+        >
+          <span class="text-[10px] font-bold leading-none text-white">
+            {{ settings.lang() === 'en' ? 'EN' : 'VI' }}
+          </span>
+        </app-switch>
+      </div>
+
+      <!-- Profile Links List -->
+      <ul class="flex flex-col gap-1 p-2 m-0 list-none">
+        @for (item of filterMenu(); track $index) {
+          <li>
             <button
               type="button"
-              (click)="goAdmin()"
-              class="flex w-full items-center gap-2 border-b border-border px-4 py-3 text-left text-sm font-medium text-gray-700 transition-colors hover:text-primary dark:border-gray-700 dark:text-gray-300 dark:hover:text-primary"
+              (click)="handleItemClick(item)"
+              [class]="
+                'flex w-full items-center gap-3 rounded-xl px-3 py-2 text-xs font-semibold outline-none transition-all cursor-pointer ' +
+                (item.isDanger
+                  ? 'text-danger hover:bg-danger/15'
+                  : 'text-gray-300 hover:text-white hover:bg-white/10')
+              "
             >
-              <i-lucide name="gauge" class="h-4 w-4 opacity-80 dark:text-gray-300" aria-hidden="true" />
-              <span>{{ 'profileMenu.admin' | translate }}</span>
-              <i-lucide name="arrow-right" class="ml-auto h-4 w-4 opacity-60" aria-hidden="true" />
+              <i-lucide [name]="item.icon" class="h-4 w-4 opacity-75" aria-hidden="true" />
+              <span>{{ item.title | translate }}</span>
             </button>
-          }
-
-          <!-- Settings -->
-          <div
-            class="flex items-center justify-between gap-3 border-b border-border px-4 py-3 dark:border-gray-700"
-          >
-            <div class="flex items-center gap-2">
-              <i-lucide name="moon" class="h-4 w-4 opacity-80 dark:text-gray-300" aria-hidden="true" />
-              <span class="text-sm text-gray-700 dark:text-gray-300">{{
-                'settings.theme' | translate
-              }}</span>
-            </div>
-            <app-switch
-              [checked]="settings.theme()"
-              (checkedChange)="settings.toggleTheme()"
-              [attr.aria-label]="'settings.theme' | translate"
-            >
-              @if (settings.theme()) {
-                <i-lucide name="moon" class="size-3.5 text-slate-700 dark:text-gray-200" aria-hidden="true" />
-              } @else {
-                <i-lucide name="sun" class="size-3.5 text-amber-500" aria-hidden="true" />
-              }
-            </app-switch>
-          </div>
-
-          <div
-            class="flex items-center justify-between gap-3 border-b border-border px-4 py-3 dark:border-gray-700"
-          >
-            <div class="flex items-center gap-2">
-              <i-lucide name="languages" class="h-4 w-4 opacity-80 dark:text-gray-300" aria-hidden="true" />
-              <span class="text-sm text-gray-700 dark:text-gray-300">{{
-                'settings.language' | translate
-              }}</span>
-            </div>
-            <app-switch
-              [checked]="settings.lang() === 'en'"
-              (checkedChange)="toggleLang($event)"
-              [attr.aria-label]="'settings.language' | translate"
-            >
-              <span
-                class="text-xs font-bold leading-none text-slate-700 dark:text-gray-200"
-              >
-                {{ settings.lang() === 'en' ? 'EN' : 'VI' }}
-              </span>
-            </app-switch>
-          </div>
-
-          <!-- Menu List -->
-          <ul class="flex flex-col gap-1 p-2">
-            @for (item of filterMenu(); track $index) {
-              <li>
-                <button
-                  type="button"
-                  (click)="handleItemClick(item)"
-                  [class]="
-                    'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium outline-none transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-focus ' +
-                    (item.isDanger
-                      ? ' text-danger hover:bg-danger/10'
-                      : ' text-gray-700 hover:bg-gray-100 hover:text-primary dark:text-gray-300 dark:hover:bg-gray-700/60')
-                  "
-                >
-                  <i-lucide [name]="item.icon" class="h-4 w-4 opacity-70" aria-hidden="true" />
-                  {{ item.title | translate }}
-                </button>
-              </li>
-            }
-          </ul>
-        </div>
-      </nz-dropdown-menu>
+          </li>
+        }
+      </ul>
     </div>
+  </nz-dropdown-menu>
+</div>
   

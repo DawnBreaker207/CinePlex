@@ -1,37 +1,51 @@
-<div class="mx-auto w-full max-w-5xl px-4 pb-12 pt-6 md:px-6">
-  <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100 sm:text-3xl">
-    {{ "nav.pricing" | translate }}
-  </h1>
-  <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-    {{ "pricing.hint" | translate }}
-  </p>
-
-  <div class="mt-6 overflow-x-auto rounded-xl border border-slate-200 dark:border-gray-700 bg-white dark:bg-[#161a20]">
-    <table class="w-full min-w-[560px] text-sm">
-      <thead>
-        <tr class="border-b border-slate-200 dark:border-gray-700 bg-slate-50 dark:bg-gray-800/50 text-left">
-          <th class="p-4 font-semibold text-gray-600 dark:text-gray-300">{{ "pricing.seatType" | translate }}</th>
-          <th class="p-4 text-right font-semibold text-gray-600 dark:text-gray-300">{{ "pricing.weekday2d" | translate }}</th>
-          <th class="p-4 text-right font-semibold text-gray-600 dark:text-gray-300">{{ "pricing.weekday3d" | translate }}</th>
-          <th class="p-4 text-right font-semibold text-gray-600 dark:text-gray-300">{{ "pricing.weekend2d" | translate }}</th>
-          <th class="p-4 text-right font-semibold text-gray-600 dark:text-gray-300">{{ "pricing.weekend3d" | translate }}</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (r of rows; track r.type) {
-          <tr class="border-b border-slate-100 dark:border-gray-700 last:border-0 text-gray-800 dark:text-gray-200">
-            <td class="p-4 font-bold">{{ r.type | translate }}</td>
-            <td class="p-4 text-right font-mono tabular-nums">{{ r.day2d | currency: "VND" }}</td>
-            <td class="p-4 text-right font-mono tabular-nums">{{ r.day3d | currency: "VND" }}</td>
-            <td class="p-4 text-right font-mono tabular-nums">{{ r.end2d | currency: "VND" }}</td>
-            <td class="p-4 text-right font-mono tabular-nums">{{ r.end3d | currency: "VND" }}</td>
-          </tr>
-        }
-      </tbody>
-    </table>
+<div class="mx-auto w-full max-w-7xl px-4 pb-16 pt-8 sm:px-6 lg:px-8">
+  <!-- PAGE HEADER -->
+  <div class="glass-panel rounded-2xl p-6 sm:p-8 border border-white/10 shadow-2xl mb-8">
+    <div class="flex items-center gap-3 mb-2">
+      <div class="w-2.5 h-6 rounded-full bg-gold"></div>
+      <h1 class="text-2xl sm:text-3xl font-black text-white uppercase tracking-wider m-0">
+        {{ "nav.pricing" | translate }}
+      </h1>
+    </div>
+    <p class="text-xs sm:text-sm text-gray-400 m-0">
+      {{ "pricing.hint" | translate }}
+    </p>
   </div>
 
-  <div class="mt-4 rounded-xl border border-slate-200 dark:border-gray-700 bg-white dark:bg-[#161a20] p-4 text-sm text-gray-500 dark:text-gray-400">
-    {{ "pricing.note" | translate }}
+  <!-- PRICING TABLE -->
+  <div class="glass-panel rounded-2xl border border-white/10 overflow-hidden shadow-2xl">
+    <div class="overflow-x-auto">
+      <table class="w-full min-w-[620px] text-sm text-left">
+        <thead>
+          <tr class="border-b border-white/10 bg-white/5 text-gray-300">
+            <th class="p-5 font-bold uppercase tracking-wider text-xs">{{ "pricing.seatType" | translate }}</th>
+            <th class="p-5 text-right font-bold uppercase tracking-wider text-xs">{{ "pricing.weekday2d" | translate }}</th>
+            <th class="p-5 text-right font-bold uppercase tracking-wider text-xs">{{ "pricing.weekday3d" | translate }}</th>
+            <th class="p-5 text-right font-bold uppercase tracking-wider text-xs">{{ "pricing.weekend2d" | translate }}</th>
+            <th class="p-5 text-right font-bold uppercase tracking-wider text-xs">{{ "pricing.weekend3d" | translate }}</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-white/5">
+          @for (r of rows; track r.type) {
+            <tr class="hover:bg-white/5 transition-colors text-gray-200">
+              <td class="p-5 font-bold text-white flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full" [class]="r.type.includes('VIP') ? 'bg-gold' : r.type.includes('COUPLE') ? 'bg-purple-500' : 'bg-primary'"></span>
+                {{ r.type | translate }}
+              </td>
+              <td class="p-5 text-right font-mono font-bold tabular-nums text-gray-300">{{ r.day2d | currency: "VND" }}</td>
+              <td class="p-5 text-right font-mono font-bold tabular-nums text-gray-300">{{ r.day3d | currency: "VND" }}</td>
+              <td class="p-5 text-right font-mono font-bold tabular-nums text-primary">{{ r.end2d | currency: "VND" }}</td>
+              <td class="p-5 text-right font-mono font-bold tabular-nums text-primary">{{ r.end3d | currency: "VND" }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- PRICING NOTE -->
+  <div class="mt-6 glass-panel rounded-2xl border border-white/10 p-5 text-xs sm:text-sm text-gray-400 leading-relaxed flex items-start gap-3">
+    <nz-icon nzType="info-circle" class="text-primary text-base mt-0.5 shrink-0" />
+    <span>{{ "pricing.note" | translate }}</span>
   </div>
 </div>

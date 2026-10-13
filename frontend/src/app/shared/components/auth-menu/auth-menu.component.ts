@@ -1,7 +1,8 @@
 import { Component, computed, effect, inject, ChangeDetectionStrategy } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { LucideAngularModule } from 'lucide-angular';
 import { NzDropDownModule } from 'ng-zorro-antd/dropdown';
+import { NzIconModule } from 'ng-zorro-antd/icon';
 import { Store } from '@ngrx/store';
 import { NzAvatarModule } from 'ng-zorro-antd/avatar';
 import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
@@ -26,11 +27,13 @@ interface MenuItem {
 @Component({
   selector: 'app-auth-menu',
   imports: [
+    RouterLink,
     LucideAngularModule,
     NzDropDownModule,
-NzAvatarModule,
-NzToolTipModule,
-AppSwitchComponent,
+    NzIconModule,
+    NzAvatarModule,
+    NzToolTipModule,
+    AppSwitchComponent,
     TranslatePipe,
   ],
   templateUrl: './auth-menu.component.html',

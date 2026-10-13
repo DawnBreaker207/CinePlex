@@ -1,78 +1,119 @@
 <article
-  class="h-full overflow-hidden rounded-xl border border-slate-200 dark:border-gray-700 bg-white dark:bg-[#161a20]"
+  class="group relative flex flex-col h-full rounded-2xl overflow-hidden glass-panel border border-white/10 hover:border-primary/50 transition-all duration-300 shadow-xl hover:shadow-2xl hover:-translate-y-1"
 >
-  <a
-    [routerLink]="['/movie/detail', movie().id]"
-    class="block h-40 bg-slate-100 dark:bg-gray-800"
-    [attr.aria-label]="movie().title"
-  >
-    <img
-      [src]="
-        movie().backdrop ||
-        movie().poster ||
-        'https://placehold.co/300x400/1A202C/F8FAFC?text=CinePlex'
+  <!-- POSTER CONTAINER (Aspect ratio 2:3 chuẩn rạp phim) -->
+  <div class="relative aspect-[2/3] w-full overflow-hidden bg-gray-900">
+    <a
+      [routerLink]="['/movie/detail', movie().id]"
+      class="block w-full h-full"
+      [attr.aria-label]="movie().title"
+    >
+      <img
+        [src]="
+          movie().poster ||
+          movie().backdrop ||
+          'https://placehold.co/400x600/161a20/e4002b?text=' + movie().title
+        "
+        [alt]="movie().title"
+        loading="lazy"
+        class="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500 ease-out"
+      />
+      <!-- Gradient overlay on bottom of image for text readability -->
+      <div
+        class="absolute inset-0 bg-gradient-to-t from-[#161a20] via-transparent to-black/30 pointer-events-none"
+      ></div>
+    </a>
+
+    <!-- Top Left: Cinema format badge -->
+    <div class="absolute top-2.5 left-2.5 flex items-center gap-1.5 z-10 pointer-events-none">
+      <span class="px-2 py-0.5 rounded-md text-[11px] font-black tracking-wider uppercase bg-primary text-white shadow-md">
+        2D
+      </span>
+      @if (movie().duration) {
+        <span class="px-2 py-0.5 rounded-md text-[11px] font-mono font-bold bg-black/60 backdrop-blur-md text-gray-200 border border-white/10">
+          {{ movie().duration }}'
+        </span>
+      }
+    </div>
+
+    <!-- Top Right: Floating Glass Favorite Button -->
+    <button
+      type="button"
+      class="absolute top-2.5 right-2.5 z-10 w-8 h-8 rounded-full bg-black/50 backdrop-blur-md border border-white/15 flex items-center justify-center text-gray-300 hover:text-primary hover:bg-black/75 hover:scale-110 transition-all cursor-pointer"
+      [attr.aria-label]="'favorites.toggle' | translate"
+      [attr.aria-pressed]="favorites.isFavorite(movie().id)"
+      nz-tooltip
+      [nzTooltipTitle]="
+        favorites.isFavorite(movie().id)
+          ? ('favorites.remove' | translate)
+          : ('favorites.toggle' | translate)
       "
-      [alt]="movie().title"
-      loading="lazy"
-      class="h-full w-full object-cover"
-    />
-  </a>
-  <div class="space-y-2 p-3">
-    <div class="flex items-start justify-between gap-2">
+      (click)="toggleFavorite()"
+    >
+      <nz-icon
+        nzType="heart"
+        [nzTheme]="favorites.isFavorite(movie().id) ? 'fill' : 'outline'"
+        [class.text-primary]="favorites.isFavorite(movie().id)"
+        class="text-sm"
+        aria-hidden="true"
+      />
+    </button>
+
+    <!-- Center Hover Overlay: Quick Play Icon -->
+    <a
+      [routerLink]="['/movie/detail', movie().id]"
+      class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/40 backdrop-blur-[2px] transition-opacity duration-300 z-10"
+      [attr.aria-label]="'common.viewDetail' | translate"
+    >
+      <div class="w-12 h-12 rounded-full bg-primary/90 text-white flex items-center justify-center shadow-lg marquee-glow transform scale-75 group-hover:scale-100 transition-transform duration-300">
+        <nz-icon nzType="play-circle" nzTheme="fill" class="text-2xl" />
+      </div>
+    </a>
+  </div>
+
+  <!-- MOVIE INFO -->
+  <div class="flex-1 flex flex-col justify-between p-3.5 space-y-2.5 bg-[#161a20]">
+    <div>
       <a
         [routerLink]="['/movie/detail', movie().id]"
-        class="block truncate text-sm font-semibold text-slate-900 dark:text-gray-100 hover:text-primary"
+        class="block font-bold text-sm sm:text-base text-gray-100 hover:text-primary line-clamp-1 leading-snug transition-colors"
         [title]="movie().title"
       >
         {{ movie().title }}
       </a>
+
+      <!-- Genres and Rating -->
+      <div class="flex items-center gap-1.5 mt-1 text-xs text-gray-400">
+        @if (movie().rating !== undefined && movie().rating !== null) {
+          <span class="inline-flex items-center font-mono font-bold text-warning tabular-nums">
+            ★ {{ movie().rating }}
+          </span>
+          <span class="text-gray-600">·</span>
+        }
+        <span class="truncate" [title]="movie().genres.join(', ')">
+          {{ movie().genres.join(", ") || ("movie.genreUpdating" | translate) }}
+        </span>
+      </div>
+    </div>
+
+    <!-- BOOK BUTTON -->
+    @if (canBook()) {
       <button
         nz-button
-        nzType="text"
-        nzShape="circle"
-        class="shrink-0 min-w-11 min-h-11 flex items-center justify-center"
-        [attr.aria-label]="'favorites.toggle' | translate"
-        [attr.aria-pressed]="favorites.isFavorite(movie().id)"
-        nz-tooltip
-        [nzTooltipTitle]="
-          favorites.isFavorite(movie().id)
-            ? ('favorites.remove' | translate)
-            : ('favorites.toggle' | translate)
-        "
-        (click)="toggleFavorite()"
+        nzBlock
+        nzType="primary"
+        class="h-10 rounded-xl font-bold uppercase tracking-wider text-xs bg-primary hover:bg-primary-dark border-none shadow-md marquee-glow-subtle transition-all duration-300 cursor-pointer"
+        (click)="onSelectMovie(movie().id)"
       >
-        <nz-icon
-          nzType="heart"
-          [nzTheme]="favorites.isFavorite(movie().id) ? 'fill' : 'outline'"
-          [class.text-primary]="favorites.isFavorite(movie().id)"
-          class="text-base"
-          aria-hidden="true"
-        />
+        {{ "common.bookTicket" | translate }}
       </button>
-    </div>
-    <p
-      class="truncate text-xs text-slate-500 dark:text-gray-400"
-      [title]="movie().genres.join(', ')"
-    >
-      @if (movie().rating !== undefined && movie().rating !== null) {
-        <span class="font-mono font-semibold text-warning tabular-nums"
-          >★ {{ movie().rating }}</span
-        >
-        ·
-      }
-      {{
-        movie().genres.join(", ") ||
-          ("movie.genreUpdating" | translate)
-      }}
-    </p>
-    <button
-      nz-button
-      nzBlock
-      nzType="primary"
-      class="rounded-lg min-h-11"
-      (click)="onSelectMovie(movie().id)"
-    >
-      {{ "common.bookTicket" | translate }}
-    </button>
+    } @else {
+      <a
+        [routerLink]="['/movie/detail', movie().id]"
+        class="block w-full text-center py-2 rounded-xl text-xs font-bold uppercase tracking-wider border border-white/15 bg-white/5 text-gray-300 hover:text-white hover:bg-white/10 transition-colors"
+      >
+        {{ "common.viewDetail" | translate }}
+      </a>
+    }
   </div>
 </article>

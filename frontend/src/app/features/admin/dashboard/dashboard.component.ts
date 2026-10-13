@@ -31,7 +31,6 @@ import { PaymentChartComponent } from '@features/admin/dashboard/components/paym
 import { TheaterChartComponent } from '@features/admin/dashboard/components/theater-chart/theater-chart.component';
 import { MovieChartComponent } from '@features/admin/dashboard/components/movie-chart/movie-chart.component';
 import { RevenueChartComponent } from '@features/admin/dashboard/components/revenue-chart/revenue-chart.component';
-import { LoadingComponent } from '@shared/components/loading/loading.component';
 import { TranslateService, TranslatePipe } from '@ngx-translate/core';
 import { SettingsService } from '@core/services/settings/settings.service';
 import { NzModalService } from 'ng-zorro-antd/modal';
@@ -71,7 +70,6 @@ import {
     NzDropDownModule,
     NzMenuModule,
     DashboardItemComponent,
-    LoadingComponent,
     TranslatePipe,
     NzAlertModule,
     NzTabsModule,

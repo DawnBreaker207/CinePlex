@@ -1,6 +1,7 @@
 import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
 import { TranslatePipe } from '@ngx-translate/core';
+import { NzIconModule } from 'ng-zorro-antd/icon';
 
 interface PriceRow {
   type: string;
@@ -12,7 +13,7 @@ interface PriceRow {
 
 @Component({
   selector: 'app-pricing',
-  imports: [CurrencyPipe, TranslatePipe],
+  imports: [CurrencyPipe, TranslatePipe, NzIconModule],
   templateUrl: './pricing.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

@@ -1,9 +1,12 @@
 @if (movie(); as movie) {
-  <div class="min-h-screen bg-transparent pb-16 text-slate-900">
+  <div class="min-h-screen bg-transparent pb-20 text-gray-100">
+    <!-- HERO HEADER -->
     <app-detail-header [movie]="movie" (bookNow)="scrollToShowtimes()" />
 
-    <div class="mx-auto mt-10 flex max-w-5xl flex-col gap-8 px-4 md:px-6">
-      <div class="w-full space-y-8">
+    <!-- MAIN DETAIL CONTENT (7xl wide) -->
+    <div class="mx-auto mt-6 flex max-w-7xl flex-col gap-10 px-4 sm:px-6 lg:px-8">
+      <div class="w-full space-y-10">
+        <!-- SHOWTIMES SECTION -->
         <app-showtime-section
           #showtimesSection
           [dates]="dates()"
@@ -13,95 +16,87 @@
           (showtimeSelect)="bookShowtime($event)"
         />
 
-        <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <nz-tabs [nzTabBarGutter]="20" nzType="line" class="custom-tabs">
+        <!-- MOVIE SYNOPSIS & REVIEWS TABS -->
+        <div class="glass-panel rounded-2xl p-6 sm:p-8 border border-white/10 shadow-2xl">
+          <nz-tabs [nzTabBarGutter]="24" nzType="line" class="cinema-tabs">
+            <!-- TAB 1: NỘI DUNG PHIM -->
             <nz-tab [nzTitle]="'detail.movieContent' | translate">
-              <p class="text-base leading-relaxed text-slate-600 md:text-lg">
-                {{ movie.overview }}
-              </p>
-              <div
-                class="mt-6 grid grid-cols-1 gap-4 text-sm text-slate-500 md:grid-cols-2"
-              >
-                <div>
-                  <strong>{{ "detail.premiere" | translate }}</strong>
-                  <span class="ml-2 text-slate-900">
-                    {{ movie.releaseDate | date: "dd/MM/yyyy" }}
-                  </span>
-                </div>
-                <div>
-                  <strong>{{ "detail.country" | translate }}</strong>
-                  <span class="ml-2 text-slate-900">
-                    {{ movie.country }}
-                  </span>
-                </div>
-                <div>
-                  <strong>{{ "common.language" | translate }}</strong>
-                  <span class="ml-2 text-slate-900">
-                    {{ movie.language }}
-                  </span>
+              <div class="py-4 space-y-6">
+                <p class="text-base sm:text-lg leading-relaxed text-gray-300">
+                  {{ movie.overview }}
+                </p>
+
+                <!-- Detailed metadata grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 pt-6 border-t border-white/10 text-sm">
+                  <div class="rounded-xl bg-white/5 border border-white/10 p-4">
+                    <span class="block text-xs uppercase tracking-wider text-gray-400 font-bold mb-1">
+                      {{ "detail.premiere" | translate }}
+                    </span>
+                    <span class="text-base font-semibold text-white">
+                      {{ movie.releaseDate | date: "dd/MM/yyyy" }}
+                    </span>
+                  </div>
+
+                  <div class="rounded-xl bg-white/5 border border-white/10 p-4">
+                    <span class="block text-xs uppercase tracking-wider text-gray-400 font-bold mb-1">
+                      {{ "detail.country" | translate }}
+                    </span>
+                    <span class="text-base font-semibold text-white">
+                      {{ movie.country || "—" }}
+                    </span>
+                  </div>
+
+                  <div class="rounded-xl bg-white/5 border border-white/10 p-4">
+                    <span class="block text-xs uppercase tracking-wider text-gray-400 font-bold mb-1">
+                      {{ "common.language" | translate }}
+                    </span>
+                    <span class="text-base font-semibold text-white">
+                      {{ movie.language || "—" }}
+                    </span>
+                  </div>
                 </div>
               </div>
             </nz-tab>
-            <nz-tab
-              [nzTitle]="
-                ('common.rating' | translate) + ' (' + reviews.length + ')'
-              "
-            >
-              <div class="space-y-6">
+
+            <!-- TAB 2: ĐÁNH GIÁ -->
+            <nz-tab [nzTitle]="('common.rating' | translate) + ' (' + reviews.length + ')'">
+              <div class="py-4 space-y-6">
                 @for (review of reviews; track review.user) {
-                  <div
-                    class="flex gap-4 border-b border-slate-100 pb-4 last:border-0"
-                  >
-                    <nz-avatar
-                      [nzSrc]="review.avatar"
-                      nzSize="large"
-                    ></nz-avatar>
-                    <div>
-                      <div class="flex items-center gap-2 mb-1">
-                        <span class="font-bold text-slate-900">
-                          {{ review.user }}
-                        </span>
-                        <nz-rate
-                          [ngModel]="review.rating"
-                          nzDisabled
-                          class="text-xs"
-                        ></nz-rate>
+                  <div class="flex gap-4 border-b border-white/10 pb-5 last:border-0">
+                    <nz-avatar [nzSrc]="review.avatar" [nzSize]="48" class="shrink-0 border border-white/10"></nz-avatar>
+                    <div class="space-y-1">
+                      <div class="flex items-center gap-3">
+                        <span class="font-bold text-white">{{ review.user }}</span>
+                        <nz-rate [ngModel]="review.rating" nzDisabled class="text-xs"></nz-rate>
                       </div>
-                      <p class="text-sm text-slate-600">{{ review.comment }}</p>
-                      <span class="mt-1 block text-xs text-slate-400">
-                        {{ review.date }}
-                      </span>
+                      <p class="text-sm text-gray-300">{{ review.comment }}</p>
+                      <span class="text-xs text-gray-500 font-mono">{{ review.date }}</span>
                     </div>
                   </div>
                 } @empty {
-                  <div
-                    class="flex flex-col items-center justify-center py-12 text-center"
-                  >
-                    <nz-icon
-                      nzType="star"
-                      class="text-4xl text-slate-300 mb-3"
-                    />
-                    <p class="text-slate-500 font-medium">
+                  <div class="flex flex-col items-center justify-center py-14 text-center">
+                    <nz-icon nzType="star" class="text-4xl text-warning/60 mb-3" />
+                    <p class="text-base text-gray-300 font-semibold mb-1">
                       {{ "detail.noReviews" | translate }}
                     </p>
-                    <p class="text-sm text-slate-400 mt-1">
+                    <p class="text-sm text-gray-500 m-0">
                       {{ "detail.firstReview" | translate }}
                     </p>
                   </div>
                 }
+
                 <button
                   nz-button
                   nzBlock
                   nzType="dashed"
                   disabled
                   aria-disabled="true"
-                  [attr.aria-label]="(('detail.writeReview' | translate) + ' — ' + ('detail.reviewComingSoon' | translate))"
-                  class="border-slate-300 text-slate-500 min-h-11"
+                  class="border-white/20 text-gray-400 min-h-12 rounded-xl"
                 >
                   {{ "detail.writeReview" | translate }}
-                  <span class="ml-2 text-xs font-normal"
-                    >({{ "detail.reviewComingSoon" | translate }})</span
-                  >
+                  <span class="ml-2 text-xs font-normal opacity-70">
+                    ({{ "detail.reviewComingSoon" | translate }})
+                  </span>
                 </button>
               </div>
             </nz-tab>
@@ -111,5 +106,7 @@
     </div>
   </div>
 } @else {
-  <app-loading />
+  <div class="min-h-screen flex items-center justify-center">
+    <app-loading />
+  </div>
 }

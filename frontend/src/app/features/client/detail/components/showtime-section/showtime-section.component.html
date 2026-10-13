@@ -1,110 +1,105 @@
+<div class="glass-panel rounded-2xl p-6 sm:p-8 border border-white/10 shadow-2xl">
+  <!-- SECTION TITLE -->
+  <div class="flex items-center gap-3 mb-6">
+    <div class="w-2.5 h-6 rounded-full bg-primary"></div>
+    <h2 class="text-xl sm:text-2xl font-black text-white uppercase tracking-wider m-0">
+      {{ 'detail.showtimes' | translate }}
+    </h2>
+  </div>
 
-    <div class="rounded-2xl border border-slate-200 dark:border-gray-700 bg-white dark:bg-[#161a20] p-6">
-      <h2
-        class="mb-6 border-l-4 border-primary pl-3 text-2xl font-bold text-slate-900 dark:text-gray-100"
+  <!-- DATE SELECTION BAR -->
+  <div class="mb-8 flex gap-3 overflow-x-auto pb-2 scrollbar-thin touch-manipulation">
+    @for (date of dates(); track date) {
+      <button
+        type="button"
+        (click)="selectDate(date)"
+        [attr.aria-pressed]="(selectedDate() | date: 'ddMMyy') === (date | date: 'ddMMyy')"
+        [attr.aria-label]="date | date: 'dd/MM/yyyy'"
+        class="min-w-[90px] min-h-12 cursor-pointer rounded-xl border p-3 text-center transition-all duration-200 focus-visible:outline-none"
+        [ngClass]="
+          (selectedDate() | date: 'ddMMyy') === (date | date: 'ddMMyy')
+            ? 'border-primary bg-primary text-white shadow-lg marquee-glow-subtle font-bold'
+            : 'border-white/10 bg-white/5 text-gray-400 hover:border-white/30 hover:text-white'
+        "
       >
-        {{ 'detail.showtimes' | translate }}
-      </h2>
+        <span class="block text-xs uppercase tracking-wider opacity-75">{{ date | date: 'EEE' }}</span>
+        <span class="text-xl font-bold font-mono tabular-nums leading-none mt-1 block">
+          {{ date | date: 'dd/MM' }}
+        </span>
+      </button>
+    }
+  </div>
 
-      <div class="mb-6 flex gap-3 overflow-x-auto pb-2 scrollbar-hide touch-manipulation">
-        @for (date of dates(); track date) {
-          <button
-            type="button"
-            (click)="selectDate(date)"
-            [attr.aria-pressed]="(selectedDate() | date: 'ddMMyy') === (date | date: 'ddMMyy')"
-            [attr.aria-label]="date | date: 'dd/MM/yyyy'"
-            class="min-w-[84px] min-h-11 cursor-pointer rounded-lg border p-3 text-center transition-colors duration-200"
-            [ngClass]="
-              (selectedDate() | date: 'ddMMyy') === (date | date: 'ddMMyy')
-                ? 'border-primary bg-primary text-white'
-                : 'border-slate-200 dark:border-gray-700 bg-slate-50 dark:bg-gray-800 text-slate-500 dark:text-gray-300 hover:border-slate-300'
-            "
-          >
-            <span class="text-2xl font-bold tabular-nums">{{ date | date: 'dd' }}</span>
-            /<span class="text-sm tabular-nums">{{ date | date: 'MM' }}</span>
-          </button>
-        }
-      </div>
+  <!-- CINEMAS AND SHOWTIMES -->
+  <div class="space-y-6">
+    @for (cinema of cinemas(); track cinema.id) {
+      <div class="rounded-xl border border-white/10 bg-black/30 p-5 space-y-4">
+        <div class="flex items-center gap-2 text-white">
+          <nz-icon nzType="environment" nzTheme="fill" class="text-primary text-base" />
+          <h3 class="text-base font-extrabold text-white tracking-wide m-0">
+            {{ cinema.name }}
+          </h3>
+        </div>
 
-      <div class="space-y-4">
-        @for (cinema of cinemas(); track cinema.id) {
-          <div
-            class="rounded-xl border border-slate-200 dark:border-gray-700 bg-slate-50 dark:bg-gray-800/50 p-4 transition-colors hover:border-slate-300"
-          >
-            <p class="mb-3 text-sm font-semibold text-slate-800 dark:text-gray-100">
-              {{ cinema.name }}
-            </p>
-            <div class="flex flex-wrap gap-3">
-              @for (show of cinema.showtimes; track show.id) {
-                <button
-                  type="button"
-                  (click)="selectShowtime(cinema.id, show)"
-                  [disabled]="show.availableSeats === 0"
-                  [attr.aria-label]="show.time + ' - ' + (show.availableSeats > 0 ? show.availableSeats : ('detail.soldOut' | translate))"
-                  class="group relative w-[112px] min-h-11 overflow-hidden rounded-lg border bg-white dark:bg-[#161a20] p-3 text-center transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+        <div class="flex flex-wrap gap-3">
+          @for (show of cinema.showtimes; track show.id) {
+            <button
+              type="button"
+              (click)="selectShowtime(cinema.id, show)"
+              [disabled]="show.availableSeats === 0"
+              [attr.aria-label]="show.time + ' - ' + (show.availableSeats > 0 ? show.availableSeats : ('detail.soldOut' | translate))"
+              class="group relative w-32 min-h-12 rounded-xl border p-3 text-center transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-40"
+              [ngClass]="
+                show.availableSeats === 0
+                  ? 'border-white/5 bg-white/5 text-gray-600'
+                  : show.availableSeats > 0 && show.availableSeats < 5
+                    ? 'border-warning/50 bg-warning/10 hover:border-warning hover:bg-warning/20 cursor-pointer'
+                    : 'border-white/15 bg-white/5 hover:border-primary hover:bg-primary/10 cursor-pointer'
+              "
+            >
+              <div class="text-lg font-black font-mono tabular-nums text-white group-hover:text-primary transition-colors">
+                {{ show.time }}
+              </div>
+              <div class="flex items-center justify-center gap-1.5 mt-1">
+                <span
+                  class="h-1.5 w-1.5 rounded-full shrink-0"
                   [ngClass]="
                     show.availableSeats === 0
-                      ? 'border-slate-200 dark:border-gray-700'
+                      ? 'bg-gray-600'
                       : show.availableSeats > 0 && show.availableSeats < 5
-                        ? 'cursor-pointer border-warning'
-                        : 'cursor-pointer border-slate-300 dark:border-gray-600 hover:border-primary'
+                        ? 'bg-warning animate-pulse'
+                        : 'bg-success'
                   "
-                >
-                  <div
-                    class="text-lg font-bold font-mono tabular-nums text-slate-900 dark:text-gray-100 group-hover:text-primary"
-                  >
-                    {{ show.time }}
-                  </div>
-                  <div class="flex items-center gap-1.5 mt-1">
-                    <div
-                      class="h-1.5 w-1.5 rounded-full"
-                      aria-hidden="true"
-                      [ngClass]="
-                        show.availableSeats === 0
-                          ? 'bg-slate-300'
-                          : show.availableSeats > 0 && show.availableSeats < 5
-                            ? 'bg-warning'
-                            : 'bg-success'
-                      "
-                    ></div>
-                    <span
-                      class="text-xs font-medium text-slate-500 dark:text-gray-400 group-hover:text-primary"
-                    >
-                      @if (show.availableSeats >= 0) {
-                        {{
-                          show.availableSeats > 0
-                            ? show.availableSeats +
-                              ('detail.seatsAvailable' | translate)
-                            : ('detail.soldOut' | translate)
-                        }}
-                      }
-                    </span>
-                  </div>
-                </button>
-              }
-            </div>
-          </div>
-        } @empty {
-          <div
-            class="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 dark:border-gray-700 bg-slate-50 dark:bg-gray-800/50 py-16"
-          >
-            <nz-icon
-              nzType="calendar"
-              class="mb-4 text-5xl text-slate-400"
-              aria-hidden="true"
-            ></nz-icon>
-            <p class="text-lg text-slate-500 dark:text-gray-400">
-              {{ 'detail.noShowtimeToday' | translate }}
-            </p>
-            <button
-              nz-button
-              nzType="link"
-              (click)="selectDate(dates()[0])"
-              class="text-primary min-h-11"
-            >
-              {{ 'detail.otherDates' | translate }}
+                ></span>
+                <span class="text-[11px] font-mono font-medium text-gray-400 group-hover:text-gray-200">
+                  @if (show.availableSeats >= 0) {
+                    {{
+                      show.availableSeats > 0
+                        ? show.availableSeats + ('detail.seatsAvailable' | translate)
+                        : ('detail.soldOut' | translate)
+                    }}
+                  }
+                </span>
+              </div>
             </button>
-          </div>
-        }
+          }
+        </div>
       </div>
-    </div>
+    } @empty {
+      <div class="flex flex-col items-center justify-center rounded-2xl border border-dashed border-white/10 bg-white/5 py-16 text-center">
+        <nz-icon nzType="calendar" class="mb-4 text-4xl text-gray-600" aria-hidden="true" />
+        <p class="text-base text-gray-400 mb-2">
+          {{ 'detail.noShowtimeToday' | translate }}
+        </p>
+        <button
+          nz-button
+          nzType="link"
+          (click)="selectDate(dates()[0])"
+          class="text-primary font-bold cursor-pointer"
+        >
+          {{ 'detail.otherDates' | translate }}
+        </button>
+      </div>
+    }
+  </div>
+</div>

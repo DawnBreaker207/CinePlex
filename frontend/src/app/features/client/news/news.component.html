@@ -1,101 +1,141 @@
-<div class="mx-auto w-full max-w-5xl px-4 pb-12 pt-6 md:px-6">
-  <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100 sm:text-3xl">
-    {{ "nav.news" | translate }}
-  </h1>
+<div class="mx-auto w-full max-w-7xl px-4 pb-16 pt-8 sm:px-6 lg:px-8">
+  <!-- PAGE HEADER -->
+  <div class="glass-panel rounded-2xl p-6 sm:p-8 border border-white/10 shadow-2xl mb-8">
+    <div class="flex items-center gap-3 mb-2">
+      <div class="w-2.5 h-6 rounded-full bg-primary"></div>
+      <h1 class="text-2xl sm:text-3xl font-black text-white uppercase tracking-wider m-0">
+        {{ "nav.news" | translate }} & Ưu đãi
+      </h1>
+    </div>
+    <p class="text-xs sm:text-sm text-gray-400 m-0">
+      Cập nhật các chương trình khuyến mãi độc quyền và tin tức điện ảnh mới nhất từ CinePlex
+    </p>
+  </div>
 
+  <!-- VOUCHERS SECTION (TACTILE TICKET LOOK) -->
   @if (vouchers().length > 0) {
-    <h2 class="mb-3 mt-6 text-xl font-bold text-slate-900 dark:text-gray-100">
-      {{ "news.offers" | translate }}
-    </h2>
-    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-      @for (v of vouchers(); track v.id) {
-        <div class="rounded-xl border-2 border-solid border-primary bg-primary-light/40 dark:bg-primary/10 p-4">
-          <div class="flex items-center justify-between gap-2">
-            <span class="font-mono text-lg font-extrabold tabular-nums text-primary">
-              {{ v.code }}
-            </span>
-            <button
-              nz-button
-              nzType="primary"
-              nzSize="small"
-              class="rounded-lg font-semibold min-h-11"
-              [nzLoading]="voucherStore.saving()"
-              [disabled]="voucherStore.saving()"
-              (click)="claim(v.code)"
-            >
-              {{ "news.claim" | translate }}
-            </button>
+    <div class="mb-12">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-2.5 h-6 rounded-full bg-gold"></div>
+        <h2 class="text-xl sm:text-2xl font-black text-white uppercase tracking-wider m-0">
+          {{ "news.offers" | translate }}
+        </h2>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        @for (v of vouchers(); track v.id) {
+          <div class="relative overflow-hidden rounded-2xl border border-primary/40 bg-gradient-to-br from-primary/15 via-[#161a20] to-[#161a20] p-5 shadow-xl hover:border-primary transition-all duration-300">
+            <!-- Voucher Code Badge -->
+            <div class="flex items-center justify-between gap-3 mb-3">
+              <span class="px-3 py-1 rounded-lg font-mono text-base font-black tabular-nums bg-primary text-white shadow-md">
+                {{ v.code }}
+              </span>
+              <button
+                nz-button
+                nzType="primary"
+                nzSize="small"
+                class="rounded-xl font-bold px-4 h-9 bg-primary hover:bg-primary-dark border-none cursor-pointer"
+                [nzLoading]="voucherStore.saving()"
+                [disabled]="voucherStore.saving()"
+                (click)="claim(v.code)"
+              >
+                {{ "news.claim" | translate }}
+              </button>
+            </div>
+
+            <h3 class="text-base font-bold text-white mb-1">
+              {{ v.name }}
+            </h3>
+            <p class="text-xs font-mono tabular-nums text-gray-400 m-0">
+              Giảm <span class="text-warning font-bold">−{{ v.discountValue | currency: "VND" }}</span>
+              · HSD: {{ v.endAt | date: "dd/MM/yyyy" }}
+            </p>
           </div>
-          <p class="mt-1 text-sm font-semibold text-slate-800 dark:text-gray-100">{{ v.name }}</p>
-          <p class="text-xs font-mono tabular-nums text-slate-500 dark:text-gray-400">
-            −{{ v.discountValue | currency: "VND" }}
-            · {{ "voucher.validPeriod" | translate }}:
-            {{ v.endAt | date: "dd/MM/yyyy" }}
-          </p>
-        </div>
-      }
+        }
+      </div>
     </div>
   }
 
-  <h2 class="mb-3 mt-8 text-xl font-bold text-slate-900 dark:text-gray-100">
-    {{ "news.articles" | translate }}
-  </h2>
-
-  @if (loading()) {
-    <nz-skeleton [nzActive]="true" [nzParagraph]="{ rows: 4 }" class="mt-6 block" />
-  } @else if (articlesError()) {
-    <app-error-state
-      [message]="'home.loadFailed' | translate"
-      (retry)="loadArticles()"
-      class="mt-6 block"
-    />
-  } @else if (published().length === 0) {
-    <div class="mt-6 rounded-xl border border-slate-200 dark:border-gray-700 bg-white dark:bg-[#161a20] p-10 text-center">
-      <nz-empty [nzNotFoundContent]="'admin.article.empty' | translate" />
+  <!-- ARTICLES SECTION -->
+  <div>
+    <div class="flex items-center gap-3 mb-6">
+      <div class="w-2.5 h-6 rounded-full bg-primary"></div>
+      <h2 class="text-xl sm:text-2xl font-black text-white uppercase tracking-wider m-0">
+        {{ "news.articles" | translate }}
+      </h2>
     </div>
-  } @else {
-    <div class="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
-      @for (a of published(); track a.id) {
-        <article
-          class="cursor-pointer overflow-hidden rounded-xl border border-slate-200 dark:border-gray-700 bg-white dark:bg-[#161a20] transition-colors hover:border-primary"
-          (click)="toggle(a.id)"
-          (keyup.enter)="toggle(a.id)"
-          (keyup.space)="toggle(a.id)"
-          tabindex="0"
-          role="button"
-          [attr.aria-expanded]="expandedId() === a.id"
-          [attr.aria-label]="a.title"
-        >
-          @if (a.thumbnail) {
-            <img
-              [src]="a.thumbnail"
-              [alt]="a.title"
-              loading="lazy"
-              class="h-44 w-full object-cover"
-            />
-          }
-          <div class="p-4">
-            <nz-tag nzColor="default">{{ a.type }}</nz-tag>
-            <h2 class="mt-2 text-lg font-bold text-slate-900 dark:text-gray-100">{{ a.title }}</h2>
-            <p class="mt-1 text-sm text-slate-500 dark:text-gray-400">
-              {{ a.summary }}
-              @if (expandedId() !== a.id) {
-                <span>…</span>
+
+    @if (loading()) {
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        @for (_ of [1, 2, 3]; track _) {
+          <div class="glass-panel rounded-2xl p-4 border border-white/10 space-y-3">
+            <nz-skeleton [nzActive]="true" [nzParagraph]="{ rows: 4 }" class="block" />
+          </div>
+        }
+      </div>
+    } @else if (articlesError()) {
+      <div class="glass-panel rounded-2xl p-6 border border-danger/30">
+        <app-error-state
+          [message]="'home.loadFailed' | translate"
+          (retry)="loadArticles()"
+          class="block"
+        />
+      </div>
+    } @else if (published().length === 0) {
+      <div class="glass-panel rounded-2xl border border-white/10 p-16 text-center">
+        <nz-empty [nzNotFoundContent]="'admin.article.empty' | translate" />
+      </div>
+    } @else {
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        @for (a of published(); track a.id) {
+          <article
+            class="group cursor-pointer overflow-hidden rounded-2xl glass-panel border border-white/10 hover:border-primary/50 transition-all duration-300 shadow-xl flex flex-col justify-between"
+            (click)="toggle(a.id)"
+            (keyup.enter)="toggle(a.id)"
+            (keyup.space)="toggle(a.id)"
+            tabindex="0"
+            role="button"
+            [attr.aria-expanded]="expandedId() === a.id"
+            [attr.aria-label]="a.title"
+          >
+            <div>
+              @if (a.thumbnail) {
+                <div class="h-48 w-full overflow-hidden bg-gray-900">
+                  <img
+                    [src]="a.thumbnail"
+                    [alt]="a.title"
+                    loading="lazy"
+                    class="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                </div>
               }
-            </p>
-            <p class="mt-2 text-xs font-mono tabular-nums text-slate-500 dark:text-gray-400">
-              {{ a.author }} · {{ a.createdAt | date: "dd/MM/yyyy" }} ·
-              {{ a.views }} {{ "article.views" | translate }}
-            </p>
+              <div class="p-5">
+                <span class="px-2.5 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider bg-white/10 text-gray-300 border border-white/10 inline-block mb-3">
+                  {{ a.type }}
+                </span>
+                <h3 class="text-lg font-bold text-white group-hover:text-primary transition-colors line-clamp-2 mb-2 leading-snug">
+                  {{ a.title }}
+                </h3>
+                <p class="text-xs sm:text-sm text-gray-400 line-clamp-3 leading-relaxed m-0">
+                  {{ a.summary }}
+                </p>
+              </div>
+            </div>
+
+            <div class="p-5 pt-0 border-t border-white/5 mt-3 text-xs text-gray-500 font-mono flex items-center justify-between">
+              <span>{{ a.author }} · {{ a.createdAt | date: "dd/MM/yyyy" }}</span>
+              <span>{{ a.views }} {{ "article.views" | translate }}</span>
+            </div>
+
             @if (expandedId() === a.id) {
               <div
-                class="prose-sm mt-3 border-t border-slate-100 pt-3 text-sm text-slate-700"
+                class="p-5 border-t border-white/10 bg-black/40 text-sm text-gray-200 leading-relaxed"
                 [innerHTML]="a.content"
               ></div>
             }
-          </div>
-        </article>
-      }
-    </div>
-  }
+          </article>
+        }
+      </div>
+    }
+  </div>
 </div>

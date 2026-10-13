@@ -1,7 +1,6 @@
 import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { NzHeaderComponent } from 'ng-zorro-antd/layout';
-import { NzMenuDirective } from 'ng-zorro-antd/menu';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { AuthService } from '@core/auth/auth.service';
@@ -16,7 +15,6 @@ import { HEADERS } from '@core/constants/column';
     RouterLink,
     RouterLinkActive,
     NzHeaderComponent,
-    NzMenuDirective,
     NzButtonModule,
     AuthMenuComponent,
     SelectShowtimeComponent,

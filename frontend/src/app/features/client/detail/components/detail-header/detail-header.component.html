@@ -1,84 +1,125 @@
+<div class="relative min-h-[480px] sm:h-[540px] w-full overflow-hidden">
+  <!-- Backdrop Image -->
+  <div
+    class="absolute inset-0 bg-cover bg-center scale-105 blur-[1px]"
+    [style.backgroundImage]="
+      'url(' +
+      (movie().backdrop ||
+        movie().poster ||
+        'https://placehold.co/1400x700/161a20/e4002b?text=CinePlex') +
+      ')'
+    "
+  ></div>
 
-    <div class="relative h-[520px] w-full overflow-hidden">
-      <div
-        class="absolute inset-0 bg-cover bg-center"
-        [style.backgroundImage]="
-          'url(' +
-          (movie().backdrop ||
-            'https://placehold.co/1400x700/1A202C/F8FAFC?text=CinePlex') +
-          ')'
-        "
-      ></div>
-      <div
-        class="absolute inset-0 bg-gradient-to-t from-[#0b0d10] via-[#0b0d10]/80 to-black/20"
-      ></div>
-      <div
-        class="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-slate-50 to-transparent"
-      ></div>
+  <!-- Deep Dark Vignette Gradients -->
+  <div class="absolute inset-0 bg-gradient-to-t from-[#0b0d10] via-[#0b0d10]/75 to-black/40"></div>
+  <div class="absolute inset-0 bg-gradient-to-r from-[#0b0d10]/90 via-[#0b0d10]/50 to-transparent"></div>
 
-      <div
-        class="relative mx-auto flex h-full max-w-5xl items-end gap-8 px-4 pb-10 md:px-6"
-      >
-        <div
-          class="hidden w-56 shrink-0 translate-y-14 overflow-hidden rounded-xl border border-white/15 md:block"
+  <!-- Content Container -->
+  <div class="relative mx-auto flex h-full max-w-7xl items-end gap-8 px-4 pb-12 pt-28 sm:px-6 lg:px-8">
+    <!-- Vertical 2:3 Movie Poster -->
+    <div class="hidden sm:block w-52 md:w-60 shrink-0 aspect-[2/3] overflow-hidden rounded-2xl border border-white/20 shadow-2xl marquee-glow-subtle translate-y-6">
+      <img
+        [src]="movie().poster || movie().backdrop"
+        [alt]="movie().title"
+        loading="lazy"
+        class="h-full w-full object-cover"
+      />
+    </div>
+
+    <!-- Metadata & Details -->
+    <div class="mb-2 flex-1 space-y-3">
+      <!-- Release & Duration Badge -->
+      <div class="flex flex-wrap items-center gap-2.5 text-xs font-semibold text-gray-300">
+        <span class="px-2.5 py-1 rounded-md bg-primary text-white font-black tracking-wider uppercase">
+          2D / 3D
+        </span>
+        <span class="px-2.5 py-1 rounded-md bg-white/10 backdrop-blur-md border border-white/10">
+          {{ movie().releaseDate | date: 'dd/MM/yyyy' }}
+        </span>
+        <span class="px-2.5 py-1 rounded-md bg-white/10 backdrop-blur-md border border-white/10 font-mono">
+          {{ movie().duration }} {{ 'detail.minutes' | translate }}
+        </span>
+        @if (movie().country) {
+          <span class="px-2.5 py-1 rounded-md bg-white/10 backdrop-blur-md border border-white/10">
+            {{ movie().country }}
+          </span>
+        }
+      </div>
+
+      <!-- Movie Title -->
+      <h1 class="text-3xl sm:text-5xl font-black leading-tight text-white tracking-tight m-0">
+        {{ movie().title }}
+      </h1>
+      @if (movie().originalTitle && movie().originalTitle !== movie().title) {
+        <p class="text-base sm:text-lg italic text-gray-400 m-0">
+          {{ movie().originalTitle }}
+        </p>
+      }
+
+      <!-- Genres Tags -->
+      <div class="flex flex-wrap items-center gap-2 pt-1">
+        @for (genre of movie().genres; track genre) {
+          <span class="px-3 py-1 rounded-full text-xs font-medium border border-white/20 bg-white/5 text-gray-200">
+            {{ genre }}
+          </span>
+        }
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex flex-wrap gap-4 pt-3">
+        <button
+          nz-button
+          nzType="primary"
+          (click)="bookNow.emit()"
+          class="h-12 px-8 rounded-xl font-bold uppercase tracking-wider text-xs bg-primary hover:bg-primary-dark border-none shadow-xl marquee-glow transition-all cursor-pointer flex items-center gap-2"
         >
-          <img
-            [src]="movie().poster || movie().backdrop"
-            [alt]="movie().title"
-            loading="lazy"
-            class="h-full w-full object-cover"
-          />
-        </div>
+          <nz-icon nzType="thunderbolt" nzTheme="fill" />
+          {{ 'detail.bookNow' | translate }}
+        </button>
 
-        <div class="mb-2 flex-1">
-          <div
-            class="mb-2 flex flex-wrap items-center gap-3 text-sm text-slate-200"
-          >
-            <span>{{ movie().releaseDate | date: 'dd/MM/yyyy' }}</span>
-            <span>• {{ movie().duration }} {{ 'detail.minutes' | translate }}</span>
-          </div>
-
-          <h1
-            class="mb-2 text-4xl font-extrabold leading-tight text-white md:text-5xl"
-          >
-            {{ movie().title }}
-          </h1>
-          <p class="mb-4 text-lg italic text-slate-200/90 md:text-xl">
-            {{ movie().originalTitle }}
-          </p>
-
-          <div class="mb-6 flex flex-wrap items-center gap-2">
-            @for (genre of movie().genres; track genre) {
-              <nz-tag
-                [nzColor]="'transparent'"
-                class="rounded-full border border-white/30 px-3 text-xs text-white/95"
-              >
-                {{ genre }}
-              </nz-tag>
-            }
-          </div>
-
-          <div class="flex flex-wrap gap-3">
-            <button
-              nz-button
-              nzType="primary"
-              (click)="bookNow.emit()"
-              class="rounded-lg border-none bg-primary px-6 font-semibold text-white min-h-11"
-            >
-              {{ 'detail.bookNow' | translate }}
-            </button>
-
-            <button
-              nz-button
-              nzType="default"
-              (click)="soon()"
-              class="rounded-lg border border-white/50 bg-white/10 px-6 text-white hover:border-white hover:bg-white/20 min-h-11"
-            >
-              <nz-icon nzType="play-circle" nzTheme="fill" class="mr-2" aria-hidden="true" />
-              {{ 'detail.watchTrailer' | translate }}
-            </button>
-          </div>
-        </div>
+        <button
+          nz-button
+          nzType="default"
+          (click)="openTrailer()"
+          class="h-12 px-6 rounded-xl font-bold uppercase tracking-wider text-xs border border-white/20 bg-white/10 hover:bg-white/20 text-white backdrop-blur-md transition-all cursor-pointer flex items-center gap-2"
+        >
+          <nz-icon nzType="play-circle" nzTheme="fill" class="text-lg text-primary" />
+          {{ 'detail.watchTrailer' | translate }}
+        </button>
       </div>
     </div>
-  
+  </div>
+
+  <!-- YOUTUBE TRAILER MODAL -->
+  <nz-modal
+    [nzVisible]="isTrailerOpen()"
+    [nzTitle]="trailerTitle"
+    [nzFooter]="null"
+    (nzOnCancel)="closeTrailer()"
+    [nzWidth]="850"
+    [nzCentered]="true"
+    nzWrapClassName="dark cinema-modal"
+  >
+    <ng-template #trailerTitle>
+      <div class="flex items-center gap-2 text-white">
+        <nz-icon nzType="video-camera" class="text-primary" />
+        <span class="font-bold">Trailer: {{ movie().title }}</span>
+      </div>
+    </ng-template>
+
+    <ng-container *nzModalContent>
+      @if (isTrailerOpen()) {
+        <div class="relative w-full aspect-video rounded-xl overflow-hidden bg-black shadow-2xl">
+          <iframe
+            [src]="trailerUrl()"
+            class="w-full h-full border-none"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen
+            title="Movie Trailer"
+          ></iframe>
+        </div>
+      }
+    </ng-container>
+  </nz-modal>
+</div>
