@@ -46,4 +46,15 @@ export class SeatComponent {
     if (cell.span > 1) return 'couple';
     return seat.seatType === 'VIP' ? 'vip' : 'single';
   }
+
+  get selectedSeatNames(): string {
+    return this.seatStore.selectedSeats().map((s) => s.seatNumber).join(', ');
+  }
+
+  clearSelection(): void {
+    const selected = [...this.seatStore.selectedSeats()];
+    for (const seat of selected) {
+      this.seatStore.toggleSeats([seat]);
+    }
+  }
 }

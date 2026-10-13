@@ -62,11 +62,12 @@ export const SeatStore = signalStore(
           {} as Record<string, Seat[]>,
         );
 
-        // Fixed 15-column frame shared with the admin layout editor:
-        // empty columns render as spacers, adjacent COUPLE seats merge
-        // into one double-wide unit labeled "5+6".
+        // Natural sort for row labels: A..Z before AA..ZZ (learned from production Cinema project)
+        const sortRowLabels = (a: string, b: string) =>
+          a.length === b.length ? a.localeCompare(b) : a.length - b.length;
+
         return Object.keys(groups)
-          .sort()
+          .sort(sortRowLabels)
           .map((row) => ({
             row,
             cells: trimOuterEmptyCells(

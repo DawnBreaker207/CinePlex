@@ -5,8 +5,16 @@
   nz-tooltip
   [nzTooltipTitle]="'reservation.countdownHint' | translate"
   nzTooltipTrigger="click"
-  class="font-mono text-base md:text-lg font-bold text-warning tracking-wider tabular-nums"
+  class="font-mono text-base md:text-lg font-bold tracking-wider tabular-nums px-3 py-1 rounded-full transition-all duration-300 border inline-flex items-center gap-2"
+  [ngClass]="{
+    'text-amber-400 border-amber-400/30 bg-amber-400/10': !isUrgent(),
+    'text-red-500 border-red-500/50 bg-red-500/15 animate-pulse': isUrgent()
+  }"
 >
+  <span
+    class="w-2 h-2 rounded-full inline-block"
+    [ngClass]="isUrgent() ? 'bg-red-500' : 'bg-amber-400'"
+  ></span>
   {{ reservationStore.formattedTTL() }}
 </span>
 <span class="sr-only" aria-live="polite">{{ announceMsg() }}</span>

@@ -4,16 +4,18 @@ import {
   inject,
   OnInit,
   signal,
+  computed,
   ChangeDetectionStrategy,
 } from '@angular/core';
 import { StorageService } from '@core/services/storage/storage.service';
 import { ReservationStore } from '@features/client/reservation/reservation.store';
 import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { NgClass } from '@angular/common';
 
 @Component({
   selector: 'app-countdown',
-  imports: [NzToolTipModule, TranslatePipe],
+  imports: [NzToolTipModule, TranslatePipe, NgClass],
   templateUrl: './countdown.component.html',
   styleUrl: './countdown.component.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -24,6 +26,11 @@ export class CountdownComponent implements OnInit {
   private translate = inject(TranslateService);
   // Screen readers get threshold announcements only — never the ticking clock.
   readonly announceMsg = signal('');
+
+  readonly isUrgent = computed(() => {
+    const ttl = this.reservationStore.currentTTL()?.ttl ?? 999;
+    return ttl <= 60 && ttl > 0;
+  });
 
   constructor() {
     effect(() => {

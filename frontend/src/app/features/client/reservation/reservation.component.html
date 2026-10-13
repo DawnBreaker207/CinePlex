@@ -1,10 +1,10 @@
 <nz-layout class="min-h-screen bg-transparent">
-  <!-- HEADER STEPS -->
+  <!-- HEADER STEPS (GLASS NAV) -->
   <div
-    class="bg-white dark:bg-[#161a20] px-0 h-auto sticky top-0 z-40 border-b border-gray-200 dark:border-gray-700"
+    class="glass-header px-0 h-auto sticky top-0 z-40 shadow-2xl"
   >
-    <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-      <nz-steps nzType="navigation" nzSize="small" [nzCurrent]="index()">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+      <nz-steps nzType="navigation" nzSize="small" [nzCurrent]="index()" class="cinema-steps">
         <nz-step [nzTitle]="'reservation.stepSeat' | translate" nzIcon="table"></nz-step>
         <nz-step [nzTitle]="'reservation.stepCombo' | translate" nzIcon="shopping"></nz-step>
         <nz-step [nzTitle]="'reservation.stepConfirm' | translate" nzIcon="solution"></nz-step>
@@ -15,11 +15,12 @@
   <!-- BODY CONTENT -->
   <nz-content class="py-8 px-4 sm:px-6 lg:px-8">
     <div class="max-w-7xl mx-auto">
-      <!-- LEFT MAIN CONTENT -->
-      <nz-layout class="!bg-transparent flex-col lg:flex-row gap-8">
-        <nz-content class="!bg-transparent flex-1 min-w-0">
+      <!-- MAIN GRID (LEFT CONTENT + RIGHT SUMMARY SIDEBAR) -->
+      <div class="flex flex-col lg:flex-row gap-8 items-start">
+        <!-- LEFT WORKSPACE -->
+        <div class="flex-1 min-w-0 w-full">
           <div
-            class="bg-white rounded-xl border border-gray-200 p-6 min-h-full"
+            class="glass-panel rounded-2xl p-6 sm:p-8 border border-white/10 shadow-2xl min-h-full"
           >
             @switch (index()) {
               @case (0) {
@@ -38,38 +39,32 @@
               }
             }
           </div>
-        </nz-content>
+        </div>
 
-        <!-- RIGHT SIDEBAR -->
-        <nz-sider
-          [nzWidth]="380"
-          nzTheme="light"
-          class="!bg-transparent hidden lg:block shrink-0"
-        >
-          <div class="sticky top-28">
-            <app-detail-film
-              [index]="index()"
-              [steps]="steps()"
-              [holdingSeats]="reservationStore.holdingSeats()"
-              [paymentLoading]="reservationStore.submittingPayment()"
-              (stepChange)="onStepChange($event)"
-              (confirm)="onConfirm()"
-              (pay)="onPay()"
-            />
-          </div>
-        </nz-sider>
-        </nz-layout>
+        <!-- RIGHT SIDEBAR: TICKET SUMMARY (380px) -->
+        <aside class="w-full lg:w-[380px] shrink-0 sticky top-28">
+          <app-detail-film
+            [index]="index()"
+            [steps]="steps()"
+            [holdingSeats]="reservationStore.holdingSeats()"
+            [paymentLoading]="reservationStore.submittingPayment()"
+            (stepChange)="onStepChange($event)"
+            (confirm)="onConfirm()"
+            (pay)="onPay()"
+          />
+        </aside>
       </div>
-    </nz-content>
+    </div>
+  </nz-content>
 
   <!-- MOBILE BOTTOM BAR -->
   <div
-    class="lg:hidden sticky bottom-0 z-40 border-t border-gray-200 bg-white px-4 py-3"
+    class="lg:hidden sticky bottom-0 z-50 glass-header border-t border-white/10 px-4 py-3 shadow-2xl"
   >
     <div class="flex items-center justify-between gap-3">
       <div>
-        <p class="text-xs text-gray-500">{{ "reservation.total" | translate }}</p>
-        <p class="text-xl font-black text-primary">
+        <p class="text-xs text-gray-400 m-0">{{ "reservation.total" | translate }}</p>
+        <p class="text-xl font-black font-mono tabular-nums text-primary m-0">
           {{ seatStore.totalPrice() | currency: "VND" }}
         </p>
       </div>
@@ -77,7 +72,7 @@
         <button
           nz-button
           nzType="primary"
-          class="h-11 rounded-xl font-bold"
+          class="h-11 px-6 rounded-xl font-bold uppercase tracking-wider text-xs bg-primary hover:bg-primary-dark border-none shadow-lg marquee-glow-subtle cursor-pointer"
           [disabled]="seatStore.selectSeatsCount() === 0 || reservationStore.holdingSeats()"
           [nzLoading]="reservationStore.holdingSeats()"
           (click)="onConfirm()"
@@ -88,7 +83,7 @@
         <button
           nz-button
           nzType="primary"
-          class="h-11 rounded-xl font-bold"
+          class="h-11 px-6 rounded-xl font-bold uppercase tracking-wider text-xs bg-primary hover:bg-primary-dark border-none shadow-lg marquee-glow-subtle cursor-pointer"
           (click)="onComboNext()"
         >
           {{ "reservation.comboContinue" | translate }}
@@ -97,7 +92,7 @@
         <button
           nz-button
           nzType="primary"
-          class="h-11 rounded-xl font-bold"
+          class="h-11 px-6 rounded-xl font-bold uppercase tracking-wider text-xs bg-primary hover:bg-primary-dark border-none shadow-lg marquee-glow-subtle cursor-pointer"
           [disabled]="reservationStore.submittingPayment()"
           [nzLoading]="reservationStore.submittingPayment()"
           (click)="onPay()"

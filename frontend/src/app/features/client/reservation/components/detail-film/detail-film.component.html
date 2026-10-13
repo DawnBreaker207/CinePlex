@@ -1,119 +1,123 @@
 <div
-  class="bg-white dark:bg-[#161a20] rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 sticky top-24"
+  class="glass-panel rounded-2xl overflow-hidden border border-white/10 shadow-2xl space-y-0"
 >
-  <div class="relative h-40 bg-gray-900 overflow-hidden">
+  <!-- TICKET HEADER: MOVIE BANNER -->
+  <div class="relative h-36 bg-gray-900 overflow-hidden">
     <div
-      class="absolute inset-0 bg-cover bg-center opacity-40 blur-md scale-110"
+      class="absolute inset-0 bg-cover bg-center opacity-40 blur-[2px] scale-110"
       [style.backgroundImage]="'url(' + (movie()?.poster || '') + ')'"
     ></div>
     <div
-      class="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent"
+      class="absolute inset-0 bg-gradient-to-t from-[#161a20] via-[#161a20]/70 to-transparent"
     ></div>
-    <div class="relative z-10 p-5 flex gap-5 h-full items-end">
+    <div class="relative z-10 p-4 flex gap-4 h-full items-end">
       <img
         [src]="movie()?.poster"
         [alt]="movie()?.title"
         loading="lazy"
-        class="w-[96px] h-[136px] object-cover rounded-xl border-2 border-white/20 -mb-3 bg-gray-800 shrink-0"
+        class="w-20 h-28 object-cover rounded-xl border border-white/20 -mb-2 shadow-xl shrink-0"
       />
-      <div class="pb-1.5 text-white flex-1 min-w-0">
+      <div class="pb-1 text-white flex-1 min-w-0">
         <h2
-          class="text-base font-bold leading-tight truncate"
+          class="text-base font-black leading-snug truncate m-0"
           [title]="movie()?.title"
         >
           {{ movie()?.title }}
         </h2>
-        <p class="text-xs text-gray-500 mt-1 truncate">
+        <p class="text-xs text-gray-400 mt-1 truncate m-0">
           {{ movie()?.genres?.join(", ") }}
         </p>
       </div>
     </div>
   </div>
 
-  <div class="px-5 py-5 space-y-5">
-    <div class="flex items-center gap-3 bg-gray-50 dark:bg-gray-800/60 rounded-xl p-4">
+  <!-- TICKET BODY: THEATER & SHOWTIME -->
+  <div class="p-5 space-y-4">
+    <!-- Cinema & Time Box -->
+    <div class="flex items-center gap-3 bg-white/5 border border-white/10 rounded-xl p-3.5">
       <div
-        class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0"
+        class="w-9 h-9 rounded-lg bg-primary/20 flex items-center justify-center text-primary text-base shrink-0"
       >
-        <nz-icon nzType="environment" aria-hidden="true" />
+        <nz-icon nzType="environment" nzTheme="fill" aria-hidden="true" />
       </div>
       <div class="flex-1 min-w-0">
-        <p class="text-sm font-bold text-gray-800 dark:text-gray-100 truncate">
+        <p class="text-sm font-extrabold text-white truncate m-0">
           {{ theater()?.name }}
         </p>
-        <p class="text-xs font-mono tabular-nums text-gray-500 dark:text-gray-400">
-          {{ timeFormat(showtime()?.showTime) }} &middot;
+        <p class="text-xs font-mono tabular-nums text-gray-400 mt-0.5 m-0">
+          <span class="text-primary font-bold">{{ timeFormat(showtime()?.showTime) }}</span> &middot;
           {{ showtime()?.showDate | date: "dd/MM/yyyy" }}
         </p>
       </div>
     </div>
 
-    <div class="bg-primary-light/50 rounded-xl p-4 border border-primary/10">
-      <div class="flex items-center justify-between mb-3">
-        <span
-          class="text-sm font-semibold text-gray-700 dark:text-gray-200 flex items-center gap-1.5"
-        >
+    <!-- Selected Seats Box -->
+    <div class="bg-white/5 rounded-xl p-4 border border-white/10 space-y-2.5">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-extrabold uppercase tracking-wider text-gray-400 flex items-center gap-1.5">
           <nz-icon nzType="appstore" aria-hidden="true" />
           {{ "reservation.seats" | translate }}
         </span>
         @if (seatStore.selectSeatsCount()) {
           <span
-            class="text-xs font-mono tabular-nums bg-white dark:bg-gray-800 px-2 py-0.5 rounded-full border border-primary/20 text-primary font-bold"
+            class="text-[11px] font-mono font-bold tabular-nums bg-primary/20 px-2 py-0.5 rounded-full border border-primary/30 text-primary"
           >
-            {{ seatStore.selectSeatsCount() }}
-            {{ "reservation.ticketUnit" | translate }}
+            {{ seatStore.selectSeatsCount() }} {{ "reservation.ticketUnit" | translate }}
           </span>
         }
       </div>
+
       @if (seatStore.selectSeatsCount()) {
-        <div class="flex flex-wrap gap-1.5">
+        <div class="flex flex-wrap gap-1.5 pt-1">
           @for (seat of selectedSeatNumbers(); track seat) {
             <span
-              class="inline-flex items-center gap-1 bg-white dark:bg-gray-800 text-primary border border-primary/20 px-2.5 py-1 rounded-lg text-xs font-mono font-bold tabular-nums"
+              class="inline-flex items-center gap-1 bg-primary text-white px-2.5 py-1 rounded-lg text-xs font-mono font-bold tabular-nums shadow-sm"
             >
-              <nz-icon nzType="table" nzTheme="fill" class="text-xs" aria-hidden="true" />
               {{ seat }}
             </span>
           }
         </div>
       } @else {
-        <p class="text-xs text-gray-500 dark:text-gray-400 text-center py-2">
+        <p class="text-xs text-gray-500 text-center py-2 m-0">
           {{ "reservation.selectSeatsPrompt" | translate }}
         </p>
       }
     </div>
 
-    <div
-      class="bg-gradient-to-r from-primary/5 to-transparent rounded-xl p-4 border border-primary/10"
-    >
-      <div class="flex items-center justify-between mb-3">
-        <span class="text-sm text-gray-600 dark:text-gray-300 font-medium">{{
-          "reservation.total" | translate
-        }}</span>
+    <!-- TACTILE PERFORATED CUTTING LINE -->
+    <div class="ticket-perforated my-4 pt-4"></div>
+
+    <!-- Total Price & Countdown Box -->
+    <div class="space-y-3">
+      <div class="flex items-center justify-between">
+        <span class="text-xs uppercase tracking-wider font-extrabold text-gray-400">
+          {{ "reservation.total" | translate }}
+        </span>
         <span class="text-2xl font-black font-mono tabular-nums text-primary tracking-tight">
           {{ seatStore.totalPrice() | currency: "VND" }}
         </span>
       </div>
+
+      <!-- Holding Countdown Timer -->
       <div
-        class="flex items-center justify-between bg-warning/10 rounded-lg px-4 py-3 border border-warning/20"
+        class="flex items-center justify-between bg-warning/15 rounded-xl px-3.5 py-2.5 border border-warning/30"
       >
         <div class="flex items-center gap-2 text-warning">
-          <nz-icon nzType="clock-circle" nzTheme="fill" class="text-base" />
-          <span class="text-xs font-semibold">{{
-            "reservation.holdTicket" | translate
-          }}</span>
+          <nz-icon nzType="clock-circle" nzTheme="fill" class="text-sm" />
+          <span class="text-xs font-bold">{{ "reservation.holdTicket" | translate }}</span>
         </div>
         <app-countdown />
       </div>
     </div>
   </div>
 
-  <div class="p-5 pt-0 space-y-3">
+  <!-- ACTION BUTTONS -->
+  <div class="p-5 pt-0 space-y-2.5">
     @if (index() > 0) {
       <button
         nz-button
         nzType="text"
-        class="w-full h-10 rounded-xl font-semibold text-gray-500 hover:text-primary"
+        class="w-full h-10 rounded-xl font-bold uppercase tracking-wider text-xs text-gray-400 hover:text-white transition-colors cursor-pointer"
         (click)="prevStep()"
       >
         <nz-icon nzType="arrow-left" />
@@ -122,7 +126,7 @@
     }
     <button
       nz-button
-      class="w-full h-12 rounded-lg font-bold text-base shadow-sm transition-colors duration-200 !bg-primary !border-primary !text-white hover:!bg-primary-dark"
+      class="w-full h-12 rounded-xl font-bold uppercase tracking-wider text-xs shadow-xl transition-all duration-300 !bg-primary !border-primary !text-white hover:!bg-primary-dark marquee-glow cursor-pointer"
       nzType="primary"
       (click)="index() === steps().length - 1 ? emitPay() : emitConfirm()"
       [disabled]="
@@ -136,7 +140,7 @@
         {{ seatStore.totalPrice() | currency: "VND" }}
       } @else {
         {{ "reservation.holdSeat" | translate }}
-        <nz-icon nzType="arrow-right" />
+        <nz-icon nzType="arrow-right" class="ml-1" />
       }
     </button>
   </div>

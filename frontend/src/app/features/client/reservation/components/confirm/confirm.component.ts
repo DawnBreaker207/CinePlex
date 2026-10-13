@@ -12,7 +12,7 @@ import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
 import { FormsModule } from '@angular/forms';
-import { CurrencyPipe } from '@angular/common';
+import { CurrencyPipe, NgClass } from '@angular/common';
 import { selectJwt } from '@core/auth/auth.selectors';
 import { TranslatePipe } from '@ngx-translate/core';
 import { VoucherStore } from '@domain/voucher/data-access/voucher.store';
@@ -36,6 +36,7 @@ interface PaymentOption {
 @Component({
   selector: 'app-confirm',
   imports: [
+    NgClass,
     NzIconModule,
     FormsModule,
     NzRadioModule,
