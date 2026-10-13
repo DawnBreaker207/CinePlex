@@ -7,7 +7,7 @@ import {
   ChangeDetectionStrategy,
 } from '@angular/core';
 import { NzModalRef } from 'ng-zorro-antd/modal';
-import { DatePipe, NgClass } from '@angular/common';
+import { NgClass } from '@angular/common';
 import { NzButtonComponent } from 'ng-zorro-antd/button';
 import { Showtime } from '@domain/showtime/models/showtime.model';
 import { formatDisplayDate } from '@shared/utils/date.helper';
@@ -21,7 +21,6 @@ import dayjs from 'dayjs';
     NgClass,
     NzButtonComponent,
     NzIconDirective,
-    DatePipe,
     TranslatePipe,
   ],
   templateUrl: './modal.component.html',

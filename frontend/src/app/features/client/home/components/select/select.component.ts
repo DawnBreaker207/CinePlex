@@ -9,7 +9,7 @@ import { Store } from '@ngrx/store';
 import { FormsModule } from '@angular/forms';
 import { NzIconDirective } from 'ng-zorro-antd/icon';
 import { NzDropDownModule } from 'ng-zorro-antd/dropdown';
-import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { TranslateService } from '@ngx-translate/core';
 import {
   selectAllTheaters,
   selectSelectedTheaterId,
@@ -21,7 +21,7 @@ import { Theater } from '@domain/theater/models/theater.model';
 
 @Component({
   selector: 'app-theater-select',
-  imports: [FormsModule, NzIconDirective, NzDropDownModule, TranslatePipe],
+  imports: [FormsModule, NzIconDirective, NzDropDownModule],
   templateUrl: './select.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
