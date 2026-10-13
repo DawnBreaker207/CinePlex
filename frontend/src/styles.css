@@ -23,11 +23,16 @@
   --color-text-faint: #a8a29e;
   --color-focus: #5ec8ff;
 
+  --color-cinema-canvas: #0b0d10;
+  --color-cinema-card: #161a20;
+  --color-cinema-glass: rgba(22, 26, 32, 0.75);
+  --color-cinema-border: rgba(255, 255, 255, 0.08);
+
   --font-sans: "Manrope", sans-serif;
   --font-mono: "JetBrains Mono", monospace;
 
-  --radius-card: 12px;
-  --radius-btn: 8px;
+  --radius-card: 16px;
+  --radius-btn: 10px;
 
   --animate-fade-in-up: fadeInUp 0.3s ease-out forwards;
   @keyframes fadeInUp {
@@ -623,4 +628,190 @@ h6 {
 }
 .dark .dashboard-tabs .ant-table-tbody > tr:hover > td {
   background: #232b38;
+}
+
+/* =========================================================
+   CINEMATIC GLASSMORPHISM & TACTILE UTILITIES ("THE MARQUEE")
+   ========================================================= */
+
+/* Client Canvas is dark by default */
+[nz-layout][data-theme="client"] {
+  background-color: var(--color-cinema-canvas, #0b0d10) !important;
+  color: #edf2f7;
+  min-height: 100vh;
+}
+
+.glass-panel {
+  background: rgba(22, 26, 32, 0.72);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-header {
+  background: rgba(11, 13, 16, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.marquee-glow {
+  box-shadow: 0 0 25px -4px rgba(228, 0, 43, 0.45);
+}
+
+.marquee-glow-subtle {
+  box-shadow: 0 4px 20px -2px rgba(228, 0, 43, 0.25);
+}
+
+/* Projector Beam Effect */
+.projector-glow {
+  background: radial-gradient(
+    ellipse 80% 50% at 50% 0%,
+    rgba(228, 0, 43, 0.22) 0%,
+    rgba(228, 0, 43, 0.06) 50%,
+    transparent 100%
+  );
+}
+
+/* Tactile Perforated Ticket Divider */
+.ticket-perforated {
+  position: relative;
+  border-top: 2px dashed rgba(255, 255, 255, 0.15);
+}
+.ticket-perforated::before,
+.ticket-perforated::after {
+  content: "";
+  position: absolute;
+  top: -10px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: var(--color-cinema-canvas, #0b0d10);
+}
+.ticket-perforated::before {
+  left: -20px;
+}
+.ticket-perforated::after {
+  right: -20px;
+}
+
+/* Bento Card for Admin */
+.bento-card {
+  border-radius: 16px;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  background: #ffffff;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.02), 0 1px 2px -1px rgba(0, 0, 0, 0.02);
+  transition: all 0.2s ease-in-out;
+}
+.dark .bento-card {
+  border-color: rgba(255, 255, 255, 0.07);
+  background: #161a20;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.4);
+}
+.bento-card:hover {
+  border-color: rgba(228, 0, 43, 0.3);
+}
+
+/* Carousel dots: luxury pill indicators */
+.cinema-hero-carousel .slick-dots {
+  bottom: 24px !important;
+}
+.cinema-hero-carousel .slick-dots li {
+  margin: 0 4px !important;
+  width: auto !important;
+  height: auto !important;
+}
+.cinema-hero-carousel .slick-dots li button {
+  width: 24px !important;
+  height: 4px !important;
+  border-radius: 9999px !important;
+  background: rgba(255, 255, 255, 0.3) !important;
+  opacity: 1 !important;
+  transition: all 0.3s ease !important;
+}
+.cinema-hero-carousel .slick-dots li.slick-active button {
+  width: 44px !important;
+  background: var(--color-primary, #e4002b) !important;
+  box-shadow: 0 0 12px rgba(228, 0, 43, 0.6) !important;
+}
+
+/* Cinema steps nav */
+.cinema-steps .ant-steps-item-finish .ant-steps-item-icon {
+  background-color: rgba(228, 0, 43, 0.15) !important;
+  border-color: var(--color-primary) !important;
+}
+.cinema-steps .ant-steps-item-finish .ant-steps-item-icon > .ant-steps-icon {
+  color: var(--color-primary) !important;
+}
+.cinema-steps .ant-steps-item-process .ant-steps-item-icon {
+  background-color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+}
+.cinema-steps .ant-steps-item-title {
+  color: #edf2f7 !important;
+  font-weight: 700 !important;
+  font-size: 0.85rem !important;
+  letter-spacing: 0.05em !important;
+  text-transform: uppercase !important;
+}
+.cinema-steps .ant-steps-item-wait .ant-steps-item-title {
+  color: #718096 !important;
+}
+
+/* ========================================================
+   K80 (80MM) THERMAL RECEIPT PRINTER STYLES FOR CINEMA POS
+   ======================================================== */
+@media print {
+  @page {
+    size: 80mm auto;
+    margin: 0mm;
+  }
+
+  /* Hide app navigation, headers, footers and interactive buttons */
+  body * {
+    visibility: hidden;
+  }
+
+  header,
+  nav,
+  aside,
+  nz-header,
+  nz-sider,
+  .no-print,
+  .ant-modal-close,
+  .ant-modal-header,
+  .ant-modal-mask,
+  button {
+    display: none !important;
+  }
+
+  /* Position and style thermal ticket container exclusively for printing */
+  .thermal-ticket-container,
+  .thermal-ticket-container * {
+    visibility: visible !important;
+  }
+
+  .thermal-ticket-container {
+    position: fixed !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 78mm !important;
+    margin: 0 !important;
+    padding: 3mm !important;
+    color: #000000 !important;
+    background-color: #ffffff !important;
+    font-family: "JetBrains Mono", "Courier New", Courier, monospace !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  .thermal-ticket-container h4,
+  .thermal-ticket-container span,
+  .thermal-ticket-container p {
+    color: #000000 !important;
+  }
+
+  .thermal-ticket-container svg {
+    filter: invert(0) !important;
+  }
 }
