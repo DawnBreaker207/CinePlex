@@ -1,7 +1,7 @@
-<div class="p-6 md:p-8 h-full overflow-y-auto max-h-[800px]">
+<div class="p-6 md:p-8 h-full overflow-y-auto max-h-[800px] text-gray-100">
   <!-- Avatar Manager -->
-  <div class="mb-8 pb-8 border-b border-gray-100">
-    <h3 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-6">
+  <div class="mb-8 pb-8 border-b border-white/10">
+    <h3 class="text-xs font-black uppercase tracking-wider text-gray-400 mb-6">
       {{ "profile.avatar" | translate }}
     </h3>
     <input
@@ -23,7 +23,7 @@
         [attr.aria-label]="'profile.changePhoto' | translate"
       >
         <div
-          class="w-32 h-32 rounded-full overflow-hidden border-[4px] border-white shadow-lg bg-gray-100 ring-1 ring-gray-200 relative"
+          class="w-32 h-32 rounded-full overflow-hidden border-[3px] border-primary/50 shadow-2xl bg-black/40 ring-2 ring-white/10 relative"
         >
           @if (avatarPreview) {
             <img
@@ -33,7 +33,7 @@
             />
           } @else {
             <div
-              class="w-full h-full flex items-center justify-center text-gray-300 bg-gray-50"
+              class="w-full h-full flex items-center justify-center text-gray-400 bg-white/5"
             >
               <nz-icon nzType="user" class="text-5xl" />
             </div>
@@ -41,7 +41,7 @@
 
           <!-- Overlay icon Camera -->
           <div
-            class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center"
+            class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center"
           >
             <nz-icon nzType="camera" class="text-white! text-2xl mb-1" />
             <span
@@ -55,10 +55,10 @@
         <!-- Badge -->
         <div class="absolute -bottom-2 right-5 z-10 pointer-events-none">
           <nz-tag
-            [nzColor]="'geekblue'"
-            class="m-0 rounded-full px-3 py-1 font-bold text-xs border-2 border-white shadow-md"
+            [nzColor]="'gold'"
+            class="m-0 rounded-full px-3 py-0.5 font-bold text-xs border border-gold/40 shadow-md font-mono"
           >
-            <nz-icon nzType="star" nzTheme="fill" class="mr-1" />
+            <nz-icon nzType="star" nzTheme="fill" class="mr-1 text-gold" />
             {{ user().role }}
           </nz-tag>
         </div>
@@ -74,7 +74,7 @@
               nzType="text"
               nzDanger
               (click)="resetAvatar(fileInput)"
-              class="h-10 rounded-lg font-medium flex items-center gap-2"
+              class="h-10 rounded-xl font-bold text-xs uppercase tracking-wider flex items-center gap-2"
             >
               <nz-icon nzType="undo" />
               {{ "common.cancel" | translate }}
@@ -86,15 +86,15 @@
         <div class="min-h-[24px]">
           @if (selectedFile) {
             <p
-              class="text-sm text-info font-semibold animate-pulse flex items-center justify-center sm:justify-start gap-2 bg-info/10 py-1 px-3 rounded-lg w-fit"
+              class="text-xs text-info font-bold animate-pulse flex items-center justify-center sm:justify-start gap-2 bg-info/15 border border-info/30 py-1.5 px-3 rounded-xl w-fit"
             >
               <nz-icon nzType="info-circle" nzTheme="fill" />
               {{ "profile.unsavedChanges" | translate }}
             </p>
           } @else {
-            <div class="text-xs text-gray-500 space-y-1">
-              <p>{{ "profile.supportedFormats" | translate }}</p>
-              <p>{{ "profile.maxSize" | translate }}</p>
+            <div class="text-xs text-gray-400 space-y-1">
+              <p class="m-0">{{ "profile.supportedFormats" | translate }}</p>
+              <p class="m-0">{{ "profile.maxSize" | translate }}</p>
             </div>
           }
         </div>
@@ -110,41 +110,41 @@
     nzLayout="vertical"
   >
     <div class="mb-6">
-      <h3 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4">
+      <h3 class="text-xs font-black uppercase tracking-wider text-gray-400 mb-4">
         {{ "profile.basicInfo" | translate }}
       </h3>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
         <nz-form-item>
-          <nz-form-label nzRequired class="font-semibold text-gray-700"
+          <nz-form-label nzRequired class="text-xs font-bold uppercase tracking-wider text-gray-300"
             >{{ "profile.fullName" | translate }}
           </nz-form-label>
           <nz-form-control [nzErrorTip]="'profile.requiredName' | translate">
             <input
               nz-input
               formControlName="username"
-              class="h-11 rounded-lg px-4 border-gray-200"
+              class="h-11 rounded-xl px-4 border border-white/15 bg-white/5 text-white placeholder-gray-500 focus:border-primary"
               [placeholder]="'profile.nameExample' | translate"
             />
           </nz-form-control>
         </nz-form-item>
 
         <nz-form-item>
-          <nz-form-label nzRequired class="font-semibold text-gray-700"
+          <nz-form-label nzRequired class="text-xs font-bold uppercase tracking-wider text-gray-300"
             >{{ "confirm.phone" | translate }}
           </nz-form-label>
           <nz-form-control [nzErrorTip]="'profile.requiredPhone' | translate">
             <input
               nz-input
               formControlName="phone"
-              class="h-11 rounded-lg px-4 border-gray-200"
+              class="h-11 rounded-xl px-4 border border-white/15 bg-white/5 text-white placeholder-gray-500 focus:border-primary font-mono"
               placeholder="09xxxxxxxx"
             />
           </nz-form-control>
         </nz-form-item>
 
         <nz-form-item class="md:col-span-2">
-          <nz-form-label class="font-semibold text-gray-700"
+          <nz-form-label class="text-xs font-bold uppercase tracking-wider text-gray-300"
             >{{ "common.email" | translate }}
           </nz-form-label>
           <nz-form-control>
@@ -152,12 +152,12 @@
               <input
                 nz-input
                 formControlName="email"
-                class="h-11 rounded-lg pl-10 bg-gray-50 text-gray-500 cursor-not-allowed border-gray-200"
+                class="h-11 rounded-xl px-4 border border-white/10 bg-white/5 text-gray-400 cursor-not-allowed font-mono"
               />
-              <div class="absolute right-3 top-1/2 -translate-y-1/2">
+              <div class="absolute right-3.5 top-1/2 -translate-y-1/2">
                 <nz-icon
                   nzType="lock"
-                  class="text-gray-400"
+                  class="text-gray-500"
                   nz-tooltip
                   [nzTooltipTitle]="'profile.notChangeable' | translate"
                 />
@@ -167,7 +167,7 @@
         </nz-form-item>
 
         <nz-form-item class="md:col-span-2">
-          <nz-form-label class="font-semibold text-gray-700"
+          <nz-form-label class="text-xs font-bold uppercase tracking-wider text-gray-300"
             >{{ "common.address" | translate }}
           </nz-form-label>
           <nz-form-control>
@@ -175,7 +175,7 @@
               nz-input
               formControlName="address"
               rows="3"
-              class="rounded-lg p-3 border-gray-200 text-base"
+              class="rounded-xl p-3 border border-white/15 bg-white/5 text-white placeholder-gray-500 focus:border-primary text-sm"
               [placeholder]="'profile.addressPlaceholder' | translate"
             ></textarea>
           </nz-form-control>
@@ -185,13 +185,12 @@
 
     <!-- Action bar -->
     <div
-      class="flex items-center justify-end gap-4 pt-6 border-t border-gray-100"
+      class="flex items-center justify-end gap-4 pt-6 border-t border-white/10"
     >
       <button
         nz-button
         nzType="primary"
-        nzSize="large"
-        class="px-8 rounded-lg font-bold shadow-lg shadow-blue-200 hover:shadow-blue-300 transition-all"
+        class="h-11 px-8 rounded-xl font-bold uppercase tracking-wider text-xs bg-primary hover:bg-primary-dark border-none shadow-xl marquee-glow cursor-pointer"
         [nzLoading]="isSaving"
       >
         {{ "profile.saveChanges" | translate }}
