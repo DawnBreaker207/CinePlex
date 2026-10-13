@@ -1,0 +1,30 @@
+:host {
+  display: block;
+}
+
+/* Custom scrollbars */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background-color: rgba(156, 163, 175, 0.4);
+  border-radius: 9999px;
+}
+
+/* Radio button customized for modern dark/light look */
+::ng-deep .ant-radio-button-wrapper {
+  border-radius: 8px !important;
+  border-color: rgba(156, 163, 175, 0.2) !important;
+}
+
+::ng-deep .ant-radio-button-wrapper-checked {
+  background-color: #e50914 !important;
+  border-color: #e50914 !important;
+  color: #fff !important;
+}

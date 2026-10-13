@@ -13,6 +13,7 @@ import { AuditComponent } from '@features/admin/audit/audit.component';
 import { RoomsComponent } from '@features/admin/theater/rooms/rooms.component';
 import { RefundComponent } from '@features/admin/refund/refund.component';
 import { PermissionComponent } from '@features/admin/permission/permission.component';
+import { CounterSaleComponent } from '@features/admin/counter-sale/counter-sale.component';
 
 export const ADMIN_ROUTES: Routes = [
   {
@@ -53,6 +54,11 @@ export const ADMIN_ROUTES: Routes = [
         path: 'reservation',
         title: 'admin.reservation',
         component: ReservationComponent,
+      },
+      {
+        path: 'pos',
+        title: 'Quầy Bán Vé (POS)',
+        component: CounterSaleComponent,
       },
       {
         path: 'checkin',

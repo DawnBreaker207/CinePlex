@@ -17,6 +17,7 @@ export interface Showtime extends DateModel, IsDeleted {
 
   totalSeats: number;
   availableSeats: number;
+  roomName?: string;
 }
 
 export interface ShowtimeRequest {

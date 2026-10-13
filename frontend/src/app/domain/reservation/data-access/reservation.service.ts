@@ -26,6 +26,14 @@ export interface VoucherDiscount {
   finalAmount: number;
 }
 
+export interface CounterSaleRequest {
+  showtimeId: number;
+  seatIds: number[];
+  paymentMethod: string;
+  customerName?: string;
+  customerPhone?: string;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -150,6 +158,15 @@ export class ReservationService {
       .pipe(
         map((res) => res.data),
         catchError(this.handleError<VoucherDiscount>('Apply voucher')),
+      );
+  }
+
+  counterSale(request: CounterSaleRequest) {
+    return this.http
+      .post<ApiRes<Reservation>>(`${this.URL}/staff/counter-sale`, request)
+      .pipe(
+        map((res) => res.data),
+        catchError(this.handleError<Reservation>('Counter ticket sale')),
       );
   }
 

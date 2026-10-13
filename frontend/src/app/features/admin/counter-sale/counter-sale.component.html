@@ -1,0 +1,513 @@
+<div class="p-4 lg:p-6 space-y-6 max-w-7xl mx-auto no-print">
+  <!-- TOP BAR: HEADER & SELECTORS -->
+  <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 p-5 rounded-2xl bg-white dark:bg-[#161a20] border border-slate-200 dark:border-white/10 shadow-sm">
+    <div class="flex items-center gap-3.5">
+      <div class="w-11 h-11 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary text-xl shrink-0">
+        <nz-icon nzType="shop" nzTheme="outline" />
+      </div>
+      <div>
+        <h2 class="text-xl font-black text-slate-900 dark:text-white tracking-tight m-0 flex items-center gap-2">
+          Quầy Bán Vé Box Office
+          <span class="text-xs px-2.5 py-0.5 rounded-full font-bold bg-primary/10 text-primary border border-primary/20 uppercase tracking-wider">POS</span>
+        </h2>
+        <p class="text-xs text-slate-500 dark:text-gray-400 m-0 mt-0.5">
+          Xuất vé trực tiếp tại quầy rạp, xác nhận tức thì và in hóa đơn nhiệt K80
+        </p>
+      </div>
+    </div>
+
+    <!-- Rạp & Ngày selector -->
+    <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
+      <div class="w-full sm:w-60">
+        <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Cụm rạp</label>
+        <nz-select
+          class="w-full"
+          [ngModel]="selectedTheaterId()"
+          (ngModelChange)="onTheaterChange($event)"
+          nzPlaceHolder="Chọn rạp"
+        >
+          @for (t of theaters(); track t.id) {
+            <nz-option [nzValue]="t.id" [nzLabel]="t.name"></nz-option>
+          }
+        </nz-select>
+      </div>
+
+      <div class="w-full sm:w-52">
+        <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Ngày chiếu</label>
+        <nz-select
+          class="w-full"
+          [ngModel]="selectedDate()"
+          (ngModelChange)="onDateChange($event)"
+          nzPlaceHolder="Chọn ngày"
+        >
+          @for (d of availableDates; track d.date) {
+            <nz-option [nzValue]="d.date" [nzLabel]="d.label"></nz-option>
+          }
+        </nz-select>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN WORKSPACE: 2-COLUMN LAYOUT -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+    
+    <!-- LEFT PANEL (8 COLS): SHOWTIMES & SEAT MAP -->
+    <div class="lg:col-span-8 space-y-6">
+      
+      <!-- STEP 1: CHỌN SUẤT CHIẾU -->
+      <div class="p-5 rounded-2xl bg-white dark:bg-[#161a20] border border-slate-200 dark:border-white/10 shadow-sm">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-sm font-black uppercase tracking-wider text-slate-800 dark:text-gray-200 m-0 flex items-center gap-2">
+            <span class="w-6 h-6 rounded-lg bg-primary text-white text-xs flex items-center justify-center font-bold">1</span>
+            Chọn phim & Suất chiếu trong ngày
+          </h3>
+          @if (loadingShowtimes()) {
+            <nz-spin nzSimple [nzSize]="'small'"></nz-spin>
+          }
+        </div>
+
+        @if (!loadingShowtimes() && movieGroups().length === 0) {
+          <div class="text-center py-8 text-slate-400 dark:text-gray-500 text-sm">
+            <nz-icon nzType="frown" nzTheme="outline" class="text-3xl mb-2 text-slate-300 dark:text-gray-600 block" />
+            Không có suất chiếu nào tại rạp này trong ngày đã chọn.
+          </div>
+        }
+
+        <div class="space-y-4 max-h-72 overflow-y-auto pr-1 scrollbar-thin">
+          @for (group of movieGroups(); track group.title) {
+            <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200/70 dark:border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div class="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
+                <nz-icon nzType="video-camera" class="text-primary" />
+                <span>{{ group.title }}</span>
+              </div>
+
+              <!-- List of showtime buttons -->
+              <div class="flex flex-wrap items-center gap-2">
+                @for (st of group.showtimes; track st.id) {
+                  <button
+                    type="button"
+                    (click)="selectShowtime(st)"
+                    [class]="selectedShowtime()?.id === st.id
+                      ? 'bg-primary text-white shadow-md border-primary scale-105'
+                      : 'bg-white dark:bg-white/10 text-slate-700 dark:text-gray-200 border-slate-200 dark:border-white/10 hover:border-primary hover:text-primary'"
+                    class="px-3.5 py-1.5 rounded-lg border text-xs font-bold transition-all flex items-center gap-1.5"
+                  >
+                    <nz-icon nzType="clock-circle" />
+                    <span>{{ formatTime(st.showTime) }}</span>
+                    <span class="text-[10px] opacity-75">({{ st.roomName || 'P.1' }})</span>
+                  </button>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- STEP 2: SƠ ĐỒ CHỌN GHẾ -->
+      <div class="p-5 rounded-2xl bg-white dark:bg-[#161a20] border border-slate-200 dark:border-white/10 shadow-sm relative min-h-[420px]">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-sm font-black uppercase tracking-wider text-slate-800 dark:text-gray-200 m-0 flex items-center gap-2">
+            <span class="w-6 h-6 rounded-lg bg-primary text-white text-xs flex items-center justify-center font-bold">2</span>
+            Sơ đồ chọn ghế trực tiếp
+          </h3>
+
+          @if (selectedShowtime()) {
+            <div class="text-xs font-bold text-primary bg-primary/10 px-3 py-1 rounded-full border border-primary/20">
+              {{ selectedShowtime()?.movieTitle }} • {{ formatTime(selectedShowtime()?.showTime) }} • {{ selectedShowtime()?.roomName || 'Phòng 1' }}
+            </div>
+          }
+        </div>
+
+        @if (!selectedShowtime()) {
+          <div class="flex flex-col items-center justify-center py-24 text-slate-400 dark:text-gray-500">
+            <nz-icon nzType="info-circle" nzTheme="outline" class="text-4xl mb-3 text-slate-300 dark:text-gray-600" />
+            <p class="text-sm font-medium">Vui lòng bấm chọn một suất chiếu ở trên để hiển thị sơ đồ ghế.</p>
+          </div>
+        } @else if (loadingSeats()) {
+          <div class="flex flex-col items-center justify-center py-24">
+            <nz-spin nzSimple [nzSize]="'large'"></nz-spin>
+            <p class="text-xs text-slate-400 mt-3 font-semibold">Đang nạp sơ đồ ghế rạp chiếu...</p>
+          </div>
+        } @else {
+          <!-- CINEMA SCREEN CURVE -->
+          <div class="relative my-6 max-w-lg mx-auto">
+            <div class="h-2 rounded-t-full bg-gradient-to-r from-transparent via-primary/80 to-transparent shadow-[0_0_20px_rgba(229,9,20,0.5)]"></div>
+            <p class="text-center text-[10px] tracking-widest uppercase font-black text-slate-400 dark:text-gray-400 mt-2">
+              Màn hình chiếu • Screen
+            </p>
+          </div>
+
+          <!-- SEAT GRID -->
+          <div class="overflow-x-auto pb-4 pt-2">
+            <div class="min-w-fit mx-auto flex flex-col items-center gap-2">
+              @for (rowGroup of groupedSeats(); track rowGroup.row) {
+                <div class="flex items-center gap-2">
+                  <!-- Row Label Left -->
+                  <span class="w-6 text-center text-xs font-black text-slate-400 dark:text-gray-400 select-none">
+                    {{ rowGroup.row }}
+                  </span>
+
+                  <!-- Row Cells -->
+                  <div class="flex items-center gap-1.5">
+                    @for (cell of rowGroup.cells; track $index) {
+                      @if (cell.seats.length === 0) {
+                        <!-- Empty gap cell -->
+                        <div class="w-7 h-7"></div>
+                      } @else {
+                        @for (seat of cell.seats; track seat.id) {
+                          <div
+                            (click)="toggleSeat(seat)"
+                            [title]="seat.seatNumber + ' - ' + (seat.seatType || 'Thường') + ' (' + seat.status + ')'"
+                            [class]="getSeatClass(seat)"
+                            class="relative flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 select-none"
+                          >
+                            <app-seat-icon
+                              [variant]="iconVariant(cell, seat)"
+                              [size]="26"
+                            />
+                            <span class="absolute inset-0 flex items-center justify-center text-[9px] font-black text-white pointer-events-none drop-shadow">
+                              {{ seat.seatNumber }}
+                            </span>
+                          </div>
+                        }
+                      }
+                    }
+                  </div>
+
+                  <!-- Row Label Right -->
+                  <span class="w-6 text-center text-xs font-black text-slate-400 dark:text-gray-400 select-none">
+                    {{ rowGroup.row }}
+                  </span>
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- SEAT LEGEND -->
+          <div class="flex flex-wrap items-center justify-center gap-6 pt-5 mt-4 border-t border-slate-200 dark:border-white/10 text-xs font-bold text-slate-600 dark:text-gray-300">
+            <div class="flex items-center gap-2">
+              <span class="w-4 h-4 rounded bg-slate-300 dark:bg-white/20"></span>
+              <span>Ghế thường</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="w-4 h-4 rounded bg-amber-500"></span>
+              <span>Ghế VIP</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="w-4 h-4 rounded bg-primary"></span>
+              <span>Đang chọn</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="w-4 h-4 rounded bg-red-800 opacity-50"></span>
+              <span>Đã bán</span>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL (4 COLS): CART, CUSTOMER & CHECKOUT -->
+    <div class="lg:col-span-4 space-y-6">
+      <div class="p-5 rounded-2xl bg-white dark:bg-[#161a20] border border-slate-200 dark:border-white/10 shadow-lg space-y-5 sticky top-4">
+        
+        <!-- CART HEADER -->
+        <div class="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-white/10">
+          <div class="flex items-center gap-2">
+            <nz-icon nzType="shopping-cart" class="text-lg text-primary" />
+            <h3 class="text-base font-black text-slate-900 dark:text-white m-0 uppercase tracking-wider">
+              Chi tiết vé POS
+            </h3>
+          </div>
+          @if (selectedSeats().length > 0) {
+            <button
+              type="button"
+              (click)="clearSelection()"
+              class="text-xs text-red-500 hover:underline font-semibold bg-transparent border-0 cursor-pointer p-0"
+            >
+              Xóa chọn
+            </button>
+          }
+        </div>
+
+        <!-- SHOWTIME INFO SUMMARY -->
+        @if (selectedShowtime()) {
+          <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200/80 dark:border-white/5 space-y-1.5 text-xs">
+            <div class="font-extrabold text-sm text-slate-900 dark:text-white truncate">
+              {{ selectedShowtime()?.movieTitle }}
+            </div>
+            <div class="text-slate-500 dark:text-gray-400 flex items-center justify-between">
+              <span>Phòng: <b class="text-slate-800 dark:text-gray-200">{{ selectedShowtime()?.roomName || 'Phòng 1' }}</b></span>
+              <span>Giờ: <b class="text-primary">{{ formatTime(selectedShowtime()?.showTime) }}</b></span>
+            </div>
+            <div class="text-slate-500 dark:text-gray-400">
+              Ngày: <b class="text-slate-800 dark:text-gray-200">{{ formatDate(selectedShowtime()?.showDate) }}</b>
+            </div>
+          </div>
+        } @else {
+          <div class="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-500 font-medium">
+            Chưa chọn suất chiếu. Vui lòng chọn ở cột bên trái.
+          </div>
+        }
+
+        <!-- SELECTED SEATS LIST -->
+        <div>
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">
+            Ghế đã chọn ({{ selectedSeats().length }})
+          </label>
+          @if (selectedSeats().length === 0) {
+            <p class="text-xs text-slate-400 italic m-0">Chưa chọn ghế nào.</p>
+          } @else {
+            <div class="flex flex-wrap gap-2 max-h-36 overflow-y-auto pr-1 scrollbar-thin">
+              @for (seat of selectedSeats(); track seat.id) {
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-primary/10 border border-primary/20 text-primary text-xs font-bold">
+                  <span>{{ seat.seatNumber }}</span>
+                  <span class="text-[10px] opacity-75 font-normal">({{ seat.seatType || 'Thường' }})</span>
+                  <button
+                    type="button"
+                    (click)="removeSeat(seat.id)"
+                    class="hover:text-red-600 bg-transparent border-0 cursor-pointer p-0 ml-0.5 text-xs font-bold"
+                  >
+                    ×
+                  </button>
+                </span>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- CUSTOMER FORM -->
+        <div class="space-y-3 pt-3 border-t border-slate-200 dark:border-white/10">
+          <div>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+              Tên khách hàng
+            </label>
+            <input
+              nz-input
+              [(ngModel)]="customerName"
+              placeholder="Khách mua tại quầy"
+              class="w-full text-xs font-medium"
+            />
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+              Số điện thoại (tùy chọn)
+            </label>
+            <input
+              nz-input
+              [(ngModel)]="customerPhone"
+              placeholder="Ví dụ: 0912345678"
+              class="w-full text-xs font-medium"
+            />
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">
+              Hình thức thanh toán
+            </label>
+            <nz-radio-group [(ngModel)]="paymentMethod" class="w-full grid grid-cols-3 gap-2">
+              <label nz-radio-button nzValue="CASH" class="text-center text-xs font-bold">Tiền mặt</label>
+              <label nz-radio-button nzValue="CARD_POS" class="text-center text-xs font-bold">Thẻ POS</label>
+              <label nz-radio-button nzValue="TRANSFER" class="text-center text-xs font-bold">Chuyển khoản</label>
+            </nz-radio-group>
+          </div>
+
+          <!-- CASH CALCULATOR (NẾU CHỌN TIỀN MẶT) -->
+          @if (paymentMethod === 'CASH') {
+            <div class="p-3 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200/80 dark:border-white/5 space-y-2.5">
+              <div class="flex items-center justify-between text-xs">
+                <span class="font-bold text-slate-600 dark:text-gray-300">Tiền khách đưa:</span>
+                <input
+                  type="number"
+                  [(ngModel)]="cashGiven"
+                  placeholder="0"
+                  step="10000"
+                  class="w-32 px-2.5 py-1 text-right text-xs font-bold rounded-lg border border-slate-300 dark:border-white/20 bg-white dark:bg-[#161a20] text-slate-900 dark:text-white"
+                />
+              </div>
+
+              <!-- Quick Cash Buttons for POS Teller -->
+              <div class="flex items-center gap-1.5 pt-0.5">
+                <button
+                  type="button"
+                  (click)="setQuickCash('exact')"
+                  class="flex-1 py-1 rounded bg-slate-200 dark:bg-white/10 hover:bg-primary hover:text-white text-[10px] font-bold transition-colors border-0 cursor-pointer text-slate-700 dark:text-gray-200"
+                >
+                  Đúng tiền
+                </button>
+                <button
+                  type="button"
+                  (click)="setQuickCash(100000)"
+                  class="flex-1 py-1 rounded bg-slate-200 dark:bg-white/10 hover:bg-primary hover:text-white text-[10px] font-bold transition-colors border-0 cursor-pointer text-slate-700 dark:text-gray-200"
+                >
+                  100k
+                </button>
+                <button
+                  type="button"
+                  (click)="setQuickCash(200000)"
+                  class="flex-1 py-1 rounded bg-slate-200 dark:bg-white/10 hover:bg-primary hover:text-white text-[10px] font-bold transition-colors border-0 cursor-pointer text-slate-700 dark:text-gray-200"
+                >
+                  200k
+                </button>
+                <button
+                  type="button"
+                  (click)="setQuickCash(500000)"
+                  class="flex-1 py-1 rounded bg-slate-200 dark:bg-white/10 hover:bg-primary hover:text-white text-[10px] font-bold transition-colors border-0 cursor-pointer text-slate-700 dark:text-gray-200"
+                >
+                  500k
+                </button>
+              </div>
+
+              <div class="flex items-center justify-between text-xs pt-2 border-t border-slate-200 dark:border-white/5">
+                <span class="font-bold text-slate-500 dark:text-gray-400">Tiền thối lại:</span>
+                <span class="font-extrabold text-emerald-500 text-sm">
+                  {{ formatCurrency(changeDue()) }}
+                </span>
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- TOTAL PRICE -->
+        <div class="pt-3 border-t border-slate-200 dark:border-white/10 flex items-center justify-between">
+          <div>
+            <span class="block text-xs uppercase font-black text-slate-400 tracking-wider">Tổng cộng:</span>
+            <span class="text-[11px] text-slate-400">Đã gồm VAT & Phí rạp</span>
+          </div>
+          <div class="text-2xl font-black text-primary">
+            {{ formatCurrency(totalPrice()) }}
+          </div>
+        </div>
+
+        <!-- CTA SUBMIT BUTTON -->
+        <button
+          type="button"
+          (click)="submitCounterSale()"
+          [disabled]="selectedSeats().length === 0 || !selectedShowtime() || submitting()"
+          class="w-full py-3.5 rounded-xl font-black text-sm uppercase tracking-wider bg-primary hover:bg-primary-hover active:scale-[0.98] text-white shadow-lg shadow-primary/20 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 border-0 cursor-pointer"
+        >
+          @if (submitting()) {
+            <nz-spin nzSimple [nzSize]="'small'"></nz-spin>
+            <span>Đang xuất vé...</span>
+          } @else {
+            <nz-icon nzType="printer" nzTheme="outline" class="text-lg" />
+            <span>XUẤT VÉ & THANH TOÁN</span>
+          }
+        </button>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ========================================== -->
+<!-- MODAL XUẤT VÉ THÀNH CÔNG & IN VÉ NHIỆT K80 -->
+<!-- ========================================== -->
+<nz-modal
+  [(nzVisible)]="showSuccessModal"
+  nzTitle="Vé Đã Xuất Thành Công"
+  [nzFooter]="null"
+  (nzOnCancel)="startNewSale()"
+  nzWidth="480px"
+>
+  <ng-container *nzModalContent>
+    @if (completedReservation(); as res) {
+      <div class="space-y-6 text-center py-2">
+        <div class="w-16 h-16 mx-auto rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 flex items-center justify-center text-3xl">
+          <nz-icon nzType="check-circle" nzTheme="fill" />
+        </div>
+
+        <div>
+          <h3 class="text-lg font-black text-slate-900 dark:text-white m-0">GIAO DỊCH HOÀN TẤT</h3>
+          <p class="text-xs text-slate-500 dark:text-gray-400 mt-1 mb-0">
+            Vé quầy đã được tạo thành công và lưu vào hệ thống rạp
+          </p>
+        </div>
+
+        <!-- THERMAL TICKET K80 PREVIEW (CŨNG DÙNG ĐỂ IN TRỰC TIẾP QUA WINDOW.PRINT) -->
+        <div class="thermal-ticket-container p-5 rounded-2xl bg-slate-50 dark:bg-white/5 border border-dashed border-slate-300 dark:border-white/20 text-left font-mono text-xs space-y-3">
+          <div class="text-center pb-2 border-b border-dashed border-slate-300 dark:border-white/20">
+            <h4 class="font-black text-sm uppercase tracking-wider text-slate-900 dark:text-white m-0">
+              CINEPLEX CINEMAS
+            </h4>
+            <p class="text-[10px] text-slate-500 dark:text-gray-400 m-0 mt-0.5">
+              {{ res.showtime.theaterName }}
+            </p>
+            <p class="text-[10px] text-slate-500 dark:text-gray-400 m-0">
+              VÉ XEM PHIM (BOX OFFICE TICKET)
+            </p>
+          </div>
+
+          <div class="space-y-1 text-slate-700 dark:text-gray-300 text-[11px]">
+            <div class="flex justify-between font-bold">
+              <span>Mã vé:</span>
+              <span class="text-primary font-mono">{{ res.reservationCode }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span>Phim:</span>
+              <span class="font-bold text-slate-900 dark:text-white truncate max-w-[200px]">{{ res.showtime.movieTitle }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span>Phòng chiếu:</span>
+              <span>{{ res.showtime.roomName || 'Phòng 1' }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span>Suất chiếu:</span>
+              <span>{{ formatTime(res.showtime.showTime) }} - {{ formatDate(res.showtime.showDate) }}</span>
+            </div>
+            <div class="flex justify-between font-bold">
+              <span>Ghế ngồi:</span>
+              <span class="text-primary">{{ res.seats.join(', ') }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span>Khách hàng:</span>
+              <span>{{ res.user.username }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span>Hình thức:</span>
+              <span>{{ paymentMethod }}</span>
+            </div>
+          </div>
+
+          <div class="pt-2 border-t border-dashed border-slate-300 dark:border-white/20 flex justify-between font-bold text-sm text-slate-900 dark:text-white">
+            <span>TỔNG TIỀN:</span>
+            <span>{{ formatCurrency(res.totalAmount) }}</span>
+          </div>
+
+          <!-- BARCODE SECTION -->
+          <div class="pt-3 text-center flex flex-col items-center justify-center">
+            <app-barcode [value]="res.reservationCode" />
+            <span class="text-[10px] tracking-widest text-slate-400 mt-1 font-mono">
+              *{{ res.reservationCode }}*
+            </span>
+            <p class="text-[9px] text-slate-400 dark:text-gray-500 mt-2 italic m-0">
+              Cảm ơn quý khách và chúc xem phim vui vẻ!
+            </p>
+          </div>
+        </div>
+
+        <!-- ACTION BUTTONS -->
+        <div class="flex items-center gap-3 pt-2">
+          <button
+            type="button"
+            (click)="printThermalTicket()"
+            class="flex-1 py-3 rounded-xl font-bold text-xs uppercase tracking-wider bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:opacity-90 transition-all flex items-center justify-center gap-2 border-0 cursor-pointer shadow-md"
+          >
+            <nz-icon nzType="printer" nzTheme="outline" class="text-base" />
+            <span>IN VÉ NHIỆT (K80)</span>
+          </button>
+
+          <button
+            type="button"
+            (click)="startNewSale()"
+            class="flex-1 py-3 rounded-xl font-bold text-xs uppercase tracking-wider bg-primary text-white hover:bg-primary-hover transition-all flex items-center justify-center gap-2 border-0 cursor-pointer shadow-md"
+          >
+            <nz-icon nzType="plus" nzTheme="outline" class="text-base" />
+            <span>TẠO ĐƠN MỚI</span>
+          </button>
+        </div>
+      </div>
+    }
+  </ng-container>
+</nz-modal>

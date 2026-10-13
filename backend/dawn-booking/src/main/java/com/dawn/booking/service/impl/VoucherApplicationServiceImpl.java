@@ -12,6 +12,8 @@ import com.dawn.cinema.api.CinemaModuleApi;
 import com.dawn.cinema.dto.response.ShowtimeResponse;
 import com.dawn.cinema.dto.response.SeatResponse;
 import com.dawn.common.core.exception.ApiException;
+import com.dawn.common.infra.redis.service.VelocityGuard;
+import org.springframework.http.HttpStatus;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -37,16 +39,25 @@ public class VoucherApplicationServiceImpl implements VoucherApplicationService 
 
     ReservationRepository reservationRepository;
 
+    VelocityGuard velocityGuard;
+
     static Duration HOLD_TIMEOUT = Duration.ofMinutes(com.dawn.common.core.constant.Constants.RESERVATION_HOLD_MINUTES);
 
     @Override
     public VoucherDiscountDTO applyVoucher(String reservationId, String code) {
+        // Rate-limit brute force attempts (learned from production Auction/Go specs)
+        if (!velocityGuard.tryAcquire("rate:voucher:" + reservationId, 5, Duration.ofSeconds(60))) {
+            log.warn("Rate limit exceeded for voucher application on reservation {}", reservationId);
+            throw new ApiException(HttpStatus.TOO_MANY_REQUESTS,
+                    com.dawn.common.core.constant.ErrorCode.VOUCHER_RATE_LIMITED.format());
+        }
+
         // S4: refuse to discount a dead hold (laptop sleep / expired TTL).
         // Matches the createPayment guard in the payment module.
         Long holdTtl = reservationRedisService.getReservationTtl(reservationId);
         if (holdTtl == null || holdTtl <= 0) {
             log.warn("Voucher refused for reservation {}: hold already expired", reservationId);
-            throw new ApiException(org.springframework.http.HttpStatus.CONFLICT,
+            throw new ApiException(HttpStatus.CONFLICT,
                     com.dawn.common.core.constant.ErrorCode.RESERVATION_EXPIRED.format());
         }
         ReservationRedisDTO redisData = reservationRedisService.getReservationSession(reservationId);

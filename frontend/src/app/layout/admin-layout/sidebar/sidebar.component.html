@@ -3,37 +3,44 @@
   [nzCollapsed]="isCollapsed()"
   [nzTrigger]="triggerTemplate"
   (nzCollapsedChange)="triggerCollapsed.emit($event)"
-  nzWidth="280px"
+  nzWidth="260px"
   nzBreakpoint="lg"
-  [nzCollapsedWidth]="80"
+  [nzCollapsedWidth]="76"
   nzTheme="light"
-  class="z-20 h-full border-r border-slate-100 dark:border-primary/25 hidden md:block bg-white dark:bg-[#161a20] flex flex-col"
+  class="z-20 h-full border-r border-slate-200/80 dark:border-white/10 hidden md:block bg-white dark:bg-[#161a20] flex flex-col shadow-sm"
 >
+  <!-- LOGO SECTION -->
   <div
-    class="h-20 shrink-0 flex items-center justify-center border-b border-slate-100 dark:border-primary/25 sticky top-0 bg-white dark:bg-[#161a20] z-10"
+    class="h-18 shrink-0 flex items-center px-5 border-b border-slate-200/80 dark:border-white/10 sticky top-0 bg-white dark:bg-[#161a20] z-10"
   >
-    <a routerLink="/admin/dashboard" class="flex items-center gap-3 text-decoration-none">
+    <a routerLink="/admin/dashboard" class="flex items-center gap-3 text-decoration-none group">
       <div
-        class="w-10 h-10 rounded-xl bg-primary flex items-center justify-center"
+        class="w-9 h-9 rounded-xl bg-gradient-to-tr from-primary-dark via-primary to-primary-dark flex items-center justify-center shadow-md marquee-glow-subtle shrink-0 group-hover:scale-105 transition-transform"
       >
         <nz-icon
           nzType="video-camera"
           nzTheme="fill"
-          class="text-xl text-white"
+          class="text-lg text-white"
           aria-hidden="true"
         />
       </div>
-      <h1
-        class="text-2xl font-black tracking-tight text-slate-800 dark:text-gray-100 m-0 overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-300 ease-out"
-        [class]="isCollapsed() ? 'max-w-0 opacity-0' : 'max-w-[180px] opacity-100'"
+      <div
+        class="overflow-hidden whitespace-nowrap transition-[max-width,opacity] duration-300 ease-out"
+        [class]="isCollapsed() ? 'max-w-0 opacity-0' : 'max-w-[170px] opacity-100'"
       >
-        CINE<span class="text-primary">{{ "sidebar.brandSuffix" | translate }}</span>
-      </h1>
+        <h1 class="text-xl font-black tracking-tight text-slate-900 dark:text-white m-0">
+          CINE<span class="text-primary">{{ "sidebar.brandSuffix" | translate }}</span>
+        </h1>
+        <p class="text-[10px] uppercase font-bold tracking-widest text-gray-400 m-0 leading-none mt-0.5">
+          Workspace
+        </p>
+      </div>
     </a>
   </div>
 
+  <!-- MENU LIST -->
   <div
-    class="p-4 flex-1 min-h-0 overflow-y-auto custom-scrollbar"
+    class="p-3 flex-1 min-h-0 overflow-y-auto scrollbar-thin"
   >
     <ul
       class="border-r-0 bg-transparent space-y-1"
@@ -42,29 +49,31 @@
       nzMode="inline"
       [nzInlineCollapsed]="isCollapsed()"
     >
+      <!-- GROUP 1: OVERVIEW -->
       <li
         nz-menu-item
         [nzSelected]="isActive('/admin/dashboard')"
         [routerLink]="['/admin/dashboard']"
-        class="rounded-xl font-medium text-slate-600 dark:text-gray-300 hover:text-primary hover:bg-primary-light/50 transition-colors"
+        class="rounded-xl font-semibold text-slate-700 dark:text-gray-300 hover:text-primary transition-all mb-1"
       >
-        <nz-icon nzType="appstore" nzTheme="outline" class="text-lg" />
+        <nz-icon nzType="dashboard" nzTheme="outline" class="text-lg" />
         <span>{{ "sidebar.statistics" | translate }}</span>
       </li>
 
+      <!-- GROUP 2: CINEMA CATALOG -->
       <li
         [class]="isCollapsed()
-          ? 'sidebar-section h-px my-3 mx-4 overflow-hidden text-transparent bg-(--color-border) rounded-sm'
-          : 'sidebar-section text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 px-3 pt-4 pb-1'"
-        class="pointer-events-none select-none transition-[height,margin,padding] duration-300"
+          ? 'h-px my-2 mx-3 bg-slate-200 dark:bg-white/10 rounded-sm'
+          : 'text-[11px] font-black uppercase tracking-wider text-gray-400 dark:text-gray-400 px-3 pt-3 pb-1'"
+        class="pointer-events-none select-none"
       >
-        {{ "sidebar.cinema" | translate }}
+        {{ isCollapsed() ? '' : ('sidebar.cinema' | translate) }}
       </li>
       <li
         nz-menu-item
         [nzSelected]="isActive('/admin/movie')"
         [routerLink]="['/admin/movie']"
-        class="rounded-xl font-medium text-slate-600 dark:text-gray-300 hover:text-primary hover:bg-primary-light/50 transition-colors"
+        class="rounded-xl font-medium text-slate-700 dark:text-gray-300 hover:text-primary transition-all"
       >
         <nz-icon nzType="play-square" nzTheme="outline" class="text-lg" />
         <span>{{ "common.movies" | translate }}</span>
@@ -73,7 +82,7 @@
         nz-menu-item
         [nzSelected]="isActive('/admin/theater')"
         [routerLink]="['/admin/theater']"
-        class="rounded-xl font-medium text-slate-600 dark:text-gray-300 hover:text-primary hover:bg-primary-light/50 transition-colors"
+        class="rounded-xl font-medium text-slate-700 dark:text-gray-300 hover:text-primary transition-all"
       >
         <nz-icon nzType="shop" nzTheme="outline" class="text-lg" />
         <span>{{ "sidebar.theaters" | translate }}</span>
@@ -82,70 +91,81 @@
         nz-menu-item
         [nzSelected]="isActive('/admin/showtime')"
         [routerLink]="['/admin/showtime']"
-        class="rounded-xl font-medium text-slate-600 dark:text-gray-300 hover:text-primary hover:bg-primary-light/50 transition-colors"
+        class="rounded-xl font-medium text-slate-700 dark:text-gray-300 hover:text-primary transition-all"
       >
         <nz-icon nzType="calendar" nzTheme="outline" class="text-lg" />
         <span>{{ "sidebar.showtimes" | translate }}</span>
       </li>
 
+      <!-- GROUP 3: OPERATIONS & BOX OFFICE -->
       <li
         [class]="isCollapsed()
-          ? 'sidebar-section h-px my-3 mx-4 overflow-hidden text-transparent bg-(--color-border) rounded-sm'
-          : 'sidebar-section text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 px-3 pt-4 pb-1'"
-        class="pointer-events-none select-none transition-[height,margin,padding] duration-300"
+          ? 'h-px my-2 mx-3 bg-slate-200 dark:bg-white/10 rounded-sm'
+          : 'text-[11px] font-black uppercase tracking-wider text-gray-400 dark:text-gray-400 px-3 pt-3 pb-1'"
+        class="pointer-events-none select-none"
       >
-        {{ "sidebar.operations" | translate }}
+        {{ isCollapsed() ? '' : ('sidebar.operations' | translate) }}
       </li>
       <li
         nz-menu-item
         [nzSelected]="isActive('/admin/reservation')"
         [routerLink]="['/admin/reservation']"
-        class="rounded-xl font-medium text-slate-600 dark:text-gray-300 hover:text-primary hover:bg-primary-light/50 transition-colors"
+        class="rounded-xl font-medium text-slate-700 dark:text-gray-300 hover:text-primary transition-all"
       >
         <nz-icon nzType="ordered-list" nzTheme="outline" class="text-lg" />
         <span>{{ "sidebar.bookings" | translate }}</span>
       </li>
       <li
         nz-menu-item
-        [nzSelected]="isActive('/admin/checkin')"
-        [routerLink]="['/admin/checkin']"
-        class="rounded-xl font-medium text-slate-600 dark:text-gray-300 hover:text-primary hover:bg-primary-light/50 transition-colors"
+        [nzSelected]="isActive('/admin/pos')"
+        [routerLink]="['/admin/pos']"
+        class="rounded-xl font-medium text-slate-700 dark:text-gray-300 hover:text-primary transition-all"
       >
-        <nz-icon nzType="scan" nzTheme="outline" class="text-lg" />
-        <span>{{ "sidebar.checkin" | translate }}</span>
+        <nz-icon nzType="shop" nzTheme="outline" class="text-lg text-emerald-500" />
+        <span class="font-bold text-emerald-500">{{ "sidebar.pos" | translate }}</span>
       </li>
       <li
         nz-menu-item
-        [nzSelected]="isActive('/admin/voucher')"
-        [routerLink]="['/admin/voucher']"
-        class="rounded-xl font-medium text-slate-600 dark:text-gray-300 hover:text-primary hover:bg-primary-light/50 transition-colors"
+        [nzSelected]="isActive('/admin/checkin')"
+        [routerLink]="['/admin/checkin']"
+        class="rounded-xl font-medium text-slate-700 dark:text-gray-300 hover:text-primary transition-all"
       >
-        <nz-icon nzType="tags" nzTheme="outline" class="text-lg" />
-        <span>{{ "profile.voucher" | translate }}</span>
+        <nz-icon nzType="scan" nzTheme="outline" class="text-lg text-primary" />
+        <span class="font-bold text-primary">{{ "sidebar.checkin" | translate }}</span>
       </li>
       <li
         nz-menu-item
         [nzSelected]="isActive('/admin/refund')"
         [routerLink]="['/admin/refund']"
-        class="rounded-xl font-medium text-slate-600 dark:text-gray-300 hover:text-primary hover:bg-primary-light/50 transition-colors"
+        class="rounded-xl font-medium text-slate-700 dark:text-gray-300 hover:text-primary transition-all"
       >
         <nz-icon nzType="transaction" nzTheme="outline" class="text-lg" />
         <span>{{ "sidebar.refunds" | translate }}</span>
       </li>
+      <li
+        nz-menu-item
+        [nzSelected]="isActive('/admin/voucher')"
+        [routerLink]="['/admin/voucher']"
+        class="rounded-xl font-medium text-slate-700 dark:text-gray-300 hover:text-primary transition-all"
+      >
+        <nz-icon nzType="tags" nzTheme="outline" class="text-lg" />
+        <span>{{ "profile.voucher" | translate }}</span>
+      </li>
 
+      <!-- GROUP 4: SYSTEM & SETTINGS -->
       <li
         [class]="isCollapsed()
-          ? 'sidebar-section h-px my-3 mx-4 overflow-hidden text-transparent bg-(--color-border) rounded-sm'
-          : 'sidebar-section text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 px-3 pt-4 pb-1'"
-        class="pointer-events-none select-none transition-[height,margin,padding] duration-300"
+          ? 'h-px my-2 mx-3 bg-slate-200 dark:bg-white/10 rounded-sm'
+          : 'text-[11px] font-black uppercase tracking-wider text-gray-400 dark:text-gray-400 px-3 pt-3 pb-1'"
+        class="pointer-events-none select-none"
       >
-        {{ "sidebar.system" | translate }}
+        {{ isCollapsed() ? '' : ('sidebar.system' | translate) }}
       </li>
       <li
         nz-menu-item
         [nzSelected]="isActive('/admin/user')"
         [routerLink]="['/admin/user']"
-        class="rounded-xl font-medium text-slate-600 dark:text-gray-300 hover:text-primary hover:bg-primary-light/50 transition-colors"
+        class="rounded-xl font-medium text-slate-700 dark:text-gray-300 hover:text-primary transition-all"
       >
         <nz-icon nzType="team" nzTheme="outline" class="text-lg" />
         <span>{{ "sidebar.users" | translate }}</span>
@@ -154,7 +174,7 @@
         nz-menu-item
         [nzSelected]="isActive('/admin/article')"
         [routerLink]="['/admin/article']"
-        class="rounded-xl font-medium text-slate-600 dark:text-gray-300 hover:text-primary hover:bg-primary-light/50 transition-colors"
+        class="rounded-xl font-medium text-slate-700 dark:text-gray-300 hover:text-primary transition-all"
       >
         <nz-icon nzType="file-text" nzTheme="outline" class="text-lg" />
         <span>{{ "sidebar.articles" | translate }}</span>
@@ -163,7 +183,7 @@
         nz-menu-item
         [nzSelected]="isActive('/admin/audit-logs')"
         [routerLink]="['/admin/audit-logs']"
-        class="rounded-xl font-medium text-slate-600 dark:text-gray-300 hover:text-primary hover:bg-primary-light/50 transition-colors"
+        class="rounded-xl font-medium text-slate-700 dark:text-gray-300 hover:text-primary transition-all"
       >
         <nz-icon nzType="audit" nzTheme="outline" class="text-lg" />
         <span>{{ "sidebar.audit" | translate }}</span>
@@ -172,7 +192,7 @@
         nz-menu-item
         [nzSelected]="isActive('/admin/permission')"
         [routerLink]="['/admin/permission']"
-        class="rounded-xl font-medium text-slate-600 dark:text-gray-300 hover:text-primary hover:bg-primary-light/50 transition-colors"
+        class="rounded-xl font-medium text-slate-700 dark:text-gray-300 hover:text-primary transition-all"
       >
         <nz-icon nzType="safety-certificate" nzTheme="outline" class="text-lg" />
         <span>{{ "sidebar.permissions" | translate }}</span>
@@ -182,12 +202,13 @@
 </nz-sider>
 
 <ng-template #triggerTemplate>
-  <nz-icon
-    [nzType]="isCollapsed() ? 'double-right' : 'double-left'"
-    class="text-lg"
-    nz-tooltip
-    [nzTooltipTitle]="'navbar.toggleSidebar' | translate"
-    [@iconFade]="isCollapsed() ? 'closed' : 'open'"
-  />
+  <div class="flex items-center justify-center w-full h-full text-slate-500 hover:text-primary">
+    <nz-icon
+      [nzType]="isCollapsed() ? 'double-right' : 'double-left'"
+      class="text-base"
+      nz-tooltip
+      [nzTooltipTitle]="'navbar.toggleSidebar' | translate"
+      [@iconFade]="isCollapsed() ? 'closed' : 'open'"
+    />
+  </div>
 </ng-template>
-

@@ -1,5 +1,6 @@
 package com.dawn.booking.service.impl;
 
+import com.dawn.booking.dto.request.CounterSaleRequest;
 import com.dawn.booking.dto.request.ReservationFilterRequest;
 import com.dawn.booking.dto.request.ReservationUserRequest;
 import com.dawn.booking.dto.response.*;
@@ -22,11 +23,13 @@ import com.dawn.common.core.annotation.AuditLog;
 import com.dawn.common.core.aspect.AuditLogContext;
 import com.dawn.common.core.constant.Constants;
 import com.dawn.common.core.constant.ErrorCode;
+import com.dawn.common.core.constant.LogConstant;
 import com.dawn.common.core.constant.ReservationStatus;
 import com.dawn.common.core.dto.response.ResponsePage;
 import com.dawn.common.core.exception.ApiException;
 import com.dawn.common.core.exception.wrapper.ResourceNotFoundException;
 import com.dawn.common.core.exception.wrapper.SeatUnavailableException;
+import com.dawn.common.core.model.AuthenticatedUser;
 import com.dawn.identity.api.IdentityModuleApi;
 import com.dawn.identity.dto.response.UserResponse;
 import lombok.AccessLevel;
@@ -43,11 +46,13 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -188,6 +193,7 @@ public class ReservationServiceImpl implements ReservationService {
 
     @Override
     @Transactional
+    @AuditLog(action = LogConstant.Action.CHECK_IN, entity = LogConstant.Entity.RESERVATION, entityId = "#reservationCode", metadata = "'CHECKIN'")
     public ReservationResponse checkIn(String reservationCode) {
         Reservation reservation = reservationRepository
                 .findByReservationCode(reservationCode)
@@ -198,15 +204,114 @@ public class ReservationServiceImpl implements ReservationService {
         if (Boolean.TRUE.equals(reservation.getCheckedIn())) {
             throw new ApiException(HttpStatus.CONFLICT, ErrorCode.RESERVATION_ALREADY_CHECKED_IN.format());
         }
+
+        // Validate cinema gate entry window (-30 minutes to +20 minutes from showtime)
+        ShowtimeResponse showtime = cinemaApi.findShowtimeById(reservation.getShowtimeId());
+        if (showtime != null && showtime.getShowDate() != null && showtime.getShowTime() != null) {
+            LocalDateTime showDateTime = LocalDateTime.of(showtime.getShowDate(), showtime.getShowTime());
+            LocalDateTime now = LocalDateTime.now();
+            LocalDateTime openWindow = showDateTime.minusMinutes(30);
+            LocalDateTime closeWindow = showDateTime.plusMinutes(20);
+
+            if (now.isBefore(openWindow)) {
+                throw new ApiException(HttpStatus.BAD_REQUEST, ErrorCode.RESERVATION_CHECKIN_TOO_EARLY.format());
+            }
+            if (now.isAfter(closeWindow)) {
+                throw new ApiException(HttpStatus.BAD_REQUEST, ErrorCode.RESERVATION_CHECKIN_EXPIRED.format());
+            }
+        }
+
         reservation.setCheckedIn(true);
         reservation.setCheckedInAt(Instant.now());
         reservationRepository.save(reservation);
         log.info("Ticket checked in for reservation {}", reservationCode);
 
         List<SeatResponse> seats = cinemaApi.findSeatsByReservationId(reservation.getId());
-        ShowtimeResponse showtime = cinemaApi.findShowtimeById(reservation.getShowtimeId());
         UserResponse user = identityApi.findUserById(reservation.getUserId());
         return ReservationMappingHelper.map(reservation, user, showtime, seats);
+    }
+
+    @Override
+    @Transactional
+    @AuditLog(action = LogConstant.Action.COUNTER_SALE, entity = LogConstant.Entity.RESERVATION, metadata = "'BOX_OFFICE'")
+    public ReservationResponse counterSale(CounterSaleRequest request, AuthenticatedUser staff) {
+        log.info("Staff {} initiating counter ticket sale for showtime {}", staff.getUsername(), request.getShowtimeId());
+        ShowtimeResponse showtime = cinemaApi.findShowtimeById(request.getShowtimeId());
+        if (showtime == null) {
+            throw new ResourceNotFoundException(ErrorCode.SHOWTIME_NOT_FOUND.format());
+        }
+        List<Long> seatIds = request.getSeatIds();
+        if (seatIds == null || seatIds.isEmpty()) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, ErrorCode.NO_SEAT_SELECTED.format());
+        }
+        List<SeatResponse> seats = cinemaApi.findSeatsByIds(seatIds);
+        if (seats.size() != seatIds.size()) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, ErrorCode.RESERVATION_SEATS_NOT_FOUND_DB.format());
+        }
+        BigDecimal totalAmount = seats.stream()
+                .map(SeatResponse::getPrice)
+                .filter(Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        String counterCode = "CT-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        Reservation reservation = Reservation.builder()
+                .reservationCode(counterCode)
+                .userId(staff.getId())
+                .showtimeId(showtime.getId())
+                .reservationStatus(ReservationStatus.CONFIRMED)
+                .totalAmount(totalAmount)
+                .originalAmount(totalAmount)
+                .discountAmount(BigDecimal.ZERO)
+                .isPaid(true)
+                .checkedIn(false)
+                .isDeleted(false)
+                .createdAt(Instant.now())
+                .build();
+
+        reservation = reservationRepository.saveAndFlush(reservation);
+
+        int booked = cinemaApi.bookSeats(showtime.getId(), seatIds, reservation.getId());
+        if (booked != seatIds.size()) {
+            log.warn("Counter booking failed: some seats already booked for showtime {}", showtime.getId());
+            throw new SeatUnavailableException(ErrorCode.SEAT_UNAVAILABLE.format());
+        }
+
+        try {
+            ticketService.createTickets(reservation, seats);
+        } catch (Exception e) {
+            log.error("Failed to create tickets for counter reservation {}", counterCode, e);
+        }
+
+        try {
+            reservationNotificationHelper.handleNotification(reservation, showtime, seats);
+        } catch (Exception e) {
+            log.warn("Failed to dispatch notification for counter reservation {}", counterCode);
+        }
+
+        AuditLogContext.set("showtimeId", showtime.getId());
+        AuditLogContext.set("seats", seatIds);
+        AuditLogContext.set("total", totalAmount);
+        AuditLogContext.set("staff", staff.getUsername());
+
+        String staffEmail = null;
+        try {
+            UserResponse staffUser = identityApi.findUserById(staff.getId());
+            if (staffUser != null) {
+                staffEmail = staffUser.getEmail();
+            }
+        } catch (Exception e) {
+            log.debug("Staff user details lookup skipped: {}", e.getMessage());
+        }
+
+        UserResponse userResponse = UserResponse.builder()
+                .userId(staff.getId())
+                .username(request.getCustomerName() != null && !request.getCustomerName().isBlank()
+                        ? request.getCustomerName() : "Khách vãng lai (" + staff.getUsername() + ")")
+                .email(staffEmail)
+                .phone(request.getCustomerPhone())
+                .build();
+
+        return ReservationMappingHelper.map(reservation, userResponse, showtime, seats);
     }
 
     @Override

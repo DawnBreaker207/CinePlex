@@ -1,5 +1,6 @@
 package com.dawn.booking.controller;
 
+import com.dawn.booking.dto.request.CounterSaleRequest;
 import com.dawn.booking.dto.request.ReservationFilterRequest;
 import com.dawn.booking.dto.request.ReservationHoldSeatRequest;
 import com.dawn.booking.dto.request.ReservationInitRequest;
@@ -106,6 +107,17 @@ public class ReservationController {
     @Operation(summary = "Check in ticket", description = "Single-use entry verification at the box office")
     public ResponseObject<ReservationResponse> reservationCheckIn(@PathVariable String reservationCode) {
         return ResponseObject.success(reservationService.checkIn(reservationCode));
+    }
+
+    @PostMapping("/staff/counter-sale")
+    @PreAuthorize("hasAnyRole('STAFF','MANAGER','ADMIN','OWNER')")
+    @Operation(summary = "Counter Box Office Ticket Sale", description = "Direct in-person ticket purchase at the cinema counter with immediate confirmation and receipt")
+    public ResponseObject<ReservationResponse> counterSale(
+            @Valid @RequestBody CounterSaleRequest request,
+            Authentication authentication
+    ) {
+        AuthenticatedUser staff = (AuthenticatedUser) authentication.getPrincipal();
+        return ResponseObject.created(reservationService.counterSale(request, staff));
     }
 
     @PostMapping("/{reservationId}/cancel")
