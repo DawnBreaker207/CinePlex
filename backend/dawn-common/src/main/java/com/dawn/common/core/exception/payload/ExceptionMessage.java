@@ -1,6 +1,7 @@
 package com.dawn.common.core.exception.payload;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -8,6 +9,7 @@ import lombok.Data;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.ZonedDateTime;
+import java.util.List;
 
 @AllArgsConstructor
 @Data
@@ -25,4 +27,14 @@ public class ExceptionMessage implements Serializable {
 
     private final String code;
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private final String reason;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private final String requestId;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private final List<ValidationError> errors;
+
+    public record ValidationError(String field, String message) implements Serializable {}
 }

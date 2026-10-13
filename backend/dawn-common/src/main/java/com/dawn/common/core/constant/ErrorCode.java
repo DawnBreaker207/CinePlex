@@ -113,7 +113,14 @@ public enum ErrorCode {
     INVALID_STATE_TRANSITION("Invalid state transition from {0} to {1}"),
 
     // System
-    FILE_NOT_FOUND("File not found");
+    FILE_NOT_FOUND("File not found"),
+
+    // Cinema Entry & Check-In Window (Gate Control)
+    RESERVATION_CHECKIN_TOO_EARLY("Cannot check in: Showtime entry opens 30 minutes before showtime"),
+    RESERVATION_CHECKIN_EXPIRED("Cannot check in: Entry window closed (more than 20 minutes past showtime)"),
+
+    // Anti-abuse & Rate Limit
+    VOUCHER_RATE_LIMITED("Too many voucher application attempts, please try again later");
 
     private final String template;
 
@@ -123,6 +130,13 @@ public enum ErrorCode {
 
     public String code() {
         return name();
+    }
+
+    /**
+     * Stable snake_case reason for frontends to switch on and translate locally.
+     */
+    public String reason() {
+        return name().toLowerCase();
     }
 
     public String format(Object... args) {

@@ -41,8 +41,21 @@ import { provideStoreDevtools } from '@ngrx/store-devtools';
 import { NgxEchartsModule } from 'ngx-echarts';
 import { icons, LucideAngularModule } from 'lucide-angular';
 import localVi from '@angular/common/locales/vi';
+import { provideNzConfig, NzConfig } from 'ng-zorro-antd/core/config';
 import { CurrencyFormatPipe } from '@shared/pipes/currency-format.pipe';
 import { NzModalModule } from 'ng-zorro-antd/modal';
+
+const nzConfig: NzConfig = {
+  theme: {
+    primaryColor: '#e4002b',
+  },
+  message: {
+    nzTop: 72,
+  },
+  notification: {
+    nzTop: 72,
+  },
+};
 import { AuthInterceptor } from '@core/interceptor/auth.interceptor';
 import { CacheInterceptor } from '@core/interceptor/cache.interceptor';
 import { ErrorInterceptor } from '@core/interceptor/error.interceptor';
@@ -100,6 +113,7 @@ export const appConfig: ApplicationConfig = {
     ),
     provideNzIcons(nzIcons),
     provideNzI18n(vi_VN),
+    provideNzConfig(nzConfig),
     importProvidersFrom(NzModalModule),
     provideStore({
       [authFeatureKey]: authReducer,

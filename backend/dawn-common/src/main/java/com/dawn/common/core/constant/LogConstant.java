@@ -20,6 +20,8 @@ public final class LogConstant {
         public static final String ARTICLE_CREATE = "ARTICLE_CREATE";
         public static final String ARTICLE_UPDATE = "ARTICLE_UPDATE";
         public static final String ARTICLE_DELETE = "ARTICLE_DELETE";
+        public static final String CHECK_IN = "CHECK_IN";
+        public static final String COUNTER_SALE = "COUNTER_SALE";
 
         private Action() {
         }
@@ -29,6 +31,7 @@ public final class LogConstant {
         public static final String USER = "USER";
         public static final String VOUCHER = "VOUCHER";
         public static final String ARTICLE = "ARTICLE";
+        public static final String RESERVATION = "RESERVATION";
 
         private Entity() {
         }

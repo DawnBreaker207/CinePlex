@@ -1,10 +1,13 @@
 import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { AuthService } from '../auth/auth.service';
-import { catchError, switchMap, throwError } from 'rxjs';
+import { BehaviorSubject, catchError, filter, switchMap, take, throwError } from 'rxjs';
 import { Store } from '@ngrx/store';
 import { SKIP_AUTH, USE_HEADER } from '@core/constants/http-context.tokens';
 import { AuthActions } from '@core/auth/auth.actions';
+
+let isRefreshing = false;
+const refreshTokenSubject = new BehaviorSubject<string | null>(null);
 
 export const AuthInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);
@@ -47,26 +50,60 @@ export const AuthInterceptor: HttpInterceptorFn = (req, next) => {
         typeof error.error?.message === 'string'
           ? error.error.message.toLowerCase()
           : '';
-      const tokenInvalid = message.includes('not found') || message.includes('invalid') || message.includes('revoked');
+      const tokenInvalid =
+        message.includes('not found') ||
+        message.includes('invalid') ||
+        message.includes('revoked');
+
       if (tokenInvalid) {
+        isRefreshing = false;
         authService.setAccessToken(null);
         store.dispatch(AuthActions.loadLogout());
         return throwError(() => error);
       }
 
+      // Single-flight refresh token queue (inspired by production Cinema project)
+      if (isRefreshing) {
+        return refreshTokenSubject.pipe(
+          filter((t): t is string => t !== null),
+          take(1),
+          switchMap((newToken) => {
+            return next(
+              req.clone({
+                setHeaders: { Authorization: `Bearer ${newToken}` },
+                withCredentials: true,
+              }),
+            );
+          }),
+        );
+      }
+
+      isRefreshing = true;
+      refreshTokenSubject.next(null);
+
       return authService.silentRefresh().pipe(
         switchMap((newToken) => {
+          isRefreshing = false;
           if (!newToken) {
             authService.setAccessToken(null);
             store.dispatch(AuthActions.loadLogout());
+            refreshTokenSubject.next(null);
             return throwError(() => error);
           }
+          refreshTokenSubject.next(newToken);
           return next(
             req.clone({
               setHeaders: { Authorization: `Bearer ${newToken}` },
               withCredentials: true,
             }),
           );
+        }),
+        catchError((refreshErr) => {
+          isRefreshing = false;
+          authService.setAccessToken(null);
+          store.dispatch(AuthActions.loadLogout());
+          refreshTokenSubject.next(null);
+          return throwError(() => refreshErr);
         }),
       );
     }),
